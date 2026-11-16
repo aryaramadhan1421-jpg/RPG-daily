@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.graphics.Color
 import android.os.Bundle
 import android.view.ViewGroup
+import android.view.WindowManager
+import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -20,6 +22,19 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var webView: WebView
 
+    inner class AndroidBridge {
+        @JavascriptInterface
+        fun setKeepScreenOn(enable: Boolean) {
+            runOnUiThread {
+                if (enable) {
+                    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                } else {
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                }
+            }
+        }
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge(
@@ -28,7 +43,6 @@ class MainActivity : ComponentActivity() {
         )
         super.onCreate(savedInstanceState)
 
-        // 1. Buat wadah FrameLayout dengan warna latar gelap
         val container = FrameLayout(this).apply {
             setBackgroundColor(Color.parseColor("#070B14"))
             layoutParams = ViewGroup.LayoutParams(
@@ -37,7 +51,6 @@ class MainActivity : ComponentActivity() {
             )
         }
 
-        // 2. Siapkan WebView di dalam wadah tersebut
         webView = WebView(this).apply {
             setBackgroundColor(Color.parseColor("#070B14"))
             layoutParams = FrameLayout.LayoutParams(
@@ -50,15 +63,16 @@ class MainActivity : ComponentActivity() {
                 databaseEnabled = true
                 allowFileAccess = true
                 allowContentAccess = true
+                mediaPlaybackRequiresUserGesture = false
                 cacheMode = WebSettings.LOAD_DEFAULT
             }
+            addJavascriptInterface(AndroidBridge(), "AndroidBridge")
             webViewClient = WebViewClient()
             webChromeClient = WebChromeClient()
         }
 
         container.addView(webView)
 
-        // 3. Beri jarak aman pada WADAHNYA (FrameLayout), bukan pada WebView
         ViewCompat.setOnApplyWindowInsetsListener(container) { view, windowInsets ->
             val insets = windowInsets.getInsets(
                 WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
