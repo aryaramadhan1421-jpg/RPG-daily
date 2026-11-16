@@ -1,6 +1,29 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="48dp" android:height="48dp" android:viewportWidth="48" android:viewportHeight="48">
-    <path android:fillColor="#07090E" android:pathData="M0,0h48v48h-48z" />
-    <path android:fillColor="#00F0FF" android:pathData="M8,8h32v5h-32zM8,21.5h22v5h-22zM8,35h32v5h-32z" />
-    <path android:fillColor="#9D4EDD" android:pathData="M34,19h6v10h-6z" />
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Latar Belakang Gelap Cyber -->
+    <path
+        android:fillColor="#070B14"
+        android:pathData="M0,0h108v108h-108z" />
+
+    <!-- Bingkai Luar Neon Cyan -->
+    <path
+        android:strokeColor="#00F0FF"
+        android:strokeWidth="2.5"
+        android:fillColor="#0E1726"
+        android:pathData="M54,18 L84,30 L84,56 C84,74 70,86 54,92 C38,86 24,74 24,56 L24,30 Z" />
+
+    <!-- Aksen Dalam Ungu / Neon -->
+    <path
+        android:strokeColor="#8B5CF6"
+        android:strokeWidth="1.5"
+        android:pathData="M54,24 L78,34 L78,55 C78,70 67,80 54,85 C41,80 30,70 30,55 L30,34 Z" />
+
+    <!-- Simbol Pedang / Panah Naik (Level Up) -->
+    <path
+        android:fillColor="#00F0FF"
+        android:pathData="M54,32 L66,48 L59,48 L59,72 L49,72 L49,48 L42,48 Z" />
 </vector>
