@@ -29,7 +29,7 @@ jobs:
           GRADLE_DIR=$(find . -name "settings.gradle*" -printf "%h\n" | head -n 1)
           echo "Menemukan proyek Android di folder: $GRADLE_DIR"
           cd "$GRADLE_DIR"
-          gradle assembleDebug
+          gradle assembleDebug -Pkotlin.jvm.target.validation.mode=warning
 
       - name: Upload APK ke Artifacts
         uses: actions/upload-artifact@v4
