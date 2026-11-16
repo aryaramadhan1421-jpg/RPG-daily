@@ -89,6 +89,7 @@
         .grid { display: grid; }
         .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
         .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         .grid-cols-7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
         .gap-1 { gap: 0.25rem; }
@@ -405,16 +406,21 @@
                     </div>
                 </div>
 
-                <!-- Active Title Selector -->
+                <!-- Active Title Selector (2. Instant Cycle + Long/Detail Modal Option) -->
                 <div style="margin-top: 0.75rem; padding-top: 0.625rem; border-top: 1px solid rgba(30,41,59,0.85);" class="flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-1-5" style="font-size: 0.75rem;">
-                        <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
+                    <div class="flex items-center gap-1-5 min-w-0" style="font-size: 0.75rem;">
+                        <svg class="icon shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
                         <span style="color: var(--text-muted);">Title:</span>
-                        <span id="active-title-name" class="font-display" style="font-weight: 700; color: #fcd34d;">Shadow Candidate</span>
+                        <span id="active-title-name" class="font-display truncate" style="font-weight: 700; color: #fcd34d;">Shadow Candidate</span>
                     </div>
-                    <button onclick="openTitlesModal()" class="font-display" style="font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 4px 8px; border-radius: 0.5rem; background: rgba(245,158,11,0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.4);">
-                        Ganti Title (<span id="unlocked-titles-count">1</span>/4)
-                    </button>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button onclick="cycleActiveTitle()" class="font-display" style="font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 4px 8px; border-radius: 0.5rem; background: rgba(245,158,11,0.18); color: #fcd34d; border: 1px solid rgba(245,158,11,0.45);" title="Langsung ganti ke gelar berikutnya yang sudah terbuka">
+                            Ganti Title (<span id="unlocked-titles-count">1</span>/4)
+                        </button>
+                        <button onclick="openTitlesModal()" style="padding: 4px 6px; border-radius: 0.5rem; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;" title="Lihat Daftar & Syarat Semua Title">
+                            <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- HP & XP Bars -->
@@ -644,7 +650,7 @@
             <div class="flex items-center justify-between gap-2">
                 <div>
                     <h2 class="font-display" style="font-weight: 700; font-size: 1.25rem; color: #fff;">QUEST BOARD</h2>
-                    <p style="font-size: 0.75rem; color: var(--text-muted);">Selesaikan misi harian untuk menjadi lebih kuat</p>
+                    <p style="font-size: 0.75rem; color: var(--text-muted);">Centang misi selesai (klik ulang untuk batalkan/undo)</p>
                 </div>
                 <div class="flex items-center gap-1-5 shrink-0">
                     <button onclick="restoreDefaultHabits()" class="font-display flex items-center gap-1" style="background: var(--bg-slate-900); color: #67e8f9; border: 1px solid rgba(6,182,212,0.4); font-weight: 700; font-size: 0.75rem; padding: 0.5rem 0.625rem; border-radius: 0.75rem;" title="Muat Ulang Paket Default Daily Habit">
@@ -734,14 +740,20 @@
         <!-- ==================== TAB 3: DUNGEON (FOCUS TIMER) ==================== -->
         <section id="tab-dungeon" class="tab-content hidden space-y-4">
             <div class="system-card text-center" style="padding: 1.25rem; border-color: rgba(168,85,247,0.35);">
-                <span class="font-display" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.35); color: #d8b4fe; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.75rem;">
-                    <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/></svg>
-                    Instant Dungeon Gate
-                </span>
+                <div class="flex items-center justify-center gap-2" style="margin-bottom: 0.75rem;">
+                    <span class="font-display" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.35); color: #d8b4fe; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">
+                        <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/></svg>
+                        Instant Dungeon Gate
+                    </span>
+                    <span id="wakelock-status-badge" class="hidden font-display" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 9999px; background: rgba(16,185,129,0.16); border: 1px solid rgba(16,185,129,0.4); color: #34d399; font-size: 10px; font-weight: 700; text-transform: uppercase;">
+                        <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        SCREEN ON
+                    </span>
+                </div>
 
                 <h2 class="font-display" style="font-weight: 700; font-size: 1.5rem; color: #fff;">DEEP FOCUS RAID</h2>
                 <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; max-width: 20rem; margin-left: auto; margin-right: auto; line-height: 1.5;">
-                    Masuki gerbang fokus. Jangan menyerah sebelum waktu habis untuk mengklaim <span style="color: #67e8f9;">+INT</span>, <span style="color: #67e8f9;">XP</span>, dan <span style="color: #fcd34d;">Gold</span>!
+                    Masuki gerbang fokus. Layar otomatis tetap menyala & jangan menyerah sebelum waktu habis untuk klaim <span style="color: #67e8f9;">+INT</span>, <span style="color: #67e8f9;">XP</span>, dan <span style="color: #fcd34d;">Gold</span>!
                 </p>
 
                 <!-- Mode Selector -->
@@ -754,8 +766,27 @@
                     </button>
                 </div>
 
+                <!-- 3. Offline Ambient Sound Selector (Web Audio API) -->
+                <div style="margin-top: 0.75rem; background: rgba(2,6,23,0.75); border: 1px solid var(--bg-slate-800); border-radius: 0.75rem; padding: 0.5rem;">
+                    <div class="flex items-center justify-between" style="font-size: 10px; color: var(--text-muted); margin-bottom: 0.375rem; padding: 0 2px;">
+                        <span class="font-display uppercase" style="font-weight: 700; color: #c084fc;">Ambient Fokus (Offline)</span>
+                        <span id="ambient-active-label" style="color: var(--cyan-400); font-weight: 600;">Mode: Hening</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1-5">
+                        <button type="button" onclick="setDungeonAmbient('none')" id="amb-none" class="font-display" style="padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: rgba(34,211,238,0.2); color: #67e8f9; border: 1px solid rgba(34,211,238,0.5);">
+                            🔇 Hening
+                        </button>
+                        <button type="button" onclick="setDungeonAmbient('synth')" id="amb-synth" class="font-display" style="padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;">
+                            🌌 Dark Synth
+                        </button>
+                        <button type="button" onclick="setDungeonAmbient('rain')" id="amb-rain" class="font-display" style="padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;">
+                            🌧️ Suara Hujan
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Circular Timer Display -->
-                <div style="margin: 1.5rem auto; position: relative; width: 12rem; height: 12rem; display: flex; align-items: center; justify-content: center;">
+                <div style="margin: 1.25rem auto; position: relative; width: 12rem; height: 12rem; display: flex; align-items: center; justify-content: center;">
                     <svg style="width: 100%; height: 100%; transform: rotate(-90deg);" viewBox="0 0 100 100">
                         <circle cx="50" cy="50" r="44" stroke="#1e293b" stroke-width="6" fill="transparent" />
                         <circle id="dungeon-progress-ring" cx="50" cy="50" r="44" stroke="#9d4edd" stroke-width="6" fill="transparent"
@@ -956,11 +987,14 @@
     <!-- ==================== JAVASCRIPT LOGIC (100% OFFLINE) ==================== -->
     <script>
         // ==========================================
-        // 1. WEB AUDIO API SYNTHESIZER (NO EXTERNAL FILES)
+        // 1. WEB AUDIO API SYNTHESIZER + DUNGEON AMBIENT
         // ==========================================
         const SoundFX = {
             ctx: null,
             muted: false,
+            ambientMode: 'none', // 'none' | 'synth' | 'rain'
+            ambientNodes: [],
+            ambientGain: null,
 
             init() {
                 if (!this.ctx) {
@@ -989,6 +1023,25 @@
                 gain.connect(this.ctx.destination);
                 osc.start(now);
                 osc.stop(now + 0.05);
+            },
+
+            playUndo() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(620, now);
+                osc.frequency.exponentialRampToValueAtTime(340, now + 0.11);
+
+                gain.gain.setValueAtTime(0.09, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.13);
             },
 
             playQuestComplete() {
@@ -1079,6 +1132,97 @@
                 gain.connect(this.ctx.destination);
                 osc.start(now);
                 osc.stop(now + 0.31);
+            },
+
+            // Offline Ambient Generator for Dungeon Mode
+            startAmbient(mode) {
+                this.stopAmbient();
+                if (mode === 'none' || this.muted) return;
+                this.init();
+
+                const masterGain = this.ctx.createGain();
+                masterGain.gain.setValueAtTime(0.001, this.ctx.currentTime);
+                masterGain.gain.linearRampToValueAtTime(mode === 'synth' ? 0.14 : 0.18, this.ctx.currentTime + 1.2);
+                masterGain.connect(this.ctx.destination);
+                this.ambientGain = masterGain;
+
+                if (mode === 'synth') {
+                    // Deep Dark Synth Drone (A1 55Hz + E2 82.41Hz + A2 110Hz + slow LFO filter)
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(240, this.ctx.currentTime);
+
+                    const lfo = this.ctx.createOscillator();
+                    const lfoGain = this.ctx.createGain();
+                    lfo.frequency.setValueAtTime(0.12, this.ctx.currentTime);
+                    lfoGain.gain.setValueAtTime(95, this.ctx.currentTime);
+                    lfo.connect(lfoGain);
+                    lfoGain.connect(filter.frequency);
+                    lfo.start();
+                    this.ambientNodes.push(lfo);
+
+                    filter.connect(masterGain);
+
+                    const freqs = [55, 82.41, 110];
+                    const types = ['sawtooth', 'triangle', 'sine'];
+                    freqs.forEach((f, idx) => {
+                        const osc = this.ctx.createOscillator();
+                        const oscGain = this.ctx.createGain();
+                        osc.type = types[idx];
+                        osc.frequency.setValueAtTime(f, this.ctx.currentTime);
+                        osc.detune.setValueAtTime((idx - 1) * 6, this.ctx.currentTime);
+                        oscGain.gain.setValueAtTime(idx === 0 ? 0.45 : 0.35, this.ctx.currentTime);
+                        osc.connect(oscGain);
+                        oscGain.connect(filter);
+                        osc.start();
+                        this.ambientNodes.push(osc);
+                    });
+                } else if (mode === 'rain') {
+                    // Offline Procedural Pink/Brown Noise Rain Generator
+                    const bufferSize = this.ctx.sampleRate * 3;
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    let lastOut = 0.0;
+                    for (let i = 0; i < bufferSize; i++) {
+                        const white = Math.random() * 2 - 1;
+                        data[i] = (lastOut + (0.04 * white)) / 1.04;
+                        lastOut = data[i];
+                        data[i] *= 2.8;
+                    }
+
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    noise.loop = true;
+
+                    const bandpass = this.ctx.createBiquadFilter();
+                    bandpass.type = 'bandpass';
+                    bandpass.frequency.setValueAtTime(750, this.ctx.currentTime);
+                    bandpass.Q.setValueAtTime(0.65, this.ctx.currentTime);
+
+                    const highshelf = this.ctx.createBiquadFilter();
+                    highshelf.type = 'highshelf';
+                    highshelf.frequency.setValueAtTime(2200, this.ctx.currentTime);
+                    highshelf.gain.setValueAtTime(-6, this.ctx.currentTime);
+
+                    noise.connect(bandpass);
+                    bandpass.connect(highshelf);
+                    highshelf.connect(masterGain);
+                    noise.start();
+                    this.ambientNodes.push(noise);
+                }
+            },
+
+            stopAmbient() {
+                if (this.ambientNodes.length > 0) {
+                    this.ambientNodes.forEach(node => {
+                        try { node.stop(); node.disconnect(); } catch (e) {}
+                    });
+                    this.ambientNodes = [];
+                }
+                if (this.ambientGain) {
+                    try { this.ambientGain.disconnect(); } catch (e) {}
+                    this.ambientGain = null;
+                }
             }
         };
 
@@ -1098,12 +1242,83 @@
         function toggleAudio() {
             SoundFX.muted = !SoundFX.muted;
             updateAudioIcon();
-            if (!SoundFX.muted) SoundFX.playClick();
+            if (SoundFX.muted) {
+                SoundFX.stopAmbient();
+            } else {
+                SoundFX.playClick();
+                if (isDungeonRunning && SoundFX.ambientMode !== 'none') {
+                    SoundFX.startAmbient(SoundFX.ambientMode);
+                }
+            }
             saveState();
         }
 
         // ==========================================
-        // 2. GAME STATE & DEFAULT DAILY HABITS
+        // 2. SCREEN WAKE LOCK / KEEP SCREEN ON BRIDGE
+        // ==========================================
+        const ScreenWakeManager = {
+            wakeLockSentinel: null,
+            isActive: false,
+
+            async enable() {
+                this.isActive = true;
+                this.updateBadge(true);
+
+                // 1. Native Android WebView Bridge (if wrapped in APK)
+                try {
+                    if (window.AndroidBridge && typeof window.AndroidBridge.setKeepScreenOn === 'function') {
+                        window.AndroidBridge.setKeepScreenOn(true);
+                    }
+                } catch (e) {}
+
+                // 2. Standard W3C Screen Wake Lock API (Modern Mobile Browsers / PWA)
+                try {
+                    if ('wakeLock' in navigator) {
+                        this.wakeLockSentinel = await navigator.wakeLock.request('screen');
+                        this.wakeLockSentinel.addEventListener('release', () => {
+                            if (this.isActive) this.updateBadge(false);
+                        });
+                    }
+                } catch (err) {
+                    // Fallback gracefully on unsupported devices
+                }
+            },
+
+            async disable() {
+                this.isActive = false;
+                this.updateBadge(false);
+
+                try {
+                    if (window.AndroidBridge && typeof window.AndroidBridge.setKeepScreenOn === 'function') {
+                        window.AndroidBridge.setKeepScreenOn(false);
+                    }
+                } catch (e) {}
+
+                try {
+                    if (this.wakeLockSentinel) {
+                        await this.wakeLockSentinel.release();
+                        this.wakeLockSentinel = null;
+                    }
+                } catch (err) {}
+            },
+
+            updateBadge(visible) {
+                const badge = document.getElementById('wakelock-status-badge');
+                if (!badge) return;
+                if (visible) badge.classList.remove('hidden');
+                else badge.classList.add('hidden');
+            }
+        };
+
+        // Re-acquire Wake Lock automatically if user switches back to the app during active Dungeon
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && isDungeonRunning && ScreenWakeManager.isActive) {
+                ScreenWakeManager.enable();
+            }
+        });
+
+        // ==========================================
+        // 3. GAME STATE & DEFAULT DAILY HABITS
         // ==========================================
         const STORAGE_KEY = 'system_rpg_productivity_offline_v1';
 
@@ -1232,7 +1447,8 @@
             },
             selectedDate: null,
             lastRealDate: null,
-            muted: false
+            muted: false,
+            ambientMode: 'none'
         };
 
         const TITLES_CATALOG = [
@@ -1336,7 +1552,7 @@
             return gameState.selectedDate;
         }
 
-        function recordActivityHistory(title, type, stat, xp, gold) {
+        function recordActivityHistory(title, type, stat, xp, gold, questId = null) {
             if (!gameState.history) {
                 gameState.history = { dailyCounts: {}, logs: [] };
             }
@@ -1344,7 +1560,8 @@
             gameState.history.dailyCounts[dateKey] = (gameState.history.dailyCounts[dateKey] || 0) + 1;
 
             gameState.history.logs.unshift({
-                id: 'log_' + Date.now(),
+                id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+                questId: questId,
                 title,
                 type,
                 stat,
@@ -1368,6 +1585,7 @@
                 if (raw) {
                     const parsed = JSON.parse(raw);
                     SoundFX.muted = !!parsed.muted;
+                    SoundFX.ambientMode = parsed.ambientMode || 'none';
                     if (!parsed.history) {
                         parsed.history = { dailyCounts: {}, logs: [] };
                         initDemoHistory(parsed);
@@ -1392,7 +1610,10 @@
                 const unfinishedCount = dailyQuests.filter(q => !q.completed).length;
 
                 gameState.quests.forEach(q => {
-                    if (q.category === 'Daily Quest') q.completed = false;
+                    if (q.category === 'Daily Quest') {
+                        q.completed = false;
+                        delete q.lastReward;
+                    }
                 });
                 gameState.selectedDate = realToday;
                 gameState.lastRealDate = realToday;
@@ -1419,6 +1640,7 @@
         function saveState() {
             try {
                 gameState.muted = SoundFX.muted;
+                gameState.ambientMode = SoundFX.ambientMode;
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
             } catch (e) {
                 console.error('Gagal menyimpan state:', e);
@@ -1426,7 +1648,7 @@
         }
 
         // ==========================================
-        // 3. CORE RPG CALCULATIONS & RANKING
+        // 4. CORE RPG CALCULATIONS & RANKING
         // ==========================================
         function getRequiredXP(level) {
             return level * 100;
@@ -1448,7 +1670,7 @@
             return TITLES_CATALOG.find(t => t.id === gameState.player.activeTitle) || TITLES_CATALOG[0];
         }
 
-        function addRewards(baseXp, baseGold, statType = null, statGain = 1) {
+        function addRewards(baseXp, baseGold, statType = null, statGain = 1, silentFloat = false) {
             const mult = getStreakMultiplier();
             const titleObj = getActiveTitleObj();
             const finalXp = Math.round(baseXp * (mult + titleObj.xpBonus));
@@ -1461,7 +1683,9 @@
                 gameState.player.stats[statType] += statGain;
             }
 
-            spawnFloatingReward(`+${finalXp} XP  |  +${finalGold} Gold${statType ? `  |  +${statGain} ${statType}` : ''}`);
+            if (!silentFloat) {
+                spawnFloatingReward(`+${finalXp} XP  |  +${finalGold} Gold${statType ? `  |  +${statGain} ${statType}` : ''}`);
+            }
 
             let leveledUp = false;
             while (gameState.player.xp >= getRequiredXP(gameState.player.level)) {
@@ -1483,6 +1707,32 @@
 
             saveState();
             renderAll();
+
+            return { finalXp, finalGold, statType, statGain };
+        }
+
+        function revokeRewards(xpAmount, goldAmount, statType = null, statGain = 1) {
+            gameState.player.gold = Math.max(0, gameState.player.gold - goldAmount);
+
+            if (statType && gameState.player.stats[statType] !== undefined) {
+                gameState.player.stats[statType] = Math.max(1, gameState.player.stats[statType] - statGain);
+            }
+
+            // Roll back XP accurately across levels if needed
+            let remainingToSubtract = xpAmount;
+            while (remainingToSubtract > 0) {
+                if (gameState.player.xp >= remainingToSubtract) {
+                    gameState.player.xp -= remainingToSubtract;
+                    remainingToSubtract = 0;
+                } else if (gameState.player.level > 1) {
+                    remainingToSubtract -= gameState.player.xp;
+                    gameState.player.level -= 1;
+                    gameState.player.xp = getRequiredXP(gameState.player.level);
+                } else {
+                    gameState.player.xp = 0;
+                    remainingToSubtract = 0;
+                }
+            }
         }
 
         function takeDamage(amount) {
@@ -1504,7 +1754,7 @@
         }
 
         // ==========================================
-        // 4. UI RENDERING FUNCTIONS
+        // 5. UI RENDERING FUNCTIONS
         // ==========================================
         function renderAll() {
             renderStatus();
@@ -1512,6 +1762,7 @@
             renderQuests();
             renderShop();
             updateAudioIcon();
+            updateAmbientButtonsUI();
         }
 
         function renderStatus() {
@@ -1783,22 +2034,23 @@
                 const isDone = q.completed;
                 const card = document.createElement('div');
                 card.className = 'system-card flex items-center justify-between gap-3';
-                card.style.cssText = `padding: 0.875rem; border-radius: 0.75rem; ${isDone ? 'opacity: 0.55; border-color: #1e293b;' : ''}`;
+                card.style.cssText = `padding: 0.875rem; border-radius: 0.75rem; ${isDone ? 'opacity: 0.72; border-color: rgba(16,185,129,0.35);' : ''}`;
 
                 const checkBtnStyle = isDone 
-                    ? 'background: rgba(16,185,129,0.2); border: 1px solid #10b981; color: #34d399;' 
+                    ? 'background: rgba(16,185,129,0.22); border: 1px solid #10b981; color: #34d399;' 
                     : 'border: 1px solid rgba(34,211,238,0.65); color: transparent;';
 
                 card.innerHTML = `
                     <div class="flex items-start gap-3 flex-1 min-w-0">
-                        <button onclick="completeQuest('${q.id}')" ${isDone ? 'disabled' : ''} 
+                        <button onclick="toggleQuest('${q.id}')" title="${isDone ? 'Klik untuk batalkan (Undo)' : 'Centang selesai'}"
                             style="margin-top: 2px; width: 1.5rem; height: 1.5rem; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; ${checkBtnStyle}">
                             <svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                         </button>
-                        <div class="min-w-0 flex-1">
+                        <div class="min-w-0 flex-1" onclick="toggleQuest('${q.id}')" style="cursor: pointer;">
                             <div class="flex flex-wrap items-center gap-1-5" style="margin-bottom: 4px;">
                                 <span class="font-display" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; ${catStyles[q.category] || ''}">${q.category}</span>
                                 <span class="font-display" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; ${statStyles[q.stat] || ''}">+${q.stat}</span>
+                                ${isDone ? '<span class="font-display" style="font-size: 9px; font-weight: 700; color: #34d399; background: rgba(16,185,129,0.12); padding: 1px 6px; border-radius: 4px;">SELESAI (TAP = UNDO)</span>' : ''}
                             </div>
                             <p class="${isDone ? 'line-through' : ''}" style="font-size: 0.875rem; font-weight: 500; color: ${isDone ? '#94a3b8' : '#f1f5f9'}; line-height: 1.35;">${escapeHtml(q.title)}</p>
                             <div class="flex items-center gap-3 font-display" style="margin-top: 6px; font-size: 11px; font-weight: 700;">
@@ -1890,7 +2142,7 @@
         }
 
         // ==========================================
-        // 5. QUEST & SHOP INTERACTIONS
+        // 6. QUEST (WITH UNDO TOGGLE) & SHOP INTERACTIONS
         // ==========================================
         function toggleQuestForm() {
             SoundFX.playClick();
@@ -1938,28 +2190,100 @@
             spawnFloatingReward('Quest Baru Ditambahkan!');
         }
 
-        function completeQuest(id) {
+        // 1. Toggle Quest (Complete OR Undo precisely)
+        function toggleQuest(id) {
             const quest = gameState.quests.find(q => q.id === id);
-            if (!quest || quest.completed) return;
+            if (!quest) return;
 
-            quest.completed = true;
-            SoundFX.playQuestComplete();
-
-            recordActivityHistory(quest.title, quest.category, quest.stat, quest.xp, quest.gold);
-
-            if (quest.category === 'Daily Quest') {
+            if (!quest.completed) {
+                // --- COMPLETE QUEST ---
                 const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
-                const allDailyDone = dailyQuests.length > 0 && dailyQuests.every(q => q.completed);
-                if (allDailyDone) {
-                    gameState.player.streak += 1;
-                    setTimeout(() => {
-                        spawnFloatingReward(`🔥 ALL DAILY HABITS CLEAR! Streak +1 (${gameState.player.streak} Hari)`);
-                    }, 600);
-                }
-            }
+                const wasAllDailyDone = dailyQuests.length > 0 && dailyQuests.every(q => q.completed);
 
-            const statGain = quest.category === 'Boss Fight' ? 3 : (quest.category === 'Main Quest' ? 2 : 1);
-            addRewards(quest.xp, quest.gold, quest.stat, statGain);
+                quest.completed = true;
+                SoundFX.playQuestComplete();
+
+                const statGain = quest.category === 'Boss Fight' ? 3 : (quest.category === 'Main Quest' ? 2 : 1);
+                const granted = addRewards(quest.xp, quest.gold, quest.stat, statGain);
+                const activeDateStr = getCurrentGameDateKey();
+
+                let streakAdded = false;
+                if (quest.category === 'Daily Quest' && !wasAllDailyDone) {
+                    const nowAllDailyDone = dailyQuests.length > 0 && dailyQuests.every(q => q.completed);
+                    if (nowAllDailyDone) {
+                        gameState.player.streak += 1;
+                        streakAdded = true;
+                        setTimeout(() => {
+                            spawnFloatingReward(`🔥 ALL DAILY HABITS CLEAR! Streak +1 (${gameState.player.streak} Hari)`);
+                        }, 600);
+                    }
+                }
+
+                // Store exact reward snapshot for precision Undo
+                quest.lastReward = {
+                    finalXp: granted.finalXp,
+                    finalGold: granted.finalGold,
+                    stat: quest.stat,
+                    statGain: statGain,
+                    dateStr: activeDateStr,
+                    streakAdded: streakAdded
+                };
+
+                recordActivityHistory(quest.title, quest.category, quest.stat, granted.finalXp, granted.finalGold, quest.id);
+                saveState();
+                renderAll();
+            } else {
+                // --- UNDO QUEST (ANTI-SALAH PENCET) ---
+                quest.completed = false;
+                SoundFX.playUndo();
+
+                const statGain = quest.category === 'Boss Fight' ? 3 : (quest.category === 'Main Quest' ? 2 : 1);
+                const snap = quest.lastReward || {
+                    finalXp: quest.xp,
+                    finalGold: quest.gold,
+                    stat: quest.stat,
+                    statGain: statGain,
+                    dateStr: getCurrentGameDateKey(),
+                    streakAdded: false
+                };
+
+                revokeRewards(snap.finalXp, snap.finalGold, snap.stat, snap.statGain);
+
+                if (snap.streakAdded && gameState.player.streak > 0) {
+                    gameState.player.streak = Math.max(0, gameState.player.streak - 1);
+                }
+
+                // Remove matching activity log entry & decrement dailyCount on that date
+                if (gameState.history && Array.isArray(gameState.history.logs)) {
+                    let logIdx = gameState.history.logs.findIndex(
+                        l => l.questId === quest.id && l.dateStr === snap.dateStr
+                    );
+                    if (logIdx === -1) {
+                        logIdx = gameState.history.logs.findIndex(
+                            l => l.title === quest.title && l.dateStr === snap.dateStr
+                        );
+                    }
+                    if (logIdx !== -1) {
+                        const removedLog = gameState.history.logs.splice(logIdx, 1)[0];
+                        if (gameState.history.dailyCounts[removedLog.dateStr]) {
+                            gameState.history.dailyCounts[removedLog.dateStr] = Math.max(
+                                0,
+                                gameState.history.dailyCounts[removedLog.dateStr] - 1
+                            );
+                        }
+                    } else if (gameState.history.dailyCounts[snap.dateStr]) {
+                        gameState.history.dailyCounts[snap.dateStr] = Math.max(
+                            0,
+                            gameState.history.dailyCounts[snap.dateStr] - 1
+                        );
+                    }
+                }
+
+                delete quest.lastReward;
+                spawnFloatingReward(`↩️ Undo: -${snap.finalXp} XP  |  -${snap.finalGold} Gold  |  -${snap.statGain} ${snap.stat}`);
+                saveState();
+                renderAll();
+            }
         }
 
         function deleteQuest(id) {
@@ -2036,12 +2360,46 @@
         }
 
         // ==========================================
-        // 6. DUNGEON MODE (FOCUS TIMER)
+        // 7. DUNGEON MODE (FOCUS TIMER + AMBIENT + WAKE LOCK)
         // ==========================================
         let dungeonConfig = { duration: 1500, xp: 100, gold: 80 };
         let dungeonRemaining = 1500;
         let dungeonInterval = null;
         let isDungeonRunning = false;
+
+        function setDungeonAmbient(mode) {
+            SoundFX.playClick();
+            SoundFX.ambientMode = mode;
+            updateAmbientButtonsUI();
+            saveState();
+
+            if (isDungeonRunning) {
+                if (mode === 'none') {
+                    SoundFX.stopAmbient();
+                } else {
+                    SoundFX.startAmbient(mode);
+                }
+            }
+        }
+
+        function updateAmbientButtonsUI() {
+            const modes = ['none', 'synth', 'rain'];
+            const labels = {
+                none: 'Mode: Hening',
+                synth: 'Mode: Dark Synth',
+                rain: 'Mode: Suara Hujan'
+            };
+            const lblEl = document.getElementById('ambient-active-label');
+            if (lblEl) lblEl.textContent = labels[SoundFX.ambientMode] || 'Mode: Hening';
+
+            const activeStyle = 'padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: rgba(34,211,238,0.2); color: #67e8f9; border: 1px solid rgba(34,211,238,0.5);';
+            const inactiveStyle = 'padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;';
+
+            modes.forEach(m => {
+                const btn = document.getElementById(`amb-${m}`);
+                if (btn) btn.style.cssText = SoundFX.ambientMode === m ? activeStyle : inactiveStyle;
+            });
+        }
 
         function selectDungeonDuration(seconds, xp, gold) {
             if (isDungeonRunning) return;
@@ -2077,6 +2435,12 @@
             isDungeonRunning = true;
             dungeonRemaining = dungeonConfig.duration;
 
+            // Activate Screen Wake Lock & Selected Ambient Audio
+            ScreenWakeManager.enable();
+            if (SoundFX.ambientMode !== 'none') {
+                SoundFX.startAmbient(SoundFX.ambientMode);
+            }
+
             document.getElementById('btn-start-dungeon').classList.add('hidden');
             document.getElementById('btn-abort-dungeon').classList.remove('hidden');
             const selector = document.getElementById('dungeon-mode-selector');
@@ -2102,6 +2466,8 @@
         function completeDungeon() {
             clearInterval(dungeonInterval);
             isDungeonRunning = false;
+            SoundFX.stopAmbient();
+            ScreenWakeManager.disable();
             resetDungeonUI();
 
             gameState.player.dungeonClears = (gameState.player.dungeonClears || 0) + 1;
@@ -2121,6 +2487,8 @@
             if (!isDungeonRunning) return;
             clearInterval(dungeonInterval);
             isDungeonRunning = false;
+            SoundFX.stopAmbient();
+            ScreenWakeManager.disable();
             resetDungeonUI();
             takeDamage(10);
         }
@@ -2140,7 +2508,7 @@
         }
 
         // ==========================================
-        // 7. NEXT DAY EVALUATION & PENALTY SYSTEM
+        // 8. NEXT DAY EVALUATION & PENALTY SYSTEM
         // ==========================================
         function simulateNextDay() {
             const currentDateKey = getCurrentGameDateKey();
@@ -2155,6 +2523,7 @@
             gameState.quests.forEach(q => {
                 if (q.category === 'Daily Quest') {
                     q.completed = false;
+                    delete q.lastReward;
                 }
             });
 
@@ -2178,7 +2547,7 @@
         }
 
         // ==========================================
-        // 8. NAVIGATION, MODALS & UTILITIES
+        // 9. NAVIGATION, MODALS, INSTANT TITLE & UTILITIES
         // ==========================================
         function switchTab(tabName) {
             SoundFX.playClick();
@@ -2241,10 +2610,31 @@
         function confirmResetData() {
             localStorage.removeItem(STORAGE_KEY);
             gameState = initDemoHistory(JSON.parse(JSON.stringify(DEFAULT_STATE)));
+            SoundFX.ambientMode = 'none';
+            SoundFX.stopAmbient();
             saveState();
             closeModal('modal-reset');
             renderAll();
             spawnFloatingReward('Sistem Direset ke Data Awal');
+        }
+
+        // 2. Instant Cycle Active Title without opening modal
+        function cycleActiveTitle() {
+            const unlockedList = TITLES_CATALOG.filter(t => t.checkUnlocked(gameState));
+            if (unlockedList.length <= 1) {
+                SoundFX.playClick();
+                spawnFloatingReward('🔒 Baru 1 Title Terbuka! Cek daftar syarat di tombol sebelah.');
+                return;
+            }
+            const currentIdx = unlockedList.findIndex(t => t.id === gameState.player.activeTitle);
+            const nextIdx = (currentIdx + 1) % unlockedList.length;
+            const nextTitle = unlockedList[nextIdx];
+
+            SoundFX.playQuestComplete();
+            gameState.player.activeTitle = nextTitle.id;
+            saveState();
+            renderStatus();
+            spawnFloatingReward(`👑 Title: ${nextTitle.name} (${nextTitle.buffText})`);
         }
 
         function openTitlesModal() {
@@ -2362,15 +2752,15 @@
                 saveState();
                 renderAll();
                 SoundFX.playLevelUp();
-                spawnFloatingReward('\u2705 Data Berhasil Dipulihkan!');
+                spawnFloatingReward('✅ Data Berhasil Dipulihkan!');
             } catch (err) {
                 SoundFX.playDamage();
-                spawnFloatingReward('\u274c File Backup Tidak Valid!');
+                spawnFloatingReward('❌ File Backup Tidak Valid!');
             }
         };
 
         // ==========================================
-        // 9. INITIALIZE APP ON LOAD
+        // 10. INITIALIZE APP ON LOAD
         // ==========================================
         window.addEventListener('DOMContentLoaded', () => {
             checkRealDayRollover();
