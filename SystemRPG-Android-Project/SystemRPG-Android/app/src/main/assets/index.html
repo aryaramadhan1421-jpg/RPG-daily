@@ -3,84 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#07090e">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="SYSTEM RPG">
-    <title>SYSTEM // Awakening Productivity RPG (Offline)</title>
+    <title>SYSTEM // RPG Productivity OS</title>
 
     <style>
-        /* ==========================================
-           100% OFFLINE EMBEDDED CSS (NO CDN REQUIRED)
-           ========================================== */
+        /* =========================================================
+           OFFLINE SYSTEM RPG THEME & UTILITY CLASSES (NO INTERNET)
+           ========================================================= */
         :root {
-            --bg-main: #07090e;
-            --bg-card: rgba(15, 19, 31, 0.92);
-            --bg-dark: #0a0e17;
-            --bg-slate-800: #1e293b;
-            --bg-slate-900: #0f172a;
+            --bg-void: #05070a;
             --bg-slate-950: #020617;
-            --text-main: #e2e8f0;
-            --text-muted: #94a3b8;
-            --text-dim: #64748b;
-            --cyan: #00f0ff;
+            --bg-slate-900: #0f172a;
+            --bg-slate-800: #1e293b;
+            --border-slate: #334155;
             --cyan-400: #22d3ee;
             --cyan-500: #06b6d4;
-            --purple: #9d4edd;
             --purple-400: #c084fc;
-            --amber: #fbbf24;
+            --purple-500: #a855f7;
             --amber-400: #fbbf24;
             --amber-500: #f59e0b;
-            --rose: #ef4444;
             --rose-400: #fb7185;
             --rose-500: #f43f5e;
-            --emerald: #10b981;
             --emerald-400: #34d399;
-            --orange-400: #fb923c;
-            --orange-500: #f97316;
-            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            --font-display: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --emerald-500: #10b981;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            background-color: var(--bg-main);
+            background-color: var(--bg-void);
             color: var(--text-main);
-            font-family: var(--font-sans);
-            -webkit-tap-highlight-color: transparent;
-            overflow-x: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(0, 240, 255, 0.08) 0%, transparent 45%),
+                radial-gradient(circle at 85% 80%, rgba(157, 78, 221, 0.1) 0%, transparent 45%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            user-select: none;
-            background-image: 
-                radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.09) 0%, transparent 60%),
-                linear-gradient(to right, rgba(30, 41, 59, 0.25) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(30, 41, 59, 0.25) 1px, transparent 1px);
-            background-size: 100% 100%, 24px 24px, 24px 24px;
+            overflow-x: hidden;
+            line-height: 1.45;
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: #07090e; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
-
-        /* Typography & Utilities */
         .font-display {
-            font-family: var(--font-display);
-            letter-spacing: 0.03em;
+            font-family: "Trebuchet MS", "Segoe UI", Roboto, sans-serif;
+            letter-spacing: 0.04em;
         }
+
+        /* Layout Helpers */
         .hidden { display: none !important; }
         .flex { display: flex; }
         .flex-col { flex-direction: column; }
-        .flex-1 { flex: 1 1 0%; }
         .flex-wrap { flex-wrap: wrap; }
+        .flex-1 { flex: 1 1 0%; }
+        .shrink-0 { flex-shrink: 0; }
         .items-center { align-items: center; }
         .items-start { align-items: flex-start; }
         .justify-between { justify-content: space-between; }
@@ -90,7 +71,6 @@
         .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
         .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-        .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         .grid-cols-7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
         .gap-1 { gap: 0.25rem; }
         .gap-1-5 { gap: 0.375rem; }
@@ -103,29 +83,25 @@
         .space-y-2-5 > * + * { margin-top: 0.625rem; }
         .space-y-3 > * + * { margin-top: 0.75rem; }
         .space-y-4 > * + * { margin-top: 1rem; }
-
         .w-full { width: 100%; }
-        .min-w-0 { min-width: 0; }
-        .shrink-0 { flex-shrink: 0; }
-        .max-w-md { max-width: 28rem; }
-        .max-w-sm { max-width: 24rem; }
         .max-w-xs { max-width: 20rem; }
-        .mx-auto { margin-left: auto; margin-right: auto; }
+        .max-w-sm { max-width: 24rem; }
+        .min-w-0 { min-width: 0; }
         .text-center { text-align: center; }
         .text-right { text-align: right; }
         .text-left { text-align: left; }
         .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .line-through { text-decoration: line-through; }
 
-        /* Card & Glow */
+        /* System Hologram Card */
         .system-card {
-            background: var(--bg-card);
-            border: 1px solid rgba(0, 240, 255, 0.22);
-            box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.04);
+            background: linear-gradient(145deg, rgba(16, 22, 34, 0.96), rgba(9, 13, 21, 0.98));
+            border: 1px solid rgba(0, 240, 255, 0.25);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), inset 0 0 12px rgba(0, 240, 255, 0.05);
             border-radius: 1rem;
             padding: 1rem;
-            position: relative;
         }
+
         .shadow-neon-blue { box-shadow: 0 0 15px rgba(0, 240, 255, 0.28); }
         .shadow-neon-purple { box-shadow: 0 0 15px rgba(157, 78, 221, 0.28); }
         .shadow-neon-gold { box-shadow: 0 0 15px rgba(251, 191, 36, 0.28); }
@@ -345,9 +321,9 @@
         </div>
 
         <div class="flex items-center gap-1-5">
-            <!-- Offline Ready Badge -->
-            <span style="font-size: 10px; font-weight: 700; color: #34d399; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.35); padding: 0.2rem 0.5rem; border-radius: 9999px;" title="Berjalan 100% Tanpa Internet">
-                OFFLINE
+            <!-- Shield / Streak Freeze Indicator -->
+            <span id="header-shield-badge" class="hidden" style="font-size: 10px; font-weight: 700; color: #38bdf8; background: rgba(56, 189, 248, 0.14); border: 1px solid rgba(56, 189, 248, 0.4); padding: 0.2rem 0.45rem; border-radius: 9999px;" title="Streak Freeze Aktif (Melindungi 1x Gagal Harian)">
+                🛡️ <span id="header-shield-count">0</span>
             </span>
 
             <!-- Gold Pill -->
@@ -361,6 +337,12 @@
                 <svg class="icon animate-fire" width="14" height="14" viewBox="0 0 24 24" fill="#f97316" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
                 <span id="header-streak" class="font-display" style="font-weight: 700; font-size: 0.75rem; color: #fb923c;">0</span>
             </div>
+
+            <!-- Reminder / Bell Button -->
+            <button id="btn-reminder-modal" onclick="openReminderModal()" style="padding: 0.4rem; border-radius: 0.5rem; background: var(--bg-slate-900); border: 1px solid #334155; color: var(--amber-400); position: relative;" title="Pengingat Quest Harian">
+                <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                <span id="reminder-active-dot" class="hidden" style="position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border-radius: 9999px; background: #10b981;"></span>
+            </button>
 
             <!-- Audio Toggle Button -->
             <button id="btn-audio-toggle" onclick="toggleAudio()" style="padding: 0.4rem; border-radius: 0.5rem; background: var(--bg-slate-900); border: 1px solid #334155; color: var(--cyan-400);" title="Toggle Suara HUD">
@@ -406,7 +388,7 @@
                     </div>
                 </div>
 
-                <!-- Active Title Selector (2. Instant Cycle + Long/Detail Modal Option) -->
+                <!-- Active Title Selector -->
                 <div style="margin-top: 0.75rem; padding-top: 0.625rem; border-top: 1px solid rgba(30,41,59,0.85);" class="flex items-center justify-between gap-2">
                     <div class="flex items-center gap-1-5 min-w-0" style="font-size: 0.75rem;">
                         <svg class="icon shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
@@ -491,7 +473,7 @@
                                 <span class="stat-badge" style="background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.35); color: var(--rose-400);">STR</span>
                                 <div>
                                     <p style="font-size: 0.75rem; font-weight: 600; color: #e2e8f0;">Strength</p>
-                                    <p style="font-size: 10px; color: var(--text-muted);">Fisik, Olahraga & Kesehatan</p>
+                                    <p style="font-size: 10px; color: var(--text-muted);">Fisik, Olahraga & Pola Makan</p>
                                 </div>
                             </div>
                             <span id="stat-STR-val" class="font-display" style="font-weight: 700; font-size: 1.125rem; color: var(--rose-400);">10</span>
@@ -508,7 +490,7 @@
                                 <span class="stat-badge" style="background: rgba(6,182,212,0.15); border: 1px solid rgba(6,182,212,0.35); color: var(--cyan-400);">INT</span>
                                 <div>
                                     <p style="font-size: 0.75rem; font-weight: 600; color: #e2e8f0;">Intelligence</p>
-                                    <p style="font-size: 10px; color: var(--text-muted);">Belajar, Kerja & Fokus</p>
+                                    <p style="font-size: 10px; color: var(--text-muted);">Bahasa, Karir & Brain Training</p>
                                 </div>
                             </div>
                             <span id="stat-INT-val" class="font-display" style="font-weight: 700; font-size: 1.125rem; color: var(--cyan-400);">10</span>
@@ -525,7 +507,7 @@
                                 <span class="stat-badge" style="background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.35); color: var(--purple-400);">WIS</span>
                                 <div>
                                     <p style="font-size: 0.75rem; font-weight: 600; color: #e2e8f0;">Wisdom</p>
-                                    <p style="font-size: 10px; color: var(--text-muted);">Ibadah, Jurnal & Mindfulness</p>
+                                    <p style="font-size: 10px; color: var(--text-muted);">Shalat, Dzikir & Al-Qur'an</p>
                                 </div>
                             </div>
                             <span id="stat-WIS-val" class="font-display" style="font-weight: 700; font-size: 1.125rem; color: var(--purple-400);">10</span>
@@ -542,7 +524,7 @@
                                 <span class="stat-badge" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.35); color: var(--amber-400);">CHR</span>
                                 <div>
                                     <p style="font-size: 0.75rem; font-weight: 600; color: #e2e8f0;">Charisma</p>
-                                    <p style="font-size: 10px; color: var(--text-muted);">Sosial, Relasi & Komunikasi</p>
+                                    <p style="font-size: 10px; color: var(--text-muted);">Grooming, Kerapihan & Relasi</p>
                                 </div>
                             </div>
                             <span id="stat-CHR-val" class="font-display" style="font-weight: 700; font-size: 1.125rem; color: var(--amber-400);">10</span>
@@ -614,33 +596,21 @@
                 <div class="flex items-center justify-between">
                     <h3 class="font-display flex items-center gap-1-5" style="font-weight: 700; font-size: 0.75rem; text-transform: uppercase; color: #cbd5e1;">
                         <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>
-                        Kontrol Sistem & Evaluasi Harian
+                        Kontrol Sistem & Penalti Harian
                     </h3>
+                    <span id="penalty-rate-label" class="font-display" style="font-size: 10px; font-weight: 700; color: var(--rose-400);">-10 HP / Misi Bolos</span>
                 </div>
                 <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">
-                    Evaluasi misi pada tanggal terpilih lalu lanjut ke hari berikutnya. Jika ada <span style="color: #67e8f9;">Daily Quest</span> yang belum selesai, HP akan berkurang!
+                    Setiap pergantian hari otomatis mengecek <span style="color: #67e8f9;">Daily Quest</span>. Jika ada yang belum selesai, HP berkurang <strong style="color: #fda4af;">-10 HP/misi</strong> (maks -60 HP) dan Streak reset, kecuali kamu punya <span style="color: #38bdf8;">Streak Freeze</span>.
                 </p>
                 <div class="flex gap-2">
                     <button onclick="simulateNextDay()" class="flex-1 font-display shadow-neon-blue flex items-center justify-center gap-1-5" style="background: linear-gradient(to right, #0891b2, #2563eb); color: #fff; font-weight: 700; font-size: 0.875rem; padding: 0.625rem 0.75rem; border-radius: 0.75rem;">
                         <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v8"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg>
                         Evaluasi & Lanjut Hari
                     </button>
-                    <button onclick="openResetModal()" style="background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155; padding: 0.625rem; border-radius: 0.75rem;" title="Reset Data Demo">
+                    <button onclick="openResetModal()" style="background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155; padding: 0.625rem; border-radius: 0.75rem;" title="Reset Data Sistem">
                         <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                     </button>
-                </div>
-
-                <!-- Backup & Restore JSON -->
-                <div style="padding-top: 0.5rem; border-top: 1px solid rgba(30,41,59,0.85);" class="flex gap-2">
-                    <button onclick="exportBackupData()" class="flex-1 font-display flex items-center justify-center gap-1-5" style="background: var(--bg-slate-900); color: #67e8f9; border: 1px solid #334155; font-weight: 700; font-size: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.75rem;">
-                        <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        Backup Data (JSON)
-                    </button>
-                    <label class="flex-1 font-display flex items-center justify-center gap-1-5" style="background: var(--bg-slate-900); color: #fcd34d; border: 1px solid #334155; font-weight: 700; font-size: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.75rem; cursor: pointer;">
-                        <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                        Restore Data
-                        <input type="file" accept=".json" onchange="importBackupData(event)" class="hidden">
-                    </label>
                 </div>
             </div>
         </section>
@@ -650,10 +620,10 @@
             <div class="flex items-center justify-between gap-2">
                 <div>
                     <h2 class="font-display" style="font-weight: 700; font-size: 1.25rem; color: #fff;">QUEST BOARD</h2>
-                    <p style="font-size: 0.75rem; color: var(--text-muted);">Centang misi selesai (klik ulang untuk batalkan/undo)</p>
+                    <p style="font-size: 0.75rem; color: var(--text-muted);">Centang misi selesai (tap ulang untuk Undo)</p>
                 </div>
                 <div class="flex items-center gap-1-5 shrink-0">
-                    <button onclick="restoreDefaultHabits()" class="font-display flex items-center gap-1" style="background: var(--bg-slate-900); color: #67e8f9; border: 1px solid rgba(6,182,212,0.4); font-weight: 700; font-size: 0.75rem; padding: 0.5rem 0.625rem; border-radius: 0.75rem;" title="Muat Ulang Paket Default Daily Habit">
+                    <button onclick="restoreDefaultHabits()" class="font-display flex items-center gap-1" style="background: var(--bg-slate-900); color: #67e8f9; border: 1px solid rgba(6,182,212,0.4); font-weight: 700; font-size: 0.75rem; padding: 0.5rem 0.625rem; border-radius: 0.75rem;" title="Muat Semua Paket Preset Habit">
                         <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
                         Preset Habit
                     </button>
@@ -664,14 +634,20 @@
                 </div>
             </div>
 
-            <!-- Daily Quest Progress Summary Bar -->
-            <div class="system-card" style="padding: 0.75rem; border-radius: 0.75rem;">
-                <div class="flex justify-between" style="font-size: 0.75rem; margin-bottom: 4px;">
-                    <span class="font-display" style="font-weight: 700; color: #67e8f9; text-transform: uppercase;">Daily Habit Completion</span>
-                    <span id="daily-progress-text" class="font-display" style="font-weight: 700; color: #fff;">0 / 0</span>
+            <!-- Daily Quest Progress Summary Bar + Quick Reminder Bar -->
+            <div class="system-card space-y-2" style="padding: 0.75rem; border-radius: 0.75rem;">
+                <div>
+                    <div class="flex justify-between" style="font-size: 0.75rem; margin-bottom: 4px;">
+                        <span class="font-display" style="font-weight: 700; color: #67e8f9; text-transform: uppercase;">Daily Habit Completion</span>
+                        <span id="daily-progress-text" class="font-display" style="font-weight: 700; color: #fff;">0 / 0</span>
+                    </div>
+                    <div class="progress-track" style="height: 0.5rem;">
+                        <div id="daily-progress-bar" class="progress-fill" style="width: 0%; background: linear-gradient(to right, #22d3ee, #34d399);"></div>
+                    </div>
                 </div>
-                <div class="progress-track" style="height: 0.5rem;">
-                    <div id="daily-progress-bar" class="progress-fill" style="width: 0%; background: linear-gradient(to right, #22d3ee, #34d399);"></div>
+                <div class="flex items-center justify-between" style="padding-top: 0.375rem; border-top: 1px solid rgba(30,41,59,0.8); font-size: 11px;">
+                    <span id="reminder-status-banner" style="color: var(--text-muted);">🔔 Pengingat harian: <strong style="color: #fcd34d;">Belum aktif</strong></span>
+                    <button onclick="openReminderModal()" class="font-display" style="color: var(--cyan-400); font-weight: 700; text-decoration: underline;">Atur Alarm</button>
                 </div>
             </div>
 
@@ -686,7 +662,7 @@
 
                 <div>
                     <label style="display: block; font-size: 0.75rem; color: #cbd5e1; margin-bottom: 4px;">Nama Misi / Tugas</label>
-                    <input type="text" id="q-title" required placeholder="Contoh: Push-up 30x atau Baca Buku 20 Hal" class="input-cyber">
+                    <input type="text" id="q-title" required placeholder="Contoh: Shalat Subuh & Dzikir Pagi" class="input-cyber">
                 </div>
 
                 <div class="grid grid-cols-2 gap-2-5">
@@ -703,8 +679,8 @@
                         <select id="q-stat" class="input-cyber" style="font-size: 0.75rem;">
                             <option value="STR">STR (Fisik)</option>
                             <option value="INT">INT (Belajar/Kerja)</option>
-                            <option value="WIS">WIS (Mindfulness)</option>
-                            <option value="CHR">CHR (Sosial)</option>
+                            <option value="WIS">WIS (Ibadah/Mindful)</option>
+                            <option value="CHR">CHR (Grooming/Sosial)</option>
                         </select>
                     </div>
                 </div>
@@ -756,17 +732,17 @@
                     Masuki gerbang fokus. Layar otomatis tetap menyala & jangan menyerah sebelum waktu habis untuk klaim <span style="color: #67e8f9;">+INT</span>, <span style="color: #67e8f9;">XP</span>, dan <span style="color: #fcd34d;">Gold</span>!
                 </p>
 
-                <!-- Mode Selector -->
-                <div id="dungeon-mode-selector" class="flex justify-center gap-2" style="margin-top: 1rem;">
-                    <button onclick="selectDungeonDuration(1500, 100, 80)" id="mode-25m" class="font-display" style="padding: 6px 12px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.5);">
-                        25 Menit (Rank-C)
+                <!-- Mode Selector (10m & 25m Only) -->
+                <div id="dungeon-mode-selector" class="grid grid-cols-2 gap-2" style="margin-top: 1rem;">
+                    <button onclick="selectDungeonDuration(600, 40, 30, 1)" id="mode-10m" class="font-display" style="padding: 8px 8px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;">
+                        10 Menit (Rank-E)
                     </button>
-                    <button onclick="selectDungeonDuration(10, 35, 30)" id="mode-10s" class="font-display" style="padding: 6px 12px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;">
-                        10 Detik (Simulasi)
+                    <button onclick="selectDungeonDuration(1500, 100, 80, 2)" id="mode-25m" class="font-display" style="padding: 8px 8px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.5);">
+                        25 Menit (Rank-C)
                     </button>
                 </div>
 
-                <!-- 3. Offline Ambient Sound Selector (Web Audio API) -->
+                <!-- Offline Ambient Sound Selector (Web Audio API) -->
                 <div style="margin-top: 0.75rem; background: rgba(2,6,23,0.75); border: 1px solid var(--bg-slate-800); border-radius: 0.75rem; padding: 0.5rem;">
                     <div class="flex items-center justify-between" style="font-size: 10px; color: var(--text-muted); margin-bottom: 0.375rem; padding: 0 2px;">
                         <span class="font-display uppercase" style="font-weight: 700; color: #c084fc;">Ambient Fokus (Offline)</span>
@@ -812,7 +788,7 @@
                     <div style="height: 1.5rem; width: 1px; background: var(--bg-slate-800);"></div>
                     <div class="text-center">
                         <span style="font-size: 10px; color: var(--text-muted); display: block; text-transform: uppercase;">Stat Bonus</span>
-                        <span class="font-display" style="font-weight: 700; font-size: 0.875rem; color: var(--purple-400);">+2 INT</span>
+                        <span id="dungeon-reward-stat" class="font-display" style="font-weight: 700; font-size: 0.875rem; color: var(--purple-400);">+2 INT</span>
                     </div>
                 </div>
 
@@ -835,7 +811,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h2 class="font-display" style="font-weight: 700; font-size: 1.25rem; color: #fff;">SYSTEM SHOP</h2>
-                    <p style="font-size: 0.75rem; color: var(--text-muted);">Tukarkan Gold dengan Potion atau Reward Dunia Nyata</p>
+                    <p style="font-size: 0.75rem; color: var(--text-muted);">Tukarkan Gold dengan Potion, Shield, atau Reward Dunia Nyata</p>
                 </div>
                 <button onclick="toggleShopForm()" class="font-display shadow-neon-gold flex items-center gap-1" style="background: var(--amber-500); color: #020617; font-weight: 700; font-size: 0.875rem; padding: 0.5rem 0.875rem; border-radius: 0.75rem;">
                     <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -854,7 +830,7 @@
 
                 <div>
                     <label style="display: block; font-size: 0.75rem; color: #cbd5e1; margin-bottom: 4px;">Nama Reward Dunia Nyata</label>
-                    <input type="text" id="s-title" required placeholder="Contoh: Nonton 1 Episode Anime / Beli Boba" class="input-cyber">
+                    <input type="text" id="s-title" required placeholder="Contoh: Nonton 1 Episode Anime / Main Biliar" class="input-cyber">
                 </div>
 
                 <div class="grid grid-cols-2 gap-2-5">
@@ -867,6 +843,7 @@
                         <select id="s-type" class="input-cyber" style="font-size: 0.75rem;">
                             <option value="reward">Real-Life Reward</option>
                             <option value="potion">Heal +30 HP</option>
+                            <option value="shield">Streak Freeze (+1 Shield)</option>
                         </select>
                     </div>
                 </div>
@@ -942,6 +919,46 @@
         </div>
     </div>
 
+    <!-- Reminder & Notification Modal -->
+    <div id="modal-reminder" class="hidden modal-backdrop">
+        <div class="system-card max-w-xs w-full modal-enter space-y-3" style="border-color: rgba(251,191,36,0.5); padding: 1.25rem;">
+            <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--bg-slate-800); padding-bottom: 0.5rem;">
+                <h3 class="font-display flex items-center gap-1-5" style="font-weight: 700; font-size: 1rem; color: var(--amber-400);">
+                    🔔 PENGINGAT QUEST
+                </h3>
+                <button onclick="closeModal('modal-reminder')" style="color: var(--text-muted);">
+                    <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">
+                Sistem akan mengecek sisa <span style="color: #67e8f9;">Daily Quest</span> kamu pada jam pengingat yang dipilih dan mengirim notifikasi peringatan sebelum kena penalti HP.
+            </p>
+
+            <div class="flex items-center justify-between" style="background: rgba(2,6,23,0.7); padding: 0.625rem; border-radius: 0.75rem; border: 1px solid var(--bg-slate-800);">
+                <span style="font-size: 0.75rem; font-weight: 600; color: #e2e8f0;">Status Pengingat</span>
+                <label class="flex items-center gap-2" style="cursor: pointer;">
+                    <input type="checkbox" id="reminder-enabled-checkbox" style="width: 1rem; height: 1rem; accent-color: #22d3ee;">
+                    <span id="reminder-toggle-text" class="font-display" style="font-size: 0.75rem; font-weight: 700; color: #67e8f9;">Aktif</span>
+                </label>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.75rem; color: #cbd5e1; margin-bottom: 4px;">Jam Pengingat Harian</label>
+                <input type="time" id="reminder-time-input" value="20:00" class="input-cyber font-display" style="color: #fcd34d; font-weight: 700;">
+            </div>
+
+            <div class="flex gap-2">
+                <button type="button" onclick="testSystemNotification()" class="flex-1 font-display" style="background: var(--bg-slate-800); color: #67e8f9; border: 1px solid #334155; font-weight: 700; padding: 0.5rem; border-radius: 0.75rem; font-size: 0.75rem;">
+                    Tes Notifikasi
+                </button>
+                <button type="button" onclick="saveReminderSettings()" class="flex-1 font-display" style="background: var(--amber-500); color: #020617; font-weight: 700; padding: 0.5rem; border-radius: 0.75rem; font-size: 0.75rem;">
+                    Simpan
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Edit Character Name Modal -->
     <div id="modal-edit-name" class="hidden modal-backdrop">
         <div class="system-card max-w-xs w-full modal-enter" style="border-color: rgba(34,211,238,0.5); padding: 1.25rem;">
@@ -959,7 +976,7 @@
         <div class="system-card max-w-xs w-full text-center modal-enter" style="border-color: rgba(244,63,94,0.5); padding: 1.25rem;">
             <svg class="icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2" style="margin: 0 auto 0.5rem auto;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <h3 class="font-display" style="font-weight: 700; font-size: 1.125rem; color: #fff;">RESET DATA SISTEM?</h3>
-            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 1rem;">Semua progres Level, Stat, Gold, dan Quest akan dikembalikan ke data awal demo.</p>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 1rem;">Semua progres Level, Stat, Gold, dan Quest akan dikembalikan ke data awal.</p>
             <div class="flex gap-2">
                 <button onclick="closeModal('modal-reset')" class="flex-1 font-display" style="background: var(--bg-slate-800); color: #cbd5e1; font-weight: 700; padding: 0.5rem; border-radius: 0.75rem; font-size: 0.875rem;">Batal</button>
                 <button onclick="confirmResetData()" class="flex-1 font-display" style="background: #e11d48; color: #fff; font-weight: 700; padding: 0.5rem; border-radius: 0.75rem; font-size: 0.875rem;">Reset</button>
@@ -992,7 +1009,7 @@
         const SoundFX = {
             ctx: null,
             muted: false,
-            ambientMode: 'none', // 'none' | 'synth' | 'rain'
+            ambientMode: 'none',
             ambientNodes: [],
             ambientGain: null,
 
@@ -1134,7 +1151,6 @@
                 osc.stop(now + 0.31);
             },
 
-            // Offline Ambient Generator for Dungeon Mode
             startAmbient(mode) {
                 this.stopAmbient();
                 if (mode === 'none' || this.muted) return;
@@ -1147,7 +1163,6 @@
                 this.ambientGain = masterGain;
 
                 if (mode === 'synth') {
-                    // Deep Dark Synth Drone (A1 55Hz + E2 82.41Hz + A2 110Hz + slow LFO filter)
                     const filter = this.ctx.createBiquadFilter();
                     filter.type = 'lowpass';
                     filter.frequency.setValueAtTime(240, this.ctx.currentTime);
@@ -1178,7 +1193,6 @@
                         this.ambientNodes.push(osc);
                     });
                 } else if (mode === 'rain') {
-                    // Offline Procedural Pink/Brown Noise Rain Generator
                     const bufferSize = this.ctx.sampleRate * 3;
                     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
                     const data = buffer.getChannelData(0);
@@ -1254,7 +1268,7 @@
         }
 
         // ==========================================
-        // 2. SCREEN WAKE LOCK / KEEP SCREEN ON BRIDGE
+        // 2. SCREEN WAKE LOCK & NOTIFICATION MANAGER
         // ==========================================
         const ScreenWakeManager = {
             wakeLockSentinel: null,
@@ -1264,14 +1278,12 @@
                 this.isActive = true;
                 this.updateBadge(true);
 
-                // 1. Native Android WebView Bridge (if wrapped in APK)
                 try {
                     if (window.AndroidBridge && typeof window.AndroidBridge.setKeepScreenOn === 'function') {
                         window.AndroidBridge.setKeepScreenOn(true);
                     }
                 } catch (e) {}
 
-                // 2. Standard W3C Screen Wake Lock API (Modern Mobile Browsers / PWA)
                 try {
                     if ('wakeLock' in navigator) {
                         this.wakeLockSentinel = await navigator.wakeLock.request('screen');
@@ -1279,9 +1291,7 @@
                             if (this.isActive) this.updateBadge(false);
                         });
                     }
-                } catch (err) {
-                    // Fallback gracefully on unsupported devices
-                }
+                } catch (err) {}
             },
 
             async disable() {
@@ -1310,58 +1320,25 @@
             }
         };
 
-        // Re-acquire Wake Lock automatically if user switches back to the app during active Dungeon
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible' && isDungeonRunning && ScreenWakeManager.isActive) {
-                ScreenWakeManager.enable();
+            if (document.visibilityState === 'visible') {
+                if (isDungeonRunning && ScreenWakeManager.isActive) {
+                    ScreenWakeManager.enable();
+                }
+                checkDailyReminderTrigger();
             }
         });
 
         // ==========================================
-        // 3. GAME STATE & DEFAULT DAILY HABITS
+        // 3. GAME STATE & COMPLETE PERSONALIZED HABIT PRESETS
         // ==========================================
         const STORAGE_KEY = 'system_rpg_productivity_offline_v1';
 
-        const DEFAULT_DAILY_HABITS = [
+        const ALL_PRESET_QUESTS = [
+            // --- DAILY QUESTS (11 Habit Lengkap) ---
             {
-                id: 'dh_hydrate',
-                title: 'Minum 2 Liter Air Putih & Bangun Pagi Tepat Waktu',
-                category: 'Daily Quest',
-                stat: 'STR',
-                xp: 20,
-                gold: 15,
-                completed: false
-            },
-            {
-                id: 'dh_workout',
-                title: 'Latihan Fisik / Olahraga (Push-up, Lari, atau Stretching 20m)',
-                category: 'Daily Quest',
-                stat: 'STR',
-                xp: 40,
-                gold: 35,
-                completed: false
-            },
-            {
-                id: 'dh_deepwork',
-                title: 'Fokus Belajar / Upgrade Skill Utama Minimal 45 Menit',
-                category: 'Daily Quest',
-                stat: 'INT',
-                xp: 45,
-                gold: 40,
-                completed: false
-            },
-            {
-                id: 'dh_read',
-                title: 'Baca Buku Non-Fiksi / Artikel Edukatif Minimal 15 Halaman',
-                category: 'Daily Quest',
-                stat: 'INT',
-                xp: 25,
-                gold: 20,
-                completed: false
-            },
-            {
-                id: 'dh_mindful',
-                title: 'Ibadah Tepat Waktu, Meditasi & Evaluasi Jurnal Harian',
+                id: 'dh_shalat',
+                title: 'Shalat 5 Waktu Tepat Waktu (Subuh, Zuhur, Ashar, Maghrib, Isya)',
                 category: 'Daily Quest',
                 stat: 'WIS',
                 xp: 35,
@@ -1369,12 +1346,140 @@
                 completed: false
             },
             {
-                id: 'dh_social',
-                title: 'Komunikasi Positif / Bantu Orang Lain / Jaga Relasi Baik',
+                id: 'dh_dzikir',
+                title: 'Dzikir Pagi & Sore Setelah Shalat',
+                category: 'Daily Quest',
+                stat: 'WIS',
+                xp: 20,
+                gold: 15,
+                completed: false
+            },
+            {
+                id: 'dh_quran',
+                title: 'Baca Al-Qur'an & Pahami Artinya (Min. 1 Halaman)',
+                category: 'Daily Quest',
+                stat: 'WIS',
+                xp: 25,
+                gold: 20,
+                completed: false
+            },
+            {
+                id: 'dh_japanese',
+                title: 'Bahasa Jepang: 1 Bab Volingo + Tulis Latihan Hiragana & Katakana',
+                category: 'Daily Quest',
+                stat: 'INT',
+                xp: 40,
+                gold: 35,
+                completed: false
+            },
+            {
+                id: 'dh_english',
+                title: 'Bahasa Inggris: Latihan Volingo & Dengar Podcast Inggris',
+                category: 'Daily Quest',
+                stat: 'INT',
+                xp: 30,
+                gold: 25,
+                completed: false
+            },
+            {
+                id: 'dh_career',
+                title: 'Belajar Materi Persiapan Karir & Skill Profesional',
+                category: 'Daily Quest',
+                stat: 'INT',
+                xp: 35,
+                gold: 30,
+                completed: false
+            },
+            {
+                id: 'dh_brain',
+                title: 'Brain Training & Reading (Duolingo, Airlearn, Elevate, Neuronation & Buku)',
+                category: 'Daily Quest',
+                stat: 'INT',
+                xp: 25,
+                gold: 20,
+                completed: false
+            },
+            {
+                id: 'dh_workout',
+                title: 'Latihan Fisik: Plank 1 Menit, Push-up/Sit-up & Angkat Beban',
+                category: 'Daily Quest',
+                stat: 'STR',
+                xp: 40,
+                gold: 35,
+                completed: false
+            },
+            {
+                id: 'dh_nosugar',
+                title: 'Clean Diet: No Sugar Seharian & Sarapan Teratur',
+                category: 'Daily Quest',
+                stat: 'STR',
+                xp: 25,
+                gold: 20,
+                completed: false
+            },
+            {
+                id: 'dh_skincare',
+                title: 'Mandi Teratur & Skincare (Moisturizer + Sunscreen)',
                 category: 'Daily Quest',
                 stat: 'CHR',
-                xp: 25,
-                gold: 25,
+                xp: 15,
+                gold: 15,
+                completed: false
+            },
+            {
+                id: 'dh_tidy',
+                title: 'Rapih-rapih Kamar & Meja Kerja Sebelum Tidur',
+                category: 'Daily Quest',
+                stat: 'CHR',
+                xp: 15,
+                gold: 10,
+                completed: false
+            },
+            // --- MAIN QUESTS (Target Mingguan) ---
+            {
+                id: 'mq_japanese_review',
+                title: 'Review Kosakata & Kanji N5 Minggu Ini',
+                category: 'Main Quest',
+                stat: 'INT',
+                xp: 85,
+                gold: 70,
+                completed: false
+            },
+            {
+                id: 'mq_career_portfolio',
+                title: 'Selesaikan 1 Modul Skill / Update Portofolio Karir',
+                category: 'Main Quest',
+                stat: 'INT',
+                xp: 100,
+                gold: 85,
+                completed: false
+            },
+            {
+                id: 'mq_fitness_pr',
+                title: 'Tingkatkan Repetisi Push-up / Durasi Plank dari Minggu Lalu',
+                category: 'Main Quest',
+                stat: 'STR',
+                xp: 90,
+                gold: 75,
+                completed: false
+            },
+            // --- BOSS FIGHTS (Tantangan Besar) ---
+            {
+                id: 'bf_full_streak',
+                title: 'Selesaikan 100% Semua Daily Quest Tanpa Bolos Selama 7 Hari',
+                category: 'Boss Fight',
+                stat: 'WIS',
+                xp: 200,
+                gold: 180,
+                completed: false
+            },
+            {
+                id: 'bf_mock_test',
+                title: 'Simulasi Tryout Bahasa / Evaluasi Besar Bulanan',
+                category: 'Boss Fight',
+                stat: 'CHR',
+                xp: 180,
+                gold: 150,
                 completed: false
             }
         ];
@@ -1386,8 +1491,9 @@
                 xp: 35,
                 hp: 100,
                 maxHp: 100,
-                gold: 250,
+                gold: 300,
                 streak: 2,
+                streakShields: 0,
                 activeTitle: 't_novice',
                 dungeonClears: 1,
                 stats: {
@@ -1397,27 +1503,7 @@
                     CHR: 10
                 }
             },
-            quests: [
-                ...JSON.parse(JSON.stringify(DEFAULT_DAILY_HABITS)),
-                {
-                    id: 'q_main_1',
-                    title: 'Selesaikan Modul Utama Proyek / Target Mingguan',
-                    category: 'Main Quest',
-                    stat: 'INT',
-                    xp: 90,
-                    gold: 75,
-                    completed: false
-                },
-                {
-                    id: 'q_boss_1',
-                    title: 'Presentasi Penting / Taklukkan Tantangan Terberat Minggu Ini',
-                    category: 'Boss Fight',
-                    stat: 'CHR',
-                    xp: 150,
-                    gold: 120,
-                    completed: false
-                }
-            ],
+            quests: JSON.parse(JSON.stringify(ALL_PRESET_QUESTS)),
             shop: [
                 {
                     id: 's1',
@@ -1425,6 +1511,13 @@
                     cost: 150,
                     type: 'potion',
                     desc: 'Memulihkan 30 poin Vitality (HP) secara instan.'
+                },
+                {
+                    id: 's_shield',
+                    title: 'Streak Freeze (Pelindung Penalti)',
+                    cost: 400,
+                    type: 'shield',
+                    desc: 'Melindungi HP & Streak 1x otomatis saat ada Daily Quest terlewat.'
                 },
                 {
                     id: 's2',
@@ -1444,6 +1537,11 @@
             history: {
                 dailyCounts: {},
                 logs: []
+            },
+            reminder: {
+                enabled: false,
+                time: '20:00',
+                lastNotifiedDate: null
             },
             selectedDate: null,
             lastRealDate: null,
@@ -1512,11 +1610,11 @@
                 if (count > 0) {
                     sampleLogs.unshift({
                         id: 'log_demo_' + i,
-                        title: i % 2 === 0 ? 'Latihan Fisik / Olahraga (Push-up, Lari, atau Stretching 20m)' : 'Fokus Belajar / Upgrade Skill Utama Minimal 45 Menit',
+                        title: i % 2 === 0 ? 'Latihan Fisik: Plank 1 Menit, Push-up/Sit-up & Angkat Beban' : 'Bahasa Jepang: 1 Bab Volingo + Tulis Latihan Hiragana & Katakana',
                         type: 'Daily Quest',
                         stat: i % 2 === 0 ? 'STR' : 'INT',
-                        xp: i % 2 === 0 ? 40 : 45,
-                        gold: i % 2 === 0 ? 35 : 40,
+                        xp: 40,
+                        gold: 35,
                         dateStr: key
                     });
                 }
@@ -1595,6 +1693,10 @@
                     if (!parsed.lastRealDate) parsed.lastRealDate = realToday;
                     if (!parsed.player.activeTitle) parsed.player.activeTitle = 't_novice';
                     if (typeof parsed.player.dungeonClears !== 'number') parsed.player.dungeonClears = 0;
+                    if (typeof parsed.player.streakShields !== 'number') parsed.player.streakShields = 0;
+                    if (!parsed.reminder) {
+                        parsed.reminder = { enabled: false, time: '20:00', lastNotifiedDate: null };
+                    }
                     return parsed;
                 }
             } catch (e) {
@@ -1619,15 +1721,25 @@
                 gameState.lastRealDate = realToday;
 
                 if (unfinishedCount > 0) {
-                    const dmg = unfinishedCount * 10;
-                    gameState.player.streak = 0;
-                    gameState.player.hp = Math.max(10, gameState.player.hp - dmg);
-                    setTimeout(() => {
-                        showSystemModal(
-                            'PERGANTIAN HARI OTOMATIS',
-                            `Selamat datang kembali! Kemarin ada ${unfinishedCount} Daily Habit yang terlewat (-${dmg} HP). Semua Daily Habit telah di-reset untuk hari ini!`
-                        );
-                    }, 500);
+                    if ((gameState.player.streakShields || 0) > 0) {
+                        gameState.player.streakShields -= 1;
+                        setTimeout(() => {
+                            showSystemModal(
+                                '🛡️ STREAK FREEZE AKTIF!',
+                                `Kemarin ada ${unfinishedCount} Daily Habit terlewat, tetapi item Streak Freeze melindungi HP dan Streak kamu dari penalti! (Sisa Shield: ${gameState.player.streakShields})`
+                            );
+                        }, 500);
+                    } else {
+                        const dmg = Math.min(60, unfinishedCount * 10);
+                        gameState.player.streak = 0;
+                        gameState.player.hp = Math.max(10, gameState.player.hp - dmg);
+                        setTimeout(() => {
+                            showSystemModal(
+                                'PERGANTIAN HARI OTOMATIS',
+                                `Selamat datang kembali! Kemarin ada ${unfinishedCount} Daily Habit yang terlewat (-${dmg} HP & Streak reset). Semua Daily Habit telah di-reset untuk hari ini!`
+                            );
+                        }, 500);
+                    }
                 } else {
                     setTimeout(() => {
                         spawnFloatingReward('🌅 Hari Baru! Semua Daily Habit Siap Dikerjakan!');
@@ -1648,7 +1760,133 @@
         }
 
         // ==========================================
-        // 4. CORE RPG CALCULATIONS & RANKING
+        // 4. REMINDER & NOTIFICATION SYSTEM
+        // ==========================================
+        function openReminderModal() {
+            SoundFX.playClick();
+            const rem = gameState.reminder || { enabled: false, time: '20:00' };
+            document.getElementById('reminder-enabled-checkbox').checked = !!rem.enabled;
+            document.getElementById('reminder-time-input').value = rem.time || '20:00';
+            updateReminderCheckboxLabel();
+            openModal('modal-reminder');
+        }
+
+        function updateReminderCheckboxLabel() {
+            const cb = document.getElementById('reminder-enabled-checkbox');
+            const lbl = document.getElementById('reminder-toggle-text');
+            if (!cb || !lbl) return;
+            lbl.textContent = cb.checked ? 'Aktif' : 'Nonaktif';
+            lbl.style.color = cb.checked ? '#34d399' : '#94a3b8';
+        }
+
+        document.addEventListener('change', (e) => {
+            if (e.target && e.target.id === 'reminder-enabled-checkbox') {
+                updateReminderCheckboxLabel();
+            }
+        });
+
+        async function saveReminderSettings() {
+            const enabled = document.getElementById('reminder-enabled-checkbox').checked;
+            const time = document.getElementById('reminder-time-input').value || '20:00';
+
+            if (enabled && 'Notification' in window && Notification.permission === 'default') {
+                try {
+                    await Notification.requestPermission();
+                } catch (e) {}
+            }
+
+            try {
+                if (window.AndroidBridge && typeof window.AndroidBridge.scheduleDailyReminder === 'function') {
+                    window.AndroidBridge.scheduleDailyReminder(enabled, time);
+                }
+            } catch (e) {}
+
+            gameState.reminder = {
+                enabled,
+                time,
+                lastNotifiedDate: null
+            };
+            saveState();
+            renderReminderUI();
+            closeModal('modal-reminder');
+            spawnFloatingReward(enabled ? `🔔 Pengingat diset jam ${time}` : '🔕 Pengingat dinonaktifkan');
+        }
+
+        async function testSystemNotification() {
+            SoundFX.playQuestComplete();
+            const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
+            const remaining = dailyQuests.filter(q => !q.completed).length;
+            const msg = remaining > 0
+                ? `Masih ada ${remaining} Daily Quest yang belum selesai hari ini! Selesaikan sebelum ganti hari agar tidak kena penalti HP.`
+                : 'Semua Daily Quest hari ini sudah selesai! Kerja bagus, Hunter!';
+
+            if ('Notification' in window) {
+                if (Notification.permission === 'default') {
+                    await Notification.requestPermission();
+                }
+                if (Notification.permission === 'granted') {
+                    new Notification('SYSTEM RPG // Peringatan Quest', {
+                        body: msg,
+                        tag: 'system-rpg-test'
+                    });
+                }
+            }
+            showSystemModal('🔔 TES NOTIFIKASI SISTEM', msg);
+        }
+
+        function checkDailyReminderTrigger() {
+            const rem = gameState.reminder;
+            if (!rem || !rem.enabled || !rem.time) return;
+
+            const now = new Date();
+            const todayKey = formatDateKey(now);
+            if (rem.lastNotifiedDate === todayKey) return;
+
+            const [targetH, targetM] = rem.time.split(':').map(Number);
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+            const targetMinutes = targetH * 60 + targetM;
+
+            if (currentMinutes >= targetMinutes) {
+                const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
+                const remaining = dailyQuests.filter(q => !q.completed).length;
+
+                if (remaining > 0) {
+                    rem.lastNotifiedDate = todayKey;
+                    saveState();
+
+                    const bodyText = `Peringatan! Masih tersisa ${remaining} Daily Quest yang belum selesai hari ini. Selesaikan segera untuk menghindari penalti -${remaining * 10} HP!`;
+                    SoundFX.playDamage();
+
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        try {
+                            new Notification('⚠️ SYSTEM ALERT: Daily Quest Belum Selesai!', {
+                                body: bodyText,
+                                tag: 'system-rpg-daily'
+                            });
+                        } catch (e) {}
+                    }
+                    showSystemModal('⚠️ PENGINGAT DAILY QUEST', bodyText);
+                }
+            }
+        }
+
+        function renderReminderUI() {
+            const rem = gameState.reminder || { enabled: false, time: '20:00' };
+            const dot = document.getElementById('reminder-active-dot');
+            const banner = document.getElementById('reminder-status-banner');
+            if (dot) {
+                if (rem.enabled) dot.classList.remove('hidden');
+                else dot.classList.add('hidden');
+            }
+            if (banner) {
+                banner.innerHTML = rem.enabled
+                    ? `🔔 Pengingat harian: <strong style="color: #34d399;">Aktif (${rem.time})</strong>`
+                    : `🔔 Pengingat harian: <strong style="color: #fcd34d;">Belum aktif</strong>`;
+            }
+        }
+
+        // ==========================================
+        // 5. CORE RPG CALCULATIONS & RANKING
         // ==========================================
         function getRequiredXP(level) {
             return level * 100;
@@ -1718,7 +1956,6 @@
                 gameState.player.stats[statType] = Math.max(1, gameState.player.stats[statType] - statGain);
             }
 
-            // Roll back XP accurately across levels if needed
             let remainingToSubtract = xpAmount;
             while (remainingToSubtract > 0) {
                 if (gameState.player.xp >= remainingToSubtract) {
@@ -1754,13 +1991,14 @@
         }
 
         // ==========================================
-        // 5. UI RENDERING FUNCTIONS
+        // 6. UI RENDERING FUNCTIONS
         // ==========================================
         function renderAll() {
             renderStatus();
             renderHistory();
             renderQuests();
             renderShop();
+            renderReminderUI();
             updateAudioIcon();
             updateAmbientButtonsUI();
         }
@@ -1773,6 +2011,17 @@
 
             document.getElementById('header-gold').textContent = p.gold;
             document.getElementById('header-streak').textContent = p.streak;
+
+            const shieldBadge = document.getElementById('header-shield-badge');
+            const shieldCount = document.getElementById('header-shield-count');
+            if (shieldBadge && shieldCount) {
+                if ((p.streakShields || 0) > 0) {
+                    shieldBadge.classList.remove('hidden');
+                    shieldCount.textContent = p.streakShields;
+                } else {
+                    shieldBadge.classList.add('hidden');
+                }
+            }
 
             document.getElementById('player-name-display').textContent = p.name;
             document.getElementById('player-level').textContent = p.level;
@@ -2011,7 +2260,7 @@
                 container.innerHTML = `
                     <div class="system-card text-center space-y-2" style="padding: 1.5rem; color: var(--text-muted); font-size: 0.75rem;">
                         <p>Belum ada misi di kategori ini.</p>
-                        <button onclick="restoreDefaultHabits()" style="color: var(--cyan-400); text-decoration: underline; font-weight: 700;">Muat Paket Default Daily Habit</button>
+                        <button onclick="restoreDefaultHabits()" style="color: var(--cyan-400); text-decoration: underline; font-weight: 700;">Muat Semua Preset Habit</button>
                     </div>
                 `;
                 return;
@@ -2070,12 +2319,12 @@
         function restoreDefaultHabits() {
             SoundFX.playClick();
             let addedCount = 0;
-            DEFAULT_DAILY_HABITS.forEach(preset => {
+            ALL_PRESET_QUESTS.forEach(preset => {
                 const exists = gameState.quests.some(q => q.title === preset.title);
                 if (!exists) {
-                    gameState.quests.unshift({
+                    gameState.quests.push({
                         ...preset,
-                        id: 'dh_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                        id: 'preset_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
                         completed: false
                     });
                     addedCount++;
@@ -2085,9 +2334,9 @@
             if (addedCount > 0) {
                 saveState();
                 renderAll();
-                spawnFloatingReward(`✨ ${addedCount} Default Daily Habit Ditambahkan!`);
+                spawnFloatingReward(`✨ ${addedCount} Preset Quest Ditambahkan!`);
             } else {
-                spawnFloatingReward('✅ Semua Default Daily Habit Sudah Ada!');
+                spawnFloatingReward('✅ Semua 16 Preset Quest Sudah Terpasang!');
             }
         }
 
@@ -2098,14 +2347,18 @@
             gameState.shop.forEach(item => {
                 const canAfford = gameState.player.gold >= item.cost;
                 const isPotion = item.type === 'potion';
+                const isShield = item.type === 'shield';
 
-                const iconBoxStyle = isPotion 
-                    ? 'background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.4); color: #fb7185;'
-                    : 'background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); color: #fbbf24;';
+                let iconBoxStyle = 'background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); color: #fbbf24;';
+                let iconSvg = `<svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>`;
 
-                const iconSvg = isPotion
-                    ? `<svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg>`
-                    : `<svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>`;
+                if (isPotion) {
+                    iconBoxStyle = 'background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.4); color: #fb7185;';
+                    iconSvg = `<svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg>`;
+                } else if (isShield) {
+                    iconBoxStyle = 'background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.4); color: #38bdf8;';
+                    iconSvg = `<svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
+                }
 
                 const buyBtnStyle = canAfford
                     ? 'background: var(--amber-500); color: #020617;'
@@ -2130,7 +2383,7 @@
                             <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/></svg>
                             ${item.cost}
                         </button>
-                        ${!isPotion ? `
+                        ${(!isPotion && !isShield) ? `
                             <button onclick="deleteShopItem('${item.id}')" style="color: #64748b; padding: 6px;" title="Hapus Item">
                                 <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                             </button>
@@ -2142,7 +2395,7 @@
         }
 
         // ==========================================
-        // 6. QUEST (WITH UNDO TOGGLE) & SHOP INTERACTIONS
+        // 7. QUEST (WITH UNDO TOGGLE) & SHOP INTERACTIONS
         // ==========================================
         function toggleQuestForm() {
             SoundFX.playClick();
@@ -2190,13 +2443,11 @@
             spawnFloatingReward('Quest Baru Ditambahkan!');
         }
 
-        // 1. Toggle Quest (Complete OR Undo precisely)
         function toggleQuest(id) {
             const quest = gameState.quests.find(q => q.id === id);
             if (!quest) return;
 
             if (!quest.completed) {
-                // --- COMPLETE QUEST ---
                 const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
                 const wasAllDailyDone = dailyQuests.length > 0 && dailyQuests.every(q => q.completed);
 
@@ -2219,7 +2470,6 @@
                     }
                 }
 
-                // Store exact reward snapshot for precision Undo
                 quest.lastReward = {
                     finalXp: granted.finalXp,
                     finalGold: granted.finalGold,
@@ -2233,7 +2483,6 @@
                 saveState();
                 renderAll();
             } else {
-                // --- UNDO QUEST (ANTI-SALAH PENCET) ---
                 quest.completed = false;
                 SoundFX.playUndo();
 
@@ -2253,7 +2502,6 @@
                     gameState.player.streak = Math.max(0, gameState.player.streak - 1);
                 }
 
-                // Remove matching activity log entry & decrement dailyCount on that date
                 if (gameState.history && Array.isArray(gameState.history.logs)) {
                     let logIdx = gameState.history.logs.findIndex(
                         l => l.questId === quest.id && l.dateStr === snap.dateStr
@@ -2306,12 +2554,16 @@
 
             if (!title) return;
 
+            let desc = 'Reward kustom dunia nyata.';
+            if (type === 'potion') desc = 'Memulihkan +30 HP secara instan.';
+            if (type === 'shield') desc = 'Melindungi HP & Streak 1x saat ada Daily Quest terlewat.';
+
             gameState.shop.push({
                 id: 's_' + Date.now(),
                 title,
                 cost,
                 type,
-                desc: type === 'potion' ? 'Memulihkan +30 HP secara instan.' : 'Reward kustom dunia nyata.'
+                desc
             });
 
             SoundFX.playClick();
@@ -2342,6 +2594,11 @@
                 gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + 30);
                 SoundFX.playCoin();
                 spawnFloatingReward('🧪 +30 HP Dipulihkan!');
+            } else if (item.type === 'shield') {
+                gameState.player.gold -= item.cost;
+                gameState.player.streakShields = (gameState.player.streakShields || 0) + 1;
+                SoundFX.playCoin();
+                spawnFloatingReward(`🛡️ +1 Streak Freeze (Total: ${gameState.player.streakShields})`);
             } else {
                 gameState.player.gold -= item.cost;
                 SoundFX.playCoin();
@@ -2360,9 +2617,9 @@
         }
 
         // ==========================================
-        // 7. DUNGEON MODE (FOCUS TIMER + AMBIENT + WAKE LOCK)
+        // 8. DUNGEON MODE (10m & 25m + AMBIENT + WAKE LOCK)
         // ==========================================
-        let dungeonConfig = { duration: 1500, xp: 100, gold: 80 };
+        let dungeonConfig = { duration: 1500, xp: 100, gold: 80, statGain: 2 };
         let dungeonRemaining = 1500;
         let dungeonInterval = null;
         let isDungeonRunning = false;
@@ -2401,20 +2658,21 @@
             });
         }
 
-        function selectDungeonDuration(seconds, xp, gold) {
+        function selectDungeonDuration(seconds, xp, gold, statGain = 2) {
             if (isDungeonRunning) return;
             SoundFX.playClick();
-            dungeonConfig = { duration: seconds, xp, gold };
+            dungeonConfig = { duration: seconds, xp, gold, statGain };
             dungeonRemaining = seconds;
 
-            const activeModeStyle = 'padding: 6px 12px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.5);';
-            const inactiveModeStyle = 'padding: 6px 12px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;';
+            const activeModeStyle = 'padding: 8px 8px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.5);';
+            const inactiveModeStyle = 'padding: 8px 8px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;';
 
+            document.getElementById('mode-10m').style.cssText = seconds === 600 ? activeModeStyle : inactiveModeStyle;
             document.getElementById('mode-25m').style.cssText = seconds === 1500 ? activeModeStyle : inactiveModeStyle;
-            document.getElementById('mode-10s').style.cssText = seconds === 10 ? activeModeStyle : inactiveModeStyle;
 
             document.getElementById('dungeon-reward-xp').textContent = `+${xp} XP`;
             document.getElementById('dungeon-reward-gold').textContent = `+${gold} Gold`;
+            document.getElementById('dungeon-reward-stat').textContent = `+${statGain} INT`;
             updateDungeonTimerUI();
         }
 
@@ -2435,7 +2693,6 @@
             isDungeonRunning = true;
             dungeonRemaining = dungeonConfig.duration;
 
-            // Activate Screen Wake Lock & Selected Ambient Audio
             ScreenWakeManager.enable();
             if (SoundFX.ambientMode !== 'none') {
                 SoundFX.startAmbient(SoundFX.ambientMode);
@@ -2472,14 +2729,14 @@
 
             gameState.player.dungeonClears = (gameState.player.dungeonClears || 0) + 1;
 
-            const label = dungeonConfig.duration === 1500 ? 'Deep Focus Raid (25m)' : 'Deep Focus Raid (Simulasi)';
+            const label = dungeonConfig.duration === 600 ? 'Quick Focus Raid (10m)' : 'Deep Focus Raid (25m)';
             recordActivityHistory(label, 'Dungeon Clear', 'INT', dungeonConfig.xp, dungeonConfig.gold);
 
             SoundFX.playQuestComplete();
-            addRewards(dungeonConfig.xp, dungeonConfig.gold, 'INT', 2);
+            addRewards(dungeonConfig.xp, dungeonConfig.gold, 'INT', dungeonConfig.statGain);
             showSystemModal(
                 'DUNGEON CLEARED!',
-                `Kamu berhasil menaklukkan gerbang fokus! Hadiah +${dungeonConfig.xp} XP, +${dungeonConfig.gold} Gold, dan +2 INT telah ditambahkan.`
+                `Kamu berhasil menaklukkan gerbang fokus! Hadiah +${dungeonConfig.xp} XP, +${dungeonConfig.gold} Gold, dan +${dungeonConfig.statGain} INT telah ditambahkan.`
             );
         }
 
@@ -2508,7 +2765,7 @@
         }
 
         // ==========================================
-        // 8. NEXT DAY EVALUATION & PENALTY SYSTEM
+        // 9. NEXT DAY EVALUATION & PENALTY SYSTEM
         // ==========================================
         function simulateNextDay() {
             const currentDateKey = getCurrentGameDateKey();
@@ -2528,13 +2785,24 @@
             });
 
             if (unfinishedDaily.length > 0) {
-                const penaltyHp = Math.min(60, unfinishedDaily.length * 10);
-                gameState.player.streak = 0;
-                takeDamage(penaltyHp);
-                showSystemModal(
-                    `EVALUASI ${currentDateKey} -> ${nextDateKey}`,
-                    `Ada ${unfinishedDaily.length} Daily Habit belum selesai! Kamu terkena penalti -${penaltyHp} HP dan Streak di-reset ke 0. Semua Daily Habit kini telah di-reset untuk hari baru.`
-                );
+                if ((gameState.player.streakShields || 0) > 0) {
+                    gameState.player.streakShields -= 1;
+                    SoundFX.playCoin();
+                    saveState();
+                    renderAll();
+                    showSystemModal(
+                        `🛡️ STREAK FREEZE AKTIF (${currentDateKey} -> ${nextDateKey})`,
+                        `Ada ${unfinishedDaily.length} Daily Habit belum selesai, namun Streak Freeze menyelamatkanmu! Tidak ada HP berkurang dan Streak tetap aman di ${gameState.player.streak} hari (Sisa Shield: ${gameState.player.streakShields}).`
+                    );
+                } else {
+                    const penaltyHp = Math.min(60, unfinishedDaily.length * 10);
+                    gameState.player.streak = 0;
+                    takeDamage(penaltyHp);
+                    showSystemModal(
+                        `EVALUASI ${currentDateKey} -> ${nextDateKey}`,
+                        `Ada ${unfinishedDaily.length} Daily Habit belum selesai! Kamu terkena penalti -${penaltyHp} HP dan Streak di-reset ke 0. Semua Daily Habit kini telah di-reset untuk hari baru.`
+                    );
+                }
             } else {
                 SoundFX.playQuestComplete();
                 saveState();
@@ -2547,7 +2815,7 @@
         }
 
         // ==========================================
-        // 9. NAVIGATION, MODALS, INSTANT TITLE & UTILITIES
+        // 10. NAVIGATION, MODALS, INSTANT TITLE & UTILITIES
         // ==========================================
         function switchTab(tabName) {
             SoundFX.playClick();
@@ -2618,7 +2886,6 @@
             spawnFloatingReward('Sistem Direset ke Data Awal');
         }
 
-        // 2. Instant Cycle Active Title without opening modal
         function cycleActiveTitle() {
             const unlockedList = TITLES_CATALOG.filter(t => t.checkUnlocked(gameState));
             if (unlockedList.length <= 1) {
@@ -2689,83 +2956,21 @@
             spawnFloatingReward(`👑 Gelar Aktif: ${target.name}`);
         }
 
-        function exportBackupData() {
-            SoundFX.playClick();
-            const dataStr = JSON.stringify(gameState, null, 2);
-            if (window.AndroidBridge && typeof window.AndroidBridge.saveBackup === 'function') {
-                const encoded = btoa(unescape(encodeURIComponent(dataStr)));
-                window.AndroidBridge.saveBackup(encoded, `system-rpg-backup-${formatDateKey(new Date())}.json`);
-                spawnFloatingReward('💾 Siapkan lokasi penyimpanan backup...');
-                return;
-            }
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `system-rpg-backup-${formatDateKey(new Date())}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            spawnFloatingReward('💾 File Backup Berhasil Diunduh!');
-        }
-
-        function importBackupData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    if (!imported.player || !imported.quests) {
-                        throw new Error('Format file tidak valid');
-                    }
-                    gameState = imported;
-                    saveState();
-                    renderAll();
-                    SoundFX.playLevelUp();
-                    spawnFloatingReward('✅ Data Berhasil Dipulihkan!');
-                } catch (err) {
-                    SoundFX.playDamage();
-                    spawnFloatingReward('❌ File Backup Tidak Valid!');
-                }
-                event.target.value = '';
-            };
-            reader.readAsText(file);
-        }
-
         function escapeHtml(str) {
             const div = document.createElement('div');
             div.textContent = str;
             return div.innerHTML;
         }
 
-        // Native Android bridge: restore a JSON backup selected with the system file picker.
-        window.importBackupFromAndroid = function(base64) {
-            try {
-                const binary = atob(base64);
-                const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
-                const json = new TextDecoder('utf-8').decode(bytes);
-                const imported = JSON.parse(json);
-                if (!imported.player || !imported.quests) throw new Error('Format file tidak valid');
-                gameState = imported;
-                saveState();
-                renderAll();
-                SoundFX.playLevelUp();
-                spawnFloatingReward('✅ Data Berhasil Dipulihkan!');
-            } catch (err) {
-                SoundFX.playDamage();
-                spawnFloatingReward('❌ File Backup Tidak Valid!');
-            }
-        };
-
         // ==========================================
-        // 10. INITIALIZE APP ON LOAD
+        // 11. INITIALIZE APP ON LOAD
         // ==========================================
         window.addEventListener('DOMContentLoaded', () => {
             checkRealDayRollover();
             renderAll();
             updateDungeonTimerUI();
+            checkDailyReminderTrigger();
+            setInterval(checkDailyReminderTrigger, 60000);
         });
     </script>
 </body>
