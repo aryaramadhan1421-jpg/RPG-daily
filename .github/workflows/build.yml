@@ -26,9 +26,14 @@ jobs:
 
       - name: Build Debug APK
         run: |
-          if [ -d "SystemRPG-Android" ]; then
-            cd SystemRPG-Android
+          GRADLE_DIR=$(find . -name "settings.gradle*" -printf "%h\n" | head -n 1)
+          if [ -z "$GRADLE_DIR" ]; then
+            echo "ERROR: File proyek Android (settings.gradle.kts) belum terunggah ke GitHub!"
+            ls -la
+            exit 1
           fi
+          echo "Menemukan proyek Android di folder: $GRADLE_DIR"
+          cd "$GRADLE_DIR"
           gradle assembleDebug
 
       - name: Upload APK ke Artifacts
