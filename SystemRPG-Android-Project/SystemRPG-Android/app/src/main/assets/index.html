@@ -14,7 +14,7 @@
     <link rel="apple-touch-icon" href="icon-512.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Orbitron:wght@600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
@@ -555,21 +555,6 @@
                     </div>
                 </div>
 
-                <!-- Tavern Mode (Rest Day) Bar -->
-                <div style="margin-top: 0.65rem; padding: 0.55rem 0.65rem; border-radius: 0.65rem; background: rgba(15, 23, 42, 0.78); border: 1px solid rgba(251, 191, 36, 0.32);" class="flex items-center justify-between gap-2">
-                    <div class="min-w-0">
-                        <div class="flex items-center gap-1-5">
-                            <span style="font-size: 0.875rem;">🍺</span>
-                            <span id="tavern-status-title" class="font-display truncate" style="font-size: 11px; font-weight: 700; color: #fcd34d;">TAVERN REST DAY</span>
-                            <span id="tavern-quota-badge" class="font-display" style="font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 9999px; background: rgba(245,158,11,0.18); color: #fde68a; border: 1px solid rgba(245,158,11,0.4);">Kuota: 1/1 Minggu Ini</span>
-                        </div>
-                        <p id="tavern-status-desc" style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Istirahat 24 jam tanpa penalti HP & streak aman (reset tiap Senin).</p>
-                    </div>
-                    <button type="button" id="btn-enter-tavern" onclick="enterTavernMode()" class="font-display shrink-0" style="font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 6px 10px; border-radius: 0.55rem; background: linear-gradient(135deg, rgba(245,158,11,0.28), rgba(217,119,6,0.28)); color: #fde68a; border: 1px solid rgba(251,191,36,0.6); cursor: pointer;">
-                        🍺 Enter Tavern
-                    </button>
-                </div>
-
                 <!-- HP & XP Bars -->
                 <div style="margin-top: 1rem;" class="space-y-3">
                     <div>
@@ -827,8 +812,21 @@
                         Kontrol Sistem & Evaluasi Harian
                     </h3>
                 </div>
+                <div style="background: rgba(2,6,23,0.75); border: 1px solid #334155; border-radius: 0.65rem; padding: 0.55rem 0.65rem;" class="flex items-center justify-between gap-2">
+                    <div>
+                        <span class="font-display" style="font-size: 11px; font-weight: 700; color: #67e8f9; display: block;">🎯 Target Minimal Streak Harian</span>
+                        <span style="font-size: 10px; color: var(--text-muted);">Atur persentase minimal Daily Quest selesai</span>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <input type="number" id="input-streak-threshold" min="10" max="100" step="5" value="80"
+                            onchange="updateStreakThreshold(this.value)"
+                            class="input-cyber font-display text-center"
+                            style="width: 4.25rem; padding: 0.35rem; font-size: 0.8rem; font-weight: 800; color: #34d399;">
+                        <span class="font-display" style="font-size: 0.8rem; font-weight: 700; color: #34d399;">%</span>
+                    </div>
+                </div>
                 <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">
-                    Evaluasi misi pada tanggal terpilih lalu lanjut ke hari berikutnya. Target aman minimal <span style="color: #67e8f9;">80% Daily Quest</span> selesai. Jika kurang dari 80%, HP berkurang & Streak reset!
+                    Evaluasi misi pada tanggal terpilih lalu lanjut ke hari berikutnya. Target aman minimal <span id="eval-threshold-label" style="color: #67e8f9; font-weight: 700;">80% Daily Quest</span> selesai. Jika kurang dari target tersebut, HP berkurang &amp; Streak reset (kecuali ada Shield)!
                 </p>
                 <div class="flex gap-2">
                     <button onclick="simulateNextDay()" class="flex-1 font-display shadow-neon-blue flex items-center justify-center gap-1-5" style="background: linear-gradient(to right, #0891b2, #2563eb); color: #fff; font-weight: 700; font-size: 0.875rem; padding: 0.625rem 0.75rem; border-radius: 0.75rem;">
@@ -907,7 +905,7 @@
             <!-- Daily Quest Progress Summary Bar -->
             <div class="system-card" style="padding: 0.75rem; border-radius: 0.75rem;">
                 <div class="flex justify-between" style="font-size: 0.75rem; margin-bottom: 4px;">
-                    <span class="font-display" style="font-weight: 700; color: #67e8f9; text-transform: uppercase;">Daily Habit (Target Streak ≥ 80%)</span>
+                    <span id="daily-target-header" class="font-display" style="font-weight: 700; color: #67e8f9; text-transform: uppercase;">Daily Habit (Target Streak ≥ 80%)</span>
                     <span id="daily-progress-text" class="font-display" style="font-weight: 700; color: #fff;">0 / 0 (0%)</span>
                 </div>
                 <div class="progress-track" style="height: 0.5rem;">
@@ -1307,8 +1305,8 @@
             <div class="system-card space-y-3" style="border-color: rgba(34,211,238,0.45); background: linear-gradient(135deg, rgba(15,19,31,0.96), rgba(14,35,58,0.92));">
                 <div class="flex items-center justify-between gap-2" style="border-bottom: 1px solid rgba(34,211,238,0.25); padding-bottom: 0.5rem;">
                     <div>
-                        <h3 class="font-display" style="font-size: 0.875rem; font-weight: 800; color: #67e8f9; text-transform: uppercase;">⚔️ ARMORY / RELICS & PASSIVE BUFFS</h3>
-                        <p style="font-size: 10px; color: #94a3b8;">Beli & pasang hingga 3 Relic aktif untuk buff EXP, Gold, & Atribut</p>
+                        <h3 class="font-display" style="font-size: 0.875rem; font-weight: 800; color: #67e8f9; text-transform: uppercase;">⚔️ ARMORY / TEMPORARY RELICS</h3>
+                        <p style="font-size: 10px; color: #94a3b8;">Relic bersifat sementara (aktif 24 jam sejak dibeli) • Maks 3 slot aktif</p>
                     </div>
                     <span id="armory-equipped-count" class="font-display shrink-0" style="font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 9999px; background: rgba(6,182,212,0.18); color: #22d3ee; border: 1px solid rgba(34,211,238,0.45);">0 / 3 Slot</span>
                 </div>
@@ -1653,12 +1651,19 @@
         </div>
     </div>
 
-    <!-- Edit Character Name Modal -->
+    <!-- Edit Character Name & Job Modal -->
     <div id="modal-edit-name" class="hidden modal-backdrop">
-        <div class="system-card max-w-xs w-full modal-enter" style="border-color: rgba(34,211,238,0.5); padding: 1.25rem;">
-            <h3 class="font-display" style="font-weight: 700; font-size: 1.125rem; color: var(--cyan-400); margin-bottom: 0.75rem;">UBAH NAMA HUNTER</h3>
-            <input type="text" id="input-player-name" maxlength="22" class="input-cyber" style="margin-bottom: 1rem;">
-            <div class="flex gap-2">
+        <div class="system-card max-w-xs w-full modal-enter space-y-2-5" style="border-color: rgba(34,211,238,0.5); padding: 1.25rem;">
+            <h3 class="font-display" style="font-weight: 700; font-size: 1.05rem; color: var(--cyan-400);">PROFIL HUNTER</h3>
+            <div>
+                <label style="display: block; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">Nama Hunter</label>
+                <input type="text" id="input-player-name" maxlength="22" class="input-cyber">
+            </div>
+            <div>
+                <label style="display: block; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">Job / Class Hunter</label>
+                <input type="text" id="input-player-job" maxlength="24" placeholder="Contoh: Shadow Monarch" class="input-cyber">
+            </div>
+            <div class="flex gap-2" style="padding-top: 4px;">
                 <button onclick="closeModal('modal-edit-name')" class="flex-1 font-display" style="background: var(--bg-slate-800); color: #cbd5e1; font-weight: 700; padding: 0.5rem; border-radius: 0.75rem; font-size: 0.875rem;">Batal</button>
                 <button onclick="savePlayerName()" class="flex-1 font-display" style="background: var(--cyan-500); color: #020617; font-weight: 700; padding: 0.5rem; border-radius: 0.75rem; font-size: 0.875rem;">Simpan</button>
             </div>
@@ -2142,6 +2147,9 @@
             updateAudioIcon();
             if (SoundFX.muted) {
                 SoundFX.stopAmbient();
+                if (typeof lofiIsPlaying !== 'undefined' && lofiIsPlaying && typeof stopAnimeLofi1Hour === 'function') {
+                    stopAnimeLofi1Hour();
+                }
             } else {
                 SoundFX.playClick();
                 if (isDungeonRunning && SoundFX.ambientMode !== 'none') {
@@ -2257,36 +2265,41 @@
             { id: 'rec_stretch', timeSlot: 'Pagi', title: 'Stretching 15 Menit', category: 'Recovery Quest', stat: 'STR', xp: 15, gold: 10, hpHeal: 15, completed: false }
         ];
 
+        const RELIC_DURATION_MS = 24 * 60 * 60 * 1000; // 24 Jam (Sementara)
+
         const ARMORY_RELICS_CATALOG = [
             {
                 id: 'rel_chronos',
-                name: 'Chronos Hourglass',
+                name: 'Chronos Hourglass (24 Jam)',
                 slot: 'Tome/Tool',
-                cost: 450,
+                cost: 900,
+                durationHours: 24,
                 icon: '⏳',
-                buffDesc: '+15% EXP & +10% INT Stat XP dari semua aktivitas',
+                buffDesc: '[24 Jam] +15% EXP & +10% INT Stat XP dari semua aktivitas',
                 xpBonus: 0.15,
                 goldBonus: 0,
                 statBonus: { INT: 0.10 }
             },
             {
                 id: 'rel_grimoire',
-                name: "Scholar's Grimoire",
+                name: "Scholar's Grimoire (24 Jam)",
                 slot: 'Tome/Tool',
-                cost: 500,
+                cost: 1000,
+                durationHours: 24,
                 icon: '📖',
-                buffDesc: '+12% EXP & +15% INT/WIS Stat XP saat belajar & fokus',
+                buffDesc: '[24 Jam] +12% EXP & +15% INT/WIS Stat XP saat belajar & fokus',
                 xpBonus: 0.12,
                 goldBonus: 0,
                 statBonus: { INT: 0.15, WIS: 0.15 }
             },
             {
                 id: 'rel_dumbbell',
-                name: 'Iron Dumbbell Emblem',
+                name: 'Iron Dumbbell Emblem (24 Jam)',
                 slot: 'Accessory',
-                cost: 480,
+                cost: 950,
+                durationHours: 24,
                 icon: '🏋️',
-                buffDesc: '+25% STR Stat XP & +10 Max HP Permanen',
+                buffDesc: '[24 Jam] +25% STR Stat XP & +10 Max HP Sementara',
                 xpBonus: 0,
                 goldBonus: 0,
                 bonusMaxHp: 10,
@@ -2294,11 +2307,12 @@
             },
             {
                 id: 'rel_coin_pouch',
-                name: "Merchant's Coin Pouch",
+                name: "Merchant's Coin Pouch (24 Jam)",
                 slot: 'Relic',
-                cost: 550,
+                cost: 1100,
+                durationHours: 24,
                 icon: '💰',
-                buffDesc: '+20% Gold dari semua Quest & Dungeon +15% CHR Stat XP',
+                buffDesc: '[24 Jam] +20% Gold dari semua Quest & Dungeon +15% CHR Stat XP',
                 xpBonus: 0,
                 goldBonus: 0.20,
                 statBonus: { CHR: 0.15 }
@@ -2341,6 +2355,7 @@
         const DEFAULT_STATE = {
             player: {
                 name: 'Sung Jin-Woo',
+                job: 'Shadow Monarch',
                 level: 1,
                 xp: 0,
                 hp: 100,
@@ -2363,8 +2378,10 @@
                 weekKey: null,
                 usedThisWeek: false
             },
+            streakThresholdPct: 80,
             armory: {
                 owned: [],
+                expiresAt: {},
                 equipped: {
                     'Tome/Tool': null,
                     'Accessory': null,
@@ -2747,15 +2764,25 @@
                     }
                     if (!parsed.player.avatarType) parsed.player.avatarType = 'svg';
                     if (!parsed.player.avatarId) parsed.player.avatarId = 'av_shadow_monarch';
+                    if (!parsed.player.job) {
+                        const foundAv = CYBER_AVATARS_CATALOG.find(a => a.id === parsed.player.avatarId);
+                        parsed.player.job = (parsed.player.avatarType !== 'custom' && foundAv) ? foundAv.name : 'Shadow Monarch';
+                    }
                     if (typeof parsed.player.avatarCustomDataUrl === 'undefined') parsed.player.avatarCustomDataUrl = null;
                     if (!parsed.tavern) {
                         parsed.tavern = { activeUntil: null, weekKey: null, usedThisWeek: false };
                     }
                     if (!parsed.armory) {
-                        parsed.armory = { owned: [], equipped: { 'Tome/Tool': null, 'Accessory': null, 'Relic': null } };
+                        parsed.armory = { owned: [], expiresAt: {}, equipped: { 'Tome/Tool': null, 'Accessory': null, 'Relic': null } };
                     }
                     if (!parsed.armory.equipped) {
                         parsed.armory.equipped = { 'Tome/Tool': null, 'Accessory': null, 'Relic': null };
+                    }
+                    if (!parsed.armory.expiresAt) {
+                        parsed.armory.expiresAt = {};
+                    }
+                    if (typeof parsed.streakThresholdPct !== 'number' || parsed.streakThresholdPct < 10 || parsed.streakThresholdPct > 100) {
+                        parsed.streakThresholdPct = 80;
                     }
                     if (Array.isArray(parsed.quests) && !parsed.quests.some(q => q.category === 'Recovery Quest')) {
                         DEFAULT_RECOVERY_QUESTS.forEach(rq => {
@@ -2815,9 +2842,9 @@
                     regenAmt: Math.round(maxHp * 0.15),
                     resetStreak: false
                 };
-            } else if (ratio >= 0.8) {
+            } else if (ratio >= getStreakThresholdRatio()) {
                 return {
-                    rank: 'A-Rank (Minor Slip)',
+                    rank: 'A-Rank (Safe Clear)',
                     penaltyRate: 0.10,
                     rawDamage: Math.max(1, Math.round(maxHp * 0.10)),
                     regenAmt: 0,
@@ -2842,67 +2869,26 @@
             }
         }
 
-        function getMondayWeekKey(dateObj = new Date()) {
-            const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
-            const day = d.getDay();
-            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-            d.setDate(diff);
-            return formatDateKey(d);
-        }
-
-        function syncTavernWeeklyQuota() {
-            if (!gameState.tavern) {
-                gameState.tavern = { activeUntil: null, weekKey: getMondayWeekKey(), usedThisWeek: false };
-            }
-            const curWeek = getMondayWeekKey(new Date());
-            if (gameState.tavern.weekKey !== curWeek) {
-                gameState.tavern.weekKey = curWeek;
-                gameState.tavern.usedThisWeek = false;
-            }
-            if (gameState.tavern.activeUntil && Date.now() > gameState.tavern.activeUntil) {
-                gameState.tavern.activeUntil = null;
-            }
-        }
-
-        function isTavernActive() {
-            syncTavernWeeklyQuota();
-            return !!(gameState.tavern && gameState.tavern.activeUntil && Date.now() < gameState.tavern.activeUntil);
-        }
-
-        function enterTavernMode() {
-            syncTavernWeeklyQuota();
-            if (isTavernActive()) {
-                SoundFX.playClick();
-                const remHrs = Math.max(1, Math.ceil((gameState.tavern.activeUntil - Date.now()) / 3600000));
-                spawnFloatingReward(`🍺 Tavern Mode sedang aktif (${remHrs} jam tersisa)!`);
-                return;
-            }
-            if (gameState.tavern.usedThisWeek) {
-                SoundFX.playDamage();
-                spawnFloatingReward('⚠️ Kuota Tavern minggu ini sudah terpakai (Reset Senin depan)!');
-                return;
-            }
-            SoundFX.playQuestComplete();
-            gameState.tavern.usedThisWeek = true;
-            gameState.tavern.activeUntil = Date.now() + (24 * 60 * 60 * 1000);
-            saveState();
-            renderAll();
-            showSystemModal(
-                '🍺 TAVERN REST DAY AKTIF (24 JAM)',
-                'Selamat beristirahat, Hunter! Selama 24 jam ke depan, penalti HP dibekukan dan Streak harianmu terlindungi penuh. Kuota Tavern otomatis reset pada hari Senin berikutnya.'
-            );
-        }
-
         function checkRealDayRollover() {
             const realToday = formatDateKey(new Date());
-            if (gameState.lastRealDate && gameState.lastRealDate !== realToday) {
-                const tavernProtected = isTavernActive();
+            if (!gameState.lastRealDate) {
+                gameState.lastRealDate = realToday;
+                saveState();
+                return;
+            }
+
+            if (gameState.lastRealDate !== realToday) {
+                const prevDateObj = parseDateKey(gameState.lastRealDate);
+                const todayDateObj = parseDateKey(realToday);
+                const diffDays = Math.max(1, Math.round((todayDateObj - prevDateObj) / (1000 * 60 * 60 * 24)));
+
                 const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
                 const doneCount = dailyQuests.filter(q => q.completed).length;
                 const totalDaily = dailyQuests.length;
                 const ratio = totalDaily > 0 ? (doneCount / totalDaily) : 1;
                 const pct = Math.round(ratio * 100);
 
+                // Reset semua Daily & Recovery Quest untuk hari baru
                 gameState.quests.forEach(q => {
                     if (q.category === 'Daily Quest' || q.category === 'Recovery Quest') {
                         q.completed = false;
@@ -2911,18 +2897,24 @@
                 });
                 gameState.selectedDate = realToday;
                 gameState.lastRealDate = realToday;
+                gameState.lastStreakDate = null; // Wajib reset agar streak hari baru bisa naik
+
+                // Jika melewati lebih dari 1 hari penuh tanpa buka aplikasi
+                if (diffDays > 1) {
+                    const missedFullDays = diffDays - 1;
+                    const extraDamage = Math.round(gameState.player.maxHp * 0.40 * missedFullDays);
+                    if ((gameState.player.shields || 0) > 0 && gameState.player.streak > 0) {
+                        gameState.player.shields -= 1;
+                    } else {
+                        gameState.player.streak = 0;
+                    }
+                    takeDamage(extraDamage);
+                }
 
                 syncPlayerMaxHp();
                 const tier = evaluateDailyTier(ratio, gameState.player.maxHp);
 
-                if (tavernProtected && tier.rawDamage > 0) {
-                    setTimeout(() => {
-                        showSystemModal(
-                            '🍺 TAVERN PROTECTION // REST DAY',
-                            `Pergantian hari berjalan mulus! Berkat Tavern Mode, penalti HP dibekukan dan Streak ${gameState.player.streak} hari tetap aman terjaga. Semua Daily & Recovery Quest telah di-reset untuk hari ini.`
-                        );
-                    }, 500);
-                } else if (tier.rawDamage > 0) {
+                if (tier.rawDamage > 0) {
                     let shieldMsg = '';
                     if (tier.resetStreak) {
                         if ((gameState.player.shields || 0) > 0 && gameState.player.streak > 0) {
@@ -2930,10 +2922,10 @@
                             shieldMsg = ` 🛡️ Streak Shield aktif! Streak ${gameState.player.streak} hari tetap aman (sisa Shield: ${gameState.player.shields}).`;
                         } else {
                             gameState.player.streak = 0;
-                            shieldMsg = ' Streak di-reset ke 0 karena progres kemarin di bawah 80%.';
+                            shieldMsg = ` Streak di-reset ke 0 karena progres kemarin di bawah ${getStreakThresholdPct()}%.`;
                         }
                     } else {
-                        shieldMsg = ` Streak ${gameState.player.streak} hari tetap terjaga (≥80%), namun tidak ada regen HP.`;
+                        shieldMsg = ` Streak ${gameState.player.streak} hari tetap terjaga (≥${getStreakThresholdPct()}%), namun tidak ada regen HP.`;
                     }
                     takeDamage(tier.rawDamage);
                     const { wisDmgReduce } = getAttributePassives();
@@ -2951,7 +2943,11 @@
                         spawnFloatingReward(`🌅 S-Rank Perfect Clear (100%)!${healAmt > 0 ? ` Regen +${healAmt} HP (+15% Max HP)` : ' HP Penuh'} • Streak: ${gameState.player.streak} Hari`);
                     }, 500);
                 }
+
                 saveState();
+                if (typeof renderAll === 'function') {
+                    renderAll();
+                }
             }
         }
 
@@ -3123,7 +3119,95 @@
             return { cap: MAX_STAT_LEVEL, tier: 'Rank S' };
         }
 
+        function getStreakThresholdPct() {
+            const val = Number(typeof gameState !== 'undefined' && gameState ? gameState.streakThresholdPct : 80);
+            if (!Number.isFinite(val) || val < 10 || val > 100) return 80;
+            return Math.round(val);
+        }
+
+        function getStreakThresholdRatio() {
+            return getStreakThresholdPct() / 100;
+        }
+
+        function updateStreakThreshold(rawVal) {
+            let num = Math.round(Number(rawVal));
+            if (!Number.isFinite(num)) num = 80;
+            num = Math.max(10, Math.min(100, num));
+            gameState.streakThresholdPct = num;
+
+            // Recalculate today's streak credit immediately if quests are already checked
+            const todayKey = getCurrentGameDateKey();
+            const dailyQuests = gameState.quests.filter(item => item.category === 'Daily Quest');
+            const doneCount = dailyQuests.filter(item => item.completed).length;
+            const ratio = dailyQuests.length > 0 ? (doneCount / dailyQuests.length) : 0;
+
+            if (ratio >= getStreakThresholdRatio() && dailyQuests.length > 0 && gameState.lastStreakDate !== todayKey) {
+                gameState.player.streak = (gameState.player.streak || 0) + 1;
+                if (gameState.player.streak > (gameState.player.longestStreak || 0)) {
+                    gameState.player.longestStreak = gameState.player.streak;
+                }
+                gameState.lastStreakDate = todayKey;
+            } else if (ratio < getStreakThresholdRatio() && gameState.lastStreakDate === todayKey) {
+                gameState.player.streak = Math.max(0, (gameState.player.streak || 1) - 1);
+                gameState.lastStreakDate = null;
+            }
+
+            saveState();
+            renderAll();
+            if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+            spawnFloatingReward(`🎯 Target Minimal Streak diatur ke ${num}%!`);
+        }
+
+        function syncArmoryExpirations() {
+            if (!gameState || !gameState.armory) return;
+            if (!gameState.armory.expiresAt) gameState.armory.expiresAt = {};
+            const now = Date.now();
+            let changed = false;
+
+            (gameState.armory.owned || []).forEach(id => {
+                if (!gameState.armory.expiresAt[id]) {
+                    gameState.armory.expiresAt[id] = now + RELIC_DURATION_MS;
+                    changed = true;
+                }
+            });
+
+            const validOwned = [];
+            (gameState.armory.owned || []).forEach(id => {
+                const exp = gameState.armory.expiresAt[id] || 0;
+                if (exp > now) {
+                    validOwned.push(id);
+                } else {
+                    delete gameState.armory.expiresAt[id];
+                    changed = true;
+                }
+            });
+            gameState.armory.owned = validOwned;
+
+            if (gameState.armory.equipped) {
+                Object.keys(gameState.armory.equipped).forEach(slot => {
+                    const eqId = gameState.armory.equipped[slot];
+                    if (eqId && !validOwned.includes(eqId)) {
+                        gameState.armory.equipped[slot] = null;
+                        changed = true;
+                    }
+                });
+            }
+            if (changed && typeof syncPlayerMaxHp === 'function') {
+                syncPlayerMaxHp();
+            }
+        }
+
+        function formatRemainingRelicTime(expiresAt) {
+            const remMs = Math.max(0, expiresAt - Date.now());
+            const totalMins = Math.ceil(remMs / 60000);
+            const hrs = Math.floor(totalMins / 60);
+            const mins = totalMins % 60;
+            if (hrs > 0) return `${hrs}j ${mins}m`;
+            return `${mins}m`;
+        }
+
         function getEquippedRelics() {
+            syncArmoryExpirations();
             const eq = (gameState.armory && gameState.armory.equipped) || {};
             return Object.values(eq)
                 .filter(Boolean)
@@ -3177,7 +3261,7 @@
         function getHpCondition() {
             syncPlayerMaxHp();
             const ratio = gameState.player.maxHp > 0 ? (gameState.player.hp / gameState.player.maxHp) : 1;
-            if (ratio >= 0.80) {
+            if (ratio >= getStreakThresholdRatio()) {
                 return {
                     label: 'PRIMA (+10%)',
                     xpMod: 0.10,
@@ -3400,6 +3484,8 @@
             }
 
             document.getElementById('player-name-display').textContent = p.name;
+            const jobDisp = document.getElementById('player-job-display');
+            if (jobDisp) jobDisp.textContent = p.job || 'Shadow Monarch';
             document.getElementById('player-level').textContent = p.level;
             
             const rankBadge = document.getElementById('player-rank-badge');
@@ -3478,7 +3564,6 @@
             if (pChrEl) pChrEl.textContent = `Pasif: Diskon Shop ${(passives.chrShopDiscount * 100).toFixed(0)}% (Relasi & Sosial)`;
 
             renderPlayerPortrait();
-            renderTavernStatusUI();
             updateRadarChart(p.stats, tierInfo.cap);
             renderAnalyticsMetrics();
 
@@ -3614,56 +3699,16 @@
             }
         }
 
-        function renderTavernStatusUI() {
-            syncTavernWeeklyQuota();
-            const active = isTavernActive();
-            const titleEl = document.getElementById('tavern-status-title');
-            const badgeEl = document.getElementById('tavern-quota-badge');
-            const descEl = document.getElementById('tavern-status-desc');
-            const btnEl = document.getElementById('btn-enter-tavern');
-            if (!titleEl || !badgeEl || !descEl || !btnEl) return;
-
-            if (active) {
-                const remMs = Math.max(0, gameState.tavern.activeUntil - Date.now());
-                const remHrs = Math.floor(remMs / 3600000);
-                const remMins = Math.floor((remMs % 3600000) / 60000);
-                titleEl.textContent = '🍺 IN TAVERN (PROTECTED)';
-                titleEl.style.color = '#34d399';
-                badgeEl.textContent = `Sisa ${remHrs}j ${remMins}m`;
-                badgeEl.style.cssText = 'font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 9999px; background: rgba(16,185,129,0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.45);';
-                descEl.textContent = 'Penalti HP dibekukan & Streak aman selama 24 jam.';
-                btnEl.textContent = '✓ Sedang Istirahat';
-                btnEl.style.cssText = 'font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 6px 10px; border-radius: 0.55rem; background: rgba(16,185,129,0.22); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.5); cursor: pointer;';
-            } else if (gameState.tavern.usedThisWeek) {
-                titleEl.textContent = 'TAVERN REST DAY';
-                titleEl.style.color = '#94a3b8';
-                badgeEl.textContent = 'Kuota: 0/1 (Reset Senin)';
-                badgeEl.style.cssText = 'font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 9999px; background: rgba(100,116,139,0.2); color: #94a3b8; border: 1px solid #475569;';
-                descEl.textContent = 'Kuota istirahat minggu ini sudah digunakan. Reset tiap hari Senin.';
-                btnEl.textContent = 'Kuota Habis';
-                btnEl.style.cssText = 'font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 6px 10px; border-radius: 0.55rem; background: var(--bg-slate-800); color: #64748b; border: 1px solid #334155; cursor: not-allowed;';
-            } else {
-                titleEl.textContent = 'TAVERN REST DAY';
-                titleEl.style.color = '#fcd34d';
-                badgeEl.textContent = 'Kuota: 1/1 Minggu Ini';
-                badgeEl.style.cssText = 'font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 9999px; background: rgba(245,158,11,0.18); color: #fde68a; border: 1px solid rgba(245,158,11,0.4);';
-                descEl.textContent = 'Istirahat 24 jam tanpa penalti HP & streak aman (reset tiap Senin).';
-                btnEl.textContent = '🍺 Enter Tavern';
-                btnEl.style.cssText = 'font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 6px 10px; border-radius: 0.55rem; background: linear-gradient(135deg, rgba(245,158,11,0.28), rgba(217,119,6,0.28)); color: #fde68a; border: 1px solid rgba(251,191,36,0.6); cursor: pointer;';
-            }
-        }
-
         function renderPlayerPortrait() {
-            const box = document.getElementById('player-portrait-render');
-            const jobEl = document.getElementById('player-job-display');
+            const container = document.getElementById('player-portrait-render');
+            if (!container || typeof gameState === 'undefined' || !gameState.player) return;
+
             const p = gameState.player;
             if (p.avatarType === 'custom' && p.avatarCustomDataUrl) {
-                if (box) box.innerHTML = `<img src="${p.avatarCustomDataUrl}" alt="Hunter Portrait" style="width: 100%; height: 100%; object-fit: cover;">`;
-                if (jobEl) jobEl.textContent = p.customJob || 'Awakened Hunter';
+                container.innerHTML = `<img src="${p.avatarCustomDataUrl}" alt="Hunter Avatar" style="width: 100%; height: 100%; object-fit: cover;">`;
             } else {
                 const found = CYBER_AVATARS_CATALOG.find(a => a.id === p.avatarId) || CYBER_AVATARS_CATALOG[0];
-                if (box) box.innerHTML = found.svg;
-                if (jobEl) jobEl.textContent = found.name;
+                container.innerHTML = found ? found.svg : '';
             }
         }
 
@@ -3689,10 +3734,14 @@
             SoundFX.playQuestComplete();
             gameState.player.avatarType = 'svg';
             gameState.player.avatarId = avatarId;
+            const foundAv = CYBER_AVATARS_CATALOG.find(a => a.id === avatarId);
+            if (foundAv) {
+                gameState.player.job = foundAv.name;
+            }
             saveState();
-            renderPlayerPortrait();
+            renderStatus();
             openAvatarModal();
-            spawnFloatingReward('🎭 Portrait Hunter Diperbarui!');
+            spawnFloatingReward(`🎭 Avatar & Job: ${foundAv ? foundAv.name : 'Diperbarui'}!`);
         }
 
         function handleAvatarFileUpload(event) {
@@ -3971,11 +4020,25 @@
             const doneDailyCount = dailyQuests.filter(q => q.completed).length;
             const totalDailyCount = dailyQuests.length;
 
+            const targetPct = getStreakThresholdPct();
+            const dailyHeaderEl = document.getElementById('daily-target-header');
+            if (dailyHeaderEl) {
+                dailyHeaderEl.textContent = `Daily Habit (Target Streak ≥ ${targetPct}%)`;
+            }
+            const evalLabelEl = document.getElementById('eval-threshold-label');
+            if (evalLabelEl) {
+                evalLabelEl.textContent = `${targetPct}% Daily Quest`;
+            }
+            const thresholdInputEl = document.getElementById('input-streak-threshold');
+            if (thresholdInputEl && document.activeElement !== thresholdInputEl) {
+                thresholdInputEl.value = targetPct;
+            }
+
             const dailyTextEl = document.getElementById('daily-progress-text');
             const dailyBarEl = document.getElementById('daily-progress-bar');
             if (dailyTextEl && dailyBarEl) {
                 const pct = totalDailyCount > 0 ? Math.round((doneDailyCount / totalDailyCount) * 100) : 0;
-                const targetMet = pct >= 80 && totalDailyCount > 0;
+                const targetMet = pct >= targetPct && totalDailyCount > 0;
                 dailyTextEl.textContent = `${doneDailyCount} / ${totalDailyCount} (${pct}%)${targetMet ? ' 🔥' : ''}`;
                 dailyBarEl.style.width = `${pct}%`;
                 dailyBarEl.style.background = targetMet
@@ -4091,10 +4154,9 @@
             const summaryEl = document.getElementById('armory-passive-summary');
             if (!slotsEl || !listEl) return;
 
-            if (!gameState.armory) {
-                gameState.armory = { owned: [], equipped: { 'Tome/Tool': null, 'Accessory': null, 'Relic': null } };
-            }
+            syncArmoryExpirations();
             const owned = gameState.armory.owned || [];
+            const expiresAtMap = gameState.armory.expiresAt || {};
             const equipped = gameState.armory.equipped || { 'Tome/Tool': null, 'Accessory': null, 'Relic': null };
             const slotNames = ['Tome/Tool', 'Accessory', 'Relic'];
 
@@ -4105,12 +4167,13 @@
                 const eqId = equipped[slotName];
                 const relic = eqId ? ARMORY_RELICS_CATALOG.find(r => r.id === eqId) : null;
                 if (relic) {
+                    const remLabel = formatRemainingRelicTime(expiresAtMap[relic.id] || Date.now());
                     return `
                         <div onclick="toggleEquipRelic('${relic.id}')" style="cursor: pointer; background: rgba(6,182,212,0.16); border: 1px solid rgba(34,211,238,0.6); border-radius: 0.65rem; padding: 0.5rem 0.35rem; text-align: center;" title="Klik untuk melepas ${relic.name}">
                             <span style="display: block; font-size: 9px; color: #67e8f9; font-weight: 700; text-transform: uppercase;">${slotName}</span>
                             <span style="display: block; font-size: 1.25rem; margin: 2px 0;">${relic.icon}</span>
-                            <span class="font-display truncate" style="display: block; font-size: 9px; font-weight: 700; color: #fff;">${relic.name}</span>
-                            <span style="display: block; font-size: 8px; color: #34d399; margin-top: 2px;">AKTIF (Lepas)</span>
+                            <span class="font-display truncate" style="display: block; font-size: 9px; font-weight: 700; color: #fff;">${relic.name.replace(' (24 Jam)', '')}</span>
+                            <span style="display: block; font-size: 8px; color: #fcd34d; margin-top: 2px;">⏳ Sisa ${remLabel}</span>
                         </div>
                     `;
                 }
@@ -4126,7 +4189,7 @@
             if (summaryEl) {
                 const buffs = getRelicPassiveBonuses();
                 if (buffs.relics.length === 0) {
-                    summaryEl.innerHTML = 'Belum ada Relic terpasang. Beli & pasang Relic di bawah untuk mengaktifkan efek pasif!';
+                    summaryEl.innerHTML = 'Belum ada Relic aktif. Beli Relic (durasi 24 jam) di bawah untuk mengaktifkan efek sementara!';
                 } else {
                     const parts = [];
                     if (buffs.xpBonus > 0) parts.push(`+${Math.round(buffs.xpBonus * 100)}% Total EXP`);
@@ -4135,23 +4198,24 @@
                     Object.keys(buffs.statMult).forEach(st => {
                         if (buffs.statMult[st] > 0) parts.push(`+${Math.round(buffs.statMult[st] * 100)}% ${st} XP`);
                     });
-                    summaryEl.innerHTML = `<span style="color: #34d399; font-weight: 700;">✦ Passive Buff Aktif:</span> ${parts.join(' • ')}`;
+                    summaryEl.innerHTML = `<span style="color: #34d399; font-weight: 700;">✦ Buff Sementara Aktif:</span> ${parts.join(' • ')}`;
                 }
             }
 
             listEl.innerHTML = ARMORY_RELICS_CATALOG.map(relic => {
-                const isOwned = owned.includes(relic.id);
-                const isEquipped = equipped[relic.slot] === relic.id;
+                const isOwned = owned.includes(relic.id) && (expiresAtMap[relic.id] || 0) > Date.now();
+                const isEquipped = isOwned && equipped[relic.slot] === relic.id;
                 const finalCost = getDiscountedShopCost(relic.cost);
                 const canAfford = gameState.player.gold >= finalCost;
+                const remText = isOwned ? formatRemainingRelicTime(expiresAtMap[relic.id]) : '';
 
                 let actionBtn = '';
                 if (isEquipped) {
-                    actionBtn = `<button type="button" onclick="toggleEquipRelic('${relic.id}')" class="font-display" style="padding: 0.45rem 0.65rem; border-radius: 0.65rem; font-weight: 700; font-size: 11px; background: rgba(16,185,129,0.22); color: #34d399; border: 1px solid rgba(16,185,129,0.5);">Terpasang</button>`;
+                    actionBtn = `<button type="button" onclick="toggleEquipRelic('${relic.id}')" class="font-display" style="padding: 0.45rem 0.65rem; border-radius: 0.65rem; font-weight: 700; font-size: 11px; background: rgba(16,185,129,0.22); color: #34d399; border: 1px solid rgba(16,185,129,0.5);">Aktif (${remText})</button>`;
                 } else if (isOwned) {
-                    actionBtn = `<button type="button" onclick="toggleEquipRelic('${relic.id}')" class="font-display" style="padding: 0.45rem 0.65rem; border-radius: 0.65rem; font-weight: 700; font-size: 11px; background: rgba(6,182,212,0.22); color: #67e8f9; border: 1px solid rgba(34,211,238,0.5);">Pasang</button>`;
+                    actionBtn = `<button type="button" onclick="toggleEquipRelic('${relic.id}')" class="font-display" style="padding: 0.45rem 0.65rem; border-radius: 0.65rem; font-weight: 700; font-size: 11px; background: rgba(6,182,212,0.22); color: #67e8f9; border: 1px solid rgba(34,211,238,0.5);">Pasang (${remText})</button>`;
                 } else {
-                    actionBtn = `<button type="button" onclick="buyArmoryRelic('${relic.id}')" ${!canAfford ? 'disabled' : ''} class="font-display" style="padding: 0.45rem 0.65rem; border-radius: 0.65rem; font-weight: 700; font-size: 11px; ${canAfford ? 'background: var(--cyan-500); color: #020617;' : 'background: var(--bg-slate-800); color: #64748b; border: 1px solid #334155;'}">${finalCost} G</button>`;
+                    actionBtn = `<button type="button" onclick="buyArmoryRelic('${relic.id}')" ${!canAfford ? 'disabled' : ''} class="font-display" style="padding: 0.45rem 0.65rem; border-radius: 0.65rem; font-weight: 700; font-size: 11px; ${canAfford ? 'background: var(--cyan-500); color: #020617;' : 'background: var(--bg-slate-800); color: #64748b; border: 1px solid #334155;'}">${finalCost} G / 24j</button>`;
                 }
 
                 return `
@@ -4161,7 +4225,7 @@
                                 ${relic.icon}
                             </div>
                             <div class="min-w-0">
-                                <div class="flex items-center gap-1-5">
+                                <div class="flex items-center gap-1-5 flex-wrap">
                                     <h4 class="truncate" style="font-size: 0.8rem; font-weight: 700; color: #f1f5f9;">${relic.name}</h4>
                                     <span class="font-display" style="font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 4px; background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.4);">${relic.slot}</span>
                                 </div>
@@ -4175,9 +4239,9 @@
         }
 
         function buyArmoryRelic(relicId) {
+            syncArmoryExpirations();
             const relic = ARMORY_RELICS_CATALOG.find(r => r.id === relicId);
             if (!relic) return;
-            if (!gameState.armory) gameState.armory = { owned: [], equipped: { 'Tome/Tool': null, 'Accessory': null, 'Relic': null } };
             if (gameState.armory.owned.includes(relic.id)) return;
 
             const finalCost = getDiscountedShopCost(relic.cost);
@@ -4190,21 +4254,23 @@
             SoundFX.playCoin();
             gameState.player.gold -= finalCost;
             gameState.armory.owned.push(relic.id);
+            gameState.armory.expiresAt[relic.id] = Date.now() + RELIC_DURATION_MS;
             gameState.armory.equipped[relic.slot] = relic.id;
             syncPlayerMaxHp();
             recordRedeemHistory(`${relic.name} [${relic.slot}]`, finalCost, 'relic', relic.buffDesc);
             saveState();
             renderAll();
-            spawnFloatingReward(`⚔️ ${relic.name} Dibeli & Dipasang di Slot ${relic.slot}!`);
+            spawnFloatingReward(`⚔️ ${relic.name} Aktif selama 24 Jam di Slot ${relic.slot}!`);
         }
 
         function toggleEquipRelic(relicId) {
+            syncArmoryExpirations();
             const relic = ARMORY_RELICS_CATALOG.find(r => r.id === relicId);
             if (!relic || !gameState.armory || !gameState.armory.owned.includes(relic.id)) return;
             SoundFX.playClick();
             if (gameState.armory.equipped[relic.slot] === relic.id) {
                 gameState.armory.equipped[relic.slot] = null;
-                spawnFloatingReward(`📦 ${relic.name} dilepas dari slot ${relic.slot}`);
+                spawnFloatingReward(`📦 ${relic.name} dilepas sementara dari slot ${relic.slot}`);
             } else {
                 gameState.armory.equipped[relic.slot] = relic.id;
                 spawnFloatingReward(`✨ ${relic.name} dipasang di slot ${relic.slot}!`);
@@ -4396,14 +4462,14 @@
                     const doneCount = dailyQuests.filter(item => item.completed).length;
                     const ratio = dailyQuests.length > 0 ? (doneCount / dailyQuests.length) : 0;
 
-                    if (ratio >= 0.8 && gameState.lastStreakDate !== todayKey) {
+                    if (ratio >= getStreakThresholdRatio() && gameState.lastStreakDate !== todayKey) {
                         gameState.player.streak = (gameState.player.streak || 0) + 1;
                         if (gameState.player.streak > (gameState.player.longestStreak || 0)) {
                             gameState.player.longestStreak = gameState.player.streak;
                         }
                         gameState.lastStreakDate = todayKey;
                         setTimeout(() => {
-                            spawnFloatingReward(`🔥 TARGET ≥80% TERCAPAI! Streak Hari Ini +1 (${gameState.player.streak} Hari)`);
+                            spawnFloatingReward(`🔥 TARGET ≥${getStreakThresholdPct()}% TERCAPAI! Streak Hari Ini +1 (${gameState.player.streak} Hari)`);
                         }, 650);
                     }
                 }
@@ -4442,7 +4508,7 @@
                         const dailyQuests = gameState.quests.filter(item => item.category === 'Daily Quest');
                         const doneCount = dailyQuests.filter(item => item.completed).length;
                         const ratio = dailyQuests.length > 0 ? (doneCount / dailyQuests.length) : 0;
-                        if (ratio < 0.8) {
+                        if (ratio < getStreakThresholdRatio()) {
                             gameState.player.streak = Math.max(0, (gameState.player.streak || 1) - 1);
                             gameState.lastStreakDate = null;
                         }
@@ -4680,7 +4746,8 @@
                 elixir: '💖',
                 shield: '🛡️',
                 reward: '🎁',
-                gacha: '🎲'
+                gacha: '🎲',
+                relic: '⚔️'
             };
 
             listEl.innerHTML = records.map(r => `
@@ -4936,6 +5003,7 @@
         // ==========================================
         let dungeonTotalSec = 1500;
         let dungeonRemainingSec = 1500;
+        let dungeonEndTimeMs = 0;
         let dungeonRewardXp = 100;
         let dungeonRewardGold = 80;
         let dungeonInterval = null;
@@ -4956,6 +5024,9 @@
         function setDungeonAmbient(mode) {
             SoundFX.ambientMode = mode;
             updateAmbientButtonsUI();
+            if (mode !== 'none' && typeof lofiIsPlaying !== 'undefined' && lofiIsPlaying && typeof stopAnimeLofi1Hour === 'function') {
+                stopAnimeLofi1Hour();
+            }
             if (isDungeonRunning) {
                 if (mode === 'none' || SoundFX.muted) SoundFX.stopAmbient();
                 else SoundFX.startAmbient(mode);
@@ -5052,14 +5123,15 @@
             label.textContent = 'IN COMBAT // FOKUS';
             label.style.color = '#22d3ee';
 
+            dungeonEndTimeMs = Date.now() + (dungeonRemainingSec * 1000);
             dungeonInterval = setInterval(() => {
-                dungeonRemainingSec -= 1;
+                dungeonRemainingSec = Math.max(0, Math.ceil((dungeonEndTimeMs - Date.now()) / 1000));
                 updateDungeonTimerUI();
 
                 if (dungeonRemainingSec <= 0) {
                     completeDungeon();
                 }
-            }, 1000);
+            }, 500);
         }
 
         function completeDungeon() {
@@ -5220,7 +5292,6 @@
             const ratio = totalDaily > 0 ? (doneCount / totalDaily) : 1;
             const pct = Math.round(ratio * 100);
 
-            const tavernProtected = isTavernActive();
             gameState.quests.forEach(q => {
                 if (q.category === 'Daily Quest' || q.category === 'Recovery Quest') {
                     q.completed = false;
@@ -5237,12 +5308,7 @@
             syncPlayerMaxHp();
             const tier = evaluateDailyTier(ratio, gameState.player.maxHp);
 
-            if (tavernProtected && tier.rawDamage > 0) {
-                showSystemModal(
-                    '🍺 EVALUASI HARIAN // TAVERN REST DAY',
-                    `Tavern Mode sedang aktif! Penalti HP dibekukan dan Streak ${gameState.player.streak} hari tetap terlindungi penuh. Tanggal sistem maju ke ${formatReadableDate(nextDateKey)}.`
-                );
-            } else if (tier.rawDamage > 0) {
+            if (tier.rawDamage > 0) {
                 let shieldMsg = '';
                 if (tier.resetStreak) {
                     if ((gameState.player.shields || 0) > 0 && gameState.player.streak > 0) {
@@ -5254,7 +5320,7 @@
                         shieldMsg = ' Streak di-reset ke 0.';
                     }
                 } else {
-                    shieldMsg = ` Streak ${gameState.player.streak} hari tetap aman (≥80%), namun tanpa regen HP.`;
+                    shieldMsg = ` Streak ${gameState.player.streak} hari tetap aman (≥${getStreakThresholdPct()}%), namun tanpa regen HP.`;
                 }
                 takeDamage(tier.rawDamage);
                 const { wisDmgReduce } = getAttributePassives();
@@ -5267,6 +5333,9 @@
                 SoundFX.playQuestComplete();
                 if (gameState.lastStreakDate !== currentKey) {
                     gameState.player.streak += 1;
+                    if (gameState.player.streak > (gameState.player.longestStreak || 0)) {
+                        gameState.player.longestStreak = gameState.player.streak;
+                    }
                 }
                 gameState.lastStreakDate = null;
                 const healAmt = Math.min(tier.regenAmt, gameState.player.maxHp - gameState.player.hp);
@@ -5283,15 +5352,19 @@
 
         function openEditNameModal() {
             SoundFX.playClick();
-            document.getElementById('input-player-name').value = gameState.player.name;
+            document.getElementById('input-player-name').value = gameState.player.name || '';
+            const jobInput = document.getElementById('input-player-job');
+            if (jobInput) jobInput.value = gameState.player.job || 'Shadow Monarch';
             openModal('modal-edit-name');
         }
 
         function savePlayerName() {
             const val = document.getElementById('input-player-name').value.trim();
-            if (val) {
+            const jobVal = document.getElementById('input-player-job')?.value.trim();
+            if (val) gameState.player.name = val;
+            if (jobVal) gameState.player.job = jobVal;
+            if (val || jobVal) {
                 SoundFX.playCoin();
-                gameState.player.name = val;
                 saveState();
                 renderStatus();
             }
@@ -5637,8 +5710,9 @@
 
         function evaluateCalcExpression(expr) {
             if (!expr) return 0;
-            const sanitized = expr.replace(/[^0-9+\-*/.]/g, '').replace(/[+\-*/.]+$/, '');
+            let sanitized = expr.replace(/[^0-9+\-*/.]/g, '').replace(/[+\-*/.]+$/, '');
             if (!sanitized) return 0;
+            sanitized = sanitized.replace(/(^|[+\-*/])0+(?=\d)/g, '$1');
             try {
                 const res = Function('"use strict";return (' + sanitized + ')')();
                 return (typeof res === 'number' && isFinite(res)) ? Math.round(res) : 0;
@@ -5968,6 +6042,7 @@
             } else {
                 spawnFloatingReward(`📖 Grimoire Dibuka (${grimoireTotalPages} Halaman)`);
             }
+            e.target.value = '';
         }
 
         async function renderGrimoirePage(pageNum) {
@@ -6043,6 +6118,7 @@
         checkRealDayRollover();
         initTreasuryDefaults();
         currentOracleIndex = pickContextualOracleIndex();
+        if (typeof applySavedFontSettings === 'function') applySavedFontSettings();
         renderAll();
         syncSystemReminders();
         setInterval(checkScheduledReminderTick, 20000);
@@ -6334,6 +6410,9 @@
             }
 
             if (lofiRemainingSec <= 0) lofiRemainingSec = 3600;
+            if (typeof SoundFX !== 'undefined' && SoundFX.stopAmbient) {
+                SoundFX.stopAmbient();
+            }
             lofiIsPlaying = true;
 
             const btn = document.getElementById('lofi-toggle-btn');
@@ -6388,7 +6467,7 @@
         // ==========================================
         function syncAndroidHomeWidget() {
             try {
-                if (!window.AndroidBridge || typeof window.AndroidBridge.updateWidgetData !== 'function') return;
+                if (!window.AndroidBridge) return;
                 const p = gameState.player;
                 const rank = getPlayerRank(p.level);
                 const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
@@ -6396,13 +6475,13 @@
                 const totalDaily = dailyQuests.length;
                 const pct = totalDaily > 0 ? Math.round((doneCount / totalDaily) * 100) : 0;
 
-                let subtitle = `Daily Quest: ${doneCount}/${totalDaily} (${pct}%)`;
+                let subtitle = `HP ${p.hp}/${p.maxHp} • Daily: ${doneCount}/${totalDaily} (${pct}%)`;
                 if (pct >= 100 && totalDaily > 0) {
-                    subtitle = 'S-Rank Clear! Streak aman hari ini 🔥';
-                } else if (pct >= 80 && totalDaily > 0) {
-                    subtitle = `Target ≥80% tercapai! (${doneCount}/${totalDaily})`;
+                    subtitle = `S-Rank Clear! HP ${p.hp}/${p.maxHp} • Streak aman 🔥`;
+                } else if (pct >= getStreakThresholdPct() && totalDaily > 0) {
+                    subtitle = `Target ≥${getStreakThresholdPct()}% tercapai! (${doneCount}/${totalDaily}) • HP ${p.hp}`;
                 } else if (p.streak > 0) {
-                    subtitle = `Jaga ${p.streak} hari streak! (${doneCount}/${totalDaily})`;
+                    subtitle = `Jaga ${p.streak} hari streak! (${doneCount}/${totalDaily}) • HP ${p.hp}`;
                 }
 
                 // Build last 5 days array (Indo day initials: M, S, S, R, K, J, S)
@@ -6417,25 +6496,69 @@
                     d.setDate(baseDate.getDate() - i);
                     const key = formatDateKey(d);
                     const isToday = (key === activeDateStr);
-                    const isDone = isToday ? (pct >= 80 || (dailyCounts[key] || 0) > 0) : ((dailyCounts[key] || 0) > 0);
+                    const isDone = isToday
+                        ? (pct >= getStreakThresholdPct() || gameState.lastStreakDate === activeDateStr)
+                        : ((dailyCounts[key] || 0) > 0);
                     last5.push({
                         label: dayInitials[d.getDay()],
                         done: isDone
                     });
                 }
 
-                window.AndroidBridge.updateWidgetData(
-                    p.streak || 0,
-                    p.level || 1,
-                    rank.rankCode || 'E-RANK',
-                    subtitle,
-                    JSON.stringify(last5)
-                );
-            } catch (e) {}
+                if (typeof window.AndroidBridge.updateWidgetData === 'function') {
+                    window.AndroidBridge.updateWidgetData(
+                        Number(p.streak || 0),
+                        Number(p.level || 1),
+                        String(rank.rankCode || 'E-RANK'),
+                        String(subtitle),
+                        JSON.stringify(last5)
+                    );
+                }
+
+                if (typeof window.AndroidBridge.updateWidgetFull === 'function') {
+                    window.AndroidBridge.updateWidgetFull(JSON.stringify({
+                        streak: p.streak || 0,
+                        level: p.level || 1,
+                        rankCode: rank.rankCode || 'E-RANK',
+                        hp: p.hp || 0,
+                        maxHp: p.maxHp || 100,
+                        doneDaily: doneCount,
+                        totalDaily: totalDaily,
+                        pct: pct,
+                        subtitle: subtitle,
+                        last5: last5
+                    }));
+                }
+            } catch (e) {
+                console.error('Widget sync error:', e);
+            }
         }
+
+        // Auto-cek pergantian hari & paksa sinkron widget saat aplikasi dibuka kembali dari background
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                checkRealDayRollover();
+                syncAndroidHomeWidget();
+            }
+        });
+        window.addEventListener('pageshow', () => {
+            checkRealDayRollover();
+            syncAndroidHomeWidget();
+        });
+        window.addEventListener('focus', () => {
+            checkRealDayRollover();
+            syncAndroidHomeWidget();
+        });
+
+        // Cek pergantian hari tiap 30 detik kalau aplikasi dibiarkan terbuka lewat jam 00:00
+        setInterval(() => {
+            checkRealDayRollover();
+        }, 30000);
 
         applySavedFontSettings();
         syncAndroidHomeWidget();
+        setTimeout(syncAndroidHomeWidget, 800);
     </script>
+
 </body>
 </html>
