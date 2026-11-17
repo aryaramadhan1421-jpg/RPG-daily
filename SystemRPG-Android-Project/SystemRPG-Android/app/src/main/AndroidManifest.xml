@@ -23,7 +23,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Menangani Notifikasi Alarm + Pemulihan Otomatis Setelah HP Restart -->
         <receiver
             android:name=".ReminderReceiver"
             android:enabled="true"
