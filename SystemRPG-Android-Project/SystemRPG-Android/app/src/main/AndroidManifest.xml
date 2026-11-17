@@ -2,28 +2,40 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:allowBackup="true"
         android:label="SYSTEM RPG"
-        android:supportsRtl="true"
-        android:usesCleartextTraffic="true">
+        android:icon="@drawable/ic_launcher"
+        android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="false">
 
         <activity
             android:name=".MainActivity"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
-            android:exported="true"
-            android:label="SYSTEM RPG"
-            android:launchMode="singleTask">
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- Widget Home Screen SYSTEM RPG -->
         <receiver
-            android:name=".SystemStreakWidget"
+            android:name=".ReminderReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".SystemWidgetProvider"
             android:exported="true"
             android:label="SYSTEM RPG Streak">
             <intent-filter>
@@ -31,21 +43,9 @@
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/system_widget_info" />
-        </receiver>
-
-        <!-- Alias agar referensi lama SystemWidgetProvider tetap diarahkan ke widget baru -->
-        <receiver
-            android:name=".SystemWidgetProvider"
-            android:exported="true"
-            android:label="SYSTEM RPG Streak (Legacy Sync)">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/system_widget_info" />
+                android:resource="@xml/widget_info" />
         </receiver>
 
     </application>
+
 </manifest>
