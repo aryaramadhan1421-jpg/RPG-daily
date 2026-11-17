@@ -3154,6 +3154,7 @@
 
             saveState();
             renderAll();
+            syncSystemReminders();
             if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
             spawnFloatingReward(`🎯 Target Minimal Streak diatur ke ${num}%!`);
         }
@@ -4528,6 +4529,7 @@
             gameState.quests = gameState.quests.filter(q => q.id !== id);
             saveState();
             renderAll();
+            syncSystemReminders();
             spawnFloatingReward('🗑️ Quest Dihapus');
         }
 
@@ -5593,13 +5595,28 @@
             const rem = ensureReminderState();
             if (!rem.enabled) { cancelNativeSystemReminders(); return; }
             const summary = getPendingDailySummary();
+            const pct = summary.total > 0 ? Math.round((summary.done / summary.total) * 100) : 0;
+            const thresholdPct = getStreakThresholdPct();
             try {
-                if (window.AndroidBridge && typeof window.AndroidBridge.scheduleDailyReminders === 'function') {
-                    window.AndroidBridge.scheduleDailyReminders(
-                        JSON.stringify(rem.times),
-                        summary.pendingCount,
-                        gameState.player.name
-                    );
+                if (window.AndroidBridge) {
+                    if (typeof window.AndroidBridge.scheduleDailyRemindersFull === 'function') {
+                        window.AndroidBridge.scheduleDailyRemindersFull(JSON.stringify({
+                            times: rem.times,
+                            pendingCount: summary.pendingCount,
+                            doneCount: summary.done,
+                            totalCount: summary.total,
+                            pct: pct,
+                            thresholdPct: thresholdPct,
+                            playerName: gameState.player.name
+                        }));
+                    }
+                    if (typeof window.AndroidBridge.scheduleDailyReminders === 'function') {
+                        window.AndroidBridge.scheduleDailyReminders(
+                            JSON.stringify(rem.times),
+                            summary.pendingCount,
+                            gameState.player.name
+                        );
+                    }
                 }
             } catch (e) {}
         }
@@ -6525,6 +6542,7 @@
                         doneDaily: doneCount,
                         totalDaily: totalDaily,
                         pct: pct,
+                        thresholdPct: getStreakThresholdPct(),
                         subtitle: subtitle,
                         last5: last5
                     }));
