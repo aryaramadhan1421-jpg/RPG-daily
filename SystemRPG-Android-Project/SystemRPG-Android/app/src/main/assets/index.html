@@ -1062,7 +1062,7 @@
                     <label for="grimoire-pdf-input" class="font-display shadow-neon-purple" style="cursor: pointer; background: rgba(168,85,247,0.22); color: #e9d5ff; border: 1px solid rgba(192,132,252,0.5); font-size: 11px; font-weight: 700; padding: 6px 10px; border-radius: 0.65rem; white-space: nowrap;">
                         📂 Buka PDF
                     </label>
-                    <input type="file" id="grimoire-pdf-input" accept="application/pdf,.pdf" onchange="handleGrimoirePdfUpload(event)" class="hidden">
+                    <input type="file" id="grimoire-pdf-input" accept="*/*" onchange="handleGrimoirePdfUpload(event)" class="hidden">
                 </div>
 
                 <!-- Saved Bookmarks Shelf -->
@@ -5102,7 +5102,7 @@
         let grimoireRenderTask = null;
 
         if (window.pdfjsLib) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            pdfjsLib.GlobalWorkerOptions.workerSrc = '';
         }
 
         function ensureGrimoireBookmarks() {
@@ -5158,7 +5158,7 @@
             grimoireCurrentFileName = file.name;
 
             const arrayBuffer = await file.arrayBuffer();
-            const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+            const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer, disableWorker: true });
             grimoirePdfDoc = await loadingTask.promise;
             grimoireTotalPages = grimoirePdfDoc.numPages;
 
