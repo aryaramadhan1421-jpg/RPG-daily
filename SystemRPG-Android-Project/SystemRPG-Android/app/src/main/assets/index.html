@@ -2652,7 +2652,23 @@
             try {
                 gameState.muted = SoundFX.muted;
                 gameState.ambientMode = SoundFX.ambientMode;
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+                localStorage.setItem('systemRpgSaveV2', JSON.stringify(gameState));
+            try {
+                if (window.AndroidBridge && typeof window.AndroidBridge.updateWidgetData === 'function') {
+        const dQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
+        const dDone = dQuests.filter(q => q.completed).length;
+        const dPct = dQuests.length > 0 ? Math.round((dDone / dQuests.length) * 100) : 0;
+        const maxHp = getDerivedStats().maxHp;
+        window.AndroidBridge.updateWidgetData(
+            gameState.player.streak || 0,
+            gameState.player.rank || 'E-RANK',
+            gameState.player.level || 1,
+            Math.round(gameState.player.hp || 0),
+            maxHp,
+            dPct
+        );
+    }
+} catch (e) {}
             } catch (e) {
                 console.error('Gagal menyimpan state:', e);
             }
