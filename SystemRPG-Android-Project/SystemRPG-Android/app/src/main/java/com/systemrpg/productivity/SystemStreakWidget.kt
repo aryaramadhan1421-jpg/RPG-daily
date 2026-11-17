@@ -26,10 +26,16 @@ class SystemStreakWidget : AppWidgetProvider() {
 
         fun updateAllWidgets(context: Context) {
             val manager = AppWidgetManager.getInstance(context)
-            val ids = manager.getAppWidgetIds(
+            val idsNew = manager.getAppWidgetIds(
                 ComponentName(context, SystemStreakWidget::class.java)
             )
-            for (id in ids) {
+            for (id in idsNew) {
+                updateAppWidget(context, manager, id)
+            }
+            val idsLegacy = manager.getAppWidgetIds(
+                ComponentName(context, SystemWidgetProvider::class.java)
+            )
+            for (id in idsLegacy) {
                 updateAppWidget(context, manager, id)
             }
         }
@@ -44,12 +50,10 @@ class SystemStreakWidget : AppWidgetProvider() {
             val rank = prefs.getString("rank", "E-RANK") ?: "E-RANK"
             val level = prefs.getInt("level", 1)
             val dailyPct = prefs.getInt("dailyPct", 0)
-            // Format weekHistory: 7 karakter '1' atau '0', contoh "1110000" (Senin-Minggu)
             val weekHistory = prefs.getString("weekHistory", "0000000") ?: "0000000"
 
             val views = RemoteViews(context.packageName, R.layout.system_streak_widget)
 
-            // 1. Teks Streak Utama
             val dayWord = if (streak == 1) "DAY" else "DAYS"
             views.setTextViewText(R.id.widget_streak, "🔥 $streak $dayWord")
             views.setTextColor(
@@ -57,10 +61,8 @@ class SystemStreakWidget : AppWidgetProvider() {
                 if (dailyPct >= 70) Color.parseColor("#FB923C") else Color.parseColor("#38BDF8")
             )
 
-            // 2. Badge Rank & Level
             views.setTextViewText(R.id.widget_rank_lv, "$rank • Lv.$level")
 
-            // 3. Sub-judul Status Daily Quest
             val statusText = if (dailyPct >= 70) {
                 "Daily Quest: $dailyPct% Clear! • Streak Aman"
             } else {
@@ -72,50 +74,30 @@ class SystemStreakWidget : AppWidgetProvider() {
                 if (dailyPct >= 70) Color.parseColor("#4ADE80") else Color.parseColor("#CBD5E1")
             )
 
-            // 4. Deretan Centang 7 Hari (S S R K J S M)
             val dayIconIds = intArrayOf(
-                R.id.day_icon_0,
-                R.id.day_icon_1,
-                R.id.day_icon_2,
-                R.id.day_icon_3,
-                R.id.day_icon_4,
-                R.id.day_icon_5,
-                R.id.day_icon_6
+                R.id.day_icon_0, R.id.day_icon_1, R.id.day_icon_2,
+                R.id.day_icon_3, R.id.day_icon_4, R.id.day_icon_5, R.id.day_icon_6
             )
             val dayLabelIds = intArrayOf(
-                R.id.day_label_0,
-                R.id.day_label_1,
-                R.id.day_label_2,
-                R.id.day_label_3,
-                R.id.day_label_4,
-                R.id.day_label_5,
-                R.id.day_label_6
+                R.id.day_label_0, R.id.day_label_1, R.id.day_label_2,
+                R.id.day_label_3, R.id.day_label_4, R.id.day_label_5, R.id.day_label_6
             )
 
             for (i in 0 until 7) {
                 val isDone = i < weekHistory.length && weekHistory[i] == '1'
                 if (isDone) {
-                    views.setInt(
-                        dayIconIds[i],
-                        "setBackgroundResource",
-                        R.drawable.day_circle_done
-                    )
+                    views.setInt(dayIconIds[i], "setBackgroundResource", R.drawable.day_circle_done)
                     views.setTextViewText(dayIconIds[i], "✓")
                     views.setTextColor(dayIconIds[i], Color.parseColor("#0F172A"))
                     views.setTextColor(dayLabelIds[i], Color.parseColor("#22D3EE"))
                 } else {
-                    views.setInt(
-                        dayIconIds[i],
-                        "setBackgroundResource",
-                        R.drawable.day_circle_pending
-                    )
+                    views.setInt(dayIconIds[i], "setBackgroundResource", R.drawable.day_circle_pending)
                     views.setTextViewText(dayIconIds[i], "•")
                     views.setTextColor(dayIconIds[i], Color.parseColor("#64748B"))
                     views.setTextColor(dayLabelIds[i], Color.parseColor("#94A3B8"))
                 }
             }
 
-            // 5. Klik Widget -> Buka SYSTEM RPG
             val intent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
