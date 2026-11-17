@@ -266,6 +266,16 @@
             animation: modalFadeIn 0.22s ease-out forwards;
         }
 
+
+        @keyframes critFlash {
+            0% { box-shadow: 0 0 0 rgba(251, 191, 36, 0); border-color: rgba(251, 191, 36, 0.9); }
+            40% { box-shadow: 0 0 24px rgba(251, 191, 36, 0.65); border-color: #fbbf24; }
+            100% { box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.04); border-color: rgba(0, 240, 255, 0.22); }
+        }
+        .animate-crit-flash {
+            animation: critFlash 0.9s ease-out;
+        }
+
         /* Modal Backdrop */
         .modal-backdrop {
             position: fixed;
@@ -357,10 +367,10 @@
             </div>
 
             <!-- Streak & Shield Pill -->
-            <div class="pill-streak" title="Daily Streak & Streak Shield Aktif">
+            <div class="pill-streak" title="Daily Streak & Streak Freeze (Maks 2)">
                 <svg class="icon animate-fire" width="14" height="14" viewBox="0 0 24 24" fill="#f97316" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
                 <span id="header-streak" class="font-display" style="font-weight: 700; font-size: 0.75rem; color: #fb923c;">0</span>
-                <span id="header-shield-wrap" class="hidden flex items-center" style="margin-left: 3px; padding-left: 4px; border-left: 1px solid rgba(56,189,248,0.35); color: #38bdf8; font-size: 11px; font-weight: 700;" title="Streak Shield Aktif">
+                <span id="header-shield-wrap" class="hidden flex items-center" style="margin-left: 3px; padding-left: 4px; border-left: 1px solid rgba(56,189,248,0.35); color: #38bdf8; font-size: 11px; font-weight: 700;" title="Streak Freeze Aktif (Maks 2)">
                     🛡️<span id="header-shields" class="font-display" style="margin-left: 1px;">0</span>
                 </span>
             </div>
@@ -418,10 +428,13 @@
                             <svg class="icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
                         </div>
                         <div>
-                            <div class="flex items-center gap-1-5">
-                                <span id="player-rank-badge" class="font-display" style="font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 4px;">
-                                    NOVICE
-                                </span>
+                            <div class="flex flex-wrap items-center gap-1-5">
+                                <button type="button" onclick="openRankRoadmapModal()" id="player-rank-badge" class="font-display" style="font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; cursor: pointer;" title="Klik untuk melihat Roadmap semua Rank">
+                                    E-RANK • NOVICE
+                                </button>
+                                <button type="button" onclick="openRankRoadmapModal()" class="font-display" style="font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: rgba(30,41,59,0.85); color: #94a3b8; border: 1px solid #334155;" title="Lihat Semua Tingkatan Rank">
+                                    🏆 Rank
+                                </button>
                                 <span id="xp-multiplier-badge" class="hidden font-display" style="font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: rgba(249,115,22,0.2); color: #fdba74; border: 1px solid rgba(249,115,22,0.4);">
                                     1.0x XP
                                 </span>
@@ -462,10 +475,11 @@
                 <!-- HP & XP Bars -->
                 <div style="margin-top: 1rem;" class="space-y-3">
                     <div>
-                        <div class="flex justify-between" style="font-size: 0.75rem; margin-bottom: 4px;">
-                            <span class="font-display flex items-center gap-1" style="font-weight: 600; color: var(--rose-400);">
+                        <div class="flex justify-between items-center" style="font-size: 0.75rem; margin-bottom: 4px;">
+                            <span class="font-display flex items-center gap-1-5" style="font-weight: 600; color: var(--rose-400);">
                                 <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="#f43f5e" stroke="#f43f5e" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
                                 HP (Vitality)
+                                <span id="hp-condition-badge" class="font-display" style="font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: rgba(16,185,129,0.18); color: #34d399; border: 1px solid rgba(16,185,129,0.4);">PRIMA (+10%)</span>
                             </span>
                             <span id="hp-text" class="font-display" style="font-weight: 700; color: #cbd5e1;">100 / 100</span>
                         </div>
@@ -486,6 +500,21 @@
                             <div id="xp-bar" class="progress-fill" style="width: 0%; background: linear-gradient(to right, #06b6d4, #a855f7);"></div>
                         </div>
                     </div>
+
+                    <!-- Rank Promotion Progress Bar -->
+                    <div onclick="openRankRoadmapModal()" style="cursor: pointer; background: rgba(2,6,23,0.65); border: 1px solid rgba(51,65,85,0.75); border-radius: 0.65rem; padding: 0.5rem 0.65rem;" title="Klik untuk melihat Roadmap & Syarat Naik Rank">
+                        <div class="flex justify-between items-center" style="font-size: 11px; margin-bottom: 4px;">
+                            <span id="rank-next-label" class="font-display" style="font-weight: 700; color: #d8b4fe;">
+                                4 Level lagi menuju D-RANK • AWAKENED
+                            </span>
+                            <span id="rank-target-lvl" class="font-display" style="font-size: 10px; font-weight: 700; color: var(--cyan-400);">
+                                Lv.1 / Lv.5
+                            </span>
+                        </div>
+                        <div class="progress-track-sm" style="background: #0f172a; border: 1px solid #1e293b;">
+                            <div id="rank-progress-bar" class="progress-fill" style="width: 10%; background: linear-gradient(to right, #a855f7, #fbbf24);"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -496,7 +525,7 @@
                         <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
                         Status Atribut
                     </h3>
-                    <span style="font-size: 11px; color: var(--text-muted);">Auto-upgrade via Quests</span>
+                    <span id="stat-scale-badge" class="font-display" style="font-size: 10px; font-weight: 700; color: #67e8f9; background: rgba(6,182,212,0.12); border: 1px solid rgba(6,182,212,0.3); padding: 2px 7px; border-radius: 4px;">Skala Tier: 100</span>
                 </div>
 
                 <!-- Radar Chart SVG -->
@@ -527,13 +556,16 @@
                                 <span class="stat-badge" style="background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.35); color: var(--rose-400);">STR</span>
                                 <div>
                                     <p style="font-size: 0.75rem; font-weight: 600; color: #e2e8f0;">Strength</p>
-                                    <p style="font-size: 10px; color: var(--text-muted);">Fisik, Olahraga & Kesehatan</p>
+                                    <p id="perk-STR-text" style="font-size: 10px; color: #fda4af;">Pasif: +0 Max HP (Fisik & Vitality)</p>
                                 </div>
                             </div>
-                            <span id="stat-STR-val" class="font-display" style="font-weight: 700; font-size: 1.125rem; color: var(--rose-400);">10</span>
+                            <div class="text-right">
+                                <span id="stat-STR-val" class="font-display" style="font-weight: 700; font-size: 1rem; color: var(--rose-400); display: block;">Lv.1</span>
+                                <span id="stat-STR-xp" class="font-display" style="font-size: 10px; color: var(--text-muted);">0 / 100 XP</span>
+                            </div>
                         </div>
                         <div class="progress-track-sm">
-                            <div id="stat-STR-bar" class="progress-fill" style="width: 20%; background: var(--rose-500);"></div>
+                            <div id="stat-STR-bar" class="progress-fill" style="width: 0%; background: var(--rose-500);"></div>
                         </div>
                     </div>
 
@@ -544,13 +576,16 @@
                                 <span class="stat-badge" style="background: rgba(6,182,212,0.15); border: 1px solid rgba(6,182,212,0.35); color: var(--cyan-400);">INT</span>
                                 <div>
                                     <p style="font-size: 0.75rem; font-weight: 600; color: #e2e8f0;">Intelligence</p>
-                                    <p style="font-size: 10px; color: var(--text-muted);">Belajar, Kerja & Fokus</p>
+                                    <p id="perk-INT-text" style="font-size: 10px; color: #67e8f9;">Pasif: +0% XP (Belajar & Fokus)</p>
                                 </div>
                             </div>
-                            <span id="stat-INT-val" class="font-display" style="font-weight: 700; font-size: 1.125rem; color: var(--cyan-400);">10</span>
+                            <div class="text-right">
+                                <span id="stat-INT-val" class="font-display" style="font-weight: 700; font-size: 1rem; color: var(--cyan-400); display: block;">Lv.1</span>
+                                <span id="stat-INT-xp" class="font-display" style="font-size: 10px; color: var(--text-muted);">0 / 100 XP</span>
+                            </div>
                         </div>
                         <div class="progress-track-sm">
-                            <div id="stat-INT-bar" class="progress-fill" style="width: 20%; background: var(--cyan-400);"></div>
+                            <div id="stat-INT-bar" class="progress-fill" style="width: 0%; background: var(--cyan-400);"></div>
                         </div>
                     </div>
 
@@ -561,13 +596,16 @@
                                 <span class="stat-badge" style="background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.35); color: var(--purple-400);">WIS</span>
                                 <div>
                                     <p style="font-size: 0.75rem; font-weight: 600; color: #e2e8f0;">Wisdom</p>
-                                    <p style="font-size: 10px; color: var(--text-muted);">Ibadah, Jurnal & Mindfulness</p>
+                                    <p id="perk-WIS-text" style="font-size: 10px; color: #d8b4fe;">Pasif: -0% Damage Penalti (Mindfulness)</p>
                                 </div>
                             </div>
-                            <span id="stat-WIS-val" class="font-display" style="font-weight: 700; font-size: 1.125rem; color: var(--purple-400);">10</span>
+                            <div class="text-right">
+                                <span id="stat-WIS-val" class="font-display" style="font-weight: 700; font-size: 1rem; color: var(--purple-400); display: block;">Lv.1</span>
+                                <span id="stat-WIS-xp" class="font-display" style="font-size: 10px; color: var(--text-muted);">0 / 100 XP</span>
+                            </div>
                         </div>
                         <div class="progress-track-sm">
-                            <div id="stat-WIS-bar" class="progress-fill" style="width: 20%; background: #a855f7;"></div>
+                            <div id="stat-WIS-bar" class="progress-fill" style="width: 0%; background: #a855f7;"></div>
                         </div>
                     </div>
 
@@ -578,13 +616,16 @@
                                 <span class="stat-badge" style="background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.35); color: var(--amber-400);">CHR</span>
                                 <div>
                                     <p style="font-size: 0.75rem; font-weight: 600; color: #e2e8f0;">Charisma</p>
-                                    <p style="font-size: 10px; color: var(--text-muted);">Sosial, Relasi & Komunikasi</p>
+                                    <p id="perk-CHR-text" style="font-size: 10px; color: #fcd34d;">Pasif: Diskon Shop 0% (Relasi & Sosial)</p>
                                 </div>
                             </div>
-                            <span id="stat-CHR-val" class="font-display" style="font-weight: 700; font-size: 1.125rem; color: var(--amber-400);">10</span>
+                            <div class="text-right">
+                                <span id="stat-CHR-val" class="font-display" style="font-weight: 700; font-size: 1rem; color: var(--amber-400); display: block;">Lv.1</span>
+                                <span id="stat-CHR-xp" class="font-display" style="font-size: 10px; color: var(--text-muted);">0 / 100 XP</span>
+                            </div>
                         </div>
                         <div class="progress-track-sm">
-                            <div id="stat-CHR-bar" class="progress-fill" style="width: 20%; background: var(--amber-400);"></div>
+                            <div id="stat-CHR-bar" class="progress-fill" style="width: 0%; background: var(--amber-400);"></div>
                         </div>
                     </div>
                 </div>
@@ -654,7 +695,7 @@
                     </h3>
                 </div>
                 <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">
-                    Evaluasi misi pada tanggal terpilih lalu lanjut ke hari berikutnya. Jika ada <span style="color: #67e8f9;">Daily Quest</span> yang belum selesai, HP akan berkurang!
+                    Evaluasi misi pada tanggal terpilih lalu lanjut ke hari berikutnya. Target aman minimal <span style="color: #67e8f9;">80% Daily Quest</span> selesai. Jika kurang dari 80%, HP berkurang & Streak reset!
                 </p>
                 <div class="flex gap-2">
                     <button onclick="simulateNextDay()" class="flex-1 font-display shadow-neon-blue flex items-center justify-center gap-1-5" style="background: linear-gradient(to right, #0891b2, #2563eb); color: #fff; font-weight: 700; font-size: 0.875rem; padding: 0.625rem 0.75rem; border-radius: 0.75rem;">
@@ -667,6 +708,58 @@
                 </div>
 
             </div>
+
+            <!-- Reminder Notifikasi HP & Backup Data -->
+            <div class="system-card space-y-3" style="border-color: rgba(34, 211, 238, 0.3);">
+                <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--bg-slate-800); padding-bottom: 0.5rem;">
+                    <h3 class="font-display flex items-center gap-1-5" style="font-weight: 700; font-size: 0.75rem; text-transform: uppercase; color: var(--cyan-400);">
+                        <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        Reminder Notifikasi Layar HP
+                    </h3>
+                    <span id="notif-status-badge" class="font-display" style="font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 9999px; background: rgba(100,116,139,0.2); color: #94a3b8; border: 1px solid #475569;">
+                        NONAKTIF
+                    </span>
+                </div>
+                <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45;">
+                    Munculkan notifikasi pop-up di layar atas HP jika masih ada Daily Quest yang belum dikerjakan atau lupa buka SYSTEM RPG.
+                </p>
+
+                <div class="grid grid-cols-3 gap-1-5">
+                    <div>
+                        <label style="display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 3px;">🌅 Pagi</label>
+                        <input type="time" id="rem-time-pagi" value="07:30" onchange="saveReminderSettings()" class="input-cyber font-display" style="font-size: 0.75rem; padding: 0.35rem 0.4rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 3px;">🌇 Sore</label>
+                        <input type="time" id="rem-time-sore" value="16:30" onchange="saveReminderSettings()" class="input-cyber font-display" style="font-size: 0.75rem; padding: 0.35rem 0.4rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 3px;">🌙 Malam</label>
+                        <input type="time" id="rem-time-malam" value="20:30" onchange="saveReminderSettings()" class="input-cyber font-display" style="font-size: 0.75rem; padding: 0.35rem 0.4rem;">
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <button type="button" id="btn-toggle-notif" onclick="togglePushReminder()" class="flex-1 font-display flex items-center justify-center gap-1-5" style="background: rgba(6,182,212,0.18); color: #67e8f9; border: 1px solid rgba(6,182,212,0.45); font-weight: 700; font-size: 0.75rem; padding: 0.55rem 0.65rem; border-radius: 0.75rem;">
+                        🔔 Aktifkan Notifikasi
+                    </button>
+                    <button type="button" onclick="sendTestSystemNotification()" class="font-display" style="background: var(--bg-slate-900); color: #fcd34d; border: 1px solid rgba(245,158,11,0.45); font-weight: 700; font-size: 0.75rem; padding: 0.55rem 0.75rem; border-radius: 0.75rem;" title="Kirim contoh notifikasi ke layar atas HP sekarang">
+                        Tes Pop-up
+                    </button>
+                </div>
+
+                <!-- Backup & Restore JSON -->
+                <div style="padding-top: 0.5rem; border-top: 1px solid rgba(30,41,59,0.85);" class="flex gap-2">
+                    <button type="button" onclick="exportBackupData()" class="flex-1 font-display" style="background: var(--bg-slate-900); color: #cbd5e1; border: 1px solid #334155; font-weight: 700; font-size: 11px; padding: 0.45rem; border-radius: 0.65rem;">
+                        💾 Backup JSON
+                    </button>
+                    <label class="flex-1 font-display text-center" style="cursor: pointer; background: var(--bg-slate-900); color: #cbd5e1; border: 1px solid #334155; font-weight: 700; font-size: 11px; padding: 0.45rem; border-radius: 0.65rem;">
+                        📂 Restore JSON
+                        <input type="file" accept=".json,application/json" onchange="importBackupData(event)" style="display: none;">
+                    </label>
+                </div>
+            </div>
+
         </section>
 
         <!-- ==================== TAB 2: QUESTS ==================== -->
@@ -691,8 +784,8 @@
             <!-- Daily Quest Progress Summary Bar -->
             <div class="system-card" style="padding: 0.75rem; border-radius: 0.75rem;">
                 <div class="flex justify-between" style="font-size: 0.75rem; margin-bottom: 4px;">
-                    <span class="font-display" style="font-weight: 700; color: #67e8f9; text-transform: uppercase;">Daily Habit Completion</span>
-                    <span id="daily-progress-text" class="font-display" style="font-weight: 700; color: #fff;">0 / 0</span>
+                    <span class="font-display" style="font-weight: 700; color: #67e8f9; text-transform: uppercase;">Daily Habit (Target Streak ≥ 80%)</span>
+                    <span id="daily-progress-text" class="font-display" style="font-weight: 700; color: #fff;">0 / 0 (0%)</span>
                 </div>
                 <div class="progress-track" style="height: 0.5rem;">
                     <div id="daily-progress-bar" class="progress-fill" style="width: 0%; background: linear-gradient(to right, #22d3ee, #34d399);"></div>
@@ -775,12 +868,19 @@
             </div>
 
             <!-- Time-of-Day Sub-tabs (Pagi / Siang / Sore / Malam) -->
-            <div class="flex gap-1-5" style="overflow-x: auto; padding-bottom: 4px;">
+            <div class="flex gap-1-5" style="overflow-x: auto; padding-bottom: 2px;">
                 <button onclick="setTimeSlotFilter('ALL')" id="time-filter-ALL" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: rgba(168,85,247,0.22); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.5); white-space: nowrap;">🕒 Semua Waktu</button>
                 <button onclick="setTimeSlotFilter('Pagi')" id="time-filter-Pagi" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;">🌅 Pagi</button>
                 <button onclick="setTimeSlotFilter('Siang')" id="time-filter-Siang" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;">☀️ Siang</button>
                 <button onclick="setTimeSlotFilter('Sore')" id="time-filter-Sore" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;">🌇 Sore</button>
                 <button onclick="setTimeSlotFilter('Malam')" id="time-filter-Malam" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;">🌙 Malam</button>
+            </div>
+
+            <!-- Completion Status Filter Tabs (Semua | Aktif | Selesai) -->
+            <div class="grid grid-cols-3 gap-1-5" style="padding-bottom: 2px;">
+                <button onclick="setQuestStatusFilter('ALL')" id="status-filter-ALL" class="status-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.45);">Semua</button>
+                <button onclick="setQuestStatusFilter('ACTIVE')" id="status-filter-ACTIVE" class="status-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);">Aktif (Belum)</button>
+                <button onclick="setQuestStatusFilter('DONE')" id="status-filter-DONE" class="status-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);">Selesai</button>
             </div>
 
             <!-- Quest List Container -->
@@ -888,7 +988,7 @@
                     <div style="height: 1.5rem; width: 1px; background: var(--bg-slate-800);"></div>
                     <div class="text-center">
                         <span style="font-size: 10px; color: var(--text-muted); display: block; text-transform: uppercase;">Stat Bonus</span>
-                        <span class="font-display" style="font-weight: 700; font-size: 0.875rem; color: var(--purple-400);">+2 INT</span>
+                        <span class="font-display" style="font-weight: 700; font-size: 0.875rem; color: var(--purple-400);">+30 INT XP</span>
                     </div>
                 </div>
 
@@ -948,7 +1048,8 @@
                         <label style="display: block; font-size: 0.75rem; color: #cbd5e1; margin-bottom: 4px;">Efek Item</label>
                         <select id="s-type" class="input-cyber" style="font-size: 0.75rem;">
                             <option value="reward">Real-Life Reward</option>
-                            <option value="potion">Heal +30 HP</option>
+                            <option value="potion">Minor Potion (+25% Max HP)</option>
+                            <option value="elixir">Elixir of Vitality (+100% Max HP)</option>
                             <option value="shield">Streak Shield (+1)</option>
                         </select>
                     </div>
@@ -1026,7 +1127,7 @@
                 Selamat! Kamu telah mencapai <span id="levelup-new-lvl" style="font-weight: 700; color: var(--cyan-400);">Level 2</span>.
             </p>
             <div style="background: rgba(15,23,42,0.9); border: 1px solid #334155; border-radius: 0.75rem; padding: 0.75rem; margin-top: 1rem; font-size: 0.75rem; text-align: left;" class="space-y-1">
-                <p style="color: var(--emerald-400);">✓ HP dipulihkan penuh (100/100)</p>
+                <p style="color: var(--emerald-400);">✓ HP dipulihkan penuh sesuai Max HP</p>
                 <p style="color: #d8b4fe;">★ Rank: <span id="levelup-new-rank" style="font-weight: 700;">Novice</span></p>
             </div>
             <button onclick="closeModal('modal-levelup')" class="w-full font-display" style="margin-top: 1.25rem; background: var(--cyan-500); color: #020617; font-weight: 700; padding: 0.625rem; border-radius: 0.75rem;">
@@ -1066,7 +1167,7 @@
         <div class="system-card max-w-xs w-full text-center modal-enter" style="border-color: rgba(244,63,94,0.5); padding: 1.25rem;">
             <svg class="icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2" style="margin: 0 auto 0.5rem auto;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <h3 class="font-display" style="font-weight: 700; font-size: 1.125rem; color: #fff;">RESET DATA SISTEM?</h3>
-            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 1rem;">Semua progres Level, Stat, Gold, dan Quest akan dikembalikan ke data awal demo.</p>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 1rem;">Semua progres akan di-reset bersih ke awal (Level 1, 0 XP, 0 Gold, 0 Streak).</p>
             <div class="flex gap-2">
                 <button onclick="closeModal('modal-reset')" class="flex-1 font-display" style="background: var(--bg-slate-800); color: #cbd5e1; font-weight: 700; padding: 0.5rem; border-radius: 0.75rem; font-size: 0.875rem;">Batal</button>
                 <button onclick="confirmResetData()" class="flex-1 font-display" style="background: #e11d48; color: #fff; font-weight: 700; padding: 0.5rem; border-radius: 0.75rem; font-size: 0.875rem;">Reset</button>
@@ -1153,7 +1254,8 @@
                     <label style="display: block; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">Tipe Item</label>
                     <select id="edit-s-type" class="input-cyber" style="font-size: 0.75rem;">
                         <option value="reward">Reward</option>
-                        <option value="potion">Potion (+30 HP)</option>
+                        <option value="potion">Minor Potion (+25% Max HP)</option>
+                        <option value="elixir">Elixir (+100% Max HP)</option>
                         <option value="shield">Streak Shield</option>
                     </select>
                 </div>
@@ -1205,6 +1307,58 @@
             </div>
             <p style="font-size: 0.75rem; color: var(--text-muted);">Pilih gelar aktif untuk mendapatkan bonus pasif permanen:</p>
             <div id="titles-list" class="space-y-2" style="max-height: 16rem; overflow-y: auto; padding-right: 4px;"></div>
+        </div>
+    </div>
+
+    <!-- Rank Roadmap Modal -->
+    <div id="modal-rank-roadmap" class="hidden modal-backdrop">
+        <div class="system-card max-w-sm w-full modal-enter space-y-3" style="border-color: rgba(168,85,247,0.55); padding: 1.25rem;">
+            <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--bg-slate-800); padding-bottom: 0.5rem;">
+                <h3 class="font-display flex items-center gap-1-5" style="font-weight: 700; font-size: 1.125rem; color: #d8b4fe;">
+                    <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    HUNTER RANK ROADMAP
+                </h3>
+                <button onclick="closeModal('modal-rank-roadmap')" style="color: var(--text-muted);">
+                    <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.45;">
+                Naikkan Level Hunter untuk membuka tingkatan Rank baru dan mendapatkan <span style="color: #fcd34d; font-weight: 600;">Bonus Multiplier Pasif</span> otomatis:
+            </p>
+            <div id="rank-roadmap-list" class="space-y-2" style="max-height: 18rem; overflow-y: auto; padding-right: 4px;"></div>
+            <button onclick="closeModal('modal-rank-roadmap')" class="w-full font-display" style="background: var(--bg-slate-800); color: #fff; font-weight: 700; padding: 0.55rem; border-radius: 0.75rem; border: 1px solid #475569; font-size: 0.875rem;">
+                TUTUP ROADMAP
+            </button>
+        </div>
+    </div>
+
+
+    <!-- Daily Awakening Journal Modal (Fitur D) -->
+    <div id="modal-daily-journal" class="hidden modal-backdrop">
+        <div class="system-card max-w-xs w-full modal-enter space-y-3" style="border-color: rgba(168,85,247,0.6); padding: 1.25rem;">
+            <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--bg-slate-800); padding-bottom: 0.5rem;">
+                <h3 class="font-display" style="font-weight: 700; font-size: 1rem; color: #d8b4fe;">📜 AWAKENING JOURNAL</h3>
+                <button type="button" onclick="closeModal('modal-daily-journal')" style="color: var(--text-muted);">✕</button>
+            </div>
+            <p style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.45;">
+                Isi refleksi singkat sebelum menutup hari untuk mendapatkan bonus <span style="color: #c084fc; font-weight: 700;">+15 WIS XP</span> (opsional):
+            </p>
+            <div>
+                <label style="display: block; font-size: 11px; color: #67e8f9; margin-bottom: 3px;">1. Hal yang disyukuri / pencapaian hari ini:</label>
+                <input type="text" id="journal-gratitude" placeholder="Contoh: Berhasil selesaikan olahraga & belajar Jepang" class="input-cyber" style="font-size: 0.75rem;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 11px; color: #fcd34d; margin-bottom: 3px;">2. Fokus evaluasi untuk besok:</label>
+                <input type="text" id="journal-improve" placeholder="Contoh: Tidur lebih awal sebelum jam 22:30" class="input-cyber" style="font-size: 0.75rem;">
+            </div>
+            <div class="flex gap-2">
+                <button type="button" onclick="confirmJournalAndAdvance(false)" class="flex-1 font-display" style="background: var(--bg-slate-800); color: #cbd5e1; font-weight: 700; padding: 0.55rem; border-radius: 0.75rem; font-size: 0.75rem;">
+                    Lewati & Lanjut
+                </button>
+                <button type="button" onclick="confirmJournalAndAdvance(true)" class="flex-1 font-display shadow-neon-purple" style="background: linear-gradient(to right, #9333ea, #06b6d4); color: #fff; font-weight: 700; padding: 0.55rem; border-radius: 0.75rem; font-size: 0.75rem;">
+                    Simpan (+15 WIS)
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1317,6 +1471,25 @@
                     gain.connect(this.ctx.destination);
                     osc.start(now);
                     osc.stop(now + n.d + 0.02);
+                });
+            },
+
+            playCritical() {
+                if (this.muted) return;
+                this.init();
+                const notes = [659.25, 880, 1174.66, 1567.98];
+                notes.forEach((freq, idx) => {
+                    const now = this.ctx.currentTime + idx * 0.05;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now);
+                    gain.gain.setValueAtTime(0.14, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.26);
                 });
             },
 
@@ -1883,19 +2056,25 @@
             player: {
                 name: 'Sung Jin-Woo',
                 level: 1,
-                xp: 35,
+                xp: 0,
                 hp: 100,
                 maxHp: 100,
-                gold: 250,
-                streak: 2,
-                shields: 1,
+                gold: 0,
+                streak: 0,
+                shields: 0,
                 activeTitle: 't_novice',
-                dungeonClears: 1,
+                dungeonClears: 0,
                 stats: {
-                    STR: 12,
-                    INT: 14,
-                    WIS: 11,
-                    CHR: 10
+                    STR: 1,
+                    INT: 1,
+                    WIS: 1,
+                    CHR: 1
+                },
+                statXp: {
+                    STR: 0,
+                    INT: 0,
+                    WIS: 0,
+                    CHR: 0
                 }
             },
             quests: [
@@ -1924,10 +2103,19 @@
             shop: [
                 {
                     id: 's1',
-                    title: 'Health Potion (+30 HP)',
-                    cost: 150,
+                    title: 'Minor Health Potion (+25% Max HP)',
+                    cost: 120,
                     type: 'potion',
-                    desc: 'Memulihkan 30 poin Vitality (HP) secara instan.'
+                    healPct: 0.25,
+                    desc: 'Memulihkan 25% Max HP secara instan.'
+                },
+                {
+                    id: 's_elixir',
+                    title: 'Elixir of Vitality (+100% Max HP)',
+                    cost: 350,
+                    type: 'elixir',
+                    healPct: 1.0,
+                    desc: 'Memulihkan HP hingga penuh (100% Max HP) dalam kondisi darurat.'
                 },
                 {
                     id: 's2',
@@ -1938,10 +2126,10 @@
                 },
                 {
                     id: 's3',
-                    title: 'Streak Shield (Pelindung Streak 1x)',
+                    title: 'Streak Freeze (Pelindung Streak • Maks 2)',
                     cost: 400,
                     type: 'shield',
-                    desc: 'Otomatis menahan Streak agar tidak reset ke 0 saat ada misi terlewat.'
+                    desc: 'Otomatis menahan Streak saat terlewat (Maksimal stok 2 di inventori).'
                 },
                 {
                     id: 's4',
@@ -1977,31 +2165,31 @@
             {
                 id: 't_wolf',
                 name: 'Wolf Slayer',
-                reqText: 'Capai Streak Harian minimal 3 Hari',
+                reqText: 'Capai Streak Harian minimal 7 Hari berturut-turut',
                 buffText: '+10% Bonus Gold dari semua misi',
                 xpBonus: 0,
                 goldBonus: 0.10,
-                checkUnlocked: (state) => state.player.streak >= 3
+                checkUnlocked: (state) => state.player.streak >= 7
             },
             {
                 id: 't_iron',
                 name: 'Iron Will',
-                reqText: 'Selesaikan minimal 3x Deep Focus Dungeon',
+                reqText: 'Selesaikan minimal 5x Deep Focus Dungeon',
                 buffText: '+10% Bonus XP dari semua misi',
                 xpBonus: 0.10,
                 goldBonus: 0,
-                checkUnlocked: (state) => (state.player.dungeonClears || 0) >= 3
+                checkUnlocked: (state) => (state.player.dungeonClears || 0) >= 5
             },
             {
                 id: 't_monarch',
                 name: 'Monarch of Shadows',
-                reqText: 'Capai Level 10 atau total atribut >= 80',
+                reqText: 'Capai Level 15 atau total Level atribut >= 60',
                 buffText: '+15% XP & +15% Gold Permanen',
                 xpBonus: 0.15,
                 goldBonus: 0.15,
                 checkUnlocked: (state) => {
                     const s = state.player.stats;
-                    return state.player.level >= 10 || (s.STR + s.INT + s.WIS + s.CHR) >= 80;
+                    return state.player.level >= 15 || (s.STR + s.INT + s.WIS + s.CHR) >= 60;
                 }
             }
         ];
@@ -2050,31 +2238,11 @@
             const todayKey = formatDateKey(today);
             state.selectedDate = todayKey;
             state.lastRealDate = todayKey;
-
-            const sampleCounts = [2, 3, 1, 4, 3, 5, 2, 4, 5, 4, 2, 6, 3, 0];
-            const sampleLogs = [];
-
-            for (let i = 13; i >= 1; i--) {
-                const d = new Date(today);
-                d.setDate(today.getDate() - i);
-                const key = formatDateKey(d);
-                const count = sampleCounts[13 - i];
-                state.history.dailyCounts[key] = count;
-
-                if (count > 0) {
-                    sampleLogs.unshift({
-                        id: 'log_demo_' + i,
-                        title: i % 2 === 0 ? 'Latihan Fisik / Olahraga (Push-up, Lari, atau Stretching 20m)' : 'Fokus Belajar / Upgrade Skill Utama Minimal 45 Menit',
-                        type: 'Daily Quest',
-                        stat: i % 2 === 0 ? 'STR' : 'INT',
-                        xp: i % 2 === 0 ? 40 : 45,
-                        gold: i % 2 === 0 ? 35 : 40,
-                        dateStr: key
-                    });
-                }
-            }
-
-            state.history.logs = sampleLogs;
+            state.lastStreakDate = null;
+            state.history = {
+                dailyCounts: {},
+                logs: []
+            };
             return state;
         }
 
@@ -2211,8 +2379,8 @@
             if (gameState.lastOracleClaimDate === todayStr) return;
             SoundFX.playQuestComplete();
             gameState.lastOracleClaimDate = todayStr;
-            addRewards(5, 5, 'WIS', 1, true);
-            spawnFloatingReward('📜 Petuah Diterima: +5 XP | +5 Gold | +1 WIS');
+            addRewards(5, 5, 'WIS', 10, true);
+            spawnFloatingReward('📜 Petuah Diterima: +5 XP | +5 Gold | +10 WIS XP');
             saveState();
             renderOracle();
         }
@@ -2242,6 +2410,7 @@
 
         let currentQuestFilter = 'ALL';
         let currentTimeSlotFilter = 'ALL';
+        let currentQuestStatusFilter = 'ALL'; // 'ALL' | 'ACTIVE' | 'DONE'
         let questSearchQuery = '';
         let shopSearchQuery = '';
         let showAllHistoryLogs = false;
@@ -2263,13 +2432,49 @@
                     if (!parsed.player.activeTitle) parsed.player.activeTitle = 't_novice';
                     if (!Array.isArray(parsed.redeemHistory)) parsed.redeemHistory = [];
                     if (!Array.isArray(parsed.customQuotes)) parsed.customQuotes = [];
+                    if (!parsed.history.slotCombosClaimed) parsed.history.slotCombosClaimed = {};
+                    if (!Array.isArray(parsed.history.journals)) parsed.history.journals = [];
+                    if (!parsed.reminders) {
+                        parsed.reminders = { enabled: false, times: { Pagi: '07:30', Sore: '16:30', Malam: '20:30' }, lastFired: {} };
+                    }
                     if (typeof parsed.lastOracleClaimDate === 'undefined') parsed.lastOracleClaimDate = null;
                     if (typeof parsed.player.dungeonClears !== 'number') parsed.player.dungeonClears = 0;
                     if (typeof parsed.player.shields !== 'number') parsed.player.shields = 0;
+                    if (parsed.player.shields > 2) parsed.player.shields = 2;
+                    if (!parsed.player.statXp) {
+                        parsed.player.statXp = { STR: 0, INT: 0, WIS: 0, CHR: 0 };
+                        // Migrate old inflated stats (which started at 10) down to realistic Stat Level starting from 1
+                        ['STR', 'INT', 'WIS', 'CHR'].forEach(st => {
+                            const oldVal = parsed.player.stats[st] || 10;
+                            parsed.player.stats[st] = Math.max(1, Math.min(100, oldVal >= 10 ? (oldVal - 9) : oldVal));
+                        });
+                    }
                     if (Array.isArray(parsed.quests)) {
                         parsed.quests.forEach(q => {
                             if (!q.timeSlot) q.timeSlot = inferQuestTimeSlot(q);
                         });
+                    }
+                    if (Array.isArray(parsed.shop)) {
+                        const s1Item = parsed.shop.find(s => s.id === 's1');
+                        if (s1Item && s1Item.title === 'Health Potion (+30 HP)') {
+                            s1Item.title = 'Minor Health Potion (+25% Max HP)';
+                            s1Item.cost = 120;
+                            s1Item.healPct = 0.25;
+                            s1Item.desc = 'Memulihkan 25% Max HP secara instan.';
+                        }
+                        if (!parsed.shop.some(s => s.id === 's_elixir' || s.type === 'elixir')) {
+                            const s1Idx = parsed.shop.findIndex(s => s.id === 's1');
+                            const elixirObj = {
+                                id: 's_elixir',
+                                title: 'Elixir of Vitality (+100% Max HP)',
+                                cost: 350,
+                                type: 'elixir',
+                                healPct: 1.0,
+                                desc: 'Memulihkan HP hingga penuh (100% Max HP) dalam kondisi darurat.'
+                            };
+                            if (s1Idx >= 0) parsed.shop.splice(s1Idx + 1, 0, elixirObj);
+                            else parsed.shop.unshift(elixirObj);
+                        }
                     }
                     return parsed;
                 }
@@ -2279,11 +2484,50 @@
             return initDemoHistory(JSON.parse(JSON.stringify(DEFAULT_STATE)));
         }
 
+        function evaluateDailyTier(ratio, maxHp) {
+            if (ratio >= 1.0) {
+                return {
+                    rank: 'S-Rank (Perfect Clear)',
+                    penaltyRate: 0,
+                    rawDamage: 0,
+                    regenAmt: Math.round(maxHp * 0.15),
+                    resetStreak: false
+                };
+            } else if (ratio >= 0.8) {
+                return {
+                    rank: 'A-Rank (Minor Slip)',
+                    penaltyRate: 0.10,
+                    rawDamage: Math.max(1, Math.round(maxHp * 0.10)),
+                    regenAmt: 0,
+                    resetStreak: false
+                };
+            } else if (ratio >= 0.5) {
+                return {
+                    rank: 'B-Rank (Sluggish)',
+                    penaltyRate: 0.25,
+                    rawDamage: Math.max(1, Math.round(maxHp * 0.25)),
+                    regenAmt: 0,
+                    resetStreak: true
+                };
+            } else {
+                return {
+                    rank: 'F-Rank (Critical Fail)',
+                    penaltyRate: 0.40,
+                    rawDamage: Math.max(1, Math.round(maxHp * 0.40)),
+                    regenAmt: 0,
+                    resetStreak: true
+                };
+            }
+        }
+
         function checkRealDayRollover() {
             const realToday = formatDateKey(new Date());
             if (gameState.lastRealDate && gameState.lastRealDate !== realToday) {
                 const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
-                const unfinishedCount = dailyQuests.filter(q => !q.completed).length;
+                const doneCount = dailyQuests.filter(q => q.completed).length;
+                const totalDaily = dailyQuests.length;
+                const ratio = totalDaily > 0 ? (doneCount / totalDaily) : 1;
+                const pct = Math.round(ratio * 100);
 
                 gameState.quests.forEach(q => {
                     if (q.category === 'Daily Quest') {
@@ -2294,26 +2538,36 @@
                 gameState.selectedDate = realToday;
                 gameState.lastRealDate = realToday;
 
-                if (unfinishedCount > 0) {
-                    const dmg = Math.min(60, unfinishedCount * 10);
-                    gameState.player.hp = Math.max(10, gameState.player.hp - dmg);
+                syncPlayerMaxHp();
+                const tier = evaluateDailyTier(ratio, gameState.player.maxHp);
+
+                if (tier.rawDamage > 0) {
                     let shieldMsg = '';
-                    if ((gameState.player.shields || 0) > 0 && gameState.player.streak > 0) {
-                        gameState.player.shields -= 1;
-                        shieldMsg = ` 🛡️ Streak Shield aktif! Streak ${gameState.player.streak} hari tetap aman (sisa Shield: ${gameState.player.shields}).`;
+                    if (tier.resetStreak) {
+                        if ((gameState.player.shields || 0) > 0 && gameState.player.streak > 0) {
+                            gameState.player.shields -= 1;
+                            shieldMsg = ` 🛡️ Streak Shield aktif! Streak ${gameState.player.streak} hari tetap aman (sisa Shield: ${gameState.player.shields}).`;
+                        } else {
+                            gameState.player.streak = 0;
+                            shieldMsg = ' Streak di-reset ke 0 karena progres kemarin di bawah 80%.';
+                        }
                     } else {
-                        gameState.player.streak = 0;
-                        shieldMsg = ' Streak di-reset ke 0.';
+                        shieldMsg = ` Streak ${gameState.player.streak} hari tetap terjaga (≥80%), namun tidak ada regen HP.`;
                     }
+                    takeDamage(tier.rawDamage);
+                    const { wisDmgReduce } = getAttributePassives();
+                    const actualDmg = Math.max(1, Math.round(tier.rawDamage * (1 - wisDmgReduce)));
                     setTimeout(() => {
                         showSystemModal(
-                            'PERGANTIAN HARI OTOMATIS',
-                            `Selamat datang kembali! Kemarin ada ${unfinishedCount} Daily Habit yang terlewat (-${dmg} HP).${shieldMsg} Semua Daily Habit telah di-reset untuk hari ini!`
+                            `PERGANTIAN HARI // ${tier.rank.toUpperCase()}`,
+                            `Selamat datang kembali! Kemarin progres Daily Habit ${pct}% (${doneCount}/${totalDaily}) • Penalti ${Math.round(tier.penaltyRate * 100)}% Max HP (-${actualDmg} HP).${shieldMsg} Semua Daily Habit telah di-reset untuk hari ini!`
                         );
                     }, 500);
                 } else {
+                    const healAmt = Math.min(tier.regenAmt, gameState.player.maxHp - gameState.player.hp);
+                    gameState.player.hp += healAmt;
                     setTimeout(() => {
-                        spawnFloatingReward('🌅 Hari Baru! Semua Daily Habit Siap Dikerjakan!');
+                        spawnFloatingReward(`🌅 S-Rank Perfect Clear (100%)!${healAmt > 0 ? ` Regen +${healAmt} HP (+15% Max HP)` : ' HP Penuh'} • Streak: ${gameState.player.streak} Hari`);
                     }, 500);
                 }
                 saveState();
@@ -2334,14 +2588,124 @@
         // 4. CORE RPG CALCULATIONS & RANKING
         // ==========================================
         function getRequiredXP(level) {
-            return level * 100;
+            // Kurva progresif realistis: Lvl 1->2 butuh 250 XP, Lvl 2->3 butuh 420 XP, Lvl 3->4 butuh 640 XP, dst.
+            return Math.round(250 * Math.pow(level, 1.35));
         }
 
+        function getTodayDailyXpEarned() {
+            const todayKey = getCurrentGameDateKey();
+            const logs = (gameState.history && Array.isArray(gameState.history.logs)) ? gameState.history.logs : [];
+            return logs
+                .filter(l => l.dateStr === todayKey && l.type === 'Daily Quest')
+                .reduce((sum, l) => sum + (l.xp || 0), 0);
+        }
+
+        const RANKS_CATALOG = [
+            {
+                minLevel: 1,
+                rankCode: 'E-RANK',
+                name: 'Novice',
+                title: 'E-Rank • Novice',
+                perkText: 'Fase Awal Kebangkitan (Base Status)',
+                style: 'color: #cbd5e1; background: rgba(51,65,85,0.45); border: 1px solid #475569;',
+                accentColor: '#94a3b8'
+            },
+            {
+                minLevel: 5,
+                rankCode: 'D-RANK',
+                name: 'Awakened',
+                title: 'D-Rank • Awakened',
+                perkText: 'Kebiasaan Mulai Terbentuk (+5% Fokus Motivasi)',
+                style: 'color: #60a5fa; background: rgba(37,99,235,0.22); border: 1px solid rgba(59,130,246,0.55);',
+                accentColor: '#60a5fa'
+            },
+            {
+                minLevel: 10,
+                rankCode: 'C-RANK',
+                name: 'Vanguard',
+                title: 'C-Rank • Vanguard',
+                perkText: 'Disiplin Konsisten & Penakluk Daily Quest',
+                style: 'color: #34d399; background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.5);',
+                accentColor: '#34d399'
+            },
+            {
+                minLevel: 15,
+                rankCode: 'B-RANK',
+                name: 'Strategist',
+                title: 'B-Rank • Strategist',
+                perkText: 'Penguasaan Sistem & Eksekusi Deep Work',
+                style: 'color: #67e8f9; background: rgba(6,182,212,0.2); border: 1px solid rgba(6,182,212,0.55);',
+                accentColor: '#22d3ee'
+            },
+            {
+                minLevel: 25,
+                rankCode: 'A-RANK',
+                name: 'Commander',
+                title: 'A-Rank • Commander',
+                perkText: 'Elit Produktivitas & Ketahanan Mental Tinggi',
+                style: 'color: #d8b4fe; background: rgba(168,85,247,0.22); border: 1px solid rgba(168,85,247,0.55);',
+                accentColor: '#c084fc'
+            },
+            {
+                minLevel: 35,
+                rankCode: 'S-RANK',
+                name: 'Sovereign',
+                title: 'S-Rank • Sovereign',
+                perkText: 'Puncak Kekuatan Hunter (Shadow Monarch)',
+                style: 'color: #fcd34d; background: rgba(245,158,11,0.22); border: 1px solid rgba(251,191,36,0.6); box-shadow: 0 0 10px rgba(251,191,36,0.25);',
+                accentColor: '#fbbf24'
+            }
+        ];
+
         function getPlayerRank(level) {
-            if (level >= 30) return { title: 'Sovereign', style: 'color: #fcd34d; background: rgba(245,158,11,0.2); border: 1px solid rgba(245,158,11,0.5);' };
-            if (level >= 15) return { title: 'Strategist', style: 'color: #67e8f9; background: rgba(6,182,212,0.2); border: 1px solid rgba(6,182,212,0.5);' };
-            if (level >= 5) return { title: 'Awakened', style: 'color: #d8b4fe; background: rgba(168,85,247,0.2); border: 1px solid rgba(168,85,247,0.5);' };
-            return { title: 'Novice', style: 'color: #cbd5e1; background: rgba(51,65,85,0.45); border: 1px solid #475569;' };
+            let current = RANKS_CATALOG[0];
+            let next = null;
+            for (let i = 0; i < RANKS_CATALOG.length; i++) {
+                if (level >= RANKS_CATALOG[i].minLevel) {
+                    current = RANKS_CATALOG[i];
+                    next = RANKS_CATALOG[i + 1] || null;
+                }
+            }
+            return { ...current, next };
+        }
+
+        function openRankRoadmapModal() {
+            SoundFX.playClick();
+            const listEl = document.getElementById('rank-roadmap-list');
+            if (!listEl) return;
+            const curLvl = gameState.player.level;
+            const currentRank = getPlayerRank(curLvl);
+
+            listEl.innerHTML = RANKS_CATALOG.map((r, idx) => {
+                const nextTier = RANKS_CATALOG[idx + 1];
+                const rangeLabel = nextTier ? `Lv.${r.minLevel} – Lv.${nextTier.minLevel - 1}` : `Lv.${r.minLevel}+`;
+                const isUnlocked = curLvl >= r.minLevel;
+                const isCurrent = r.minLevel === currentRank.minLevel;
+
+                const cardBorder = isCurrent
+                    ? 'background: rgba(168,85,247,0.16); border: 1px solid #c084fc; box-shadow: 0 0 12px rgba(168,85,247,0.2);'
+                    : (isUnlocked
+                        ? 'background: rgba(15,23,42,0.9); border: 1px solid #334155;'
+                        : 'background: rgba(2,6,23,0.65); border: 1px solid #1e293b; opacity: 0.62;');
+
+                return `
+                    <div style="padding: 0.7rem 0.8rem; border-radius: 0.75rem; ${cardBorder}">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-1-5">
+                                <span style="font-size: 0.85rem;">${isCurrent ? '🔥' : (isUnlocked ? '✅' : '🔒')}</span>
+                                <span class="font-display" style="font-weight: 800; font-size: 0.85rem; color: ${r.accentColor};">${r.title.toUpperCase()}</span>
+                            </div>
+                            <span class="font-display" style="font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 9999px; background: rgba(15,23,42,0.95); color: ${isUnlocked ? '#67e8f9' : '#64748b'}; border: 1px solid #334155;">
+                                ${rangeLabel}
+                            </span>
+                        </div>
+                        <p style="font-size: 11px; color: #cbd5e1; margin-top: 4px;">${r.perkText}</p>
+                        ${isCurrent ? `<span class="font-display" style="display: inline-block; margin-top: 4px; font-size: 9px; font-weight: 800; color: #34d399; text-transform: uppercase; letter-spacing: 0.06em;">★ RANK KAMU SAAT INI</span>` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            openModal('modal-rank-roadmap');
         }
 
         function getStreakMultiplier() {
@@ -2353,27 +2717,139 @@
             return TITLES_CATALOG.find(t => t.id === gameState.player.activeTitle) || TITLES_CATALOG[0];
         }
 
-        function addRewards(baseXp, baseGold, statType = null, statGain = 1, silentFloat = false) {
+        const MAX_STAT_LEVEL = 100;
+
+        function getRequiredStatXP(statLevel) {
+            // Level 1 -> 2 butuh 100 Stat XP, Level 2 -> 3 butuh 200 Stat XP, dst.
+            return Math.max(100, statLevel * 100);
+        }
+
+        function getQuestStatXpGain(questOrCategory) {
+            const cat = typeof questOrCategory === 'string' ? questOrCategory : (questOrCategory.category || 'Daily Quest');
+            const baseXp = typeof questOrCategory === 'object' ? (questOrCategory.xp || 20) : 20;
+            if (cat === 'Boss Fight') return 100; // S-Rank / Boss
+            if (cat === 'Main Quest') return 50;  // A-Rank / Hard
+            if (baseXp >= 30) return 25;          // Medium Daily
+            return 15;                            // Easy Daily
+        }
+
+        // Dynamic Stat Tier Scale (Max Level 100)
+        function getStatTierInfo(maxStatVal) {
+            if (maxStatVal < 20) return { cap: 20, tier: 'Rank E' };
+            if (maxStatVal < 40) return { cap: 40, tier: 'Rank D' };
+            if (maxStatVal < 60) return { cap: 60, tier: 'Rank C' };
+            if (maxStatVal < 80) return { cap: 80, tier: 'Rank B' };
+            return { cap: MAX_STAT_LEVEL, tier: 'Rank S' };
+        }
+
+        // Attribute Passive Bonuses derived from STR, INT, WIS, CHR Level above baseline (1)
+        function getAttributePassives() {
+            const s = gameState.player.stats;
+            const bonusMaxHp = Math.max(0, (s.STR - 1) * 3);
+            const effectiveMaxHp = 100 + bonusMaxHp;
+            const intXpBonus = Math.min(0.40, Math.max(0, (s.INT - 1) * 0.008)); // +0.8% XP per INT Lv above 1 (max +40%)
+            const wisDmgReduce = Math.min(0.40, Math.max(0, (s.WIS - 1) * 0.008)); // -0.8% damage per WIS Lv above 1 (max -40%)
+            const chrShopDiscount = Math.min(0.25, Math.max(0, Math.floor((s.CHR - 1) / 2) * 0.01)); // -1% shop cost per 2 CHR Lv (max -25%)
+            return { bonusMaxHp, effectiveMaxHp, intXpBonus, wisDmgReduce, chrShopDiscount };
+        }
+
+        function syncPlayerMaxHp() {
+            const { effectiveMaxHp } = getAttributePassives();
+            const oldMax = gameState.player.maxHp || 100;
+            gameState.player.maxHp = effectiveMaxHp;
+            if (effectiveMaxHp > oldMax) {
+                gameState.player.hp = Math.min(effectiveMaxHp, gameState.player.hp + (effectiveMaxHp - oldMax));
+            } else if (gameState.player.hp > effectiveMaxHp) {
+                gameState.player.hp = effectiveMaxHp;
+            }
+        }
+
+        // HP Condition Modifier: Prima (>=80% HP: +10% XP & Gold), Normal (30-79%: 0%), Exhausted (<30%: -25% XP & Gold)
+        function getHpCondition() {
+            syncPlayerMaxHp();
+            const ratio = gameState.player.maxHp > 0 ? (gameState.player.hp / gameState.player.maxHp) : 1;
+            if (ratio >= 0.80) {
+                return {
+                    label: 'PRIMA (+10%)',
+                    xpMod: 0.10,
+                    goldMod: 0.10,
+                    style: 'background: rgba(16,185,129,0.18); color: #34d399; border: 1px solid rgba(16,185,129,0.45);'
+                };
+            }
+            if (ratio < 0.30) {
+                return {
+                    label: 'EXHAUSTED (-25%)',
+                    xpMod: -0.25,
+                    goldMod: -0.25,
+                    style: 'background: rgba(244,63,94,0.22); color: #fda4af; border: 1px solid rgba(244,63,94,0.55);'
+                };
+            }
+            return {
+                label: 'STABIL (1.0x)',
+                xpMod: 0,
+                goldMod: 0,
+                style: 'background: rgba(56,189,248,0.15); color: #7dd3fc; border: 1px solid rgba(56,189,248,0.35);'
+            };
+        }
+
+        function getDiscountedShopCost(baseCost) {
+            const { chrShopDiscount } = getAttributePassives();
+            return Math.max(5, Math.round(baseCost * (1 - chrShopDiscount)));
+        }
+
+        function addRewards(baseXp, baseGold, statType = null, statXpGain = 15, silentFloat = false) {
             const mult = getStreakMultiplier();
             const titleObj = getActiveTitleObj();
-            const finalXp = Math.round(baseXp * (mult + titleObj.xpBonus));
-            const finalGold = Math.round(baseGold * (1 + titleObj.goldBonus));
+            const hpCond = getHpCondition();
+            const passives = getAttributePassives();
+
+            const totalXpMult = Math.max(0.25, mult + titleObj.xpBonus + hpCond.xpMod + passives.intXpBonus);
+            const totalGoldMult = Math.max(0.25, 1 + titleObj.goldBonus + hpCond.goldMod);
+
+            const finalXp = Math.round(baseXp * totalXpMult);
+            const finalGold = Math.round(baseGold * totalGoldMult);
 
             gameState.player.xp += finalXp;
             gameState.player.gold += finalGold;
 
+            let statLeveledUp = false;
+            let newStatLvl = 1;
             if (statType && gameState.player.stats[statType] !== undefined) {
-                gameState.player.stats[statType] += statGain;
+                if (!gameState.player.statXp) gameState.player.statXp = { STR: 0, INT: 0, WIS: 0, CHR: 0 };
+                if (gameState.player.stats[statType] < MAX_STAT_LEVEL) {
+                    gameState.player.statXp[statType] = (gameState.player.statXp[statType] || 0) + statXpGain;
+                    while (
+                        gameState.player.stats[statType] < MAX_STAT_LEVEL &&
+                        gameState.player.statXp[statType] >= getRequiredStatXP(gameState.player.stats[statType])
+                    ) {
+                        gameState.player.statXp[statType] -= getRequiredStatXP(gameState.player.stats[statType]);
+                        gameState.player.stats[statType] += 1;
+                        statLeveledUp = true;
+                        newStatLvl = gameState.player.stats[statType];
+                    }
+                    if (gameState.player.stats[statType] >= MAX_STAT_LEVEL) {
+                        gameState.player.stats[statType] = MAX_STAT_LEVEL;
+                        gameState.player.statXp[statType] = 0;
+                    }
+                }
+                syncPlayerMaxHp();
             }
 
             if (!silentFloat) {
-                spawnFloatingReward(`+${finalXp} XP  |  +${finalGold} Gold${statType ? `  |  +${statGain} ${statType}` : ''}`);
+                spawnFloatingReward(`+${finalXp} XP  |  +${finalGold} Gold${statType ? `  |  +${statXpGain} ${statType} XP` : ''}`);
+            }
+            if (statLeveledUp && !silentFloat) {
+                setTimeout(() => {
+                    spawnFloatingReward(`⚡ ${statType} NAIK KE LEVEL ${newStatLvl}!`);
+                }, 450);
             }
 
+            const prevRankTitle = getPlayerRank(gameState.player.level).title;
             let leveledUp = false;
             while (gameState.player.xp >= getRequiredXP(gameState.player.level)) {
                 gameState.player.xp -= getRequiredXP(gameState.player.level);
                 gameState.player.level += 1;
+                syncPlayerMaxHp();
                 gameState.player.hp = gameState.player.maxHp;
                 leveledUp = true;
             }
@@ -2382,8 +2858,11 @@
                 setTimeout(() => {
                     SoundFX.playLevelUp();
                     const rank = getPlayerRank(gameState.player.level);
+                    const promoted = rank.title !== prevRankTitle;
                     document.getElementById('levelup-new-lvl').textContent = `Level ${gameState.player.level}`;
-                    document.getElementById('levelup-new-rank').textContent = rank.title;
+                    document.getElementById('levelup-new-rank').textContent = promoted
+                        ? `${rank.title} (🎉 RANK UP!)`
+                        : rank.title;
                     openModal('modal-levelup');
                 }, 400);
             }
@@ -2391,14 +2870,29 @@
             saveState();
             renderAll();
 
-            return { finalXp, finalGold, statType, statGain };
+            return { finalXp, finalGold, statType, statXpGain };
         }
 
-        function revokeRewards(xpAmount, goldAmount, statType = null, statGain = 1) {
+        function revokeRewards(xpAmount, goldAmount, statType = null, statXpGain = 15) {
             gameState.player.gold = Math.max(0, gameState.player.gold - goldAmount);
 
             if (statType && gameState.player.stats[statType] !== undefined) {
-                gameState.player.stats[statType] = Math.max(1, gameState.player.stats[statType] - statGain);
+                if (!gameState.player.statXp) gameState.player.statXp = { STR: 0, INT: 0, WIS: 0, CHR: 0 };
+                let remStatXp = statXpGain;
+                while (remStatXp > 0) {
+                    if ((gameState.player.statXp[statType] || 0) >= remStatXp) {
+                        gameState.player.statXp[statType] -= remStatXp;
+                        remStatXp = 0;
+                    } else if (gameState.player.stats[statType] > 1) {
+                        remStatXp -= (gameState.player.statXp[statType] || 0);
+                        gameState.player.stats[statType] -= 1;
+                        gameState.player.statXp[statType] = getRequiredStatXP(gameState.player.stats[statType]);
+                    } else {
+                        gameState.player.statXp[statType] = 0;
+                        remStatXp = 0;
+                    }
+                }
+                syncPlayerMaxHp();
             }
 
             // Roll back XP accurately across levels if needed
@@ -2420,15 +2914,37 @@
 
         function takeDamage(amount) {
             SoundFX.playDamage();
-            gameState.player.hp = Math.max(0, gameState.player.hp - amount);
-            spawnFloatingReward(`⚠️ -${amount} HP!`);
+            syncPlayerMaxHp();
+            const { wisDmgReduce } = getAttributePassives();
+            const mitigatedDamage = Math.max(1, Math.round(amount * (1 - wisDmgReduce)));
+
+            gameState.player.hp = Math.max(0, gameState.player.hp - mitigatedDamage);
+            spawnFloatingReward(`⚠️ -${mitigatedDamage} HP!${mitigatedDamage < amount ? ` (WIS menahan ${amount - mitigatedDamage})` : ''}`);
 
             if (gameState.player.hp === 0) {
-                gameState.player.hp = 50;
-                gameState.player.gold = Math.max(0, gameState.player.gold - 50);
+                const prevLevel = gameState.player.level;
+                const levelLost = prevLevel > 1 ? 1 : 0;
+                if (levelLost > 0) {
+                    gameState.player.level = prevLevel - 1;
+                    gameState.player.xp = 0;
+                } else {
+                    gameState.player.xp = 0;
+                }
+                const lostGold = Math.floor(gameState.player.gold * 0.5);
+                const prevStreak = gameState.player.streak || 0;
+
+                gameState.player.gold = Math.max(0, gameState.player.gold - lostGold);
+                gameState.player.streak = 0;
+                gameState.lastStreakDate = null;
+                gameState.player.hp = Math.round(gameState.player.maxHp * 0.5);
+
+                const lvlMsg = levelLost > 0
+                    ? `Level turun (${prevLevel} → ${gameState.player.level})`
+                    : `Level bertahan di Lv.${gameState.player.level} (XP di-reset ke 0)`;
+
                 showSystemModal(
-                    'CRITICAL EXHAUSTION!',
-                    'Vitality (HP) kamu mencapai 0! Sistem memulihkan HP ke 50 dengan penalti -50 Gold. Istirahatlah dan selesaikan Daily Quest!'
+                    'KNOCKED OUT // HP = 0!',
+                    `Vitality habis total! Sistem memulihkan HP ke ${gameState.player.hp}/${gameState.player.maxHp} dengan penalti berat: ${lvlMsg}, -${lostGold} Gold (50%), dan Streak (${prevStreak} hari) di-reset ke 0. Selesaikan 100% Daily Quest atau beli Potion di Shop!`
                 );
             }
 
@@ -2449,6 +2965,7 @@
             renderRedeemHistory();
             updateAudioIcon();
             updateAmbientButtonsUI();
+            if (typeof renderReminderUI === 'function') renderReminderUI();
         }
 
         function renderStatus() {
@@ -2473,7 +2990,26 @@
             
             const rankBadge = document.getElementById('player-rank-badge');
             rankBadge.textContent = rank.title;
-            rankBadge.style.cssText = `font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; ${rank.style}`;
+            rankBadge.style.cssText = `font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; cursor: pointer; ${rank.style}`;
+
+            const rankNextLabel = document.getElementById('rank-next-label');
+            const rankTargetLvl = document.getElementById('rank-target-lvl');
+            const rankProgBar = document.getElementById('rank-progress-bar');
+            if (rankNextLabel && rankTargetLvl && rankProgBar) {
+                if (rank.next) {
+                    const lvlLeft = rank.next.minLevel - p.level;
+                    const spanTotal = Math.max(1, rank.next.minLevel - rank.minLevel);
+                    const spanDone = Math.max(0, p.level - rank.minLevel);
+                    const pctRank = Math.min(100, Math.max(8, Math.round((spanDone / spanTotal) * 100)));
+                    rankNextLabel.textContent = `${lvlLeft} Level lagi menuju ${rank.next.title.toUpperCase()}`;
+                    rankTargetLvl.textContent = `Lv.${p.level} / Lv.${rank.next.minLevel}`;
+                    rankProgBar.style.width = `${pctRank}%`;
+                } else {
+                    rankNextLabel.textContent = '👑 RANK TERTINGGI TERCAPAI (S-RANK)';
+                    rankTargetLvl.textContent = `Lv.${p.level} (MAX)`;
+                    rankProgBar.style.width = '100%';
+                }
+            }
 
             const multBadge = document.getElementById('xp-multiplier-badge');
             if (mult > 1) {
@@ -2483,22 +3019,51 @@
                 multBadge.classList.add('hidden');
             }
 
+            const hpCond = getHpCondition();
             const hpPct = Math.min(100, Math.round((p.hp / p.maxHp) * 100));
             document.getElementById('hp-text').textContent = `${p.hp} / ${p.maxHp}`;
             document.getElementById('hp-bar').style.width = `${hpPct}%`;
+            const hpCondBadge = document.getElementById('hp-condition-badge');
+            if (hpCondBadge) {
+                hpCondBadge.textContent = hpCond.label;
+                hpCondBadge.style.cssText = `font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 4px; ${hpCond.style}`;
+            }
 
             const xpPct = Math.min(100, Math.round((p.xp / reqXp) * 100));
             document.getElementById('xp-text').textContent = `${p.xp} / ${reqXp} XP`;
             document.getElementById('xp-bar').style.width = `${xpPct}%`;
 
+            const maxCurrentStat = Math.max(p.stats.STR, p.stats.INT, p.stats.WIS, p.stats.CHR);
+            const tierInfo = getStatTierInfo(maxCurrentStat);
+            const scaleBadge = document.getElementById('stat-scale-badge');
+            if (scaleBadge) {
+                scaleBadge.textContent = `${tierInfo.tier} • Max Lv.${MAX_STAT_LEVEL}`;
+            }
+
+            if (!p.statXp) p.statXp = { STR: 0, INT: 0, WIS: 0, CHR: 0 };
             ['STR', 'INT', 'WIS', 'CHR'].forEach(stat => {
-                const val = p.stats[stat];
-                const barPct = Math.min(100, (val / 50) * 100);
-                document.getElementById(`stat-${stat}-val`).textContent = val;
+                const lvl = p.stats[stat] || 1;
+                const curStatXp = p.statXp[stat] || 0;
+                const reqStatXp = getRequiredStatXP(lvl);
+                const isMax = lvl >= MAX_STAT_LEVEL;
+                const barPct = isMax ? 100 : Math.min(100, Math.round((curStatXp / reqStatXp) * 100));
+                document.getElementById(`stat-${stat}-val`).textContent = `Lv.${lvl}`;
+                const xpLbl = document.getElementById(`stat-${stat}-xp`);
+                if (xpLbl) xpLbl.textContent = isMax ? 'MAX LEVEL' : `${curStatXp} / ${reqStatXp} XP`;
                 document.getElementById(`stat-${stat}-bar`).style.width = `${barPct}%`;
             });
 
-            updateRadarChart(p.stats);
+            const passives = getAttributePassives();
+            const pStrEl = document.getElementById('perk-STR-text');
+            const pIntEl = document.getElementById('perk-INT-text');
+            const pWisEl = document.getElementById('perk-WIS-text');
+            const pChrEl = document.getElementById('perk-CHR-text');
+            if (pStrEl) pStrEl.textContent = `Pasif: +${passives.bonusMaxHp} Max HP (Fisik & Vitality)`;
+            if (pIntEl) pIntEl.textContent = `Pasif: +${(passives.intXpBonus * 100).toFixed(1)}% XP (Belajar & Fokus)`;
+            if (pWisEl) pWisEl.textContent = `Pasif: -${(passives.wisDmgReduce * 100).toFixed(1)}% Damage Penalti (Mindfulness)`;
+            if (pChrEl) pChrEl.textContent = `Pasif: Diskon Shop ${(passives.chrShopDiscount * 100).toFixed(0)}% (Relasi & Sosial)`;
+
+            updateRadarChart(p.stats, tierInfo.cap);
 
             const activeTitle = getActiveTitleObj();
             const unlockedCount = TITLES_CATALOG.filter(t => t.checkUnlocked(gameState)).length;
@@ -2508,10 +3073,10 @@
             if (unlockedCountEl) unlockedCountEl.textContent = unlockedCount;
         }
 
-        function updateRadarChart(stats) {
+        function updateRadarChart(stats, dynamicCap = 100) {
             const poly = document.getElementById('radar-data-poly');
             if (!poly) return;
-            const maxVal = 40;
+            const maxVal = dynamicCap;
             const cx = 110, cy = 90, maxR = 65;
 
             const norm = (v) => Math.min(1, Math.max(0.15, v / maxVal));
@@ -2606,10 +3171,25 @@
             }
 
             logListEl.innerHTML = '';
-            if (displayedLogs.length === 0) {
+            const journals = (gameState.history?.journals || []).filter(j => showAllHistoryLogs || j.dateStr === activeDateStr);
+            if (displayedLogs.length === 0 && journals.length === 0) {
                 logListEl.innerHTML = `<p style="font-size: 0.75rem; color: #64748b; text-align: center; padding: 0.75rem 0;">Tidak ada misi selesai pada tanggal ${activeDateStr}.</p>`;
                 return;
             }
+
+            journals.forEach(j => {
+                const jCard = document.createElement('div');
+                jCard.style.cssText = 'background: rgba(88,28,135,0.22); border: 1px solid rgba(168,85,247,0.45); border-radius: 0.75rem; padding: 0.55rem 0.75rem; margin-bottom: 0.375rem;';
+                jCard.innerHTML = `
+                    <div class="flex items-center justify-between" style="font-size: 10px; color: #d8b4fe; margin-bottom: 3px;">
+                        <span class="font-display" style="font-weight: 700;">📜 AWAKENING JOURNAL (${j.dateStr})</span>
+                        <span class="font-display" style="color: #34d399; font-weight: 700;">+15 WIS</span>
+                    </div>
+                    ${j.gratitude ? `<p style="font-size: 11px; color: #f1f5f9;">✨ Syukur: ${escapeHtml(j.gratitude)}</p>` : ''}
+                    ${j.improve ? `<p style="font-size: 11px; color: #cbd5e1; margin-top: 2px;">🎯 Besok: ${escapeHtml(j.improve)}</p>` : ''}
+                `;
+                logListEl.appendChild(jCard);
+            });
 
             displayedLogs.forEach(item => {
                 const row = document.createElement('div');
@@ -2691,6 +3271,19 @@
             renderQuests();
         }
 
+        function setQuestStatusFilter(status) {
+            SoundFX.playClick();
+            currentQuestStatusFilter = status;
+            document.querySelectorAll('.status-filter-btn').forEach(btn => {
+                btn.style.cssText = 'padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);';
+            });
+            const activeBtn = document.getElementById(`status-filter-${status}`);
+            if (activeBtn) {
+                activeBtn.style.cssText = 'padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.45);';
+            }
+            renderQuests();
+        }
+
         function handleQuestSearch(val) {
             questSearchQuery = (val || '').trim().toLowerCase();
             const clearBtn = document.getElementById('btn-clear-quest-search');
@@ -2752,9 +3345,13 @@
             const dailyTextEl = document.getElementById('daily-progress-text');
             const dailyBarEl = document.getElementById('daily-progress-bar');
             if (dailyTextEl && dailyBarEl) {
-                dailyTextEl.textContent = `${doneDailyCount} / ${totalDailyCount} Selesai`;
                 const pct = totalDailyCount > 0 ? Math.round((doneDailyCount / totalDailyCount) * 100) : 0;
+                const targetMet = pct >= 80 && totalDailyCount > 0;
+                dailyTextEl.textContent = `${doneDailyCount} / ${totalDailyCount} (${pct}%)${targetMet ? ' 🔥' : ''}`;
                 dailyBarEl.style.width = `${pct}%`;
+                dailyBarEl.style.background = targetMet
+                    ? 'linear-gradient(to right, #34d399, #fbbf24)'
+                    : 'linear-gradient(to right, #22d3ee, #34d399)';
             }
 
             const incompleteDaily = doneDailyCount < totalDailyCount;
@@ -2762,13 +3359,19 @@
             if (incompleteDaily) navBadge.classList.remove('hidden');
             else navBadge.classList.add('hidden');
 
-            const filtered = gameState.quests.filter(q => {
-                const matchCat = currentQuestFilter === 'ALL' || q.category === currentQuestFilter;
-                const slot = inferQuestTimeSlot(q);
-                const matchTime = currentTimeSlotFilter === 'ALL' || slot === currentTimeSlotFilter;
-                const matchSearch = !questSearchQuery || q.title.toLowerCase().includes(questSearchQuery);
-                return matchCat && matchTime && matchSearch;
-            });
+            const filtered = gameState.quests
+                .filter(q => {
+                    const matchCat = currentQuestFilter === 'ALL' || q.category === currentQuestFilter;
+                    const slot = inferQuestTimeSlot(q);
+                    const matchTime = currentTimeSlotFilter === 'ALL' || slot === currentTimeSlotFilter;
+                    const matchStatus = currentQuestStatusFilter === 'ALL' ||
+                        (currentQuestStatusFilter === 'ACTIVE' && !q.completed) ||
+                        (currentQuestStatusFilter === 'DONE' && q.completed);
+                    const matchSearch = !questSearchQuery || q.title.toLowerCase().includes(questSearchQuery);
+                    return matchCat && matchTime && matchStatus && matchSearch;
+                })
+                // Auto-sort: quest yang belum selesai selalu di atas, yang sudah selesai turun ke bawah
+                .sort((a, b) => Number(a.completed) - Number(b.completed));
 
             if (filtered.length === 0) {
                 container.innerHTML = `
@@ -2822,7 +3425,7 @@
                             <div class="flex flex-wrap items-center gap-1" style="margin-bottom: 4px;">
                                 <span class="font-display" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; ${catStyles[q.category] || ''}">${q.category}</span>
                                 <span class="font-display" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: rgba(30,41,59,0.85); color: #cbd5e1; border: 1px solid #334155;">${slotIcons[slot] || slot}</span>
-                                <span class="font-display" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; ${statStyles[q.stat] || ''}">+${q.stat}</span>
+                                <span class="font-display" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; ${statStyles[q.stat] || ''}">+${getQuestStatXpGain(q)} ${q.stat} XP</span>
                             </div>
                             <p class="${isDone ? 'line-through' : ''}" style="font-size: 0.875rem; font-weight: 500; color: ${isDone ? '#94a3b8' : '#f1f5f9'}; line-height: 1.35;">${escapeHtml(q.title)}</p>
                             <div class="flex items-center gap-3 font-display" style="margin-top: 6px; font-size: 11px; font-weight: 700;">
@@ -2954,44 +3557,85 @@
             const q = gameState.quests.find(item => item.id === id);
             if (!q) return;
 
+            const todayKey = getCurrentGameDateKey();
+
             if (!q.completed) {
                 q.completed = true;
-                SoundFX.playQuestComplete();
 
-                const rewardResult = addRewards(q.xp, q.gold, q.stat, 1);
+                // Diminishing returns untuk Daily Quest jika XP harian sudah >= 350 XP agar kenaikan level tetap menantang
+                let effectiveBaseXp = q.xp;
+                if (q.category === 'Daily Quest' && getTodayDailyXpEarned() >= 350) {
+                    effectiveBaseXp = Math.max(8, Math.round(q.xp * 0.5));
+                }
+
+                // Fitur A1: Critical Clear (12% peluang dapat 1.5x Gold)
+                const isCrit = Math.random() < 0.12;
+                const effectiveBaseGold = isCrit ? Math.round(q.gold * 1.5) : q.gold;
+                if (isCrit) {
+                    SoundFX.playCritical();
+                } else {
+                    SoundFX.playQuestComplete();
+                }
+
+                const statXpEarned = getQuestStatXpGain(q);
+                const rewardResult = addRewards(effectiveBaseXp, effectiveBaseGold, q.stat, statXpEarned, isCrit);
+                if (isCrit) {
+                    spawnFloatingReward(`⚡ CRITICAL CLEAR! +${rewardResult.finalXp} XP | +${rewardResult.finalGold} Gold (1.5x)`);
+                }
+
                 q.lastReward = {
                     xp: rewardResult.finalXp,
                     gold: rewardResult.finalGold,
                     stat: q.stat,
-                    statGain: 1
+                    statXpGain: statXpEarned
                 };
 
                 recordActivityHistory(q.title, q.category, q.stat, rewardResult.finalXp, rewardResult.finalGold, q.id);
 
-                // Jika semua Daily Quest selesai hari ini dan streak belum naik hari ini, tambah streak
+                // Fitur A2: Slot Sweep Combo Bonus (100% Daily Quest pada slot Pagi/Siang/Sore/Malam)
                 if (q.category === 'Daily Quest') {
+                    const slot = inferQuestTimeSlot(q);
+                    if (['Pagi', 'Siang', 'Sore', 'Malam'].includes(slot)) {
+                        if (!gameState.history.slotCombosClaimed) gameState.history.slotCombosClaimed = {};
+                        const comboKey = `${todayKey}_${slot}`;
+                        const slotQuests = gameState.quests.filter(item => item.category === 'Daily Quest' && inferQuestTimeSlot(item) === slot);
+                        if (slotQuests.length > 0 && slotQuests.every(item => item.completed) && !gameState.history.slotCombosClaimed[comboKey]) {
+                            const comboReward = addRewards(15, 25, 'WIS', 15, true);
+                            gameState.history.slotCombosClaimed[comboKey] = {
+                                xp: comboReward.finalXp,
+                                gold: comboReward.finalGold,
+                                statXpGain: 15
+                            };
+                            setTimeout(() => {
+                                spawnFloatingReward(`🔥 ${slot.toUpperCase()} SWEEP COMBO! +${comboReward.finalGold} Gold & +15 WIS XP`);
+                            }, 350);
+                        }
+                    }
+
+                    // Streak naik +1 HANYA SEKALI per hari ketika minimal 80% Daily Quest selesai (tanpa mengganti tanggal hari ini)
                     const dailyQuests = gameState.quests.filter(item => item.category === 'Daily Quest');
-                    const allDailyDone = dailyQuests.length > 0 && dailyQuests.every(item => item.completed);
-                    const todayKey = getCurrentGameDateKey();
-                    if (allDailyDone && gameState.lastStreakDate !== todayKey) {
+                    const doneCount = dailyQuests.filter(item => item.completed).length;
+                    const ratio = dailyQuests.length > 0 ? (doneCount / dailyQuests.length) : 0;
+
+                    if (ratio >= 0.8 && gameState.lastStreakDate !== todayKey) {
                         gameState.player.streak = (gameState.player.streak || 0) + 1;
                         gameState.lastStreakDate = todayKey;
                         setTimeout(() => {
-                            spawnFloatingReward(`🔥 ALL DAILY CLEAR! Streak +1 (${gameState.player.streak} Hari)`);
-                        }, 600);
+                            spawnFloatingReward(`🔥 TARGET ≥80% TERCAPAI! Streak Hari Ini +1 (${gameState.player.streak} Hari)`);
+                        }, 650);
                     }
                 }
+                syncSystemReminders();
             } else {
                 // Undo quest completion
                 q.completed = false;
                 SoundFX.playUndo();
 
-                const rev = q.lastReward || { xp: q.xp, gold: q.gold, stat: q.stat, statGain: 1 };
-                revokeRewards(rev.xp, rev.gold, rev.stat, rev.statGain);
+                const rev = q.lastReward || { xp: q.xp, gold: q.gold, stat: q.stat, statXpGain: getQuestStatXpGain(q) };
+                revokeRewards(rev.xp, rev.gold, rev.stat, rev.statXpGain ?? rev.statGain ?? getQuestStatXpGain(q));
                 delete q.lastReward;
 
                 // Hapus log terakhir untuk quest ini di tanggal aktif
-                const todayKey = getCurrentGameDateKey();
                 if (gameState.history && Array.isArray(gameState.history.logs)) {
                     const logIdx = gameState.history.logs.findIndex(l => (l.questId === q.id || l.title === q.title) && l.dateStr === todayKey);
                     if (logIdx !== -1) {
@@ -3002,7 +3646,30 @@
                     }
                 }
 
+                // Tarik kembali Slot Sweep Combo jika di-undo di hari yang sama
+                if (q.category === 'Daily Quest') {
+                    const slot = inferQuestTimeSlot(q);
+                    const comboKey = `${todayKey}_${slot}`;
+                    if (gameState.history.slotCombosClaimed && gameState.history.slotCombosClaimed[comboKey]) {
+                        const cRev = gameState.history.slotCombosClaimed[comboKey];
+                        revokeRewards(cRev.xp, cRev.gold, 'WIS', cRev.statXpGain || 15);
+                        delete gameState.history.slotCombosClaimed[comboKey];
+                    }
+
+                    // Jika di-undo hingga di bawah 80% pada hari yang sama, tarik kembali kenaikan streak hari ini
+                    if (gameState.lastStreakDate === todayKey) {
+                        const dailyQuests = gameState.quests.filter(item => item.category === 'Daily Quest');
+                        const doneCount = dailyQuests.filter(item => item.completed).length;
+                        const ratio = dailyQuests.length > 0 ? (doneCount / dailyQuests.length) : 0;
+                        if (ratio < 0.8) {
+                            gameState.player.streak = Math.max(0, (gameState.player.streak || 1) - 1);
+                            gameState.lastStreakDate = null;
+                        }
+                    }
+                }
+
                 spawnFloatingReward(`↩️ Dibatalkan: -${rev.xp} XP | -${rev.gold} Gold`);
+                syncSystemReminders();
             }
 
             saveState();
@@ -3078,22 +3745,33 @@
                 return;
             }
 
+            const MAX_STREAK_SHIELDS = 2;
+
             filteredShop.forEach(item => {
-                const canAfford = gameState.player.gold >= item.cost;
-                const isPotion = item.type === 'potion';
+                const finalCost = getDiscountedShopCost(item.cost);
+                const hasDiscount = finalCost < item.cost;
+                const isPotion = item.type === 'potion' || item.type === 'elixir';
+                const isElixir = item.type === 'elixir';
                 const isShield = item.type === 'shield';
+                const currentShields = gameState.player.shields || 0;
+                const isShieldMaxed = isShield && currentShields >= MAX_STREAK_SHIELDS;
+                const canAfford = !isShieldMaxed && (gameState.player.gold >= finalCost);
 
-                const iconBoxStyle = isPotion 
-                    ? 'background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.4); color: #fb7185;'
-                    : (isShield 
-                        ? 'background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.4); color: #38bdf8;'
-                        : 'background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); color: #fbbf24;');
+                const iconBoxStyle = isElixir
+                    ? 'background: rgba(16,185,129,0.16); border: 1px solid rgba(16,185,129,0.45); color: #34d399;'
+                    : (isPotion 
+                        ? 'background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.4); color: #fb7185;'
+                        : (isShield 
+                            ? 'background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.4); color: #38bdf8;'
+                            : 'background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); color: #fbbf24;'));
 
-                const iconSvg = isPotion
-                    ? `<svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg>`
-                    : (isShield
-                        ? `<svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`
-                        : `<svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>`);
+                const iconSvg = isElixir
+                    ? `<svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>`
+                    : (isPotion
+                        ? `<svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></svg>`
+                        : (isShield
+                            ? `<svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`
+                            : `<svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>`));
 
                 const buyBtnStyle = canAfford
                     ? 'background: var(--amber-500); color: #020617;'
@@ -3113,10 +3791,12 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-1 shrink-0">
-                        <button onclick="buyShopItem('${item.id}')" class="font-display flex items-center gap-1 ${canAfford ? 'shadow-neon-gold' : ''}" 
+                        <button onclick="buyShopItem('${item.id}')" ${isShieldMaxed ? 'disabled' : ''} class="font-display flex items-center gap-1 ${canAfford ? 'shadow-neon-gold' : ''}" 
                             style="padding: 0.5rem 0.65rem; border-radius: 0.75rem; font-weight: 700; font-size: 0.75rem; ${buyBtnStyle}">
-                            <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/></svg>
-                            ${item.cost}
+                            ${isShieldMaxed ? `Maks (${currentShields}/${MAX_STREAK_SHIELDS})` : `
+                                <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/></svg>
+                                ${hasDiscount ? `<span style="text-decoration:line-through;opacity:0.65;font-size:10px;">${item.cost}</span> ${finalCost}` : finalCost}
+                            `}
                         </button>
                         <button onclick="openEditShopModal('${item.id}')" style="color: #94a3b8; padding: 5px;" title="Edit Item">
                             <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
@@ -3142,18 +3822,23 @@
             if (!title) return;
 
             const descMap = {
-                potion: 'Memulihkan +30 HP secara instan.',
+                potion: 'Memulihkan 25% Max HP secara instan.',
+                elixir: 'Memulihkan HP hingga penuh (100% Max HP) dalam kondisi darurat.',
                 shield: 'Melindungi Streak 1x dari reset otomatis.',
                 reward: 'Reward kustom dunia nyata.'
             };
 
-            gameState.shop.push({
+            const newItem = {
                 id: 's_' + Date.now(),
                 title,
                 cost,
                 type,
                 desc: descMap[type] || 'Reward kustom dunia nyata.'
-            });
+            };
+            if (type === 'potion') newItem.healPct = 0.25;
+            if (type === 'elixir') newItem.healPct = 1.0;
+
+            gameState.shop.push(newItem);
 
             SoundFX.playClick();
             document.getElementById('shop-form').reset();
@@ -3166,33 +3851,50 @@
         function buyShopItem(id) {
             const item = gameState.shop.find(s => s.id === id);
             if (!item) return;
+            const finalCost = getDiscountedShopCost(item.cost);
 
-            if (gameState.player.gold < item.cost) {
+            if (gameState.player.gold < finalCost) {
                 SoundFX.playDamage();
                 spawnFloatingReward('❌ Gold Tidak Cukup!');
                 return;
             }
 
-            if (item.type === 'potion') {
+            const paidItemRecord = { ...item, cost: finalCost };
+
+            if (item.type === 'potion' || item.type === 'elixir') {
+                syncPlayerMaxHp();
                 if (gameState.player.hp >= gameState.player.maxHp) {
                     SoundFX.playClick();
-                    spawnFloatingReward('HP Sudah Penuh (100/100)!');
+                    spawnFloatingReward(`HP Sudah Penuh (${gameState.player.hp}/${gameState.player.maxHp})!`);
                     return;
                 }
-                gameState.player.gold -= item.cost;
-                gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + 30);
-                recordRedeemHistory(item);
+                const pct = typeof item.healPct === 'number'
+                    ? item.healPct
+                    : (item.type === 'elixir' ? 1.0 : 0.25);
+                const healAmount = Math.max(1, Math.round(gameState.player.maxHp * pct));
+                const prevHp = gameState.player.hp;
+                gameState.player.gold -= finalCost;
+                gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + healAmount);
+                const actualHealed = gameState.player.hp - prevHp;
+                recordRedeemHistory(paidItemRecord);
                 SoundFX.playCoin();
-                spawnFloatingReward('🧪 +30 HP Dipulihkan!');
+                spawnFloatingReward(item.type === 'elixir'
+                    ? `✨ Elixir Aktif! HP Pulih Penuh (+${actualHealed} HP)`
+                    : `🧪 Minor Potion! +${actualHealed} HP (+25% Max HP)`);
             } else if (item.type === 'shield') {
-                gameState.player.gold -= item.cost;
-                gameState.player.shields = (gameState.player.shields || 0) + 1;
-                recordRedeemHistory(item);
+                if ((gameState.player.shields || 0) >= 2) {
+                    SoundFX.playClick();
+                    spawnFloatingReward('🛡️ Stok Streak Freeze Sudah Maksimal (2/2)!');
+                    return;
+                }
+                gameState.player.gold -= finalCost;
+                gameState.player.shields = Math.min(2, (gameState.player.shields || 0) + 1);
+                recordRedeemHistory(paidItemRecord);
                 SoundFX.playCoin();
-                spawnFloatingReward(`🛡️ Streak Shield Aktif! (Total: ${gameState.player.shields})`);
+                spawnFloatingReward(`🛡️ Streak Freeze Aktif! (${gameState.player.shields}/2)`);
             } else {
-                gameState.player.gold -= item.cost;
-                recordRedeemHistory(item);
+                gameState.player.gold -= finalCost;
+                recordRedeemHistory(paidItemRecord);
                 SoundFX.playCoin();
                 spawnFloatingReward(`🎁 Klaim Reward: ${item.title}!`);
             }
@@ -3246,7 +3948,7 @@
             }
 
             history.forEach(entry => {
-                const isPotion = entry.type === 'potion';
+                const isPotion = entry.type === 'potion' || entry.type === 'elixir';
                 const tagStyle = isPotion
                     ? 'color: #fb7185; background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.3);'
                     : 'color: #34d399; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3);';
@@ -3465,7 +4167,7 @@
             recordActivityHistory(label, 'Dungeon Clear', 'INT', dungeonConfig.xp, dungeonConfig.gold);
 
             SoundFX.playQuestComplete();
-            addRewards(dungeonConfig.xp, dungeonConfig.gold, 'INT', 2);
+            addRewards(dungeonConfig.xp, dungeonConfig.gold, 'INT', 30);
 
             let linkedNotice = '';
             if (linkedQuestId) {
@@ -3478,7 +4180,7 @@
 
             showSystemModal(
                 'DUNGEON CLEARED!',
-                `Kamu berhasil menaklukkan gerbang fokus ${minsLabel} menit! Hadiah +${dungeonConfig.xp} XP, +${dungeonConfig.gold} Gold, dan +2 INT telah ditambahkan.${linkedNotice}`
+                `Kamu berhasil menaklukkan gerbang fokus ${minsLabel} menit! Hadiah +${dungeonConfig.xp} XP, +${dungeonConfig.gold} Gold, dan +30 INT XP telah ditambahkan.${linkedNotice}`
             );
         }
 
@@ -3511,9 +4213,41 @@
         // 8. NEXT DAY EVALUATION & PENALTY SYSTEM
         // ==========================================
         function simulateNextDay() {
+            SoundFX.playClick();
+            const gIn = document.getElementById('journal-gratitude');
+            const iIn = document.getElementById('journal-improve');
+            if (gIn) gIn.value = '';
+            if (iIn) iIn.value = '';
+            openModal('modal-daily-journal');
+        }
+
+        function confirmJournalAndAdvance(saveJournal) {
+            const currentDateKey = getCurrentGameDateKey();
+            if (saveJournal) {
+                const gratitude = (document.getElementById('journal-gratitude')?.value || '').trim();
+                const improve = (document.getElementById('journal-improve')?.value || '').trim();
+                if (gratitude || improve) {
+                    if (!Array.isArray(gameState.history.journals)) gameState.history.journals = [];
+                    gameState.history.journals.unshift({
+                        id: 'jrn_' + Date.now(),
+                        dateStr: currentDateKey,
+                        gratitude,
+                        improve
+                    });
+                    addRewards(0, 0, 'WIS', 15, true);
+                }
+            }
+            closeModal('modal-daily-journal');
+            executeAdvanceNextDay();
+        }
+
+        function executeAdvanceNextDay() {
             const currentDateKey = getCurrentGameDateKey();
             const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
-            const unfinishedDaily = dailyQuests.filter(q => !q.completed);
+            const doneCount = dailyQuests.filter(q => q.completed).length;
+            const totalDaily = dailyQuests.length;
+            const ratio = totalDaily > 0 ? (doneCount / totalDaily) : 1;
+            const pct = Math.round(ratio * 100);
 
             const nextDateObj = parseDateKey(currentDateKey);
             nextDateObj.setDate(nextDateObj.getDate() + 1);
@@ -3527,28 +4261,45 @@
                 }
             });
 
-            if (unfinishedDaily.length > 0) {
-                const penaltyHp = Math.min(60, unfinishedDaily.length * 10);
+            syncPlayerMaxHp();
+            const tier = evaluateDailyTier(ratio, gameState.player.maxHp);
+
+            if (tier.rawDamage > 0) {
                 let shieldText = '';
-                if ((gameState.player.shields || 0) > 0 && gameState.player.streak > 0) {
-                    gameState.player.shields -= 1;
-                    shieldText = ` 🛡️ Streak Shield terpakai! Streak ${gameState.player.streak} hari terlindungi (sisa Shield: ${gameState.player.shields}).`;
+                if (tier.resetStreak) {
+                    if ((gameState.player.shields || 0) > 0 && gameState.player.streak > 0) {
+                        gameState.player.shields -= 1;
+                        shieldText = ` 🛡️ Streak Shield terpakai! Streak ${gameState.player.streak} hari terlindungi (sisa Shield: ${gameState.player.shields}).`;
+                    } else {
+                        gameState.player.streak = 0;
+                        shieldText = ' Streak di-reset ke 0 (progres <80%).';
+                    }
                 } else {
-                    gameState.player.streak = 0;
-                    shieldText = ' Streak di-reset ke 0.';
+                    shieldText = ` Streak tetap aman di ${gameState.player.streak} hari (≥80%), tetapi tidak mendapat regen HP.`;
                 }
-                takeDamage(penaltyHp);
-                showSystemModal(
-                    `EVALUASI ${currentDateKey} -> ${nextDateKey}`,
-                    `Ada ${unfinishedDaily.length} Daily Habit belum selesai! Kamu terkena penalti -${penaltyHp} HP.${shieldText} Semua Daily Habit kini telah di-reset untuk hari baru.`
-                );
+
+                const { wisDmgReduce } = getAttributePassives();
+                const mitigatedDmg = Math.max(1, Math.round(tier.rawDamage * (1 - wisDmgReduce)));
+                const wisNote = mitigatedDmg < tier.rawDamage ? ` (WIS menahan ${tier.rawDamage - mitigatedDmg} dmg)` : '';
+                const wasKnockedOut = (gameState.player.hp - mitigatedDmg) <= 0;
+
+                takeDamage(tier.rawDamage);
+
+                if (!wasKnockedOut) {
+                    showSystemModal(
+                        `EVALUASI ${currentDateKey} -> ${nextDateKey} [${tier.rank}]`,
+                        `Progres Daily Habit ${pct}% (${doneCount}/${totalDaily}) • Penalti ${Math.round(tier.penaltyRate * 100)}% Max HP (-${mitigatedDmg} HP${wisNote}).${shieldText} Semua Daily Habit telah di-reset untuk hari baru.`
+                    );
+                }
             } else {
+                const healAmt = Math.min(tier.regenAmt, gameState.player.maxHp - gameState.player.hp);
+                gameState.player.hp += healAmt;
                 SoundFX.playQuestComplete();
                 saveState();
                 renderAll();
                 showSystemModal(
-                    `HARI BARU: ${nextDateKey}`,
-                    `Luar biasa! Semua Daily Habit pada ${currentDateKey} selesai tanpa penalti. Streak kamu terjaga di ${gameState.player.streak} hari!`
+                    `HARI BARU: ${nextDateKey} [${tier.rank}]`,
+                    `Perfect Clear ${pct}% (${doneCount}/${totalDaily} selesai)! ${healAmt > 0 ? `Vitality pulih +${healAmt} HP (+15% Max HP → ${gameState.player.hp}/${gameState.player.maxHp}), dan ` : `Vitality sudah penuh (${gameState.player.hp}/${gameState.player.maxHp}), dan `}Streak terjaga di ${gameState.player.streak} hari.`
                 );
             }
         }
@@ -3767,6 +4518,218 @@
             }
         };
 
+
+        // ==========================================
+        // 11. PUSH NOTIFICATION REMINDER (LAYAR ATAS HP)
+        // ==========================================
+        function getReminderConfig() {
+            if (!gameState.reminders) {
+                gameState.reminders = {
+                    enabled: false,
+                    times: { Pagi: '07:30', Sore: '16:30', Malam: '20:30' },
+                    lastFired: {}
+                };
+            }
+            return gameState.reminders;
+        }
+
+        function renderReminderUI() {
+            const cfg = getReminderConfig();
+            const badge = document.getElementById('notif-status-badge');
+            const btn = document.getElementById('btn-toggle-notif');
+            const pIn = document.getElementById('rem-time-pagi');
+            const sIn = document.getElementById('rem-time-sore');
+            const mIn = document.getElementById('rem-time-malam');
+
+            if (pIn && cfg.times?.Pagi) pIn.value = cfg.times.Pagi;
+            if (sIn && cfg.times?.Sore) sIn.value = cfg.times.Sore;
+            if (mIn && cfg.times?.Malam) mIn.value = cfg.times.Malam;
+
+            const permGranted = (typeof Notification !== 'undefined' && Notification.permission === 'granted') ||
+                (window.AndroidBridge && typeof window.AndroidBridge.scheduleReminder === 'function');
+            const isActive = cfg.enabled && permGranted;
+
+            if (badge) {
+                if (isActive) {
+                    badge.textContent = 'AKTIF';
+                    badge.style.cssText = 'font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 9999px; background: rgba(16,185,129,0.18); color: #34d399; border: 1px solid rgba(16,185,129,0.45);';
+                } else {
+                    badge.textContent = 'NONAKTIF';
+                    badge.style.cssText = 'font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 9999px; background: rgba(100,116,139,0.2); color: #94a3b8; border: 1px solid #475569;';
+                }
+            }
+            if (btn) {
+                btn.textContent = isActive ? '🔕 Matikan Notifikasi' : '🔔 Aktifkan Notifikasi';
+            }
+        }
+
+        function saveReminderSettings() {
+            const cfg = getReminderConfig();
+            cfg.times = {
+                Pagi: document.getElementById('rem-time-pagi')?.value || '07:30',
+                Sore: document.getElementById('rem-time-sore')?.value || '16:30',
+                Malam: document.getElementById('rem-time-malam')?.value || '20:30'
+            };
+            saveState();
+            syncSystemReminders();
+        }
+
+        async function togglePushReminder() {
+            SoundFX.playClick();
+            const cfg = getReminderConfig();
+
+            if (cfg.enabled) {
+                cfg.enabled = false;
+                saveState();
+                renderReminderUI();
+                syncSystemReminders();
+                spawnFloatingReward('🔕 Notifikasi Reminder Dimatikan');
+                return;
+            }
+
+            // Native Android WebView bridge check
+            if (window.AndroidBridge && typeof window.AndroidBridge.scheduleReminder === 'function') {
+                cfg.enabled = true;
+                saveReminderSettings();
+                renderReminderUI();
+                spawnFloatingReward('🔔 Notifikasi Android Aktif!');
+                return;
+            }
+
+            if (typeof Notification === 'undefined') {
+                spawnFloatingReward('⚠️ Browser ini belum mendukung Notifikasi Pop-up');
+                return;
+            }
+
+            let perm = Notification.permission;
+            if (perm !== 'granted') {
+                perm = await Notification.requestPermission();
+            }
+
+            if (perm === 'granted') {
+                cfg.enabled = true;
+                saveReminderSettings();
+                renderReminderUI();
+                spawnFloatingReward('🔔 Notifikasi Layar Atas HP Aktif!');
+                showTopScreenNotification(
+                    '⚔️ SYSTEM RPG // REMINDER AKTIF',
+                    'Sistem akan mengingatkanmu jika masih ada Daily Quest yang belum selesai!'
+                );
+            } else {
+                cfg.enabled = false;
+                saveState();
+                renderReminderUI();
+                spawnFloatingReward('❌ Izin Notifikasi Ditolak di Pengaturan HP');
+            }
+        }
+
+        function showTopScreenNotification(title, body) {
+            // 1. Android Native Notification Bridge (jika dibungkus APK)
+            try {
+                if (window.AndroidBridge && typeof window.AndroidBridge.showNotification === 'function') {
+                    window.AndroidBridge.showNotification(title, body);
+                    return;
+                }
+            } catch (e) {}
+
+            // 2. Web Notification API (muncul di status bar atas HP / Android)
+            if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+                try {
+                    const notif = new Notification(title, {
+                        body: body,
+                        tag: 'system-rpg-daily-reminder',
+                        renotify: true
+                    });
+                    notif.onclick = () => {
+                        window.focus();
+                        switchTab('quests');
+                        notif.close();
+                    };
+                } catch (e) {
+                    // Fallback jika ServiceWorker registration dibutuhkan di beberapa Chrome Android
+                    if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+                        navigator.serviceWorker.ready.then(reg => {
+                            reg.showNotification(title, {
+                                body: body,
+                                tag: 'system-rpg-daily-reminder',
+                                renotify: true
+                            });
+                        }).catch(() => {});
+                    }
+                }
+            }
+        }
+
+        function sendTestSystemNotification() {
+            SoundFX.playClick();
+            const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
+            const remaining = dailyQuests.filter(q => !q.completed).length;
+            const pct = dailyQuests.length > 0 ? Math.round(((dailyQuests.length - remaining) / dailyQuests.length) * 100) : 100;
+
+            const title = remaining > 0
+                ? `⚠️ SYSTEM ALERT: ${remaining} Daily Quest Tersisa!`
+                : '🔥 SYSTEM RPG: Semua Daily Quest Selesai!';
+            const body = remaining > 0
+                ? `Progres hari ini ${pct}%. Ayo selesaikan minimal 80% agar Streak ${gameState.player.streak} hari tidak reset!`
+                : `Mantap Hunter ${gameState.player.name}! Target hari ini sudah aman 100%.`;
+
+            if (typeof Notification !== 'undefined' && Notification.permission !== 'granted' && !(window.AndroidBridge && window.AndroidBridge.showNotification)) {
+                togglePushReminder();
+                return;
+            }
+            showTopScreenNotification(title, body);
+            spawnFloatingReward('📲 Notifikasi Tes Dikirim ke Layar Atas HP!');
+        }
+
+        function syncSystemReminders() {
+            const cfg = getReminderConfig();
+            const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
+            const remaining = dailyQuests.filter(q => !q.completed).length;
+
+            // Sinkronisasi jadwal ke AndroidBridge jika dijalankan sebagai APK
+            try {
+                if (window.AndroidBridge && typeof window.AndroidBridge.scheduleReminder === 'function') {
+                    window.AndroidBridge.scheduleReminder(JSON.stringify({
+                        enabled: cfg.enabled,
+                        times: cfg.times,
+                        remainingDailyCount: remaining,
+                        streak: gameState.player.streak
+                    }));
+                }
+            } catch (e) {}
+        }
+
+        function checkScheduledRemindersTick() {
+            const cfg = getReminderConfig();
+            if (!cfg.enabled) return;
+
+            const now = new Date();
+            const todayKey = formatDateKey(now);
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            const currentHHMM = `${hh}:${mm}`;
+
+            if (!cfg.lastFired) cfg.lastFired = {};
+
+            const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
+            const remaining = dailyQuests.filter(q => !q.completed).length;
+            if (remaining === 0) return;
+
+            const pct = dailyQuests.length > 0 ? Math.round(((dailyQuests.length - remaining) / dailyQuests.length) * 100) : 0;
+
+            Object.entries(cfg.times || {}).forEach(([slotName, targetTime]) => {
+                const fireKey = `${todayKey}_${slotName}_${targetTime}`;
+                if (currentHHMM === targetTime && !cfg.lastFired[fireKey]) {
+                    cfg.lastFired[fireKey] = true;
+                    saveState();
+                    showTopScreenNotification(
+                        `⚔️ SYSTEM RPG // REMINDER ${slotName.toUpperCase()}`,
+                        `Masih ada ${remaining} Daily Quest belum selesai (Progres ${pct}%). Jangan lupa isi SYSTEM RPG agar Streak ${gameState.player.streak} hari aman!`
+                    );
+                }
+            });
+        }
+
         // ==========================================
         // 10. INITIALIZE APP ON LOAD
         // ==========================================
@@ -3774,7 +4737,10 @@
             checkRealDayRollover();
             currentOracleIndex = pickContextualOracleIndex();
             renderAll();
+            renderReminderUI();
             updateDungeonTimerUI();
+            syncSystemReminders();
+            setInterval(checkScheduledRemindersTick, 20000);
         });
     </script>
 </body>
