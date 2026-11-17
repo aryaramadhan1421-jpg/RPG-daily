@@ -8,7 +8,6 @@
     android:gravity="center_vertical"
     android:background="@drawable/widget_bg_cyber">
 
-    <!-- Header: Streak Besar & Rank/Level Badge -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -41,7 +40,6 @@
             android:textSize="11sp" />
     </LinearLayout>
 
-    <!-- Sub-judul Status Daily Quest -->
     <TextView
         android:id="@+id/widget_daily_status"
         android:layout_width="match_parent"
@@ -53,7 +51,6 @@
         android:maxLines="1"
         android:ellipsize="end" />
 
-    <!-- Deretan Ikon Centang 7 Hari (S S R K J S M) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -61,201 +58,39 @@
         android:orientation="horizontal"
         android:gravity="center">
 
-        <!-- Hari 1: Senin (S) -->
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-            <TextView
-                android:id="@+id/day_icon_0"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:gravity="center"
-                android:background="@drawable/day_circle_pending"
-                android:text="•"
-                android:textColor="#64748B"
-                android:textStyle="bold"
-                android:textSize="12sp" />
-            <TextView
-                android:id="@+id/day_label_0"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="S"
-                android:textColor="#94A3B8"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/day_icon_0" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+            <TextView android:id="@+id/day_label_0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="S" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Hari 2: Selasa (S) -->
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-            <TextView
-                android:id="@+id/day_icon_1"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:gravity="center"
-                android:background="@drawable/day_circle_pending"
-                android:text="•"
-                android:textColor="#64748B"
-                android:textStyle="bold"
-                android:textSize="12sp" />
-            <TextView
-                android:id="@+id/day_label_1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="S"
-                android:textColor="#94A3B8"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/day_icon_1" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+            <TextView android:id="@+id/day_label_1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="S" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Hari 3: Rabu (R) -->
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-            <TextView
-                android:id="@+id/day_icon_2"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:gravity="center"
-                android:background="@drawable/day_circle_pending"
-                android:text="•"
-                android:textColor="#64748B"
-                android:textStyle="bold"
-                android:textSize="12sp" />
-            <TextView
-                android:id="@+id/day_label_2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="R"
-                android:textColor="#94A3B8"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/day_icon_2" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+            <TextView android:id="@+id/day_label_2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="R" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Hari 4: Kamis (K) -->
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-            <TextView
-                android:id="@+id/day_icon_3"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:gravity="center"
-                android:background="@drawable/day_circle_pending"
-                android:text="•"
-                android:textColor="#64748B"
-                android:textStyle="bold"
-                android:textSize="12sp" />
-            <TextView
-                android:id="@+id/day_label_3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="K"
-                android:textColor="#94A3B8"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/day_icon_3" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+            <TextView android:id="@+id/day_label_3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="K" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Hari 5: Jumat (J) -->
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-            <TextView
-                android:id="@+id/day_icon_4"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:gravity="center"
-                android:background="@drawable/day_circle_pending"
-                android:text="•"
-                android:textColor="#64748B"
-                android:textStyle="bold"
-                android:textSize="12sp" />
-            <TextView
-                android:id="@+id/day_label_4"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="J"
-                android:textColor="#94A3B8"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/day_icon_4" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+            <TextView android:id="@+id/day_label_4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="J" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Hari 6: Sabtu (S) -->
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-            <TextView
-                android:id="@+id/day_icon_5"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:gravity="center"
-                android:background="@drawable/day_circle_pending"
-                android:text="•"
-                android:textColor="#64748B"
-                android:textStyle="bold"
-                android:textSize="12sp" />
-            <TextView
-                android:id="@+id/day_label_5"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="S"
-                android:textColor="#94A3B8"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/day_icon_5" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+            <TextView android:id="@+id/day_label_5" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="S" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Hari 7: Minggu (M) -->
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center">
-            <TextView
-                android:id="@+id/day_icon_6"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:gravity="center"
-                android:background="@drawable/day_circle_pending"
-                android:text="•"
-                android:textColor="#64748B"
-                android:textStyle="bold"
-                android:textSize="12sp" />
-            <TextView
-                android:id="@+id/day_label_6"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="M"
-                android:textColor="#94A3B8"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/day_icon_6" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+            <TextView android:id="@+id/day_label_6" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="M" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
         </LinearLayout>
-
     </LinearLayout>
 </LinearLayout>

@@ -5,7 +5,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="14dp"
-    android:background="#070B14">
+    android:gravity="center_vertical"
+    android:background="@drawable/widget_bg_cyber">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -18,36 +19,78 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="🔥 0 HARI STREAK"
+            android:text="🔥 0 DAYS"
             android:textColor="#FB923C"
             android:textStyle="bold"
-            android:textSize="16sp" />
+            android:textSize="20sp"
+            android:letterSpacing="0.03" />
 
         <TextView
             android:id="@+id/widget_rank_lv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="#172554"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
             android:text="E-RANK • Lv.1"
             android:textColor="#22D3EE"
             android:textStyle="bold"
-            android:textSize="12sp" />
+            android:textSize="11sp" />
     </LinearLayout>
 
     <TextView
-        android:id="@+id/widget_hp"
-        android:layout_width="wrap_content"
+        android:id="@+id/widget_daily_status"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:text="❤️ HP: 100 / 100"
-        android:textColor="#F87171"
-        android:textSize="12sp" />
+        android:layout_marginTop="4dp"
+        android:text="Daily Quest: 0% Clear! (Target ≥70%)"
+        android:textColor="#CBD5E1"
+        android:textSize="12sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
 
-    <TextView
-        android:id="@+id/widget_daily"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
-        android:text="⚔️ Daily Quest: 0% (Target ≥70%)"
-        android:textColor="#94A3B8"
-        android:textSize="12sp" />
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/day_icon_0" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+            <TextView android:id="@+id/day_label_0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="S" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/day_icon_1" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+            <TextView android:id="@+id/day_label_1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="S" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/day_icon_2" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+            <TextView android:id="@+id/day_label_2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="R" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/day_icon_3" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+            <TextView android:id="@+id/day_label_3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="K" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/day_icon_4" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+            <TextView android:id="@+id/day_label_4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="J" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/day_icon_5" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+            <TextView android:id="@+id/day_label_5" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="S" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+            <TextView android:id="@+id/day_icon_6" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+            <TextView android:id="@+id/day_label_6" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="M" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>
