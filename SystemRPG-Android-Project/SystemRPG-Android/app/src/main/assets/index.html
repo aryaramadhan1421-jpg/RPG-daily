@@ -14,7 +14,7 @@
     <link rel="apple-touch-icon" href="icon-512.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Orbitron:wght@600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
@@ -446,7 +446,7 @@
             <div class="pill-streak" title="Daily Streak & Streak Freeze (Maks 2)">
                 <svg class="icon animate-fire" width="14" height="14" viewBox="0 0 24 24" fill="#f97316" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
                 <span id="header-streak" class="font-display" style="font-weight: 700; font-size: 0.75rem; color: #fb923c;">0</span>
-                <span id="header-shield-wrap" class="hidden items-center" style="margin-left: 3px; padding-left: 4px; border-left: 1px solid rgba(56,189,248,0.35); color: #38bdf8; font-size: 11px; font-weight: 700;" title="Streak Freeze Aktif (Maks 2)">
+                <span id="header-shield-wrap" class="hidden flex items-center" style="margin-left: 3px; padding-left: 4px; border-left: 1px solid rgba(56,189,248,0.35); color: #38bdf8; font-size: 11px; font-weight: 700;" title="Streak Freeze Aktif (Maks 2)">
                     🛡️<span id="header-shields" class="font-display" style="margin-left: 1px;">0</span>
                 </span>
             </div>
@@ -504,9 +504,12 @@
             <div class="system-card">
                 <div class="flex items-start justify-between gap-3">
                     <div class="flex items-center gap-3">
-                        <div style="width: 3.5rem; height: 3.5rem; border-radius: 0.75rem; background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(147,51,234,0.2)); border: 1px solid rgba(34,211,238,0.5); display: flex; align-items: center; justify-content: center;" class="shadow-neon-blue shrink-0">
-                            <svg class="icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
-                        </div>
+                        <button type="button" onclick="openAvatarModal()" id="player-portrait-btn" style="position: relative; width: 3.75rem; height: 3.75rem; border-radius: 0.85rem; background: linear-gradient(135deg, rgba(6,182,212,0.22), rgba(147,51,234,0.25)); border: 1.5px solid rgba(34,211,238,0.65); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; padding: 0;" class="shadow-neon-blue shrink-0" title="Klik untuk ganti Avatar / Foto Hunter">
+                            <div id="player-portrait-render" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                                <svg class="icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
+                            </div>
+                            <span style="position: absolute; bottom: 0; right: 0; background: rgba(2,6,23,0.88); color: #67e8f9; font-size: 9px; padding: 1px 4px; border-top-left-radius: 5px; border-top: 1px solid rgba(34,211,238,0.4); border-left: 1px solid rgba(34,211,238,0.4);">✎</span>
+                        </button>
                         <div>
                             <div class="flex flex-wrap items-center gap-1-5">
                                 <button type="button" onclick="openRankRoadmapModal()" id="player-rank-badge" class="font-display" style="font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; cursor: pointer;" title="Klik untuk melihat Roadmap semua Rank">
@@ -525,7 +528,7 @@
                                     <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                                 </button>
                             </div>
-                            <p style="font-size: 0.75rem; color: var(--text-muted);">Job: <span style="color: #67e8f9; font-weight: 600;">Shadow Monarch Candidate</span></p>
+                            <p style="font-size: 0.75rem; color: var(--text-muted);">Job: <span id="player-job-display" style="color: #67e8f9; font-weight: 600;">Shadow Monarch</span></p>
                         </div>
                     </div>
 
@@ -550,6 +553,21 @@
                             <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
                         </button>
                     </div>
+                </div>
+
+                <!-- Tavern Mode (Rest Day) Bar -->
+                <div style="margin-top: 0.65rem; padding: 0.55rem 0.65rem; border-radius: 0.65rem; background: rgba(15, 23, 42, 0.78); border: 1px solid rgba(251, 191, 36, 0.32);" class="flex items-center justify-between gap-2">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-1-5">
+                            <span style="font-size: 0.875rem;">🍺</span>
+                            <span id="tavern-status-title" class="font-display truncate" style="font-size: 11px; font-weight: 700; color: #fcd34d;">TAVERN REST DAY</span>
+                            <span id="tavern-quota-badge" class="font-display" style="font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 9999px; background: rgba(245,158,11,0.18); color: #fde68a; border: 1px solid rgba(245,158,11,0.4);">Kuota: 1/1 Minggu Ini</span>
+                        </div>
+                        <p id="tavern-status-desc" style="font-size: 10px; color: #94a3b8; margin-top: 2px;">Istirahat 24 jam tanpa penalti HP & streak aman (reset tiap Senin).</p>
+                    </div>
+                    <button type="button" id="btn-enter-tavern" onclick="enterTavernMode()" class="font-display shrink-0" style="font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 6px 10px; border-radius: 0.55rem; background: linear-gradient(135deg, rgba(245,158,11,0.28), rgba(217,119,6,0.28)); color: #fde68a; border: 1px solid rgba(251,191,36,0.6); cursor: pointer;">
+                        🍺 Enter Tavern
+                    </button>
                 </div>
 
                 <!-- HP & XP Bars -->
@@ -608,24 +626,59 @@
                     <span id="stat-scale-badge" class="font-display" style="font-size: 10px; font-weight: 700; color: #67e8f9; background: rgba(6,182,212,0.12); border: 1px solid rgba(6,182,212,0.3); padding: 2px 7px; border-radius: 4px;">Skala Tier: 100</span>
                 </div>
 
-                <!-- Radar Chart SVG -->
-                <div class="flex justify-center items-center" style="padding: 0.5rem; background: rgba(2,6,23,0.65); border-radius: 0.75rem; border: 1px solid rgba(30,41,59,0.85);">
-                    <svg id="stats-radar-svg" viewBox="0 0 220 180" style="width: 100%; max-width: 230px; height: auto; overflow: visible;">
-                        <polygon points="110,25 175,90 110,155 45,90" fill="none" stroke="#1e293b" stroke-width="1" />
-                        <polygon points="110,46 153,90 110,134 67,90" fill="none" stroke="#1e293b" stroke-width="1" stroke-dasharray="2,2" />
-                        <polygon points="110,68 132,90 110,112 88,90" fill="none" stroke="#1e293b" stroke-width="1" />
-                        <line x1="110" y1="25" x2="110" y2="155" stroke="#1e293b" stroke-width="1" />
-                        <line x1="45" y1="90" x2="175" y2="90" stroke="#1e293b" stroke-width="1" />
-                        <polygon id="radar-data-poly" points="110,60 140,90 110,120 80,90" fill="rgba(0, 240, 255, 0.22)" stroke="#00f0ff" stroke-width="2" />
-                        <circle id="node-STR" cx="110" cy="60" r="3" fill="#fb7185" />
-                        <circle id="node-INT" cx="140" cy="90" r="3" fill="#22d3ee" />
-                        <circle id="node-WIS" cx="110" cy="120" r="3" fill="#c084fc" />
-                        <circle id="node-CHR" cx="80" cy="90" r="3" fill="#fbbf24" />
-                        <text x="110" y="15" text-anchor="middle" fill="#fb7185" font-weight="700" font-size="11">STR</text>
-                        <text x="184" y="94" text-anchor="start" fill="#22d3ee" font-weight="700" font-size="11">INT</text>
-                        <text x="110" y="172" text-anchor="middle" fill="#c084fc" font-weight="700" font-size="11">WIS</text>
-                        <text x="36" y="94" text-anchor="end" fill="#fbbf24" font-weight="700" font-size="11">CHR</text>
-                    </svg>
+                <!-- Analytics & Radar Chart SVG (All-Time vs Last 7 Days) -->
+                <div class="space-y-2-5" style="padding: 0.65rem; background: rgba(2,6,23,0.72); border-radius: 0.75rem; border: 1px solid rgba(34,211,238,0.25);">
+                    <div class="flex items-center justify-between gap-2">
+                        <span id="radar-mode-subtitle" class="font-display" style="font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Distribusi Atribut Hunter</span>
+                        <div class="flex items-center gap-1" style="background: rgba(15,23,42,0.95); padding: 2px; border-radius: 0.5rem; border: 1px solid #334155;">
+                            <button type="button" id="radar-toggle-all" onclick="setRadarChartMode('ALL')" class="font-display" style="font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 0.4rem; background: rgba(6,182,212,0.25); color: #67e8f9; border: 1px solid rgba(34,211,238,0.5);">All-Time</button>
+                            <button type="button" id="radar-toggle-7d" onclick="setRadarChartMode('7D')" class="font-display" style="font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 0.4rem; background: transparent; color: #94a3b8; border: 1px solid transparent;">Last 7 Days</button>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center items-center" style="width: 100%; overflow: hidden;">
+                        <svg id="stats-radar-svg" viewBox="0 0 240 185" style="width: 100%; max-width: 250px; height: auto; display: block;">
+                            <defs>
+                                <filter id="radarNeonGlow" x="-30%" y="-30%" width="160%" height="160%">
+                                    <feGaussianBlur stdDeviation="3.2" result="blur" />
+                                    <feMerge>
+                                        <feMergeNode in="blur" />
+                                        <feMergeNode in="SourceGraphic" />
+                                    </feMerge>
+                                </filter>
+                            </defs>
+                            <polygon points="120,30 182,92 120,154 58,92" fill="none" stroke="#1e293b" stroke-width="1.2" />
+                            <polygon points="120,51 161,92 120,133 79,92" fill="none" stroke="#1e293b" stroke-width="1" stroke-dasharray="2,2" />
+                            <polygon points="120,71 141,92 120,113 99,92" fill="none" stroke="#1e293b" stroke-width="1" />
+                            <line x1="120" y1="30" x2="120" y2="154" stroke="#1e293b" stroke-width="1" />
+                            <line x1="58" y1="92" x2="182" y2="92" stroke="#1e293b" stroke-width="1" />
+                            <polygon id="radar-data-poly" points="120,62 150,92 120,122 90,92" fill="rgba(0, 240, 255, 0.24)" stroke="#00f0ff" stroke-width="2.2" filter="url(#radarNeonGlow)" />
+                            <circle id="node-STR" cx="120" cy="62" r="3.5" fill="#fb7185" filter="url(#radarNeonGlow)" />
+                            <circle id="node-INT" cx="150" cy="92" r="3.5" fill="#22d3ee" filter="url(#radarNeonGlow)" />
+                            <circle id="node-WIS" cx="120" cy="122" r="3.5" fill="#c084fc" filter="url(#radarNeonGlow)" />
+                            <circle id="node-CHR" cx="90" cy="92" r="3.5" fill="#fbbf24" filter="url(#radarNeonGlow)" />
+                            <text id="radar-lbl-STR" x="120" y="18" text-anchor="middle" fill="#fb7185" font-weight="700" font-size="10.5">STR</text>
+                            <text id="radar-lbl-INT" x="190" y="96" text-anchor="start" fill="#22d3ee" font-weight="700" font-size="10.5">INT</text>
+                            <text id="radar-lbl-WIS" x="120" y="173" text-anchor="middle" fill="#c084fc" font-weight="700" font-size="10.5">WIS</text>
+                            <text id="radar-lbl-CHR" x="50" y="96" text-anchor="end" fill="#fbbf24" font-weight="700" font-size="10.5">CHR</text>
+                        </svg>
+                    </div>
+
+                    <!-- 3 Key Analytics Metrics -->
+                    <div class="grid grid-cols-3 gap-1-5" style="padding-top: 2px;">
+                        <div style="background: rgba(15,23,42,0.85); border: 1px solid rgba(251,146,60,0.35); border-radius: 0.6rem; padding: 0.45rem 0.35rem; text-align: center;">
+                            <span style="display: block; font-size: 9px; color: #94a3b8; text-transform: uppercase;">🔥 Longest Streak</span>
+                            <span id="metric-longest-streak" class="font-display" style="font-size: 0.875rem; font-weight: 800; color: #fb923c;">0 Hari</span>
+                        </div>
+                        <div style="background: rgba(15,23,42,0.85); border: 1px solid rgba(168,85,247,0.35); border-radius: 0.6rem; padding: 0.45rem 0.35rem; text-align: center;">
+                            <span style="display: block; font-size: 9px; color: #94a3b8; text-transform: uppercase;">⏳ Dungeon Focus</span>
+                            <span id="metric-dungeon-hours" class="font-display" style="font-size: 0.875rem; font-weight: 800; color: #d8b4fe;">0.0 Jam</span>
+                        </div>
+                        <div style="background: rgba(15,23,42,0.85); border: 1px solid rgba(52,211,153,0.35); border-radius: 0.6rem; padding: 0.45rem 0.35rem; text-align: center;">
+                            <span style="display: block; font-size: 9px; color: #94a3b8; text-transform: uppercase;">📈 Rate Minggu Ini</span>
+                            <span id="metric-weekly-rate" class="font-display" style="font-size: 0.875rem; font-weight: 800; color: #34d399;">0%</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 gap-3" style="padding-top: 4px;">
@@ -881,6 +934,7 @@
                         <label style="display: block; font-size: 0.75rem; color: #cbd5e1; margin-bottom: 4px;">Kategori</label>
                         <select id="q-category" class="input-cyber" style="font-size: 0.75rem; padding: 0.5rem 0.4rem;">
                             <option value="Daily Quest">Daily Quest</option>
+                            <option value="Recovery Quest">🌿 Recovery Quest</option>
                             <option value="Main Quest">Main Quest</option>
                             <option value="Boss Fight">Boss Fight</option>
                         </select>
@@ -933,6 +987,7 @@
             <div class="flex gap-1-5" style="overflow-x: auto; padding-bottom: 2px;">
                 <button onclick="setQuestFilter('ALL')" id="filter-ALL" class="quest-filter-btn font-display" style="padding: 6px 12px; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 700; background: rgba(6,182,212,0.2); color: #67e8f9; border: 1px solid rgba(6,182,212,0.4); white-space: nowrap;">Semua</button>
                 <button onclick="setQuestFilter('Daily Quest')" id="filter-Daily Quest" class="quest-filter-btn font-display" style="padding: 6px 12px; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;">Daily Quest</button>
+                <button onclick="setQuestFilter('Recovery Quest')" id="filter-Recovery Quest" class="quest-filter-btn font-display" style="padding: 6px 12px; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 700; background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.35); white-space: nowrap;">🌿 Recovery</button>
                 <button onclick="setQuestFilter('Main Quest')" id="filter-Main Quest" class="quest-filter-btn font-display" style="padding: 6px 12px; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;">Main Quest</button>
                 <button onclick="setQuestFilter('Boss Fight')" id="filter-Boss Fight" class="quest-filter-btn font-display" style="padding: 6px 12px; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;">Boss Fight</button>
             </div>
@@ -965,7 +1020,7 @@
                         <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/></svg>
                         Instant Dungeon Gate
                     </span>
-                    <span id="wakelock-status-badge" class="hidden font-display" style="align-items: center; gap: 4px; padding: 4px 10px; border-radius: 9999px; background: rgba(16,185,129,0.16); border: 1px solid rgba(16,185,129,0.4); color: #34d399; font-size: 10px; font-weight: 700; text-transform: uppercase;">
+                    <span id="wakelock-status-badge" class="hidden font-display" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 9999px; background: rgba(16,185,129,0.16); border: 1px solid rgba(16,185,129,0.4); color: #34d399; font-size: 10px; font-weight: 700; text-transform: uppercase;">
                         <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                         SCREEN ON
                     </span>
@@ -1239,8 +1294,38 @@
                 <button type="button" id="btn-clear-shop-search" onclick="clearShopSearch()" class="hidden" style="position: absolute; right: 0.65rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.75rem;">✕</button>
             </div>
 
+            <!-- Section Divider 1: Consumables & Real-World Rewards -->
+            <div class="flex items-center justify-between" style="padding: 0.25rem 0.1rem; border-bottom: 1px solid rgba(251,191,36,0.3);">
+                <span class="font-display" style="font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: #fcd34d; text-transform: uppercase;">🎁 Potion & Real-World Rewards</span>
+                <span style="font-size: 10px; color: #94a3b8;">Konsumsi & Hadiah Nyata</span>
+            </div>
+
             <!-- Shop Items Container -->
             <div id="shop-list" class="space-y-2-5"></div>
+
+            <!-- Section Divider 2: Armory / Relics & Passive Buffs (3 Active Slots) -->
+            <div class="system-card space-y-3" style="border-color: rgba(34,211,238,0.45); background: linear-gradient(135deg, rgba(15,19,31,0.96), rgba(14,35,58,0.92));">
+                <div class="flex items-center justify-between gap-2" style="border-bottom: 1px solid rgba(34,211,238,0.25); padding-bottom: 0.5rem;">
+                    <div>
+                        <h3 class="font-display" style="font-size: 0.875rem; font-weight: 800; color: #67e8f9; text-transform: uppercase;">⚔️ ARMORY / RELICS & PASSIVE BUFFS</h3>
+                        <p style="font-size: 10px; color: #94a3b8;">Beli & pasang hingga 3 Relic aktif untuk buff EXP, Gold, & Atribut</p>
+                    </div>
+                    <span id="armory-equipped-count" class="font-display shrink-0" style="font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 9999px; background: rgba(6,182,212,0.18); color: #22d3ee; border: 1px solid rgba(34,211,238,0.45);">0 / 3 Slot</span>
+                </div>
+
+                <!-- 3 Active Equipment Slots -->
+                <div class="grid grid-cols-3 gap-2" id="armory-active-slots">
+                    <!-- Populated by renderArmory() -->
+                </div>
+
+                <!-- Active Passive Buffs Summary Strip -->
+                <div id="armory-passive-summary" style="font-size: 10px; color: #cbd5e1; background: rgba(2,6,23,0.65); border: 1px solid rgba(51,65,85,0.75); border-radius: 0.55rem; padding: 0.45rem 0.6rem;">
+                    Belum ada Relic terpasang. Pasang Relic di bawah untuk mengaktifkan efek pasif!
+                </div>
+
+                <!-- Relic Catalog List -->
+                <div id="armory-relic-list" class="space-y-2"></div>
+            </div>
 
             <!-- Mystery Chest Gacha Banner -->
             <div class="system-card space-y-2-5 shadow-neon-purple" style="border-color: rgba(168,85,247,0.55); background: linear-gradient(135deg, rgba(15,19,31,0.96), rgba(46,16,101,0.75));">
@@ -1538,6 +1623,36 @@
         </div>
     </div>
 
+    <!-- Avatar / Hunter Portrait Customization Modal -->
+    <div id="modal-avatar-picker" class="hidden modal-backdrop">
+        <div class="system-card max-w-sm w-full modal-enter space-y-3" style="border-color: rgba(34,211,238,0.55); padding: 1.25rem; max-height: 88vh; overflow-y: auto;">
+            <div class="flex justify-between items-center" style="border-bottom: 1px solid var(--bg-slate-800); padding-bottom: 0.5rem;">
+                <div>
+                    <h3 class="font-display" style="font-weight: 800; font-size: 1rem; color: var(--cyan-400);">HUNTER PORTRAIT</h3>
+                    <p style="font-size: 11px; color: var(--text-muted);">Pilih 6 Avatar Cyber-Fantasy atau unggah foto dari galeri HP</p>
+                </div>
+                <button type="button" onclick="closeModal('modal-avatar-picker')" style="color: var(--text-muted); padding: 4px;">✕</button>
+            </div>
+
+            <!-- 6 Cyber-Fantasy SVG Avatars Grid -->
+            <div id="avatar-preset-grid" class="grid grid-cols-3 gap-2"></div>
+
+            <!-- Upload Custom Photo from Gallery -->
+            <div style="background: rgba(2,6,23,0.72); border: 1px dashed rgba(34,211,238,0.45); border-radius: 0.75rem; padding: 0.75rem; text-align: center;" class="space-y-2">
+                <p style="font-size: 11px; color: #cbd5e1; font-weight: 600;">📷 Foto Pribadi / Galeri HP</p>
+                <p style="font-size: 10px; color: #94a3b8;">Otomatis dikompres (160×160px) agar ringan di localStorage</p>
+                <input type="file" id="avatar-upload-input" accept="image/*" onchange="handleAvatarFileUpload(event)" class="hidden">
+                <button type="button" onclick="document.getElementById('avatar-upload-input').click()" class="w-full font-display" style="padding: 0.5rem; border-radius: 0.6rem; background: linear-gradient(to right, rgba(6,182,212,0.25), rgba(168,85,247,0.25)); color: #67e8f9; border: 1px solid rgba(34,211,238,0.5); font-size: 11px; font-weight: 700;">
+                    📁 Pilih Foto dari Galeri
+                </button>
+            </div>
+
+            <button type="button" onclick="closeModal('modal-avatar-picker')" class="w-full font-display" style="background: var(--bg-slate-800); color: #fff; font-weight: 700; padding: 0.55rem; border-radius: 0.75rem; font-size: 0.8rem;">
+                SELESAI
+            </button>
+        </div>
+    </div>
+
     <!-- Edit Character Name Modal -->
     <div id="modal-edit-name" class="hidden modal-backdrop">
         <div class="system-card max-w-xs w-full modal-enter" style="border-color: rgba(34,211,238,0.5); padding: 1.25rem;">
@@ -1580,6 +1695,7 @@
                     <label style="display: block; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">Kategori</label>
                     <select id="edit-q-category" class="input-cyber" style="font-size: 11px; padding: 0.45rem 0.35rem;">
                         <option value="Daily Quest">Daily</option>
+                        <option value="Recovery Quest">🌿 Recovery</option>
                         <option value="Main Quest">Main</option>
                         <option value="Boss Fight">Boss</option>
                     </select>
@@ -2083,13 +2199,8 @@
             updateBadge(visible) {
                 const badge = document.getElementById('wakelock-status-badge');
                 if (!badge) return;
-                if (visible) {
-                    badge.classList.remove('hidden');
-                    badge.style.display = 'inline-flex';
-                } else {
-                    badge.classList.add('hidden');
-                    badge.style.display = '';
-                }
+                if (visible) badge.classList.remove('hidden');
+                else badge.classList.add('hidden');
             }
         };
 
@@ -2140,6 +2251,93 @@
             { id: 'dh_skincare_malam', timeSlot: 'Malam', title: 'Gosok gigi facial wash moisturizer', category: 'Daily Quest', stat: 'CHR', xp: 20, gold: 15, completed: false }
         ];
 
+        const DEFAULT_RECOVERY_QUESTS = [
+            { id: 'rec_walk', timeSlot: 'Sore', title: 'Jalan Santai 30 Menit', category: 'Recovery Quest', stat: 'WIS', xp: 15, gold: 10, hpHeal: 20, completed: false },
+            { id: 'rec_sleep', timeSlot: 'Malam', title: 'Tidur Berkualitas 7–8 Jam', category: 'Recovery Quest', stat: 'STR', xp: 20, gold: 15, hpHeal: 25, completed: false },
+            { id: 'rec_stretch', timeSlot: 'Pagi', title: 'Stretching 15 Menit', category: 'Recovery Quest', stat: 'STR', xp: 15, gold: 10, hpHeal: 15, completed: false }
+        ];
+
+        const ARMORY_RELICS_CATALOG = [
+            {
+                id: 'rel_chronos',
+                name: 'Chronos Hourglass',
+                slot: 'Tome/Tool',
+                cost: 450,
+                icon: '⏳',
+                buffDesc: '+15% EXP & +10% INT Stat XP dari semua aktivitas',
+                xpBonus: 0.15,
+                goldBonus: 0,
+                statBonus: { INT: 0.10 }
+            },
+            {
+                id: 'rel_grimoire',
+                name: "Scholar's Grimoire",
+                slot: 'Tome/Tool',
+                cost: 500,
+                icon: '📖',
+                buffDesc: '+12% EXP & +15% INT/WIS Stat XP saat belajar & fokus',
+                xpBonus: 0.12,
+                goldBonus: 0,
+                statBonus: { INT: 0.15, WIS: 0.15 }
+            },
+            {
+                id: 'rel_dumbbell',
+                name: 'Iron Dumbbell Emblem',
+                slot: 'Accessory',
+                cost: 480,
+                icon: '🏋️',
+                buffDesc: '+25% STR Stat XP & +10 Max HP Permanen',
+                xpBonus: 0,
+                goldBonus: 0,
+                bonusMaxHp: 10,
+                statBonus: { STR: 0.25 }
+            },
+            {
+                id: 'rel_coin_pouch',
+                name: "Merchant's Coin Pouch",
+                slot: 'Relic',
+                cost: 550,
+                icon: '💰',
+                buffDesc: '+20% Gold dari semua Quest & Dungeon +15% CHR Stat XP',
+                xpBonus: 0,
+                goldBonus: 0.20,
+                statBonus: { CHR: 0.15 }
+            }
+        ];
+
+        const CYBER_AVATARS_CATALOG = [
+            {
+                id: 'av_shadow_monarch',
+                name: 'Shadow Monarch',
+                svg: `<svg viewBox="0 0 64 64" width="100%" height="100%"><defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#06b6d4"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs><rect width="64" height="64" fill="#090d16"/><circle cx="32" cy="32" r="26" fill="url(#g1)" opacity="0.22"/><path d="M18 48 C18 38, 46 38, 46 48" fill="#1e1b4b" stroke="#38bdf8" stroke-width="2"/><circle cx="32" cy="25" r="10" fill="#0f172a" stroke="#22d3ee" stroke-width="2"/><path d="M22 22 L32 13 L42 22" fill="none" stroke="#a855f7" stroke-width="2.2"/><circle cx="28.5" cy="25" r="1.8" fill="#00f0ff"/><circle cx="35.5" cy="25" r="1.8" fill="#00f0ff"/></svg>`
+            },
+            {
+                id: 'av_cyber_knight',
+                name: 'Cyber Paladin',
+                svg: `<svg viewBox="0 0 64 64" width="100%" height="100%"><rect width="64" height="64" fill="#0a111e"/><polygon points="32,8 50,18 46,44 32,56 18,44 14,18" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/><path d="M22 26 H42 L39 33 H25 Z" fill="#00f0ff" opacity="0.85"/><path d="M32 12 V22 M26 17 H38" stroke="#fbbf24" stroke-width="2"/></svg>`
+            },
+            {
+                id: 'av_arcane_sage',
+                name: 'Arcane Scholar',
+                svg: `<svg viewBox="0 0 64 64" width="100%" height="100%"><rect width="64" height="64" fill="#120b24"/><circle cx="32" cy="32" r="24" fill="none" stroke="#c084fc" stroke-width="1.5" stroke-dasharray="4 3"/><polygon points="32,12 48,38 16,38" fill="none" stroke="#22d3ee" stroke-width="2"/><circle cx="32" cy="30" r="6" fill="#a855f7"/><circle cx="32" cy="30" r="2.5" fill="#fde047"/></svg>`
+            },
+            {
+                id: 'av_crimson_berserker',
+                name: 'Crimson Vanguard',
+                svg: `<svg viewBox="0 0 64 64" width="100%" height="100%"><rect width="64" height="64" fill="#180a12"/><path d="M16 16 L26 24 L20 34 Z M48 16 L38 24 L44 34 Z" fill="#f43f5e"/><circle cx="32" cy="33" r="13" fill="#0f172a" stroke="#fb7185" stroke-width="2.2"/><path d="M25 31 L30 34 L25 36 Z M39 31 L34 34 L39 36 Z" fill="#fda4af"/><path d="M26 42 H38" stroke="#f43f5e" stroke-width="2.2"/></svg>`
+            },
+            {
+                id: 'av_emerald_ranger',
+                name: 'Verdant Strider',
+                svg: `<svg viewBox="0 0 64 64" width="100%" height="100%"><rect width="64" height="64" fill="#071713"/><path d="M32 10 L48 26 L42 50 H22 L16 26 Z" fill="#064e3b" stroke="#34d399" stroke-width="2"/><path d="M23 28 Q32 22 41 28 Q32 34 23 28 Z" fill="#6ee7b7"/><circle cx="32" cy="28" r="2.5" fill="#022c22"/></svg>`
+            },
+            {
+                id: 'av_golden_sovereign',
+                name: 'Solar Sovereign',
+                svg: `<svg viewBox="0 0 64 64" width="100%" height="100%"><rect width="64" height="64" fill="#171207"/><circle cx="32" cy="32" r="22" fill="none" stroke="#fbbf24" stroke-width="2"/><path d="M18 24 L24 14 L32 21 L40 14 L46 24 Z" fill="#f59e0b" stroke="#fde68a" stroke-width="1.5"/><circle cx="32" cy="36" r="10" fill="#1e293b" stroke="#fbbf24" stroke-width="2"/><circle cx="29" cy="35" r="1.6" fill="#fde047"/><circle cx="35" cy="35" r="1.6" fill="#fde047"/></svg>`
+            }
+        ];
+
         const DEFAULT_STATE = {
             player: {
                 name: 'Sung Jin-Woo',
@@ -2152,11 +2350,30 @@
                 shields: 0,
                 activeTitle: 't_novice',
                 dungeonClears: 0,
+                dungeonMinutesTotal: 0,
+                longestStreak: 0,
+                avatarType: 'svg',
+                avatarId: 'av_shadow_monarch',
+                avatarCustomDataUrl: null,
                 stats: { STR: 1, INT: 1, WIS: 1, CHR: 1 },
                 statXp: { STR: 0, INT: 0, WIS: 0, CHR: 0 }
             },
+            tavern: {
+                activeUntil: null,
+                weekKey: null,
+                usedThisWeek: false
+            },
+            armory: {
+                owned: [],
+                equipped: {
+                    'Tome/Tool': null,
+                    'Accessory': null,
+                    'Relic': null
+                }
+            },
             quests: [
                 ...JSON.parse(JSON.stringify(DEFAULT_DAILY_HABITS)),
+                ...JSON.parse(JSON.stringify(DEFAULT_RECOVERY_QUESTS)),
                 {
                     id: 'q_main_1',
                     timeSlot: 'Fleksibel',
@@ -2519,6 +2736,32 @@
                     }
                     if (typeof parsed.lastOracleClaimDate === 'undefined') parsed.lastOracleClaimDate = null;
                     if (typeof parsed.player.dungeonClears !== 'number') parsed.player.dungeonClears = 0;
+                    if (typeof parsed.player.dungeonMinutesTotal !== 'number') {
+                        parsed.player.dungeonMinutesTotal = (parsed.player.dungeonClears || 0) * 25;
+                    }
+                    if (typeof parsed.player.longestStreak !== 'number') {
+                        parsed.player.longestStreak = parsed.player.streak || 0;
+                    }
+                    if ((parsed.player.streak || 0) > parsed.player.longestStreak) {
+                        parsed.player.longestStreak = parsed.player.streak;
+                    }
+                    if (!parsed.player.avatarType) parsed.player.avatarType = 'svg';
+                    if (!parsed.player.avatarId) parsed.player.avatarId = 'av_shadow_monarch';
+                    if (typeof parsed.player.avatarCustomDataUrl === 'undefined') parsed.player.avatarCustomDataUrl = null;
+                    if (!parsed.tavern) {
+                        parsed.tavern = { activeUntil: null, weekKey: null, usedThisWeek: false };
+                    }
+                    if (!parsed.armory) {
+                        parsed.armory = { owned: [], equipped: { 'Tome/Tool': null, 'Accessory': null, 'Relic': null } };
+                    }
+                    if (!parsed.armory.equipped) {
+                        parsed.armory.equipped = { 'Tome/Tool': null, 'Accessory': null, 'Relic': null };
+                    }
+                    if (Array.isArray(parsed.quests) && !parsed.quests.some(q => q.category === 'Recovery Quest')) {
+                        DEFAULT_RECOVERY_QUESTS.forEach(rq => {
+                            parsed.quests.push(JSON.parse(JSON.stringify(rq)));
+                        });
+                    }
                     if (typeof parsed.player.shields !== 'number') parsed.player.shields = 0;
                     if (parsed.player.shields > 2) parsed.player.shields = 2;
                     if (!parsed.player.statXp) {
@@ -2599,9 +2842,61 @@
             }
         }
 
+        function getMondayWeekKey(dateObj = new Date()) {
+            const d = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+            d.setDate(diff);
+            return formatDateKey(d);
+        }
+
+        function syncTavernWeeklyQuota() {
+            if (!gameState.tavern) {
+                gameState.tavern = { activeUntil: null, weekKey: getMondayWeekKey(), usedThisWeek: false };
+            }
+            const curWeek = getMondayWeekKey(new Date());
+            if (gameState.tavern.weekKey !== curWeek) {
+                gameState.tavern.weekKey = curWeek;
+                gameState.tavern.usedThisWeek = false;
+            }
+            if (gameState.tavern.activeUntil && Date.now() > gameState.tavern.activeUntil) {
+                gameState.tavern.activeUntil = null;
+            }
+        }
+
+        function isTavernActive() {
+            syncTavernWeeklyQuota();
+            return !!(gameState.tavern && gameState.tavern.activeUntil && Date.now() < gameState.tavern.activeUntil);
+        }
+
+        function enterTavernMode() {
+            syncTavernWeeklyQuota();
+            if (isTavernActive()) {
+                SoundFX.playClick();
+                const remHrs = Math.max(1, Math.ceil((gameState.tavern.activeUntil - Date.now()) / 3600000));
+                spawnFloatingReward(`🍺 Tavern Mode sedang aktif (${remHrs} jam tersisa)!`);
+                return;
+            }
+            if (gameState.tavern.usedThisWeek) {
+                SoundFX.playDamage();
+                spawnFloatingReward('⚠️ Kuota Tavern minggu ini sudah terpakai (Reset Senin depan)!');
+                return;
+            }
+            SoundFX.playQuestComplete();
+            gameState.tavern.usedThisWeek = true;
+            gameState.tavern.activeUntil = Date.now() + (24 * 60 * 60 * 1000);
+            saveState();
+            renderAll();
+            showSystemModal(
+                '🍺 TAVERN REST DAY AKTIF (24 JAM)',
+                'Selamat beristirahat, Hunter! Selama 24 jam ke depan, penalti HP dibekukan dan Streak harianmu terlindungi penuh. Kuota Tavern otomatis reset pada hari Senin berikutnya.'
+            );
+        }
+
         function checkRealDayRollover() {
             const realToday = formatDateKey(new Date());
             if (gameState.lastRealDate && gameState.lastRealDate !== realToday) {
+                const tavernProtected = isTavernActive();
                 const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
                 const doneCount = dailyQuests.filter(q => q.completed).length;
                 const totalDaily = dailyQuests.length;
@@ -2609,19 +2904,25 @@
                 const pct = Math.round(ratio * 100);
 
                 gameState.quests.forEach(q => {
-                    if (q.category === 'Daily Quest') {
+                    if (q.category === 'Daily Quest' || q.category === 'Recovery Quest') {
                         q.completed = false;
                         delete q.lastReward;
                     }
                 });
                 gameState.selectedDate = realToday;
                 gameState.lastRealDate = realToday;
-                gameState.lastStreakDate = null;
 
                 syncPlayerMaxHp();
                 const tier = evaluateDailyTier(ratio, gameState.player.maxHp);
 
-                if (tier.rawDamage > 0) {
+                if (tavernProtected && tier.rawDamage > 0) {
+                    setTimeout(() => {
+                        showSystemModal(
+                            '🍺 TAVERN PROTECTION // REST DAY',
+                            `Pergantian hari berjalan mulus! Berkat Tavern Mode, penalti HP dibekukan dan Streak ${gameState.player.streak} hari tetap aman terjaga. Semua Daily & Recovery Quest telah di-reset untuk hari ini.`
+                        );
+                    }, 500);
+                } else if (tier.rawDamage > 0) {
                     let shieldMsg = '';
                     if (tier.resetStreak) {
                         if ((gameState.player.shields || 0) > 0 && gameState.player.streak > 0) {
@@ -2822,14 +3123,44 @@
             return { cap: MAX_STAT_LEVEL, tier: 'Rank S' };
         }
 
+        function getEquippedRelics() {
+            const eq = (gameState.armory && gameState.armory.equipped) || {};
+            return Object.values(eq)
+                .filter(Boolean)
+                .map(id => ARMORY_RELICS_CATALOG.find(r => r.id === id))
+                .filter(Boolean);
+        }
+
+        function getRelicPassiveBonuses() {
+            const relics = getEquippedRelics();
+            let xpBonus = 0;
+            let goldBonus = 0;
+            let bonusMaxHp = 0;
+            const statMult = { STR: 0, INT: 0, WIS: 0, CHR: 0 };
+
+            relics.forEach(r => {
+                xpBonus += (r.xpBonus || 0);
+                goldBonus += (r.goldBonus || 0);
+                bonusMaxHp += (r.bonusMaxHp || 0);
+                if (r.statBonus) {
+                    Object.keys(r.statBonus).forEach(st => {
+                        if (statMult[st] !== undefined) statMult[st] += r.statBonus[st];
+                    });
+                }
+            });
+
+            return { relics, xpBonus, goldBonus, bonusMaxHp, statMult };
+        }
+
         function getAttributePassives() {
             const s = gameState.player.stats;
-            const bonusMaxHp = Math.max(0, (s.STR - 1) * 3);
+            const relicBuffs = getRelicPassiveBonuses();
+            const bonusMaxHp = Math.max(0, (s.STR - 1) * 3) + relicBuffs.bonusMaxHp;
             const effectiveMaxHp = 100 + bonusMaxHp;
             const intXpBonus = Math.min(0.40, Math.max(0, (s.INT - 1) * 0.008));
             const wisDmgReduce = Math.min(0.40, Math.max(0, (s.WIS - 1) * 0.008));
             const chrShopDiscount = Math.min(0.25, Math.max(0, Math.floor((s.CHR - 1) / 2) * 0.01));
-            return { bonusMaxHp, effectiveMaxHp, intXpBonus, wisDmgReduce, chrShopDiscount };
+            return { bonusMaxHp, effectiveMaxHp, intXpBonus, wisDmgReduce, chrShopDiscount, relicBuffs };
         }
 
         function syncPlayerMaxHp() {
@@ -2856,9 +3187,9 @@
             }
             if (ratio < 0.30) {
                 return {
-                    label: 'EXHAUSTED (-25%)',
-                    xpMod: -0.25,
-                    goldMod: -0.25,
+                    label: 'FATIGUE (-20% EXP)',
+                    xpMod: -0.20,
+                    goldMod: -0.15,
                     style: 'background: rgba(244,63,94,0.22); color: #fda4af; border: 1px solid rgba(244,63,94,0.55);'
                 };
             }
@@ -2880,12 +3211,16 @@
             const titleObj = getActiveTitleObj();
             const hpCond = getHpCondition();
             const passives = getAttributePassives();
+            const relicBuffs = passives.relicBuffs;
 
-            const totalXpMult = Math.max(0.25, mult + titleObj.xpBonus + hpCond.xpMod + passives.intXpBonus);
-            const totalGoldMult = Math.max(0.25, 1 + titleObj.goldBonus + hpCond.goldMod);
+            const totalXpMult = Math.max(0.25, mult + titleObj.xpBonus + hpCond.xpMod + passives.intXpBonus + relicBuffs.xpBonus);
+            const totalGoldMult = Math.max(0.25, 1 + titleObj.goldBonus + hpCond.goldMod + relicBuffs.goldBonus);
 
             const finalXp = Math.round(baseXp * totalXpMult);
             const finalGold = Math.round(baseGold * totalGoldMult);
+
+            const statBonusMult = (statType && relicBuffs.statMult[statType]) ? (1 + relicBuffs.statMult[statType]) : 1;
+            const finalStatXpGain = Math.round(statXpGain * statBonusMult);
 
             gameState.player.xp += finalXp;
             gameState.player.gold += finalGold;
@@ -2895,7 +3230,7 @@
             if (statType && gameState.player.stats[statType] !== undefined) {
                 if (!gameState.player.statXp) gameState.player.statXp = { STR: 0, INT: 0, WIS: 0, CHR: 0 };
                 if (gameState.player.stats[statType] < MAX_STAT_LEVEL) {
-                    gameState.player.statXp[statType] = (gameState.player.statXp[statType] || 0) + statXpGain;
+                    gameState.player.statXp[statType] = (gameState.player.statXp[statType] || 0) + finalStatXpGain;
                     while (
                         gameState.player.stats[statType] < MAX_STAT_LEVEL &&
                         gameState.player.statXp[statType] >= getRequiredStatXP(gameState.player.stats[statType])
@@ -2914,7 +3249,7 @@
             }
 
             if (!silentFloat) {
-                spawnFloatingReward(`+${finalXp} XP  |  +${finalGold} Gold${statType ? `  |  +${statXpGain} ${statType} XP` : ''}`);
+                spawnFloatingReward(`+${finalXp} XP  |  +${finalGold} Gold${statType ? `  |  +${finalStatXpGain} ${statType} XP` : ''}`);
             }
             if (statLeveledUp && !silentFloat) {
                 setTimeout(() => {
@@ -2948,7 +3283,7 @@
             saveState();
             renderAll();
 
-            return { finalXp, finalGold, statType, statXpGain };
+            return { finalXp, finalGold, statType, statXpGain: finalStatXpGain };
         }
 
         function revokeRewards(xpAmount, goldAmount, statType = null, statXpGain = 15) {
@@ -3060,13 +3395,8 @@
             if (shieldWrap && shieldCountEl) {
                 const shields = p.shields || 0;
                 shieldCountEl.textContent = shields;
-                if (shields > 0) {
-                    shieldWrap.classList.remove('hidden');
-                    shieldWrap.classList.add('flex');
-                } else {
-                    shieldWrap.classList.add('hidden');
-                    shieldWrap.classList.remove('flex');
-                }
+                if (shields > 0) shieldWrap.classList.remove('hidden');
+                else shieldWrap.classList.add('hidden');
             }
 
             document.getElementById('player-name-display').textContent = p.name;
@@ -3147,7 +3477,10 @@
             if (pWisEl) pWisEl.textContent = `Pasif: -${(passives.wisDmgReduce * 100).toFixed(1)}% Damage Penalti (Mindfulness)`;
             if (pChrEl) pChrEl.textContent = `Pasif: Diskon Shop ${(passives.chrShopDiscount * 100).toFixed(0)}% (Relasi & Sosial)`;
 
+            renderPlayerPortrait();
+            renderTavernStatusUI();
             updateRadarChart(p.stats, tierInfo.cap);
+            renderAnalyticsMetrics();
 
             const activeTitle = getActiveTitleObj();
             const unlockedCount = TITLES_CATALOG.filter(t => t.checkUnlocked(gameState)).length;
@@ -3157,17 +3490,74 @@
             if (unlockedCountEl) unlockedCountEl.textContent = unlockedCount;
         }
 
+        let currentRadarMode = 'ALL';
+
+        function setRadarChartMode(mode) {
+            SoundFX.playClick();
+            currentRadarMode = mode;
+            const btnAll = document.getElementById('radar-toggle-all');
+            const btn7d = document.getElementById('radar-toggle-7d');
+            if (btnAll && btn7d) {
+                if (mode === 'ALL') {
+                    btnAll.style.cssText = 'font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 0.4rem; background: rgba(6,182,212,0.25); color: #67e8f9; border: 1px solid rgba(34,211,238,0.5);';
+                    btn7d.style.cssText = 'font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 0.4rem; background: transparent; color: #94a3b8; border: 1px solid transparent;';
+                } else {
+                    btn7d.style.cssText = 'font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 0.4rem; background: rgba(168,85,247,0.25); color: #e9d5ff; border: 1px solid rgba(192,132,252,0.55);';
+                    btnAll.style.cssText = 'font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 0.4rem; background: transparent; color: #94a3b8; border: 1px solid transparent;';
+                }
+            }
+            const maxCurrentStat = Math.max(gameState.player.stats.STR, gameState.player.stats.INT, gameState.player.stats.WIS, gameState.player.stats.CHR);
+            const tierInfo = getStatTierInfo(maxCurrentStat);
+            updateRadarChart(gameState.player.stats, tierInfo.cap);
+        }
+
+        function getLast7DaysStatActivity() {
+            const counts = { STR: 0, INT: 0, WIS: 0, CHR: 0 };
+            const logs = (gameState.history && Array.isArray(gameState.history.logs)) ? gameState.history.logs : [];
+            const baseDate = parseDateKey(getCurrentGameDateKey());
+            const validDates = new Set();
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(baseDate);
+                d.setDate(baseDate.getDate() - i);
+                validDates.add(formatDateKey(d));
+            }
+            logs.forEach(l => {
+                if (validDates.has(l.dateStr) && l.stat && counts[l.stat] !== undefined) {
+                    counts[l.stat] += 1;
+                }
+            });
+            return counts;
+        }
+
         function updateRadarChart(stats, dynamicCap = 100) {
             const poly = document.getElementById('radar-data-poly');
             if (!poly) return;
-            const maxVal = dynamicCap;
-            const cx = 110, cy = 90, maxR = 65;
+            const cx = 120, cy = 92, maxR = 62;
+            const subEl = document.getElementById('radar-mode-subtitle');
 
-            const norm = (v) => Math.min(1, Math.max(0.15, v / maxVal));
-            const rSTR = norm(stats.STR) * maxR;
-            const rINT = norm(stats.INT) * maxR;
-            const rWIS = norm(stats.WIS) * maxR;
-            const rCHR = norm(stats.CHR) * maxR;
+            let rSTR, rINT, rWIS, rCHR;
+            if (currentRadarMode === '7D') {
+                const counts = getLast7DaysStatActivity();
+                const peak = Math.max(5, counts.STR, counts.INT, counts.WIS, counts.CHR);
+                const norm7 = (v) => Math.min(1, Math.max(0.15, v / peak));
+                rSTR = norm7(counts.STR) * maxR;
+                rINT = norm7(counts.INT) * maxR;
+                rWIS = norm7(counts.WIS) * maxR;
+                rCHR = norm7(counts.CHR) * maxR;
+                poly.setAttribute('fill', 'rgba(168, 85, 247, 0.26)');
+                poly.setAttribute('stroke', '#c084fc');
+                if (subEl) subEl.textContent = `Aktivitas 7 Hari (STR:${counts.STR} • INT:${counts.INT} • WIS:${counts.WIS} • CHR:${counts.CHR})`;
+            } else {
+                const maxVal = dynamicCap;
+                const norm = (v) => Math.min(1, Math.max(0.15, v / maxVal));
+                rSTR = norm(stats.STR) * maxR;
+                rINT = norm(stats.INT) * maxR;
+                rWIS = norm(stats.WIS) * maxR;
+                rCHR = norm(stats.CHR) * maxR;
+                poly.setAttribute('fill', 'rgba(0, 240, 255, 0.24)');
+                poly.setAttribute('stroke', '#00f0ff');
+                if (subEl) subEl.textContent = 'Distribusi Level Atribut (All-Time)';
+            }
 
             const pSTR = `${cx},${(cy - rSTR).toFixed(1)}`;
             const pINT = `${(cx + rINT).toFixed(1)},${cy}`;
@@ -3179,6 +3569,161 @@
             document.getElementById('node-INT').setAttribute('cx', (cx + rINT).toFixed(1));
             document.getElementById('node-WIS').setAttribute('cy', (cy + rWIS).toFixed(1));
             document.getElementById('node-CHR').setAttribute('cx', (cx - rCHR).toFixed(1));
+        }
+
+        function renderAnalyticsMetrics() {
+            const p = gameState.player;
+            if ((p.streak || 0) > (p.longestStreak || 0)) {
+                p.longestStreak = p.streak;
+            }
+            const longestEl = document.getElementById('metric-longest-streak');
+            if (longestEl) longestEl.textContent = `${p.longestStreak || p.streak || 0} Hari`;
+
+            const totalMins = typeof p.dungeonMinutesTotal === 'number'
+                ? p.dungeonMinutesTotal
+                : ((p.dungeonClears || 0) * 25);
+            const hoursEl = document.getElementById('metric-dungeon-hours');
+            if (hoursEl) hoursEl.textContent = `${(totalMins / 60).toFixed(1)} Jam`;
+
+            const rateEl = document.getElementById('metric-weekly-rate');
+            if (rateEl) {
+                const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
+                const totalDailyPerDay = Math.max(1, dailyQuests.length);
+                const dailyCounts = (gameState.history && gameState.history.dailyCounts) || {};
+                const baseDate = parseDateKey(getCurrentGameDateKey());
+                const day = baseDate.getDay();
+                const diffToMon = (day === 0 ? 6 : day - 1);
+                const monday = new Date(baseDate);
+                monday.setDate(baseDate.getDate() - diffToMon);
+
+                let daysElapsed = diffToMon + 1;
+                let completedSum = 0;
+                for (let i = 0; i < daysElapsed; i++) {
+                    const d = new Date(monday);
+                    d.setDate(monday.getDate() + i);
+                    const key = formatDateKey(d);
+                    if (key === getCurrentGameDateKey()) {
+                        completedSum += dailyQuests.filter(q => q.completed).length;
+                    } else {
+                        completedSum += Math.min(totalDailyPerDay, dailyCounts[key] || 0);
+                    }
+                }
+                const targetSum = daysElapsed * totalDailyPerDay;
+                const ratePct = Math.min(100, Math.round((completedSum / targetSum) * 100));
+                rateEl.textContent = `${ratePct}%`;
+            }
+        }
+
+        function renderTavernStatusUI() {
+            syncTavernWeeklyQuota();
+            const active = isTavernActive();
+            const titleEl = document.getElementById('tavern-status-title');
+            const badgeEl = document.getElementById('tavern-quota-badge');
+            const descEl = document.getElementById('tavern-status-desc');
+            const btnEl = document.getElementById('btn-enter-tavern');
+            if (!titleEl || !badgeEl || !descEl || !btnEl) return;
+
+            if (active) {
+                const remMs = Math.max(0, gameState.tavern.activeUntil - Date.now());
+                const remHrs = Math.floor(remMs / 3600000);
+                const remMins = Math.floor((remMs % 3600000) / 60000);
+                titleEl.textContent = '🍺 IN TAVERN (PROTECTED)';
+                titleEl.style.color = '#34d399';
+                badgeEl.textContent = `Sisa ${remHrs}j ${remMins}m`;
+                badgeEl.style.cssText = 'font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 9999px; background: rgba(16,185,129,0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.45);';
+                descEl.textContent = 'Penalti HP dibekukan & Streak aman selama 24 jam.';
+                btnEl.textContent = '✓ Sedang Istirahat';
+                btnEl.style.cssText = 'font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 6px 10px; border-radius: 0.55rem; background: rgba(16,185,129,0.22); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.5); cursor: pointer;';
+            } else if (gameState.tavern.usedThisWeek) {
+                titleEl.textContent = 'TAVERN REST DAY';
+                titleEl.style.color = '#94a3b8';
+                badgeEl.textContent = 'Kuota: 0/1 (Reset Senin)';
+                badgeEl.style.cssText = 'font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 9999px; background: rgba(100,116,139,0.2); color: #94a3b8; border: 1px solid #475569;';
+                descEl.textContent = 'Kuota istirahat minggu ini sudah digunakan. Reset tiap hari Senin.';
+                btnEl.textContent = 'Kuota Habis';
+                btnEl.style.cssText = 'font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 6px 10px; border-radius: 0.55rem; background: var(--bg-slate-800); color: #64748b; border: 1px solid #334155; cursor: not-allowed;';
+            } else {
+                titleEl.textContent = 'TAVERN REST DAY';
+                titleEl.style.color = '#fcd34d';
+                badgeEl.textContent = 'Kuota: 1/1 Minggu Ini';
+                badgeEl.style.cssText = 'font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 9999px; background: rgba(245,158,11,0.18); color: #fde68a; border: 1px solid rgba(245,158,11,0.4);';
+                descEl.textContent = 'Istirahat 24 jam tanpa penalti HP & streak aman (reset tiap Senin).';
+                btnEl.textContent = '🍺 Enter Tavern';
+                btnEl.style.cssText = 'font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 6px 10px; border-radius: 0.55rem; background: linear-gradient(135deg, rgba(245,158,11,0.28), rgba(217,119,6,0.28)); color: #fde68a; border: 1px solid rgba(251,191,36,0.6); cursor: pointer;';
+            }
+        }
+
+        function renderPlayerPortrait() {
+            const box = document.getElementById('player-portrait-render');
+            const jobEl = document.getElementById('player-job-display');
+            const p = gameState.player;
+            if (p.avatarType === 'custom' && p.avatarCustomDataUrl) {
+                if (box) box.innerHTML = `<img src="${p.avatarCustomDataUrl}" alt="Hunter Portrait" style="width: 100%; height: 100%; object-fit: cover;">`;
+                if (jobEl) jobEl.textContent = p.customJob || 'Awakened Hunter';
+            } else {
+                const found = CYBER_AVATARS_CATALOG.find(a => a.id === p.avatarId) || CYBER_AVATARS_CATALOG[0];
+                if (box) box.innerHTML = found.svg;
+                if (jobEl) jobEl.textContent = found.name;
+            }
+        }
+
+        function openAvatarModal() {
+            SoundFX.playClick();
+            const grid = document.getElementById('avatar-preset-grid');
+            if (grid) {
+                const p = gameState.player;
+                grid.innerHTML = CYBER_AVATARS_CATALOG.map(av => {
+                    const isSelected = p.avatarType !== 'custom' && p.avatarId === av.id;
+                    return `
+                        <button type="button" onclick="selectCyberAvatar('${av.id}')" style="padding: 0.45rem; border-radius: 0.75rem; background: ${isSelected ? 'rgba(6,182,212,0.22)' : 'rgba(15,23,42,0.85)'}; border: 1.5px solid ${isSelected ? '#22d3ee' : '#334155'}; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer;">
+                            <div style="width: 3.1rem; height: 3.1rem; border-radius: 0.6rem; overflow: hidden; border: 1px solid rgba(255,255,255,0.12);">${av.svg}</div>
+                            <span class="font-display truncate" style="font-size: 9px; font-weight: 700; color: ${isSelected ? '#67e8f9' : '#cbd5e1'}; max-width: 100%;">${av.name}</span>
+                        </button>
+                    `;
+                }).join('');
+            }
+            openModal('modal-avatar-picker');
+        }
+
+        function selectCyberAvatar(avatarId) {
+            SoundFX.playQuestComplete();
+            gameState.player.avatarType = 'svg';
+            gameState.player.avatarId = avatarId;
+            saveState();
+            renderPlayerPortrait();
+            openAvatarModal();
+            spawnFloatingReward('🎭 Portrait Hunter Diperbarui!');
+        }
+
+        function handleAvatarFileUpload(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const SIZE = 160;
+                    canvas.width = SIZE;
+                    canvas.height = SIZE;
+                    const ctx = canvas.getContext('2d');
+                    const minSide = Math.min(img.width, img.height);
+                    const sx = (img.width - minSide) / 2;
+                    const sy = (img.height - minSide) / 2;
+                    ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, SIZE, SIZE);
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.72);
+                    gameState.player.avatarType = 'custom';
+                    gameState.player.avatarCustomDataUrl = compressedDataUrl;
+                    SoundFX.playQuestComplete();
+                    saveState();
+                    renderPlayerPortrait();
+                    closeModal('modal-avatar-picker');
+                    spawnFloatingReward('📸 Foto Hunter Berhasil Diunggah & Dikompres!');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
         }
 
         function renderHistory() {
@@ -3475,6 +4020,7 @@
 
             const catStyles = {
                 'Daily Quest': 'color: #67e8f9; border: 1px solid rgba(6,182,212,0.35); background: rgba(8,51,68,0.45);',
+                'Recovery Quest': 'color: #6ee7b7; border: 1px solid rgba(16,185,129,0.45); background: rgba(6,78,59,0.55);',
                 'Main Quest': 'color: #d8b4fe; border: 1px solid rgba(168,85,247,0.35); background: rgba(59,7,100,0.45);',
                 'Boss Fight': 'color: #fda4af; border: 1px solid rgba(244,63,94,0.35); background: rgba(76,5,25,0.45);'
             };
@@ -3489,10 +4035,15 @@
 
             filtered.forEach(q => {
                 const isDone = q.completed;
+                const isRecovery = q.category === 'Recovery Quest';
+                const healAmt = q.hpHeal || (isRecovery ? 20 : 0);
                 const slot = inferQuestTimeSlot(q);
                 const card = document.createElement('div');
                 card.className = 'system-card flex items-center justify-between gap-2';
-                card.style.cssText = `padding: 0.875rem; border-radius: 0.75rem; ${isDone ? 'opacity: 0.72; border-color: rgba(16,185,129,0.35);' : ''}`;
+                const recoveryCardTint = isRecovery
+                    ? 'background: linear-gradient(135deg, rgba(6,78,59,0.28), rgba(15,23,42,0.92)); border-color: rgba(52,211,153,0.45);'
+                    : '';
+                card.style.cssText = `padding: 0.875rem; border-radius: 0.75rem; ${recoveryCardTint} ${isDone ? 'opacity: 0.72; border-color: rgba(16,185,129,0.35);' : ''}`;
 
                 const checkBtnStyle = isDone 
                     ? 'background: rgba(16,185,129,0.22); border: 1px solid #10b981; color: #34d399;' 
@@ -3511,9 +4062,10 @@
                                 <span class="font-display" style="font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; ${statStyles[q.stat] || ''}">+${getQuestStatXpGain(q)} ${q.stat} XP</span>
                             </div>
                             <p class="${isDone ? 'line-through' : ''}" style="font-size: 0.875rem; font-weight: 500; color: ${isDone ? '#94a3b8' : '#f1f5f9'}; line-height: 1.35;">${escapeHtml(q.title)}</p>
-                            <div class="flex items-center gap-3 font-display" style="margin-top: 6px; font-size: 11px; font-weight: 700;">
+                            <div class="flex flex-wrap items-center gap-3 font-display" style="margin-top: 6px; font-size: 11px; font-weight: 700;">
                                 <span style="color: var(--cyan-400);">+${q.xp} XP</span>
                                 <span style="color: var(--amber-400);">+${q.gold} Gold</span>
+                                ${isRecovery ? `<span style="color: #34d399;">🌿 +${healAmt} HP & Hapus Fatigue</span>` : ''}
                             </div>
                         </div>
                     </div>
@@ -3528,13 +4080,144 @@
                 `;
                 container.appendChild(card);
             });
+            renderArmory();
             renderRedeemHistory();
+        }
+
+        function renderArmory() {
+            const slotsEl = document.getElementById('armory-active-slots');
+            const listEl = document.getElementById('armory-relic-list');
+            const countEl = document.getElementById('armory-equipped-count');
+            const summaryEl = document.getElementById('armory-passive-summary');
+            if (!slotsEl || !listEl) return;
+
+            if (!gameState.armory) {
+                gameState.armory = { owned: [], equipped: { 'Tome/Tool': null, 'Accessory': null, 'Relic': null } };
+            }
+            const owned = gameState.armory.owned || [];
+            const equipped = gameState.armory.equipped || { 'Tome/Tool': null, 'Accessory': null, 'Relic': null };
+            const slotNames = ['Tome/Tool', 'Accessory', 'Relic'];
+
+            const activeCount = slotNames.filter(s => !!equipped[s]).length;
+            if (countEl) countEl.textContent = `${activeCount} / 3 Slot`;
+
+            slotsEl.innerHTML = slotNames.map(slotName => {
+                const eqId = equipped[slotName];
+                const relic = eqId ? ARMORY_RELICS_CATALOG.find(r => r.id === eqId) : null;
+                if (relic) {
+                    return `
+                        <div onclick="toggleEquipRelic('${relic.id}')" style="cursor: pointer; background: rgba(6,182,212,0.16); border: 1px solid rgba(34,211,238,0.6); border-radius: 0.65rem; padding: 0.5rem 0.35rem; text-align: center;" title="Klik untuk melepas ${relic.name}">
+                            <span style="display: block; font-size: 9px; color: #67e8f9; font-weight: 700; text-transform: uppercase;">${slotName}</span>
+                            <span style="display: block; font-size: 1.25rem; margin: 2px 0;">${relic.icon}</span>
+                            <span class="font-display truncate" style="display: block; font-size: 9px; font-weight: 700; color: #fff;">${relic.name}</span>
+                            <span style="display: block; font-size: 8px; color: #34d399; margin-top: 2px;">AKTIF (Lepas)</span>
+                        </div>
+                    `;
+                }
+                return `
+                    <div style="background: rgba(2,6,23,0.6); border: 1px dashed #334155; border-radius: 0.65rem; padding: 0.5rem 0.35rem; text-align: center;">
+                        <span style="display: block; font-size: 9px; color: #64748b; font-weight: 700; text-transform: uppercase;">${slotName}</span>
+                        <span style="display: block; font-size: 1.15rem; margin: 2px 0; opacity: 0.35;">💠</span>
+                        <span class="font-display" style="display: block; font-size: 9px; font-weight: 600; color: #475569;">Slot Kosong</span>
+                    </div>
+                `;
+            }).join('');
+
+            if (summaryEl) {
+                const buffs = getRelicPassiveBonuses();
+                if (buffs.relics.length === 0) {
+                    summaryEl.innerHTML = 'Belum ada Relic terpasang. Beli & pasang Relic di bawah untuk mengaktifkan efek pasif!';
+                } else {
+                    const parts = [];
+                    if (buffs.xpBonus > 0) parts.push(`+${Math.round(buffs.xpBonus * 100)}% Total EXP`);
+                    if (buffs.goldBonus > 0) parts.push(`+${Math.round(buffs.goldBonus * 100)}% Total Gold`);
+                    if (buffs.bonusMaxHp > 0) parts.push(`+${buffs.bonusMaxHp} Max HP`);
+                    Object.keys(buffs.statMult).forEach(st => {
+                        if (buffs.statMult[st] > 0) parts.push(`+${Math.round(buffs.statMult[st] * 100)}% ${st} XP`);
+                    });
+                    summaryEl.innerHTML = `<span style="color: #34d399; font-weight: 700;">✦ Passive Buff Aktif:</span> ${parts.join(' • ')}`;
+                }
+            }
+
+            listEl.innerHTML = ARMORY_RELICS_CATALOG.map(relic => {
+                const isOwned = owned.includes(relic.id);
+                const isEquipped = equipped[relic.slot] === relic.id;
+                const finalCost = getDiscountedShopCost(relic.cost);
+                const canAfford = gameState.player.gold >= finalCost;
+
+                let actionBtn = '';
+                if (isEquipped) {
+                    actionBtn = `<button type="button" onclick="toggleEquipRelic('${relic.id}')" class="font-display" style="padding: 0.45rem 0.65rem; border-radius: 0.65rem; font-weight: 700; font-size: 11px; background: rgba(16,185,129,0.22); color: #34d399; border: 1px solid rgba(16,185,129,0.5);">Terpasang</button>`;
+                } else if (isOwned) {
+                    actionBtn = `<button type="button" onclick="toggleEquipRelic('${relic.id}')" class="font-display" style="padding: 0.45rem 0.65rem; border-radius: 0.65rem; font-weight: 700; font-size: 11px; background: rgba(6,182,212,0.22); color: #67e8f9; border: 1px solid rgba(34,211,238,0.5);">Pasang</button>`;
+                } else {
+                    actionBtn = `<button type="button" onclick="buyArmoryRelic('${relic.id}')" ${!canAfford ? 'disabled' : ''} class="font-display" style="padding: 0.45rem 0.65rem; border-radius: 0.65rem; font-weight: 700; font-size: 11px; ${canAfford ? 'background: var(--cyan-500); color: #020617;' : 'background: var(--bg-slate-800); color: #64748b; border: 1px solid #334155;'}">${finalCost} G</button>`;
+                }
+
+                return `
+                    <div class="flex items-center justify-between gap-2" style="background: rgba(2,6,23,0.65); border: 1px solid ${isEquipped ? 'rgba(34,211,238,0.55)' : '#1e293b'}; border-radius: 0.7rem; padding: 0.65rem;">
+                        <div class="flex items-center gap-2-5 min-w-0">
+                            <div style="width: 2.35rem; height: 2.35rem; border-radius: 0.6rem; background: rgba(6,182,212,0.14); border: 1px solid rgba(34,211,238,0.35); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; flex-shrink: 0;">
+                                ${relic.icon}
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-1-5">
+                                    <h4 class="truncate" style="font-size: 0.8rem; font-weight: 700; color: #f1f5f9;">${relic.name}</h4>
+                                    <span class="font-display" style="font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 4px; background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.4);">${relic.slot}</span>
+                                </div>
+                                <p style="font-size: 10.5px; color: #94a3b8; margin-top: 2px;">${relic.buffDesc}</p>
+                            </div>
+                        </div>
+                        <div class="shrink-0">${actionBtn}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function buyArmoryRelic(relicId) {
+            const relic = ARMORY_RELICS_CATALOG.find(r => r.id === relicId);
+            if (!relic) return;
+            if (!gameState.armory) gameState.armory = { owned: [], equipped: { 'Tome/Tool': null, 'Accessory': null, 'Relic': null } };
+            if (gameState.armory.owned.includes(relic.id)) return;
+
+            const finalCost = getDiscountedShopCost(relic.cost);
+            if (gameState.player.gold < finalCost) {
+                SoundFX.playDamage();
+                spawnFloatingReward('⚠️ Gold tidak cukup untuk membeli Relic ini!');
+                return;
+            }
+
+            SoundFX.playCoin();
+            gameState.player.gold -= finalCost;
+            gameState.armory.owned.push(relic.id);
+            gameState.armory.equipped[relic.slot] = relic.id;
+            syncPlayerMaxHp();
+            recordRedeemHistory(`${relic.name} [${relic.slot}]`, finalCost, 'relic', relic.buffDesc);
+            saveState();
+            renderAll();
+            spawnFloatingReward(`⚔️ ${relic.name} Dibeli & Dipasang di Slot ${relic.slot}!`);
+        }
+
+        function toggleEquipRelic(relicId) {
+            const relic = ARMORY_RELICS_CATALOG.find(r => r.id === relicId);
+            if (!relic || !gameState.armory || !gameState.armory.owned.includes(relic.id)) return;
+            SoundFX.playClick();
+            if (gameState.armory.equipped[relic.slot] === relic.id) {
+                gameState.armory.equipped[relic.slot] = null;
+                spawnFloatingReward(`📦 ${relic.name} dilepas dari slot ${relic.slot}`);
+            } else {
+                gameState.armory.equipped[relic.slot] = relic.id;
+                spawnFloatingReward(`✨ ${relic.name} dipasang di slot ${relic.slot}!`);
+            }
+            syncPlayerMaxHp();
+            saveState();
+            renderAll();
         }
 
         function restoreDefaultHabits() {
             SoundFX.playClick();
             let addedCount = 0;
-            DEFAULT_DAILY_HABITS.forEach(preset => {
+            [...DEFAULT_DAILY_HABITS, ...DEFAULT_RECOVERY_QUESTS].forEach(preset => {
                 const exists = gameState.quests.some(q => q.title === preset.title);
                 if (!exists) {
                     gameState.quests.unshift({
@@ -3673,6 +4356,21 @@
                     statXpGain: statXpEarned
                 };
 
+                if (q.category === 'Recovery Quest') {
+                    syncPlayerMaxHp();
+                    const baseHeal = q.hpHeal || 20;
+                    const wasFatigued = (gameState.player.hp / gameState.player.maxHp) < 0.30;
+                    const minSafeHp = Math.ceil(gameState.player.maxHp * 0.30);
+                    const targetHp = Math.min(gameState.player.maxHp, gameState.player.hp + baseHeal);
+                    const finalHp = wasFatigued ? Math.max(targetHp, minSafeHp) : targetHp;
+                    const actualHealed = Math.max(0, finalHp - gameState.player.hp);
+                    gameState.player.hp = finalHp;
+                    q.lastReward.hpHealed = actualHealed;
+                    setTimeout(() => {
+                        spawnFloatingReward(`🌿 Recovery! +${actualHealed} HP${wasFatigued ? ' & Status Fatigue (-20% EXP) Dihapus!' : ''}`);
+                    }, 300);
+                }
+
                 recordActivityHistory(q.title, q.category, q.stat, rewardResult.finalXp, rewardResult.finalGold, q.id);
 
                 if (q.category === 'Daily Quest') {
@@ -3700,6 +4398,9 @@
 
                     if (ratio >= 0.8 && gameState.lastStreakDate !== todayKey) {
                         gameState.player.streak = (gameState.player.streak || 0) + 1;
+                        if (gameState.player.streak > (gameState.player.longestStreak || 0)) {
+                            gameState.player.longestStreak = gameState.player.streak;
+                        }
                         gameState.lastStreakDate = todayKey;
                         setTimeout(() => {
                             spawnFloatingReward(`🔥 TARGET ≥80% TERCAPAI! Streak Hari Ini +1 (${gameState.player.streak} Hari)`);
@@ -3712,6 +4413,9 @@
                 SoundFX.playUndo();
 
                 const rev = q.lastReward || { xp: q.xp, gold: q.gold, stat: q.stat, statXpGain: getQuestStatXpGain(q) };
+                if (q.category === 'Recovery Quest' && rev.hpHealed) {
+                    gameState.player.hp = Math.max(1, gameState.player.hp - rev.hpHealed);
+                }
                 revokeRewards(rev.xp, rev.gold, rev.stat, rev.statXpGain ?? rev.statGain ?? getQuestStatXpGain(q));
                 delete q.lastReward;
 
@@ -4370,6 +5074,7 @@
             const rewardResult = addRewards(dungeonRewardXp, dungeonRewardGold, 'INT', intXpGain);
             gameState.player.dungeonClears = (gameState.player.dungeonClears || 0) + 1;
             const mins = Math.round(dungeonTotalSec / 60);
+            gameState.player.dungeonMinutesTotal = (gameState.player.dungeonMinutesTotal || 0) + mins;
 
             const linkedSel = document.getElementById('dungeon-linked-quest');
             const linkedQuestId = linkedSel ? linkedSel.value : '';
@@ -4515,8 +5220,9 @@
             const ratio = totalDaily > 0 ? (doneCount / totalDaily) : 1;
             const pct = Math.round(ratio * 100);
 
+            const tavernProtected = isTavernActive();
             gameState.quests.forEach(q => {
-                if (q.category === 'Daily Quest') {
+                if (q.category === 'Daily Quest' || q.category === 'Recovery Quest') {
                     q.completed = false;
                     delete q.lastReward;
                 }
@@ -4531,7 +5237,12 @@
             syncPlayerMaxHp();
             const tier = evaluateDailyTier(ratio, gameState.player.maxHp);
 
-            if (tier.rawDamage > 0) {
+            if (tavernProtected && tier.rawDamage > 0) {
+                showSystemModal(
+                    '🍺 EVALUASI HARIAN // TAVERN REST DAY',
+                    `Tavern Mode sedang aktif! Penalti HP dibekukan dan Streak ${gameState.player.streak} hari tetap terlindungi penuh. Tanggal sistem maju ke ${formatReadableDate(nextDateKey)}.`
+                );
+            } else if (tier.rawDamage > 0) {
                 let shieldMsg = '';
                 if (tier.resetStreak) {
                     if ((gameState.player.shields || 0) > 0 && gameState.player.streak > 0) {
@@ -5182,7 +5893,7 @@
         let grimoireRenderTask = null;
 
         if (window.pdfjsLib) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            pdfjsLib.GlobalWorkerOptions.workerSrc = '';
         }
 
         function ensureGrimoireBookmarks() {
@@ -5237,20 +5948,10 @@
             SoundFX.playClick();
             grimoireCurrentFileName = file.name;
 
-            try {
-                const arrayBuffer = await file.arrayBuffer();
-                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-                grimoirePdfDoc = await loadingTask.promise;
-                grimoireTotalPages = grimoirePdfDoc.numPages;
-            } catch (err) {
-                console.error('PDF load error:', err);
-                showSystemModal(
-                    'GAGAL MEMBUKA PDF',
-                    'Pastikan file yang dipilih berformat .PDF valid dan tidak terkunci password.'
-                );
-                e.target.value = '';
-                return;
-            }
+            const arrayBuffer = await file.arrayBuffer();
+            const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer, disableWorker: true });
+            grimoirePdfDoc = await loadingTask.promise;
+            grimoireTotalPages = grimoirePdfDoc.numPages;
 
             const bm = ensureGrimoireBookmarks();
             const saved = bm[grimoireCurrentFileName];
@@ -5674,14 +6375,9 @@
             if (!localAudio) return;
 
             stopAnimeLofi1Hour();
-            if (localAudio.dataset.blobUrl) {
-                try { URL.revokeObjectURL(localAudio.dataset.blobUrl); } catch (err) {}
-            }
             lofiUseLocalFile = true;
             lofiRemainingSec = 3600;
-            const blobUrl = URL.createObjectURL(file);
-            localAudio.dataset.blobUrl = blobUrl;
-            localAudio.src = blobUrl;
+            localAudio.src = URL.createObjectURL(file);
             toggleAnimeLofi1Hour();
             const status = document.getElementById('lofi-status-text');
             if (status) status.textContent = `Memutar: ${file.name.slice(0, 24)} (Loop 1 Jam)`;
