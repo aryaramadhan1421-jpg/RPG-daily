@@ -866,6 +866,23 @@
 
             <!-- Shop Items Container -->
             <div id="shop-list" class="space-y-2-5"></div>
+
+            <!-- Riwayat Redeem / Penukaran Reward -->
+            <div class="system-card space-y-3" style="border-color: rgba(245, 158, 11, 0.28); margin-top: 1rem;">
+                <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--bg-slate-800); padding-bottom: 0.5rem;">
+                    <h3 class="font-display flex items-center gap-1-5" style="font-weight: 700; font-size: 0.875rem; text-transform: uppercase; color: var(--amber-400);">
+                        <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        Riwayat Redeem
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <span id="redeem-count-badge" class="font-display" style="font-size: 11px; font-weight: 700; color: #fcd34d; background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); padding: 2px 8px; border-radius: 9999px;">0x Klaim</span>
+                        <button id="btn-clear-redeem" onclick="clearRedeemHistory()" class="hidden" style="font-size: 10px; color: var(--text-muted); text-decoration: underline;" title="Bersihkan semua riwayat redeem">
+                            Hapus Semua
+                        </button>
+                    </div>
+                </div>
+                <div id="redeem-history-list" class="scroll-box space-y-1-5"></div>
+            </div>
         </section>
 
     </main>
@@ -1676,6 +1693,7 @@
                 dailyCounts: {},
                 logs: []
             },
+            redeemHistory: [],
             selectedDate: null,
             lastRealDate: null,
             muted: false,
@@ -1825,6 +1843,7 @@
                     if (!parsed.selectedDate) parsed.selectedDate = realToday;
                     if (!parsed.lastRealDate) parsed.lastRealDate = realToday;
                     if (!parsed.player.activeTitle) parsed.player.activeTitle = 't_novice';
+                    if (!Array.isArray(parsed.redeemHistory)) parsed.redeemHistory = [];
                     if (typeof parsed.player.dungeonClears !== 'number') parsed.player.dungeonClears = 0;
                     return parsed;
                 }
@@ -2296,6 +2315,7 @@
                 `;
                 container.appendChild(card);
             });
+            renderRedeemHistory();
         }
 
         function restoreDefaultHabits() {
@@ -2370,6 +2390,7 @@
                 `;
                 container.appendChild(card);
             });
+            renderRedeemHistory();
         }
 
         // ==========================================
@@ -2571,16 +2592,104 @@
                 }
                 gameState.player.gold -= item.cost;
                 gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + 30);
+                recordRedeemHistory(item);
                 SoundFX.playCoin();
                 spawnFloatingReward('🧪 +30 HP Dipulihkan!');
             } else {
                 gameState.player.gold -= item.cost;
+                recordRedeemHistory(item);
                 SoundFX.playCoin();
                 spawnFloatingReward(`🎁 Klaim Reward: ${item.title}!`);
             }
 
             saveState();
             renderAll();
+        }
+
+        function recordRedeemHistory(item) {
+            if (!Array.isArray(gameState.redeemHistory)) {
+                gameState.redeemHistory = [];
+            }
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            const dateStr = getCurrentGameDateKey();
+
+            gameState.redeemHistory.unshift({
+                id: 'rdm_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+                title: item.title,
+                cost: item.cost,
+                type: item.type,
+                dateStr: dateStr,
+                timeStr: `${hh}:${mm}`
+            });
+
+            if (gameState.redeemHistory.length > 80) {
+                gameState.redeemHistory = gameState.redeemHistory.slice(0, 80);
+            }
+        }
+
+        function renderRedeemHistory() {
+            const listEl = document.getElementById('redeem-history-list');
+            const badgeEl = document.getElementById('redeem-count-badge');
+            const clearBtn = document.getElementById('btn-clear-redeem');
+            if (!listEl) return;
+
+            const history = gameState.redeemHistory || [];
+            if (badgeEl) badgeEl.textContent = `${history.length}x Klaim`;
+            if (clearBtn) {
+                if (history.length > 0) clearBtn.classList.remove('hidden');
+                else clearBtn.classList.add('hidden');
+            }
+
+            listEl.innerHTML = '';
+            if (history.length === 0) {
+                listEl.innerHTML = `<p style="font-size: 0.75rem; color: #64748b; text-align: center; padding: 0.75rem 0;">Belum ada reward atau potion yang di-redeem.</p>`;
+                return;
+            }
+
+            history.forEach(entry => {
+                const isPotion = entry.type === 'potion';
+                const tagStyle = isPotion
+                    ? 'color: #fb7185; background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.3);'
+                    : 'color: #34d399; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3);';
+
+                const row = document.createElement('div');
+                row.style.cssText = 'background: rgba(15,23,42,0.75); border: 1px solid rgba(30,41,59,0.9); border-radius: 0.75rem; padding: 0.5rem 0.75rem;';
+                row.className = 'flex items-center justify-between gap-2';
+                row.innerHTML = `
+                    <div class="min-w-0 flex-1">
+                        <p class="truncate" style="font-size: 0.75rem; font-weight: 600; color: #f1f5f9;">${escapeHtml(entry.title)}</p>
+                        <div class="flex items-center gap-1-5" style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">
+                            <span class="font-display" style="font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 4px; ${tagStyle}">${isPotion ? 'POTION' : 'REWARD'}</span>
+                            <span>${entry.dateStr}${entry.timeStr ? ' • ' + entry.timeStr : ''}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span class="font-display" style="font-weight: 700; font-size: 11px; color: var(--amber-400);">-${entry.cost} G</span>
+                        <button onclick="deleteRedeemEntry('${entry.id}')" style="color: #64748b; padding: 4px;" title="Hapus Riwayat Ini">
+                            <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                        </button>
+                    </div>
+                `;
+                listEl.appendChild(row);
+            });
+        }
+
+        function deleteRedeemEntry(id) {
+            SoundFX.playClick();
+            gameState.redeemHistory = (gameState.redeemHistory || []).filter(item => item.id !== id);
+            saveState();
+            renderRedeemHistory();
+            spawnFloatingReward('Riwayat redeem dihapus');
+        }
+
+        function clearRedeemHistory() {
+            SoundFX.playClick();
+            gameState.redeemHistory = [];
+            saveState();
+            renderRedeemHistory();
+            spawnFloatingReward('Semua riwayat redeem dibersihkan');
         }
 
         function deleteShopItem(id) {
