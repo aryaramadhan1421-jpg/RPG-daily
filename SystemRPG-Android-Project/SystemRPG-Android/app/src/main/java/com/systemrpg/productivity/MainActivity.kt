@@ -95,56 +95,22 @@ class MainActivity : ComponentActivity() {
 
         @JavascriptInterface
         fun scheduleDailyReminders(timesJson: String, pendingCount: Int, playerName: String) {
-            try {
-                val times = JSONObject(timesJson)
-                val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                val slots = listOf("Pagi" to 1001, "Sore" to 1002, "Malam" to 1003)
+            getSharedPreferences("SystemRpgReminderPrefs", Context.MODE_PRIVATE).edit()
+                .putBoolean("enabled", true)
+                .putString("timesJson", timesJson)
+                .putInt("pendingCount", pendingCount)
+                .putString("playerName", playerName)
+                .apply()
 
-                for ((slotName, reqCode) in slots) {
-                    val intent = Intent(this@MainActivity, ReminderReceiver::class.java).apply {
-                        putExtra("slot", slotName)
-                        putExtra("pendingCount", pendingCount)
-                        putExtra("playerName", playerName)
-                    }
-                    val pendingIntent = PendingIntent.getBroadcast(
-                        this@MainActivity,
-                        reqCode,
-                        intent,
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                    )
-
-                    alarmManager.cancel(pendingIntent)
-
-                    val timeStr = times.optString(slotName, "")
-                    val parts = timeStr.split(":")
-                    if (parts.size == 2) {
-                        val hour = parts[0].toIntOrNull() ?: continue
-                        val minute = parts[1].toIntOrNull() ?: continue
-
-                        val cal = Calendar.getInstance().apply {
-                            set(Calendar.HOUR_OF_DAY, hour)
-                            set(Calendar.MINUTE, minute)
-                            set(Calendar.SECOND, 0)
-                            set(Calendar.MILLISECOND, 0)
-                            if (timeInMillis <= System.currentTimeMillis()) {
-                                add(Calendar.DAY_OF_YEAR, 1)
-                            }
-                        }
-
-                        alarmManager.setRepeating(
-                            AlarmManager.RTC_WAKEUP,
-                            cal.timeInMillis,
-                            AlarmManager.INTERVAL_DAY,
-                            pendingIntent
-                        )
-                    }
-                }
-            } catch (_: Exception) {
-            }
+            scheduleExactAlarmsFromPrefs(this@MainActivity)
         }
 
         @JavascriptInterface
         fun cancelDailyReminders() {
+            getSharedPreferences("SystemRpgReminderPrefs", Context.MODE_PRIVATE).edit()
+                .putBoolean("enabled", false)
+                .apply()
+
             try {
                 val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
                 for (reqCode in listOf(1001, 1002, 1003)) {
@@ -336,6 +302,63 @@ class MainActivity : ComponentActivity() {
             webView.goBack()
         } else {
             super.onBackPressed()
+        }
+    }
+
+    companion object {
+        fun scheduleExactAlarmsFromPrefs(context: Context) {
+            try {
+                val prefs = context.getSharedPreferences("SystemRpgReminderPrefs", Context.MODE_PRIVATE)
+                if (!prefs.getBoolean("enabled", false)) return
+
+                val timesJson = prefs.getString("timesJson", "{}") ?: "{}"
+                val pendingCount = prefs.getInt("pendingCount", 1)
+                val playerName = prefs.getString("playerName", "Hunter") ?: "Hunter"
+
+                val times = JSONObject(timesJson)
+                val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val slots = listOf("Pagi" to 1001, "Sore" to 1002, "Malam" to 1003)
+
+                for ((slotName, reqCode) in slots) {
+                    val intent = Intent(context, ReminderReceiver::class.java).apply {
+                        putExtra("slot", slotName)
+                        putExtra("pendingCount", pendingCount)
+                        putExtra("playerName", playerName)
+                    }
+                    val pendingIntent = PendingIntent.getBroadcast(
+                        context,
+                        reqCode,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+
+                    alarmManager.cancel(pendingIntent)
+
+                    val timeStr = times.optString(slotName, "")
+                    val parts = timeStr.split(":")
+                    if (parts.size == 2) {
+                        val hour = parts[0].toIntOrNull() ?: continue
+                        val minute = parts[1].toIntOrNull() ?: continue
+
+                        val cal = Calendar.getInstance().apply {
+                            set(Calendar.HOUR_OF_DAY, hour)
+                            set(Calendar.MINUTE, minute)
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                            if (timeInMillis <= System.currentTimeMillis()) {
+                                add(Calendar.DAY_OF_YEAR, 1)
+                            }
+                        }
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+                            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pendingIntent)
+                        } else {
+                            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pendingIntent)
+                        }
+                    }
+                }
+            } catch (_: Exception) {
+            }
         }
     }
 }
