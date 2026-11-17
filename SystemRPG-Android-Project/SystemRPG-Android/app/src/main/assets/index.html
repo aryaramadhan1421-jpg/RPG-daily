@@ -630,18 +630,6 @@
                     </button>
                 </div>
 
-                <!-- Backup & Restore JSON -->
-                <div style="padding-top: 0.5rem; border-top: 1px solid rgba(30,41,59,0.85);" class="flex gap-2">
-                    <button onclick="exportBackupData()" class="flex-1 font-display flex items-center justify-center gap-1-5" style="background: var(--bg-slate-900); color: #67e8f9; border: 1px solid #334155; font-weight: 700; font-size: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.75rem;">
-                        <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        Backup Data (JSON)
-                    </button>
-                    <label class="flex-1 font-display flex items-center justify-center gap-1-5" style="background: var(--bg-slate-900); color: #fcd34d; border: 1px solid #334155; font-weight: 700; font-size: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.75rem; cursor: pointer;">
-                        <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                        Restore Data
-                        <input type="file" accept=".json" onchange="importBackupData(event)" class="hidden">
-                    </label>
-                </div>
             </div>
         </section>
 
@@ -761,8 +749,8 @@
                     <button onclick="selectDungeonDuration(1500, 100, 80)" id="mode-25m" class="font-display" style="padding: 6px 12px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.5);">
                         25 Menit (Rank-C)
                     </button>
-                    <button onclick="selectDungeonDuration(10, 35, 30)" id="mode-10s" class="font-display" style="padding: 6px 12px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;">
-                        10 Detik (Simulasi)
+                    <button onclick="selectDungeonDuration(600, 45, 35)" id="mode-10m" class="font-display" style="padding: 6px 12px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;">
+                        10 Menit (Rank-E)
                     </button>
                 </div>
 
@@ -1320,39 +1308,39 @@
         // ==========================================
         // 3. GAME STATE & DEFAULT DAILY HABITS
         // ==========================================
-        const STORAGE_KEY = 'system_rpg_productivity_offline_v1';
+        const STORAGE_KEY = 'system_rpg_productivity_offline_v2';
 
         const DEFAULT_DAILY_HABITS = [
             {
-                id: 'dh_hydrate',
-                title: 'Minum 2 Liter Air Putih & Bangun Pagi Tepat Waktu',
+                id: 'dh_subuh',
+                title: 'Shalat Subuh',
                 category: 'Daily Quest',
-                stat: 'STR',
+                stat: 'WIS',
+                xp: 25,
+                gold: 20,
+                completed: false
+            },
+            {
+                id: 'dh_dzikir_pagi',
+                title: 'Dzikir Pagi',
+                category: 'Daily Quest',
+                stat: 'WIS',
                 xp: 20,
                 gold: 15,
                 completed: false
             },
             {
-                id: 'dh_workout',
-                title: 'Latihan Fisik / Olahraga (Push-up, Lari, atau Stretching 20m)',
+                id: 'dh_quran',
+                title: 'Baca Alquran dan Artinya',
                 category: 'Daily Quest',
-                stat: 'STR',
-                xp: 40,
-                gold: 35,
+                stat: 'WIS',
+                xp: 25,
+                gold: 20,
                 completed: false
             },
             {
-                id: 'dh_deepwork',
-                title: 'Fokus Belajar / Upgrade Skill Utama Minimal 45 Menit',
-                category: 'Daily Quest',
-                stat: 'INT',
-                xp: 45,
-                gold: 40,
-                completed: false
-            },
-            {
-                id: 'dh_read',
-                title: 'Baca Buku Non-Fiksi / Artikel Edukatif Minimal 15 Halaman',
+                id: 'dh_duolingo',
+                title: 'Duolingo, Airlearn, Elevate',
                 category: 'Daily Quest',
                 stat: 'INT',
                 xp: 25,
@@ -1360,21 +1348,264 @@
                 completed: false
             },
             {
-                id: 'dh_mindful',
-                title: 'Ibadah Tepat Waktu, Meditasi & Evaluasi Jurnal Harian',
+                id: 'dh_volingo',
+                title: 'Volingo',
+                category: 'Daily Quest',
+                stat: 'INT',
+                xp: 20,
+                gold: 15,
+                completed: false
+            },
+            {
+                id: 'dh_neuronation',
+                title: 'Neuronation',
+                category: 'Daily Quest',
+                stat: 'INT',
+                xp: 20,
+                gold: 15,
+                completed: false
+            },
+            {
+                id: 'dh_hiragana',
+                title: 'Tulis latihan hiragana katakan',
+                category: 'Daily Quest',
+                stat: 'INT',
+                xp: 25,
+                gold: 20,
+                completed: false
+            },
+            {
+                id: 'dh_baca_buku',
+                title: 'Baca buku',
+                category: 'Daily Quest',
+                stat: 'INT',
+                xp: 25,
+                gold: 20,
+                completed: false
+            },
+            {
+                id: 'dh_rapih',
+                title: 'Rapih rapih',
                 category: 'Daily Quest',
                 stat: 'WIS',
+                xp: 15,
+                gold: 15,
+                completed: false
+            },
+            {
+                id: 'dh_plank_pushup',
+                title: 'Plank 1 menit dan Push Up 10x',
+                category: 'Daily Quest',
+                stat: 'STR',
+                xp: 25,
+                gold: 20,
+                completed: false
+            },
+            {
+                id: 'dh_angkat_beban_pagi',
+                title: 'Angkat beban',
+                category: 'Daily Quest',
+                stat: 'STR',
+                xp: 30,
+                gold: 25,
+                completed: false
+            },
+            {
+                id: 'dh_olahraga_kardio',
+                title: 'Olahraga, senam, jalan atau aktivitas yang mengeluarkan keringat minimal 10 menit',
+                category: 'Daily Quest',
+                stat: 'STR',
+                xp: 30,
+                gold: 25,
+                completed: false
+            },
+            {
+                id: 'dh_jepang_volingo',
+                title: 'Belajar bahasa jepang 1 bab volingo',
+                category: 'Daily Quest',
+                stat: 'INT',
+                xp: 25,
+                gold: 20,
+                completed: false
+            },
+            {
+                id: 'dh_inggris_volingo',
+                title: 'Belajar bahasa inggris 1 bab volingo',
+                category: 'Daily Quest',
+                stat: 'INT',
+                xp: 25,
+                gold: 20,
+                completed: false
+            },
+            {
+                id: 'dh_sarapan',
+                title: 'Sarapan',
+                category: 'Daily Quest',
+                stat: 'STR',
+                xp: 15,
+                gold: 10,
+                completed: false
+            },
+            {
+                id: 'dh_mandi_pagi',
+                title: 'Mandi pagi',
+                category: 'Daily Quest',
+                stat: 'CHR',
+                xp: 15,
+                gold: 15,
+                completed: false
+            },
+            {
+                id: 'dh_skincare_pagi',
+                title: 'Skincare mosturizer dan sunscreen',
+                category: 'Daily Quest',
+                stat: 'CHR',
+                xp: 20,
+                gold: 15,
+                completed: false
+            },
+            {
+                id: 'dh_podcast_self',
+                title: 'Podcast self improvement',
+                category: 'Daily Quest',
+                stat: 'WIS',
+                xp: 20,
+                gold: 15,
+                completed: false
+            },
+            {
+                id: 'dh_zuhur',
+                title: 'Shalat Zuhur',
+                category: 'Daily Quest',
+                stat: 'WIS',
+                xp: 20,
+                gold: 15,
+                completed: false
+            },
+            {
+                id: 'dh_makan_siang',
+                title: 'Makan siang',
+                category: 'Daily Quest',
+                stat: 'STR',
+                xp: 15,
+                gold: 10,
+                completed: false
+            },
+            {
+                id: 'dh_youtube_english',
+                title: 'YouTube podcast english',
+                category: 'Daily Quest',
+                stat: 'INT',
+                xp: 20,
+                gold: 15,
+                completed: false
+            },
+            {
+                id: 'dh_brainstorm_gpt',
+                title: 'Brainstorm dengan chatgpt, latihan berbicara bahasa inggris atau jepang',
+                category: 'Daily Quest',
+                stat: 'CHR',
+                xp: 30,
+                gold: 25,
+                completed: false
+            },
+            {
+                id: 'dh_belajar_karir',
+                title: 'Belajar persiapan karir',
+                category: 'Daily Quest',
+                stat: 'INT',
                 xp: 35,
                 gold: 30,
                 completed: false
             },
             {
-                id: 'dh_social',
-                title: 'Komunikasi Positif / Bantu Orang Lain / Jaga Relasi Baik',
+                id: 'dh_ashar',
+                title: 'Shalat Ashar',
+                category: 'Daily Quest',
+                stat: 'WIS',
+                xp: 20,
+                gold: 15,
+                completed: false
+            },
+            {
+                id: 'dh_dzikir_sore',
+                title: 'Dzikir sore',
+                category: 'Daily Quest',
+                stat: 'WIS',
+                xp: 20,
+                gold: 15,
+                completed: false
+            },
+            {
+                id: 'dh_angkat_beban_sore',
+                title: 'Angkat beban sore',
+                category: 'Daily Quest',
+                stat: 'STR',
+                xp: 30,
+                gold: 25,
+                completed: false
+            },
+            {
+                id: 'dh_mandi_sore',
+                title: 'Mandi sore',
                 category: 'Daily Quest',
                 stat: 'CHR',
-                xp: 25,
+                xp: 15,
+                gold: 15,
+                completed: false
+            },
+            {
+                id: 'dh_magrib',
+                title: 'Shalat Magrib',
+                category: 'Daily Quest',
+                stat: 'WIS',
+                xp: 20,
+                gold: 15,
+                completed: false
+            },
+            {
+                id: 'dh_makan_malam',
+                title: 'Makan malam',
+                category: 'Daily Quest',
+                stat: 'STR',
+                xp: 15,
+                gold: 10,
+                completed: false
+            },
+            {
+                id: 'dh_isya',
+                title: 'Shalat Isya',
+                category: 'Daily Quest',
+                stat: 'WIS',
+                xp: 20,
+                gold: 15,
+                completed: false
+            },
+            {
+                id: 'dh_no_sugar',
+                title: 'No sugar',
+                category: 'Daily Quest',
+                stat: 'STR',
+                xp: 30,
                 gold: 25,
+                completed: false
+            },
+            {
+                id: 'dh_plank_situp',
+                title: 'Plank sit-up',
+                category: 'Daily Quest',
+                stat: 'STR',
+                xp: 25,
+                gold: 20,
+                completed: false
+            },
+            {
+                id: 'dh_skincare_malam',
+                title: 'Gosok gigi facial wash moisturizer',
+                category: 'Daily Quest',
+                stat: 'CHR',
+                xp: 20,
+                gold: 15,
                 completed: false
             }
         ];
@@ -2411,7 +2642,7 @@
             const inactiveModeStyle = 'padding: 6px 12px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;';
 
             document.getElementById('mode-25m').style.cssText = seconds === 1500 ? activeModeStyle : inactiveModeStyle;
-            document.getElementById('mode-10s').style.cssText = seconds === 10 ? activeModeStyle : inactiveModeStyle;
+            document.getElementById('mode-10m').style.cssText = seconds === 600 ? activeModeStyle : inactiveModeStyle;
 
             document.getElementById('dungeon-reward-xp').textContent = `+${xp} XP`;
             document.getElementById('dungeon-reward-gold').textContent = `+${gold} Gold`;
@@ -2472,7 +2703,7 @@
 
             gameState.player.dungeonClears = (gameState.player.dungeonClears || 0) + 1;
 
-            const label = dungeonConfig.duration === 1500 ? 'Deep Focus Raid (25m)' : 'Deep Focus Raid (Simulasi)';
+            const label = dungeonConfig.duration === 1500 ? 'Deep Focus Raid (25m)' : 'Deep Focus Raid (10m)';
             recordActivityHistory(label, 'Dungeon Clear', 'INT', dungeonConfig.xp, dungeonConfig.gold);
 
             SoundFX.playQuestComplete();
