@@ -2,6 +2,7 @@ package com.systemrpg.productivity
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -12,11 +13,13 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
+import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -25,6 +28,7 @@ import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -39,6 +43,32 @@ class MainActivity : ComponentActivity() {
     private lateinit var webView: WebView
     private val CHANNEL_ID = "system_rpg_channel"
     private val ACTION_REMINDER = "com.systemrpg.productivity.ACTION_DAILY_REMINDER"
+
+    // Callback untuk menangani <input type="file"> (PDF Grimoire, Foto Profil, Import Backup)
+    private var filePathCallback: ValueCallback<Array<Uri>>? = null
+
+    private val fileChooserLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (filePathCallback == null) return@registerForActivityResult
+
+        var results: Array<Uri>? = null
+        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+            val dataString = result.data?.dataString
+            val clipData = result.data?.clipData
+
+            if (clipData != null) {
+                results = Array(clipData.itemCount) { i ->
+                    clipData.getItemAt(i).uri
+                }
+            } else if (dataString != null) {
+                results = arrayOf(Uri.parse(dataString))
+            }
+        }
+
+        filePathCallback?.onReceiveValue(results)
+        filePathCallback = null
+    }
 
     private val reminderReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -249,7 +279,39 @@ class MainActivity : ComponentActivity() {
             }
             addJavascriptInterface(AndroidBridge(), "AndroidBridge")
             webViewClient = WebViewClient()
-            webChromeClient = WebChromeClient()
+
+            // Handler agar <input type="file"> bisa membuka File Manager Android
+            webChromeClient = object : WebChromeClient() {
+                override fun onShowFileChooser(
+                    webView: WebView?,
+                    callback: ValueCallback<Array<Uri>>?,
+                    fileChooserParams: FileChooserParams?
+                ): Boolean {
+                    filePathCallback?.onReceiveValue(null)
+                    filePathCallback = callback
+
+                    val acceptTypes = fileChooserParams?.acceptTypes
+                        ?.filter { it.isNotBlank() }
+                        ?.toTypedArray()
+
+                    val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                        addCategory(Intent.CATEGORY_OPENABLE)
+                        type = "*/*"
+                        if (!acceptTypes.isNullOrEmpty()) {
+                            putExtra(Intent.EXTRA_MIME_TYPES, acceptTypes)
+                        }
+                    }
+
+                    return try {
+                        fileChooserLauncher.launch(Intent.createChooser(intent, "Pilih File"))
+                        true
+                    } catch (e: Exception) {
+                        filePathCallback?.onReceiveValue(null)
+                        filePathCallback = null
+                        false
+                    }
+                }
+            }
         }
 
         container.addView(webView)
