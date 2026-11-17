@@ -14,7 +14,7 @@
     <link rel="apple-touch-icon" href="icon-512.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Orbitron:wght@600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
@@ -446,7 +446,7 @@
             <div class="pill-streak" title="Daily Streak & Streak Freeze (Maks 2)">
                 <svg class="icon animate-fire" width="14" height="14" viewBox="0 0 24 24" fill="#f97316" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
                 <span id="header-streak" class="font-display" style="font-weight: 700; font-size: 0.75rem; color: #fb923c;">0</span>
-                <span id="header-shield-wrap" class="hidden flex items-center" style="margin-left: 3px; padding-left: 4px; border-left: 1px solid rgba(56,189,248,0.35); color: #38bdf8; font-size: 11px; font-weight: 700;" title="Streak Freeze Aktif (Maks 2)">
+                <span id="header-shield-wrap" class="hidden items-center" style="margin-left: 3px; padding-left: 4px; border-left: 1px solid rgba(56,189,248,0.35); color: #38bdf8; font-size: 11px; font-weight: 700;" title="Streak Freeze Aktif (Maks 2)">
                     🛡️<span id="header-shields" class="font-display" style="margin-left: 1px;">0</span>
                 </span>
             </div>
@@ -965,7 +965,7 @@
                         <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/></svg>
                         Instant Dungeon Gate
                     </span>
-                    <span id="wakelock-status-badge" class="hidden font-display" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 9999px; background: rgba(16,185,129,0.16); border: 1px solid rgba(16,185,129,0.4); color: #34d399; font-size: 10px; font-weight: 700; text-transform: uppercase;">
+                    <span id="wakelock-status-badge" class="hidden font-display" style="align-items: center; gap: 4px; padding: 4px 10px; border-radius: 9999px; background: rgba(16,185,129,0.16); border: 1px solid rgba(16,185,129,0.4); color: #34d399; font-size: 10px; font-weight: 700; text-transform: uppercase;">
                         <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                         SCREEN ON
                     </span>
@@ -2083,8 +2083,13 @@
             updateBadge(visible) {
                 const badge = document.getElementById('wakelock-status-badge');
                 if (!badge) return;
-                if (visible) badge.classList.remove('hidden');
-                else badge.classList.add('hidden');
+                if (visible) {
+                    badge.classList.remove('hidden');
+                    badge.style.display = 'inline-flex';
+                } else {
+                    badge.classList.add('hidden');
+                    badge.style.display = '';
+                }
             }
         };
 
@@ -2611,6 +2616,7 @@
                 });
                 gameState.selectedDate = realToday;
                 gameState.lastRealDate = realToday;
+                gameState.lastStreakDate = null;
 
                 syncPlayerMaxHp();
                 const tier = evaluateDailyTier(ratio, gameState.player.maxHp);
@@ -3054,8 +3060,13 @@
             if (shieldWrap && shieldCountEl) {
                 const shields = p.shields || 0;
                 shieldCountEl.textContent = shields;
-                if (shields > 0) shieldWrap.classList.remove('hidden');
-                else shieldWrap.classList.add('hidden');
+                if (shields > 0) {
+                    shieldWrap.classList.remove('hidden');
+                    shieldWrap.classList.add('flex');
+                } else {
+                    shieldWrap.classList.add('hidden');
+                    shieldWrap.classList.remove('flex');
+                }
             }
 
             document.getElementById('player-name-display').textContent = p.name;
@@ -5171,7 +5182,7 @@
         let grimoireRenderTask = null;
 
         if (window.pdfjsLib) {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         }
 
         function ensureGrimoireBookmarks() {
@@ -5226,10 +5237,20 @@
             SoundFX.playClick();
             grimoireCurrentFileName = file.name;
 
-            const arrayBuffer = await file.arrayBuffer();
-            const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer, disableWorker: true });
-            grimoirePdfDoc = await loadingTask.promise;
-            grimoireTotalPages = grimoirePdfDoc.numPages;
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                grimoirePdfDoc = await loadingTask.promise;
+                grimoireTotalPages = grimoirePdfDoc.numPages;
+            } catch (err) {
+                console.error('PDF load error:', err);
+                showSystemModal(
+                    'GAGAL MEMBUKA PDF',
+                    'Pastikan file yang dipilih berformat .PDF valid dan tidak terkunci password.'
+                );
+                e.target.value = '';
+                return;
+            }
 
             const bm = ensureGrimoireBookmarks();
             const saved = bm[grimoireCurrentFileName];
@@ -5653,9 +5674,14 @@
             if (!localAudio) return;
 
             stopAnimeLofi1Hour();
+            if (localAudio.dataset.blobUrl) {
+                try { URL.revokeObjectURL(localAudio.dataset.blobUrl); } catch (err) {}
+            }
             lofiUseLocalFile = true;
             lofiRemainingSec = 3600;
-            localAudio.src = URL.createObjectURL(file);
+            const blobUrl = URL.createObjectURL(file);
+            localAudio.dataset.blobUrl = blobUrl;
+            localAudio.src = blobUrl;
             toggleAnimeLofi1Hour();
             const status = document.getElementById('lofi-status-text');
             if (status) status.textContent = `Memutar: ${file.name.slice(0, 24)} (Loop 1 Jam)`;
