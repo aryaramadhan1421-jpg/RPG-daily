@@ -9,7 +9,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SYSTEM RPG">
     <title>SYSTEM // Awakening Productivity RPG</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         /* ==========================================
            100% OFFLINE EMBEDDED CSS (NO CDN REQUIRED)
@@ -39,8 +43,8 @@
             --emerald-400: #34d399;
             --orange-400: #fb923c;
             --orange-500: #f97316;
-            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            --font-display: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --font-sans: "Rajdhani", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+            --font-display: "Orbitron", "Rajdhani", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
 
         * {
@@ -120,23 +124,28 @@
         /* Card & Glow */
         .system-card {
             background: var(--bg-card);
-            border: 1px solid rgba(0, 240, 255, 0.22);
-            box-shadow: inset 0 0 20px rgba(0, 240, 255, 0.04);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 240, 255, 0.26);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), inset 0 0 22px rgba(0, 240, 255, 0.05);
             border-radius: 1rem;
             padding: 1rem;
             position: relative;
         }
-        .shadow-neon-blue { box-shadow: 0 0 15px rgba(0, 240, 255, 0.28); }
-        .shadow-neon-purple { box-shadow: 0 0 15px rgba(157, 78, 221, 0.28); }
-        .shadow-neon-gold { box-shadow: 0 0 15px rgba(251, 191, 36, 0.28); }
+        .shadow-neon-blue { box-shadow: 0 0 18px rgba(0, 240, 255, 0.35), inset 0 0 8px rgba(0, 240, 255, 0.12); }
+        .shadow-neon-purple { box-shadow: 0 0 18px rgba(157, 78, 221, 0.35), inset 0 0 8px rgba(157, 78, 221, 0.12); }
+        .shadow-neon-gold { box-shadow: 0 0 18px rgba(251, 191, 36, 0.35), inset 0 0 8px rgba(251, 191, 36, 0.12); }
 
         /* Header */
         header {
             position: sticky;
             top: 0;
             z-index: 30;
-            background: rgba(7, 9, 14, 0.94);
-            border-bottom: 1px solid rgba(6, 182, 212, 0.22);
+            background: rgba(7, 9, 14, 0.88);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-bottom: 1px solid rgba(6, 182, 212, 0.28);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
             padding: 0.75rem 1rem;
             display: flex;
             align-items: center;
@@ -216,15 +225,49 @@
             left: 0;
             right: 0;
             z-index: 30;
-            background: rgba(7, 9, 14, 0.96);
-            border-top: 1px solid rgba(6, 182, 212, 0.22);
+            background: rgba(7, 9, 14, 0.9);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-top: 1px solid rgba(6, 182, 212, 0.28);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.45);
         }
         .nav-inner {
             max-width: 28rem;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             height: 4rem;
+        }
+        .calc-btn {
+            background: rgba(15, 23, 42, 0.92);
+            border: 1px solid #334155;
+            border-radius: 0.65rem;
+            padding: 0.6rem 0.25rem;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #f1f5f9;
+            text-align: center;
+        }
+        .calc-btn:active {
+            background: rgba(34, 211, 238, 0.25);
+            border-color: var(--cyan-400);
+        }
+        .calc-op {
+            background: rgba(6, 182, 212, 0.16);
+            border-color: rgba(34, 211, 238, 0.4);
+            color: #67e8f9;
+        }
+        .pdf-viewport-box {
+            width: 100%;
+            max-height: 26rem;
+            overflow: auto;
+            background: #020617;
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            border-radius: 0.75rem;
+            padding: 0.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
         }
         .nav-btn {
             display: flex;
@@ -237,6 +280,7 @@
         }
         .nav-btn.active {
             color: var(--cyan-400);
+            text-shadow: 0 0 10px rgba(34, 211, 238, 0.55);
         }
 
         /* Animations */
@@ -293,7 +337,9 @@
             position: fixed;
             inset: 0;
             z-index: 50;
-            background: rgba(0, 0, 0, 0.82);
+            background: rgba(2, 6, 23, 0.82);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1002,6 +1048,68 @@
                     </button>
                 </div>
             </div>
+
+            <!-- ANCIENT GRIMOIRE READER (PDF READER WHILE RAIDING) -->
+            <div class="system-card space-y-3" style="border-color: rgba(192, 132, 252, 0.45);">
+                <div class="flex items-center justify-between gap-2" style="border-bottom: 1px solid var(--bg-slate-800); padding-bottom: 0.5rem;">
+                    <div class="flex items-center gap-1-5">
+                        <span style="font-size: 1rem;">📖</span>
+                        <div>
+                            <h3 class="font-display" style="font-weight: 700; font-size: 0.875rem; text-transform: uppercase; color: #d8b4fe;">ANCIENT GRIMOIRE READER</h3>
+                            <p style="font-size: 10px; color: var(--text-muted);">Baca PDF materi belajar/buku sambil Dungeon Raid berjalan</p>
+                        </div>
+                    </div>
+                    <label for="grimoire-pdf-input" class="font-display shadow-neon-purple" style="cursor: pointer; background: rgba(168,85,247,0.22); color: #e9d5ff; border: 1px solid rgba(192,132,252,0.5); font-size: 11px; font-weight: 700; padding: 6px 10px; border-radius: 0.65rem; white-space: nowrap;">
+                        📂 Buka PDF
+                    </label>
+                    <input type="file" id="grimoire-pdf-input" accept="application/pdf,.pdf" onchange="handleGrimoirePdfUpload(event)" class="hidden">
+                </div>
+
+                <!-- Saved Bookmarks Shelf -->
+                <div id="grimoire-bookmarks-bar" class="space-y-1-5">
+                    <div class="flex items-center justify-between" style="font-size: 10px; color: var(--text-muted);">
+                        <span class="font-display uppercase" style="font-weight: 700; color: #fcd34d;">🔖 Bookmark Tersimpan (Per Judul File)</span>
+                        <span id="grimoire-bookmark-count" class="font-display">0 File</span>
+                    </div>
+                    <div id="grimoire-bookmark-list" class="flex gap-1-5" style="overflow-x: auto; padding-bottom: 2px;"></div>
+                </div>
+
+                <!-- Active PDF Controls & Canvas -->
+                <div id="grimoire-reader-workspace" class="hidden space-y-2-5">
+                    <div style="background: rgba(2,6,23,0.8); border: 1px solid #334155; border-radius: 0.75rem; padding: 0.5rem 0.65rem;" class="space-y-2">
+                        <div class="flex items-center justify-between gap-2">
+                            <p id="grimoire-file-title" class="font-display truncate" style="font-size: 0.75rem; font-weight: 700; color: #67e8f9;">-</p>
+                            <button type="button" onclick="saveCurrentGrimoireBookmark()" class="font-display shrink-0" style="background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid rgba(251,191,36,0.5); font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 0.5rem;">
+                                🔖 Tandai Hal Ini
+                            </button>
+                        </div>
+
+                        <!-- Page Navigation + Zoom Controls -->
+                        <div class="flex flex-wrap items-center justify-between gap-1-5">
+                            <div class="flex items-center gap-1">
+                                <button type="button" onclick="changeGrimoirePage(-1)" class="font-display" style="background: var(--bg-slate-900); border: 1px solid #334155; color: #e2e8f0; padding: 4px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700;">◀</button>
+                                <span id="grimoire-page-indicator" class="font-display" style="font-size: 11px; font-weight: 700; color: #fff; padding: 0 4px;">Hal 1 / 1</span>
+                                <button type="button" onclick="changeGrimoirePage(1)" class="font-display" style="background: var(--bg-slate-900); border: 1px solid #334155; color: #e2e8f0; padding: 4px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700;">▶</button>
+                            </div>
+
+                            <div class="flex items-center gap-1">
+                                <button type="button" onclick="zoomGrimoire(-0.2)" class="font-display" style="background: var(--bg-slate-900); border: 1px solid #334155; color: #67e8f9; padding: 4px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700;" title="Zoom Out">➖</button>
+                                <button type="button" onclick="fitGrimoireWidth()" class="font-display" style="background: rgba(6,182,212,0.18); border: 1px solid rgba(34,211,238,0.45); color: #67e8f9; padding: 4px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700;" title="Fit Lebar Layar HP">Fit</button>
+                                <button type="button" onclick="zoomGrimoire(0.2)" class="font-display" style="background: var(--bg-slate-900); border: 1px solid #334155; color: #67e8f9; padding: 4px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700;" title="Zoom In">➕</button>
+                                <span id="grimoire-zoom-label" class="font-display" style="font-size: 10px; color: var(--text-muted); margin-left: 2px;">100%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="grimoire-viewport" class="pdf-viewport-box">
+                        <canvas id="grimoire-pdf-canvas" style="border-radius: 0.4rem; max-width: none;"></canvas>
+                    </div>
+                </div>
+
+                <div id="grimoire-empty-hint" style="background: rgba(2,6,23,0.65); border: 1px dashed #334155; border-radius: 0.75rem; padding: 0.85rem; text-align: center; font-size: 11px; color: var(--text-muted);">
+                    Pilih file <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> dari HP untuk membaca sambil timer fokus berjalan. Halaman terakhir otomatis tersimpan saat kamu menekan <span style="color: #fcd34d; font-weight: 700;">🔖 Tandai Hal Ini</span>.
+                </div>
+            </div>
         </section>
 
         <!-- ==================== TAB 4: SHOP ==================== -->
@@ -1115,6 +1223,168 @@
             </div>
         </section>
 
+        <!-- ==================== TAB 5: TREASURY (KEUANGAN + KALKULATOR + ANALITIK) ==================== -->
+        <section id="tab-treasury" class="tab-content hidden space-y-4">
+            <div class="flex items-center justify-between gap-2">
+                <div>
+                    <h2 class="font-display" style="font-weight: 700; font-size: 1.25rem; color: #fff;">TREASURY VAULT</h2>
+                    <p style="font-size: 0.75rem; color: var(--text-muted);">Catat arus kas & kalkulator jajan (+10 XP & +10 WIS XP, maks 3x/hari)</p>
+                </div>
+                <span id="treasury-rpg-quota-badge" class="font-display shrink-0" style="font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 9999px; background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.45);">
+                    Bonus RPG: 0/3 Hari Ini
+                </span>
+            </div>
+
+            <!-- Interactive Calculator Card -->
+            <div class="system-card space-y-2-5" style="border-color: rgba(34, 211, 238, 0.38);">
+                <div class="flex items-center justify-between">
+                    <span class="font-display" style="font-size: 11px; font-weight: 700; color: var(--cyan-400); text-transform: uppercase;">🧮 Kalkulator Jajan & Belanja</span>
+                    <button type="button" onclick="calcClear()" class="font-display" style="font-size: 10px; font-weight: 700; color: #fda4af; background: rgba(244,63,94,0.15); border: 1px solid rgba(244,63,94,0.35); padding: 2px 8px; border-radius: 4px;">
+                        AC / Reset
+                    </button>
+                </div>
+
+                <div style="background: rgba(2,6,23,0.92); border: 1px solid #334155; border-radius: 0.75rem; padding: 0.6rem 0.75rem; text-align: right;">
+                    <div id="calc-expression" class="font-display truncate" style="font-size: 11px; color: var(--text-muted); min-height: 1rem;">0</div>
+                    <div id="calc-display" class="font-display truncate" style="font-size: 1.5rem; font-weight: 800; color: #67e8f9; margin-top: 2px;">0</div>
+                </div>
+
+                <div class="grid grid-cols-4 gap-1-5 font-display">
+                    <button type="button" onclick="calcInput('7')" class="calc-btn">7</button>
+                    <button type="button" onclick="calcInput('8')" class="calc-btn">8</button>
+                    <button type="button" onclick="calcInput('9')" class="calc-btn">9</button>
+                    <button type="button" onclick="calcInput('/')" class="calc-btn calc-op">÷</button>
+
+                    <button type="button" onclick="calcInput('4')" class="calc-btn">4</button>
+                    <button type="button" onclick="calcInput('5')" class="calc-btn">5</button>
+                    <button type="button" onclick="calcInput('6')" class="calc-btn">6</button>
+                    <button type="button" onclick="calcInput('*')" class="calc-btn calc-op">×</button>
+
+                    <button type="button" onclick="calcInput('1')" class="calc-btn">1</button>
+                    <button type="button" onclick="calcInput('2')" class="calc-btn">2</button>
+                    <button type="button" onclick="calcInput('3')" class="calc-btn">3</button>
+                    <button type="button" onclick="calcInput('-')" class="calc-btn calc-op">-</button>
+
+                    <button type="button" onclick="calcInput('0')" class="calc-btn">0</button>
+                    <button type="button" onclick="calcInput('000')" class="calc-btn">000</button>
+                    <button type="button" onclick="calcBackspace()" class="calc-btn" style="color: #fcd34d;">⌫</button>
+                    <button type="button" onclick="calcInput('+')" class="calc-btn calc-op">+</button>
+                </div>
+
+                <div class="grid grid-cols-3 gap-1-5">
+                    <button type="button" onclick="calcEquals()" class="font-display" style="background: rgba(30,41,59,0.95); border: 1px solid #475569; color: #fff; font-weight: 800; font-size: 1rem; padding: 0.6rem; border-radius: 0.65rem;">
+                        =
+                    </button>
+                    <button type="button" onclick="applyCalcToNominal()" class="font-display shadow-neon-blue" style="grid-column: span 2; background: linear-gradient(to right, #06b6d4, #10b981); color: #020617; font-weight: 800; font-size: 0.75rem; padding: 0.6rem; border-radius: 0.65rem;">
+                        ✓ PAKAI NOMINAL
+                    </button>
+                </div>
+            </div>
+
+            <!-- Record Cashflow Transaction Form -->
+            <form onsubmit="handleAddTreasuryTx(event)" class="system-card space-y-3" style="border-color: rgba(251, 191, 36, 0.35);">
+                <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--bg-slate-800); padding-bottom: 0.45rem;">
+                    <span class="font-display" style="font-size: 0.8125rem; font-weight: 700; color: var(--amber-400); text-transform: uppercase;">💸 Catat Transaksi Keuangan</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label style="display: block; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">Jenis Arus Kas</label>
+                        <select id="tx-type" onchange="updateTreasuryCategoryOptions()" class="input-cyber" style="font-size: 0.75rem;">
+                            <option value="expense">📤 Pengeluaran (-)</option>
+                            <option value="income">📥 Pemasukan (+)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">Tanggal</label>
+                        <input type="date" id="tx-date" required class="input-cyber" style="font-size: 0.75rem; padding: 0.45rem 0.5rem;">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label style="display: block; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">Nominal (Rp)</label>
+                        <input type="number" id="tx-amount" min="1" required placeholder="Contoh: 25000" class="input-cyber font-display" style="color: #fcd34d; font-weight: 700;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">Kategori</label>
+                        <select id="tx-category" class="input-cyber" style="font-size: 0.75rem;"></select>
+                    </div>
+                </div>
+
+                <div>
+                    <label style="display: block; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">Catatan / Keterangan</label>
+                    <input type="text" id="tx-note" required placeholder="Contoh: Makan siang ayam geprek / Gaji bulanan" class="input-cyber" style="font-size: 0.75rem;">
+                </div>
+
+                <button type="submit" class="w-full font-display shadow-neon-gold" style="background: linear-gradient(to right, #f59e0b, #f97316); color: #020617; font-weight: 800; font-size: 0.8125rem; padding: 0.65rem; border-radius: 0.75rem;">
+                    SIMPAN TRANSAKSI (+10 XP & +10 WIS)
+                </button>
+            </form>
+
+            <!-- Cashflow Analytics Dashboard -->
+            <div class="system-card space-y-3">
+                <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--bg-slate-800); padding-bottom: 0.5rem;">
+                    <h3 class="font-display" style="font-weight: 700; font-size: 0.875rem; text-transform: uppercase; color: var(--cyan-400);">📊 Dashboard Arus Kas</h3>
+                </div>
+
+                <!-- Period Mode Tabs -->
+                <div class="grid grid-cols-3 gap-1-5">
+                    <button type="button" onclick="setTreasuryPeriodMode('daily')" id="tr-mode-daily" class="font-display" style="padding: 6px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: rgba(6,182,212,0.2); color: #67e8f9; border: 1px solid rgba(6,182,212,0.45);">Harian</button>
+                    <button type="button" onclick="setTreasuryPeriodMode('monthly')" id="tr-mode-monthly" class="font-display" style="padding: 6px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);">Bulanan</button>
+                    <button type="button" onclick="setTreasuryPeriodMode('yearly')" id="tr-mode-yearly" class="font-display" style="padding: 6px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);">Tahunan</button>
+                </div>
+
+                <!-- Dynamic Filter Control -->
+                <div class="flex items-center justify-between gap-2" style="background: rgba(2,6,23,0.75); border: 1px solid var(--bg-slate-800); border-radius: 0.65rem; padding: 0.5rem 0.65rem;">
+                    <span id="tr-filter-label" style="font-size: 11px; color: var(--text-muted);">Filter Tanggal:</span>
+                    <input type="date" id="tr-filter-date" onchange="renderTreasury()" class="input-cyber font-display" style="max-width: 11rem; font-size: 0.75rem; padding: 0.35rem 0.5rem;">
+                    <input type="month" id="tr-filter-month" onchange="renderTreasury()" class="hidden input-cyber font-display" style="max-width: 11rem; font-size: 0.75rem; padding: 0.35rem 0.5rem;">
+                    <select id="tr-filter-year" onchange="renderTreasury()" class="hidden input-cyber font-display" style="max-width: 8rem; font-size: 0.75rem; padding: 0.35rem 0.5rem;"></select>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-3 gap-1-5 text-center">
+                    <div style="background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35); border-radius: 0.65rem; padding: 0.55rem 0.35rem;">
+                        <span style="font-size: 10px; color: #6ee7b7; display: block;">Pemasukan</span>
+                        <span id="tr-total-income" class="font-display" style="font-size: 0.75rem; font-weight: 800; color: #34d399;">Rp 0</span>
+                    </div>
+                    <div style="background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.35); border-radius: 0.65rem; padding: 0.55rem 0.35rem;">
+                        <span style="font-size: 10px; color: #fda4af; display: block;">Pengeluaran</span>
+                        <span id="tr-total-expense" class="font-display" style="font-size: 0.75rem; font-weight: 800; color: #fb7185;">Rp 0</span>
+                    </div>
+                    <div style="background: rgba(6,182,212,0.12); border: 1px solid rgba(6,182,212,0.35); border-radius: 0.65rem; padding: 0.55rem 0.35rem;">
+                        <span style="font-size: 10px; color: #67e8f9; display: block;">Selisih Bersih</span>
+                        <span id="tr-net-balance" class="font-display" style="font-size: 0.75rem; font-weight: 800; color: #22d3ee;">Rp 0</span>
+                    </div>
+                </div>
+
+                <!-- Income vs Expense Ratio Bar -->
+                <div class="space-y-1">
+                    <div class="flex justify-between" style="font-size: 11px;">
+                        <span style="color: #34d399; font-weight: 700;">Rasio Masuk: <span id="tr-ratio-in-pct">50%</span></span>
+                        <span style="color: #fb7185; font-weight: 700;">Keluar: <span id="tr-ratio-out-pct">50%</span></span>
+                    </div>
+                    <div style="width: 100%; height: 0.6rem; background: #1e293b; border-radius: 9999px; overflow: hidden; display: flex;">
+                        <div id="tr-ratio-in-bar" style="width: 50%; height: 100%; background: #10b981; transition: width 0.4s ease;"></div>
+                        <div id="tr-ratio-out-bar" style="width: 50%; height: 100%; background: #f43f5e; transition: width 0.4s ease;"></div>
+                    </div>
+                </div>
+
+                <!-- Expense Breakdown by Category -->
+                <div style="padding-top: 0.4rem; border-top: 1px solid rgba(30,41,59,0.85);">
+                    <p class="font-display" style="font-size: 11px; font-weight: 700; color: #fcd34d; text-transform: uppercase; margin-bottom: 0.4rem;">Rincian Pengeluaran per Kategori</p>
+                    <div id="tr-category-breakdown" class="space-y-1-5"></div>
+                </div>
+
+                <!-- Transaction List -->
+                <div style="padding-top: 0.4rem; border-top: 1px solid rgba(30,41,59,0.85);">
+                    <p class="font-display" style="font-size: 11px; font-weight: 700; color: #67e8f9; text-transform: uppercase; margin-bottom: 0.4rem;">Daftar Transaksi Periode Ini</p>
+                    <div id="tr-transaction-list" class="scroll-box space-y-1-5"></div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <!-- Bottom Navigation Bar -->
@@ -1136,6 +1406,10 @@
             <button onclick="switchTab('shop')" id="nav-shop" class="nav-btn">
                 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                 <span class="font-display" style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Shop</span>
+            </button>
+            <button onclick="switchTab('treasury')" id="nav-treasury" class="nav-btn">
+                <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><circle cx="17" cy="14" r="1.5"/></svg>
+                <span class="font-display" style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Treasury</span>
             </button>
         </div>
     </nav>
@@ -2166,6 +2440,12 @@
                     if (!parsed.reminders) {
                         parsed.reminders = { enabled: false, times: { Pagi: '07:30', Sore: '16:30', Malam: '20:30' }, lastFired: {} };
                     }
+                    if (!parsed.treasury) {
+                        parsed.treasury = { transactions: [], dailyBonusCounts: {} };
+                    }
+                    if (!parsed.grimoireBookmarks) {
+                        parsed.grimoireBookmarks = {};
+                    }
                     if (typeof parsed.lastOracleClaimDate === 'undefined') parsed.lastOracleClaimDate = null;
                     if (typeof parsed.player.dungeonClears !== 'number') parsed.player.dungeonClears = 0;
                     if (typeof parsed.player.shields !== 'number') parsed.player.shields = 0;
@@ -2688,6 +2968,8 @@
             updateAudioIcon();
             updateAmbientButtonsUI();
             if (typeof renderReminderUI === 'function') renderReminderUI();
+            if (typeof renderTreasury === 'function') renderTreasury();
+            if (typeof renderGrimoireBookmarks === 'function') renderGrimoireBookmarks();
         }
 
         function renderStatus() {
@@ -3291,6 +3573,9 @@
                 const effectiveBaseGold = isCrit ? Math.round(q.gold * 1.5) : q.gold;
                 if (isCrit) {
                     SoundFX.playCritical();
+                    document.body.classList.remove('animate-crit-flash');
+                    void document.body.offsetWidth;
+                    document.body.classList.add('animate-crit-flash');
                 } else {
                     SoundFX.playQuestComplete();
                 }
@@ -4500,8 +4785,473 @@
             });
         }
 
+        // ==========================================
+        // 11. TREASURY (KEUANGAN + KALKULATOR + ANALITIK)
+        // ==========================================
+        let calcExpr = '';
+        let treasuryPeriodMode = 'daily'; // 'daily' | 'monthly' | 'yearly'
+
+        const TREASURY_CATEGORIES = {
+            expense: ['🍔 Makan & Jajan', '🚗 Transportasi', '🛒 Belanja & Kebutuhan', '📱 Tagihan & Kuota', '📚 Edukasi & Buku', '🎮 Hiburan', '💊 Kesehatan', '📦 Lainnya'],
+            income: ['💼 Gaji / Honor', '🎁 Bonus / Hadiah', '📈 Usaha / Freelance', '💰 Pemasukan Lain']
+        };
+
+        function ensureTreasuryState() {
+            if (!gameState.treasury) {
+                gameState.treasury = { transactions: [], dailyBonusCounts: {} };
+            }
+            if (!Array.isArray(gameState.treasury.transactions)) gameState.treasury.transactions = [];
+            if (!gameState.treasury.dailyBonusCounts) gameState.treasury.dailyBonusCounts = {};
+            return gameState.treasury;
+        }
+
+        function formatRupiah(num) {
+            const sign = num < 0 ? '-' : '';
+            return sign + 'Rp ' + Math.abs(Math.round(num)).toLocaleString('id-ID');
+        }
+
+        function updateTreasuryCategoryOptions() {
+            const typeEl = document.getElementById('tx-type');
+            const catEl = document.getElementById('tx-category');
+            if (!typeEl || !catEl) return;
+            const list = TREASURY_CATEGORIES[typeEl.value] || TREASURY_CATEGORIES.expense;
+            catEl.innerHTML = list.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+
+        function calcInput(val) {
+            SoundFX.playClick();
+            const ops = ['+', '-', '*', '/'];
+            if (calcExpr === '' && ops.includes(val)) {
+                calcExpr = '0' + val;
+            } else if (ops.includes(val) && ops.includes(calcExpr.slice(-1))) {
+                calcExpr = calcExpr.slice(0, -1) + val;
+            } else {
+                calcExpr += val;
+            }
+            updateCalcDisplay();
+        }
+
+        function calcBackspace() {
+            SoundFX.playClick();
+            calcExpr = calcExpr.slice(0, -1);
+            updateCalcDisplay();
+        }
+
+        function calcClear() {
+            SoundFX.playClick();
+            calcExpr = '';
+            document.getElementById('calc-expression').textContent = '0';
+            document.getElementById('calc-display').textContent = '0';
+        }
+
+        function evaluateCalcExpression(expr) {
+            if (!expr) return 0;
+            const sanitized = expr.replace(/[^0-9+\-*/.]/g, '').replace(/[+\-*/.]+$/, '');
+            if (!sanitized) return 0;
+            try {
+                const res = Function('"use strict";return (' + sanitized + ')')();
+                return (typeof res === 'number' && isFinite(res)) ? Math.round(res) : 0;
+            } catch (e) {
+                return 0;
+            }
+        }
+
+        function updateCalcDisplay() {
+            const exprEl = document.getElementById('calc-expression');
+            const dispEl = document.getElementById('calc-display');
+            if (!exprEl || !dispEl) return;
+            exprEl.textContent = calcExpr.replace(/\*/g, '×').replace(/\//g, '÷') || '0';
+            const preview = evaluateCalcExpression(calcExpr);
+            dispEl.textContent = preview.toLocaleString('id-ID');
+        }
+
+        function calcEquals() {
+            SoundFX.playCoin();
+            const val = evaluateCalcExpression(calcExpr);
+            document.getElementById('calc-expression').textContent = (calcExpr.replace(/\*/g, '×').replace(/\//g, '÷') || '0') + ' =';
+            calcExpr = val > 0 ? String(val) : '';
+            document.getElementById('calc-display').textContent = val.toLocaleString('id-ID');
+        }
+
+        function applyCalcToNominal() {
+            SoundFX.playQuestComplete();
+            const val = evaluateCalcExpression(calcExpr);
+            const amountInput = document.getElementById('tx-amount');
+            if (amountInput && val > 0) {
+                amountInput.value = val;
+                spawnFloatingReward(`✓ Nominal Rp ${val.toLocaleString('id-ID')} dimasukkan!`);
+            } else {
+                spawnFloatingReward('⚠️ Hitung nominal lebih dari 0 terlebih dahulu');
+            }
+        }
+
+        function handleAddTreasuryTx(e) {
+            e.preventDefault();
+            const tr = ensureTreasuryState();
+            const type = document.getElementById('tx-type').value;
+            const dateStr = document.getElementById('tx-date').value || getCurrentGameDateKey();
+            const amount = Math.max(1, parseInt(document.getElementById('tx-amount').value, 10) || 0);
+            const category = document.getElementById('tx-category').value;
+            const note = document.getElementById('tx-note').value.trim();
+            if (!amount || !note) return;
+
+            tr.transactions.unshift({
+                id: 'tx_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+                type,
+                dateStr,
+                amount,
+                category,
+                note
+            });
+
+            const todayKey = getCurrentGameDateKey();
+            const usedToday = tr.dailyBonusCounts[todayKey] || 0;
+            if (usedToday < 3) {
+                tr.dailyBonusCounts[todayKey] = usedToday + 1;
+                SoundFX.playQuestComplete();
+                addRewards(10, 0, 'WIS', 10, true);
+                spawnFloatingReward(`💰 Tercatat! +10 XP & +10 WIS XP (${tr.dailyBonusCounts[todayKey]}/3 hari ini)`);
+            } else {
+                SoundFX.playCoin();
+                spawnFloatingReward('💰 Transaksi keuangan berhasil dicatat!');
+            }
+
+            document.getElementById('tx-amount').value = '';
+            document.getElementById('tx-note').value = '';
+            saveState();
+            renderTreasury();
+        }
+
+        function deleteTreasuryTx(id) {
+            const tr = ensureTreasuryState();
+            SoundFX.playClick();
+            tr.transactions = tr.transactions.filter(t => t.id !== id);
+            saveState();
+            renderTreasury();
+            spawnFloatingReward('🗑️ Transaksi dihapus');
+        }
+
+        function setTreasuryPeriodMode(mode) {
+            SoundFX.playClick();
+            treasuryPeriodMode = mode;
+            ['daily', 'monthly', 'yearly'].forEach(m => {
+                const btn = document.getElementById(`tr-mode-${m}`);
+                if (!btn) return;
+                if (m === mode) {
+                    btn.style.cssText = 'padding: 6px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: rgba(6,182,212,0.2); color: #67e8f9; border: 1px solid rgba(6,182,212,0.45);';
+                } else {
+                    btn.style.cssText = 'padding: 6px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);';
+                }
+            });
+
+            const lbl = document.getElementById('tr-filter-label');
+            const fDate = document.getElementById('tr-filter-date');
+            const fMonth = document.getElementById('tr-filter-month');
+            const fYear = document.getElementById('tr-filter-year');
+
+            fDate.classList.add('hidden');
+            fMonth.classList.add('hidden');
+            fYear.classList.add('hidden');
+
+            if (mode === 'daily') {
+                lbl.textContent = 'Filter Tanggal:';
+                fDate.classList.remove('hidden');
+            } else if (mode === 'monthly') {
+                lbl.textContent = 'Filter Bulan:';
+                fMonth.classList.remove('hidden');
+            } else {
+                lbl.textContent = 'Filter Tahun:';
+                fYear.classList.remove('hidden');
+            }
+            renderTreasury();
+        }
+
+        function initTreasuryDefaults() {
+            const todayKey = getCurrentGameDateKey();
+            const txDate = document.getElementById('tx-date');
+            const fDate = document.getElementById('tr-filter-date');
+            const fMonth = document.getElementById('tr-filter-month');
+            const fYear = document.getElementById('tr-filter-year');
+
+            if (txDate && !txDate.value) txDate.value = todayKey;
+            if (fDate && !fDate.value) fDate.value = todayKey;
+            if (fMonth && !fMonth.value) fMonth.value = todayKey.slice(0, 7);
+            if (fYear && fYear.options.length === 0) {
+                const curY = new Date().getFullYear();
+                for (let y = curY + 1; y >= curY - 4; y--) {
+                    const opt = document.createElement('option');
+                    opt.value = String(y);
+                    opt.textContent = String(y);
+                    if (y === curY) opt.selected = true;
+                    fYear.appendChild(opt);
+                }
+            }
+            updateTreasuryCategoryOptions();
+        }
+
+        function renderTreasury() {
+            const tr = ensureTreasuryState();
+            const todayKey = getCurrentGameDateKey();
+            const quotaUsed = tr.dailyBonusCounts[todayKey] || 0;
+            const quotaBadge = document.getElementById('treasury-rpg-quota-badge');
+            if (quotaBadge) quotaBadge.textContent = `Bonus RPG: ${quotaUsed}/3 Hari Ini`;
+
+            const fDate = document.getElementById('tr-filter-date')?.value || todayKey;
+            const fMonth = document.getElementById('tr-filter-month')?.value || todayKey.slice(0, 7);
+            const fYear = document.getElementById('tr-filter-year')?.value || todayKey.slice(0, 4);
+
+            const filtered = tr.transactions.filter(tx => {
+                if (treasuryPeriodMode === 'daily') return tx.dateStr === fDate;
+                if (treasuryPeriodMode === 'monthly') return (tx.dateStr || '').startsWith(fMonth);
+                return (tx.dateStr || '').startsWith(fYear);
+            });
+
+            let totalIn = 0;
+            let totalOut = 0;
+            const catTotals = {};
+
+            filtered.forEach(tx => {
+                if (tx.type === 'income') {
+                    totalIn += tx.amount;
+                } else {
+                    totalOut += tx.amount;
+                    catTotals[tx.category] = (catTotals[tx.category] || 0) + tx.amount;
+                }
+            });
+
+            const net = totalIn - totalOut;
+            const elIn = document.getElementById('tr-total-income');
+            const elOut = document.getElementById('tr-total-expense');
+            const elNet = document.getElementById('tr-net-balance');
+            if (elIn) elIn.textContent = formatRupiah(totalIn);
+            if (elOut) elOut.textContent = formatRupiah(totalOut);
+            if (elNet) {
+                elNet.textContent = formatRupiah(net);
+                elNet.style.color = net >= 0 ? '#22d3ee' : '#fb7185';
+            }
+
+            const sumFlow = totalIn + totalOut;
+            const inPct = sumFlow > 0 ? Math.round((totalIn / sumFlow) * 100) : 50;
+            const outPct = sumFlow > 0 ? (100 - inPct) : 50;
+            const elInPct = document.getElementById('tr-ratio-in-pct');
+            const elOutPct = document.getElementById('tr-ratio-out-pct');
+            const elInBar = document.getElementById('tr-ratio-in-bar');
+            const elOutBar = document.getElementById('tr-ratio-out-bar');
+            if (elInPct) elInPct.textContent = `${inPct}%`;
+            if (elOutPct) elOutPct.textContent = `${outPct}%`;
+            if (elInBar) elInBar.style.width = `${inPct}%`;
+            if (elOutBar) elOutBar.style.width = `${outPct}%`;
+
+            const catBox = document.getElementById('tr-category-breakdown');
+            if (catBox) {
+                const entries = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
+                if (entries.length === 0) {
+                    catBox.innerHTML = `<p style="font-size: 11px; color: #64748b;">Belum ada pengeluaran pada periode ini.</p>`;
+                } else {
+                    catBox.innerHTML = entries.map(([cat, amt]) => {
+                        const pct = totalOut > 0 ? Math.round((amt / totalOut) * 100) : 0;
+                        return `
+                            <div style="background: rgba(15,23,42,0.75); border: 1px solid #1e293b; border-radius: 0.55rem; padding: 0.4rem 0.6rem;">
+                                <div class="flex justify-between" style="font-size: 11px; margin-bottom: 3px;">
+                                    <span style="color: #e2e8f0; font-weight: 600;">${escapeHtml(cat)}</span>
+                                    <span class="font-display" style="color: #fb7185; font-weight: 700;">${formatRupiah(amt)} (${pct}%)</span>
+                                </div>
+                                <div class="progress-track-sm">
+                                    <div class="progress-fill" style="width: ${pct}%; background: linear-gradient(to right, #f43f5e, #fb923c);"></div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+
+            const txListEl = document.getElementById('tr-transaction-list');
+            if (txListEl) {
+                if (filtered.length === 0) {
+                    txListEl.innerHTML = `<p style="font-size: 11px; color: #64748b; text-align: center; padding: 0.65rem 0;">Tidak ada transaksi pada periode ini.</p>`;
+                } else {
+                    txListEl.innerHTML = filtered.map(tx => {
+                        const isInc = tx.type === 'income';
+                        return `
+                            <div style="background: rgba(15,23,42,0.75); border: 1px solid rgba(30,41,59,0.9); border-radius: 0.65rem; padding: 0.5rem 0.65rem;" class="flex items-center justify-between gap-2">
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate" style="font-size: 0.75rem; font-weight: 600; color: #f1f5f9;">${escapeHtml(tx.note)}</p>
+                                    <p style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">${escapeHtml(tx.category)} • ${tx.dateStr}</p>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <span class="font-display" style="font-size: 0.75rem; font-weight: 700; color: ${isInc ? '#34d399' : '#fb7185'};">
+                                        ${isInc ? '+' : '-'}${formatRupiah(tx.amount)}
+                                    </span>
+                                    <button type="button" onclick="deleteTreasuryTx('${tx.id}')" style="color: #64748b; padding: 3px;" title="Hapus">✕</button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            }
+        }
+
+        // ==========================================
+        // 12. ANCIENT GRIMOIRE READER (PDF IN DUNGEON)
+        // ==========================================
+        let grimoirePdfDoc = null;
+        let grimoireCurrentPage = 1;
+        let grimoireTotalPages = 1;
+        let grimoireScale = 1.0;
+        let grimoireCurrentFileName = '';
+        let grimoireRenderTask = null;
+
+        if (window.pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+
+        function ensureGrimoireBookmarks() {
+            if (!gameState.grimoireBookmarks || typeof gameState.grimoireBookmarks !== 'object') {
+                gameState.grimoireBookmarks = {};
+            }
+            return gameState.grimoireBookmarks;
+        }
+
+        function renderGrimoireBookmarks() {
+            const bm = ensureGrimoireBookmarks();
+            const entries = Object.entries(bm);
+            const countEl = document.getElementById('grimoire-bookmark-count');
+            const listEl = document.getElementById('grimoire-bookmark-list');
+            if (countEl) countEl.textContent = `${entries.length} File`;
+            if (!listEl) return;
+
+            if (entries.length === 0) {
+                listEl.innerHTML = `<span style="font-size: 10px; color: #64748b;">Belum ada bookmark tersimpan.</span>`;
+                return;
+            }
+
+            listEl.innerHTML = entries.map(([fileName, info]) => `
+                <div style="background: rgba(15,23,42,0.9); border: 1px solid rgba(245,158,11,0.4); border-radius: 0.55rem; padding: 4px 8px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; flex-shrink: 0;">
+                    <span style="font-size: 10px; color: #fcd34d; font-weight: 700;">🔖 ${escapeHtml(fileName.length > 22 ? fileName.slice(0, 20) + '…' : fileName)}</span>
+                    <span class="font-display" style="font-size: 10px; color: #67e8f9; font-weight: 700;">Hal ${info.page}/${info.totalPages || '?'}</span>
+                    <button type="button" onclick="deleteGrimoireBookmark(${JSON.stringify(fileName)})" style="color: #94a3b8; font-size: 10px;" title="Hapus Bookmark">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteGrimoireBookmark(fileName) {
+            const bm = ensureGrimoireBookmarks();
+            SoundFX.playClick();
+            delete bm[fileName];
+            saveState();
+            renderGrimoireBookmarks();
+        }
+
+        async function handleGrimoirePdfUpload(e) {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+
+            if (!window.pdfjsLib) {
+                showSystemModal(
+                    'MODUL PDF MEMERLUKAN INTERNET PERTAMA KALI',
+                    'Library PDF.js belum dimuat karena perangkat sedang offline saat pertama kali membuka halaman. Hubungkan internet sebentar lalu muat ulang halaman agar tersimpan di cache.'
+                );
+                return;
+            }
+
+            SoundFX.playClick();
+            grimoireCurrentFileName = file.name;
+
+            const arrayBuffer = await file.arrayBuffer();
+            const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+            grimoirePdfDoc = await loadingTask.promise;
+            grimoireTotalPages = grimoirePdfDoc.numPages;
+
+            const bm = ensureGrimoireBookmarks();
+            const saved = bm[grimoireCurrentFileName];
+            grimoireCurrentPage = (saved && saved.page >= 1 && saved.page <= grimoireTotalPages) ? saved.page : 1;
+
+            document.getElementById('grimoire-empty-hint').classList.add('hidden');
+            document.getElementById('grimoire-reader-workspace').classList.remove('hidden');
+            document.getElementById('grimoire-file-title').textContent = grimoireCurrentFileName;
+
+            await fitGrimoireWidth();
+
+            if (saved && saved.page > 1) {
+                spawnFloatingReward(`🔖 Melanjutkan dari Bookmark: Halaman ${grimoireCurrentPage}`);
+            } else {
+                spawnFloatingReward(`📖 Grimoire Dibuka (${grimoireTotalPages} Halaman)`);
+            }
+        }
+
+        async function renderGrimoirePage(pageNum) {
+            if (!grimoirePdfDoc) return;
+            grimoireCurrentPage = Math.max(1, Math.min(grimoireTotalPages, pageNum));
+
+            document.getElementById('grimoire-page-indicator').textContent = `Hal ${grimoireCurrentPage} / ${grimoireTotalPages}`;
+            document.getElementById('grimoire-zoom-label').textContent = `${Math.round(grimoireScale * 100)}%`;
+
+            const page = await grimoirePdfDoc.getPage(grimoireCurrentPage);
+            const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+            const viewport = page.getViewport({ scale: grimoireScale });
+
+            const canvas = document.getElementById('grimoire-pdf-canvas');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = Math.floor(viewport.width * dpr);
+            canvas.height = Math.floor(viewport.height * dpr);
+            canvas.style.width = `${Math.floor(viewport.width)}px`;
+            canvas.style.height = `${Math.floor(viewport.height)}px`;
+
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            if (grimoireRenderTask) {
+                try { grimoireRenderTask.cancel(); } catch (err) {}
+            }
+            grimoireRenderTask = page.render({ canvasContext: ctx, viewport });
+            try {
+                await grimoireRenderTask.promise;
+            } catch (err) {}
+        }
+
+        async function changeGrimoirePage(delta) {
+            if (!grimoirePdfDoc) return;
+            const target = grimoireCurrentPage + delta;
+            if (target < 1 || target > grimoireTotalPages) return;
+            SoundFX.playClick();
+            await renderGrimoirePage(target);
+        }
+
+        async function zoomGrimoire(delta) {
+            if (!grimoirePdfDoc) return;
+            SoundFX.playClick();
+            grimoireScale = Math.max(0.5, Math.min(3.0, +(grimoireScale + delta).toFixed(2)));
+            await renderGrimoirePage(grimoireCurrentPage);
+        }
+
+        async function fitGrimoireWidth() {
+            if (!grimoirePdfDoc) return;
+            const viewportBox = document.getElementById('grimoire-viewport');
+            const page = await grimoirePdfDoc.getPage(grimoireCurrentPage);
+            const unscaled = page.getViewport({ scale: 1.0 });
+            const availWidth = Math.max(240, (viewportBox ? viewportBox.clientWidth : 340) - 18);
+            grimoireScale = +(availWidth / unscaled.width).toFixed(2);
+            await renderGrimoirePage(grimoireCurrentPage);
+        }
+
+        function saveCurrentGrimoireBookmark() {
+            if (!grimoirePdfDoc || !grimoireCurrentFileName) return;
+            SoundFX.playQuestComplete();
+            const bm = ensureGrimoireBookmarks();
+            bm[grimoireCurrentFileName] = {
+                page: grimoireCurrentPage,
+                totalPages: grimoireTotalPages,
+                updatedAt: getCurrentGameDateKey()
+            };
+            saveState();
+            renderGrimoireBookmarks();
+            spawnFloatingReward(`🔖 Bookmark Tersimpan: Hal ${grimoireCurrentPage} (${grimoireCurrentFileName})`);
+        }
+
         // Initial Boot
         checkRealDayRollover();
+        initTreasuryDefaults();
+        currentOracleIndex = pickContextualOracleIndex();
         currentOracleIndex = pickContextualOracleIndex();
         renderAll();
         syncSystemReminders();
