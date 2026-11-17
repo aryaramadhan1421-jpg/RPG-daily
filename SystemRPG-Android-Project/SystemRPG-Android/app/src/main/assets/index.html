@@ -748,16 +748,6 @@
                     </button>
                 </div>
 
-                <!-- Backup & Restore JSON -->
-                <div style="padding-top: 0.5rem; border-top: 1px solid rgba(30,41,59,0.85);" class="flex gap-2">
-                    <button type="button" onclick="exportBackupData()" class="flex-1 font-display" style="background: var(--bg-slate-900); color: #cbd5e1; border: 1px solid #334155; font-weight: 700; font-size: 11px; padding: 0.45rem; border-radius: 0.65rem;">
-                        💾 Backup JSON
-                    </button>
-                    <label class="flex-1 font-display text-center" style="cursor: pointer; background: var(--bg-slate-900); color: #cbd5e1; border: 1px solid #334155; font-weight: 700; font-size: 11px; padding: 0.45rem; border-radius: 0.65rem;">
-                        📂 Restore JSON
-                        <input type="file" accept=".json,application/json" onchange="importBackupData(event)" style="display: none;">
-                    </label>
-                </div>
             </div>
 
         </section>
@@ -4587,17 +4577,30 @@
                 return;
             }
 
-            // Native Android WebView bridge check
+            // 1. Native Android WebView bridge check (APK)
             if (window.AndroidBridge && typeof window.AndroidBridge.scheduleReminder === 'function') {
+                try {
+                    if (typeof window.AndroidBridge.requestNotificationPermission === 'function') {
+                        window.AndroidBridge.requestNotificationPermission();
+                    }
+                } catch (e) {}
                 cfg.enabled = true;
                 saveReminderSettings();
                 renderReminderUI();
                 spawnFloatingReward('🔔 Notifikasi Android Aktif!');
+                showTopScreenNotification(
+                    '⚔️ SYSTEM RPG // REMINDER AKTIF',
+                    'Sistem akan mengingatkanmu di layar atas HP jika ada Daily Quest tersisa!'
+                );
                 return;
             }
 
-            if (typeof Notification === 'undefined') {
-                spawnFloatingReward('⚠️ Browser ini belum mendukung Notifikasi Pop-up');
+            // 2. WebView / file:// check (Android WebView disables Web Notification API unless native bridge is added)
+            if (typeof Notification === 'undefined' || window.location.protocol === 'file:') {
+                showSystemModal(
+                    'IZIN NOTIFIKASI ANDROID DIPERLUKAN',
+                    'Android WebView / file lokal memblokir pop-up notifikasi web standar. Untuk memunculkan notifikasi di layar atas HP, aplikasi APK perlu izin POST_NOTIFICATIONS di AndroidManifest.xml dan jembatan AndroidBridge di MainActivity.'
+                );
                 return;
             }
 
@@ -4619,7 +4622,10 @@
                 cfg.enabled = false;
                 saveState();
                 renderReminderUI();
-                spawnFloatingReward('❌ Izin Notifikasi Ditolak di Pengaturan HP');
+                showSystemModal(
+                    'IZIN NOTIFIKASI BELUM DIBERIKAN',
+                    'Izin notifikasi saat ini berstatus "' + perm + '". Buka Setelan HP > Aplikasi > SYSTEM RPG (atau Browser) > Notifikasi, lalu aktifkan "Izinkan Notifikasi" dan "Pop-up di layar".'
+                );
             }
         }
 
@@ -4673,7 +4679,8 @@
                 ? `Progres hari ini ${pct}%. Ayo selesaikan minimal 80% agar Streak ${gameState.player.streak} hari tidak reset!`
                 : `Mantap Hunter ${gameState.player.name}! Target hari ini sudah aman 100%.`;
 
-            if (typeof Notification !== 'undefined' && Notification.permission !== 'granted' && !(window.AndroidBridge && window.AndroidBridge.showNotification)) {
+            const hasNativeBridge = !!(window.AndroidBridge && typeof window.AndroidBridge.showNotification === 'function');
+            if (!hasNativeBridge && (typeof Notification === 'undefined' || window.location.protocol === 'file:' || Notification.permission !== 'granted')) {
                 togglePushReminder();
                 return;
             }
