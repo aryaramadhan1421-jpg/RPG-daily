@@ -2653,23 +2653,9 @@
                 gameState.muted = SoundFX.muted;
                 gameState.ambientMode = SoundFX.ambientMode;
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
-                try {
-                    if (window.AndroidBridge && typeof window.AndroidBridge.updateWidgetData === 'function') {
-                        const dQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
-                        const dDone = dQuests.filter(q => q.completed).length;
-                        const dPct = dQuests.length > 0 ? Math.round((dDone / dQuests.length) * 100) : 0;
-                        const rankInfo = getPlayerRank(gameState.player.level || 1);
-                        const maxHp = gameState.player.maxHp || 100;
-                        window.AndroidBridge.updateWidgetData(
-                            gameState.player.streak || 0,
-                            rankInfo.rankCode || 'E-RANK',
-                            gameState.player.level || 1,
-                            Math.round(gameState.player.hp || 0),
-                            maxHp,
-                            dPct
-                        );
-                    }
-                } catch (e) {}
+                if (typeof syncAndroidHomeWidget === 'function') {
+                    syncAndroidHomeWidget();
+                }
             } catch (e) {
                 console.error('Gagal menyimpan state:', e);
             }
@@ -5675,7 +5661,59 @@
             if (status) status.textContent = `Memutar: ${file.name.slice(0, 24)} (Loop 1 Jam)`;
         }
 
+        // ==========================================
+        // 15. ANDROID HOME SCREEN WIDGET SYNC BRIDGE
+        // ==========================================
+        function syncAndroidHomeWidget() {
+            try {
+                if (!window.AndroidBridge || typeof window.AndroidBridge.updateWidgetData !== 'function') return;
+                const p = gameState.player;
+                const rank = getPlayerRank(p.level);
+                const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
+                const doneCount = dailyQuests.filter(q => q.completed).length;
+                const totalDaily = dailyQuests.length;
+                const pct = totalDaily > 0 ? Math.round((doneCount / totalDaily) * 100) : 0;
+
+                let subtitle = `Daily Quest: ${doneCount}/${totalDaily} (${pct}%)`;
+                if (pct >= 100 && totalDaily > 0) {
+                    subtitle = 'S-Rank Clear! Streak aman hari ini 🔥';
+                } else if (pct >= 80 && totalDaily > 0) {
+                    subtitle = `Target ≥80% tercapai! (${doneCount}/${totalDaily})`;
+                } else if (p.streak > 0) {
+                    subtitle = `Jaga ${p.streak} hari streak! (${doneCount}/${totalDaily})`;
+                }
+
+                // Build last 5 days array (Indo day initials: M, S, S, R, K, J, S)
+                const dayInitials = ['M', 'S', 'S', 'R', 'K', 'J', 'S'];
+                const activeDateStr = getCurrentGameDateKey();
+                const baseDate = parseDateKey(activeDateStr);
+                const dailyCounts = (gameState.history && gameState.history.dailyCounts) || {};
+                const last5 = [];
+
+                for (let i = 4; i >= 0; i--) {
+                    const d = new Date(baseDate);
+                    d.setDate(baseDate.getDate() - i);
+                    const key = formatDateKey(d);
+                    const isToday = (key === activeDateStr);
+                    const isDone = isToday ? (pct >= 80 || (dailyCounts[key] || 0) > 0) : ((dailyCounts[key] || 0) > 0);
+                    last5.push({
+                        label: dayInitials[d.getDay()],
+                        done: isDone
+                    });
+                }
+
+                window.AndroidBridge.updateWidgetData(
+                    p.streak || 0,
+                    p.level || 1,
+                    rank.rankCode || 'E-RANK',
+                    subtitle,
+                    JSON.stringify(last5)
+                );
+            } catch (e) {}
+        }
+
         applySavedFontSettings();
+        syncAndroidHomeWidget();
     </script>
 </body>
 </html>
