@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/mini_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:gravity="center_vertical"
+    android:background="@drawable/widget_bg_cyber">
+
+    <!-- Baris 1: Rank & Level + Streak -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/mini_rank"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="E-RANK"
+            android:textColor="#22D3EE"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/mini_level"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Lv.1 • 🔥0"
+            android:textColor="#FB923C"
+            android:textStyle="bold"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <!-- Baris 2: HP Label & Bar -->
+    <TextView
+        android:id="@+id/mini_hp_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="HP 100/100"
+        android:textColor="#FCA5A5"
+        android:textStyle="bold"
+        android:textSize="11sp" />
+
+    <ProgressBar
+        android:id="@+id/mini_hp_bar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="7dp"
+        android:layout_marginTop="3dp"
+        android:max="100"
+        android:progress="100"
+        android:progressDrawable="@drawable/hp_progress_bar" />
+
+    <!-- Baris 3: Daily Quest Label & Bar -->
+    <TextView
+        android:id="@+id/mini_daily_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="DAILY 0%"
+        android:textColor="#22D3EE"
+        android:textStyle="bold"
+        android:textSize="11sp" />
+
+    <ProgressBar
+        android:id="@+id/mini_daily_bar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="7dp"
+        android:layout_marginTop="3dp"
+        android:max="100"
+        android:progress="0"
+        android:progressDrawable="@drawable/daily_progress_bar" />
+
+</LinearLayout>
