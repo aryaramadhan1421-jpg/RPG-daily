@@ -7,10 +7,8 @@ import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
@@ -42,9 +40,7 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var webView: WebView
     private val CHANNEL_ID = "system_rpg_channel"
-    private val ACTION_REMINDER = "com.systemrpg.productivity.ACTION_DAILY_REMINDER"
 
-    // Callback untuk menangani <input type="file"> (PDF Grimoire, Foto Profil, Import Backup)
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
 
     private val fileChooserLauncher = registerForActivityResult(
@@ -68,22 +64,6 @@ class MainActivity : ComponentActivity() {
 
         filePathCallback?.onReceiveValue(results)
         filePathCallback = null
-    }
-
-    private val reminderReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            val slot = intent.getStringExtra("slot") ?: "HARIAN"
-            val remaining = intent.getIntExtra("remaining", 0)
-            val streak = intent.getIntExtra("streak", 0)
-
-            val title = "⚔️ SYSTEM RPG // REMINDER ${slot.uppercase()}"
-            val body = if (remaining > 0) {
-                "Masih ada $remaining Daily Quest tersisa! Selesaikan minimal 80% agar Streak $streak hari tidak reset."
-            } else {
-                "Waktunya cek Quest Board & jaga Streak $streak harimu di SYSTEM RPG!"
-            }
-            fireTopScreenNotification(title, body)
-        }
     }
 
     inner class AndroidBridge {
@@ -114,23 +94,17 @@ class MainActivity : ComponentActivity() {
         }
 
         @JavascriptInterface
-        fun scheduleReminder(jsonConfig: String) {
+        fun scheduleDailyReminders(timesJson: String, pendingCount: Int, playerName: String) {
             try {
-                val obj = JSONObject(jsonConfig)
-                val enabled = obj.optBoolean("enabled", false)
-                val times = obj.optJSONObject("times")
-                val remaining = obj.optInt("remainingDailyCount", 0)
-                val streak = obj.optInt("streak", 0)
-
+                val times = JSONObject(timesJson)
                 val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
                 val slots = listOf("Pagi" to 1001, "Sore" to 1002, "Malam" to 1003)
 
                 for ((slotName, reqCode) in slots) {
-                    val intent = Intent(ACTION_REMINDER).apply {
-                        setPackage(packageName)
+                    val intent = Intent(this@MainActivity, ReminderReceiver::class.java).apply {
                         putExtra("slot", slotName)
-                        putExtra("remaining", remaining)
-                        putExtra("streak", streak)
+                        putExtra("pendingCount", pendingCount)
+                        putExtra("playerName", playerName)
                     }
                     val pendingIntent = PendingIntent.getBroadcast(
                         this@MainActivity,
@@ -141,34 +115,65 @@ class MainActivity : ComponentActivity() {
 
                     alarmManager.cancel(pendingIntent)
 
-                    if (enabled && times != null && times.has(slotName)) {
-                        val timeStr = times.optString(slotName, "")
-                        val parts = timeStr.split(":")
-                        if (parts.size == 2) {
-                            val hour = parts[0].toIntOrNull() ?: continue
-                            val minute = parts[1].toIntOrNull() ?: continue
+                    val timeStr = times.optString(slotName, "")
+                    val parts = timeStr.split(":")
+                    if (parts.size == 2) {
+                        val hour = parts[0].toIntOrNull() ?: continue
+                        val minute = parts[1].toIntOrNull() ?: continue
 
-                            val cal = Calendar.getInstance().apply {
-                                set(Calendar.HOUR_OF_DAY, hour)
-                                set(Calendar.MINUTE, minute)
-                                set(Calendar.SECOND, 0)
-                                set(Calendar.MILLISECOND, 0)
-                                if (timeInMillis <= System.currentTimeMillis()) {
-                                    add(Calendar.DAY_OF_YEAR, 1)
-                                }
+                        val cal = Calendar.getInstance().apply {
+                            set(Calendar.HOUR_OF_DAY, hour)
+                            set(Calendar.MINUTE, minute)
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
+                            if (timeInMillis <= System.currentTimeMillis()) {
+                                add(Calendar.DAY_OF_YEAR, 1)
                             }
-
-                            alarmManager.setRepeating(
-                                AlarmManager.RTC_WAKEUP,
-                                cal.timeInMillis,
-                                AlarmManager.INTERVAL_DAY,
-                                pendingIntent
-                            )
                         }
+
+                        alarmManager.setRepeating(
+                            AlarmManager.RTC_WAKEUP,
+                            cal.timeInMillis,
+                            AlarmManager.INTERVAL_DAY,
+                            pendingIntent
+                        )
                     }
                 }
             } catch (_: Exception) {
             }
+        }
+
+        @JavascriptInterface
+        fun cancelDailyReminders() {
+            try {
+                val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                for (reqCode in listOf(1001, 1002, 1003)) {
+                    val intent = Intent(this@MainActivity, ReminderReceiver::class.java)
+                    val pendingIntent = PendingIntent.getBroadcast(
+                        this@MainActivity,
+                        reqCode,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                    alarmManager.cancel(pendingIntent)
+                }
+            } catch (_: Exception) {
+            }
+        }
+
+        @JavascriptInterface
+        fun updateWidgetData(streak: Int, rank: String, level: Int, hp: Int, maxHp: Int, dailyPct: Int) {
+            val prefs = getSharedPreferences("SystemRpgWidgetPrefs", Context.MODE_PRIVATE)
+            prefs.edit()
+                .putInt("streak", streak)
+                .putString("rank", rank)
+                .putInt("level", level)
+                .putInt("hp", hp)
+                .putInt("maxHp", maxHp)
+                .putInt("dailyPct", dailyPct)
+                .apply()
+
+            SystemWidgetProvider.updateAllWidgets(this@MainActivity)
         }
     }
 
@@ -222,7 +227,7 @@ class MainActivity : ComponentActivity() {
 
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_launcher)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
@@ -236,7 +241,7 @@ class MainActivity : ComponentActivity() {
         manager.notify(System.currentTimeMillis().toInt(), notification)
     }
 
-    @SuppressLint("SetJavaScriptEnabled", "UnspecifiedRegisterReceiverFlag")
+    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(Color.parseColor("#070B14")),
@@ -246,13 +251,6 @@ class MainActivity : ComponentActivity() {
 
         createHighPriorityNotificationChannel()
         askNotificationPermissionIfNeeded()
-
-        val filter = IntentFilter(ACTION_REMINDER)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(reminderReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            registerReceiver(reminderReceiver, filter)
-        }
 
         val container = FrameLayout(this).apply {
             setBackgroundColor(Color.parseColor("#070B14"))
@@ -280,7 +278,6 @@ class MainActivity : ComponentActivity() {
             addJavascriptInterface(AndroidBridge(), "AndroidBridge")
             webViewClient = WebViewClient()
 
-            // Handler agar <input type="file"> bisa membuka File Manager Android
             webChromeClient = object : WebChromeClient() {
                 override fun onShowFileChooser(
                     webView: WebView?,
@@ -331,14 +328,6 @@ class MainActivity : ComponentActivity() {
 
         setContentView(container)
         webView.loadUrl("file:///android_asset/index.html")
-    }
-
-    override fun onDestroy() {
-        try {
-            unregisterReceiver(reminderReceiver)
-        } catch (_: Exception) {
-        }
-        super.onDestroy()
     }
 
     @Deprecated("Deprecated in Java")
