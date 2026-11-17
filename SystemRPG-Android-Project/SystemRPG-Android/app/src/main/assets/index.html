@@ -395,7 +395,7 @@
             vertical-align: middle;
             flex-shrink: 0;
         }
-    </style>
+    /* Penyesuaian skala font & tombol agar pas di layar HP dan tidak kepotong */         html {             font-size: 14px;             -webkit-text-size-adjust: 100%;             text-size-adjust: 100%;         }         button {             white-space: normal !important;             line-height: 1.25 !important;             word-break: break-word;         }         .font-display {             letter-spacing: 0.03em !important;         }         @media (max-width: 420px) {             html {                 font-size: 13px;             }             button.font-display,             .font-display button {                 font-size: 0.78rem !important;                 padding-left: 0.65rem !important;                 padding-right: 0.65rem !important;             }         }     </style>
 </head>
 <body>
 
@@ -5129,7 +5129,7 @@
                 <div style="background: rgba(15,23,42,0.9); border: 1px solid rgba(245,158,11,0.4); border-radius: 0.55rem; padding: 4px 8px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; flex-shrink: 0;">
                     <span style="font-size: 10px; color: #fcd34d; font-weight: 700;">🔖 ${escapeHtml(fileName.length > 22 ? fileName.slice(0, 20) + '…' : fileName)}</span>
                     <span class="font-display" style="font-size: 10px; color: #67e8f9; font-weight: 700;">Hal ${info.page}/${info.totalPages || '?'}</span>
-                    <button type="button" onclick="deleteGrimoireBookmark(${JSON.stringify(fileName)})" style="color: #94a3b8; font-size: 10px;" title="Hapus Bookmark">✕</button>
+                    <button type="button" data-filename="${escapeHtml(fileName)}" onclick="deleteGrimoireBookmark(this.dataset.filename)" style="color: #f87171; font-size: 12px; font-weight: bold; padding: 2px 6px; margin-left: 2px; cursor: pointer;" title="Hapus Bookmark">✕</button>
                 </div>
             `).join('');
         }
