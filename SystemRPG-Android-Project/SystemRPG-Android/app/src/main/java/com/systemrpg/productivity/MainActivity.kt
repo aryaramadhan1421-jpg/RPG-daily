@@ -14,6 +14,9 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
@@ -34,7 +37,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import org.json.JSONObject
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
 
@@ -127,6 +133,24 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        // Fitur #5: Haptic Feedback (Getaran Fisik HP)
+        @JavascriptInterface
+        fun vibrate(durationMs: Long) {
+            triggerVibration(durationMs.coerceIn(10L, 2000L), null)
+        }
+
+        @JavascriptInterface
+        fun hapticFeedback(type: String) {
+            when (type.lowercase(Locale.ROOT)) {
+                "quest", "check", "tap" -> triggerVibration(35L, null)
+                "complete", "claim" -> triggerVibration(0L, longArrayOf(0, 45, 50, 75))
+                "levelup", "rankup" -> triggerVibration(0L, longArrayOf(0, 60, 50, 90, 60, 160))
+                "damage", "penalty", "error" -> triggerVibration(0L, longArrayOf(0, 120, 60, 120))
+                else -> triggerVibration(35L, null)
+            }
+        }
+
+        // Fitur #3 & #4: Update Kedua Widget + Simpan Tanggal Sinkronisasi Terakhir
         @JavascriptInterface
         fun updateWidgetData(streak: Int, rank: String, level: Int, hp: Int, maxHp: Int, dailyPct: Int) {
             val weekHistory = computeWeekHistory(streak, dailyPct)
@@ -156,6 +180,7 @@ class MainActivity : ComponentActivity() {
             dailyPct: Int,
             weekHistory: String
         ) {
+            val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
             val prefs = getSharedPreferences("SystemRpgWidgetPrefs", Context.MODE_PRIVATE)
             prefs.edit()
                 .putInt("streak", streak)
@@ -165,9 +190,10 @@ class MainActivity : ComponentActivity() {
                 .putInt("maxHp", maxHp)
                 .putInt("dailyPct", dailyPct)
                 .putString("weekHistory", weekHistory)
+                .putString("lastUpdatedDate", todayStr)
                 .apply()
 
-            SystemWidgetProvider.updateAllWidgets(this@MainActivity)
+            refreshAllAppWidgets(this@MainActivity)
         }
 
         private fun computeWeekHistory(streak: Int, dailyPct: Int): String {
@@ -186,6 +212,36 @@ class MainActivity : ComponentActivity() {
                 i++
             }
             return String(chars)
+        }
+    }
+
+    private fun triggerVibration(durationMs: Long, pattern: LongArray?) {
+        try {
+            val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                vm.defaultVibrator
+            } else {
+                @Suppress("DEPRECATION")
+                getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            }
+
+            if (!vibrator.hasVibrator()) return
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (pattern != null) {
+                    vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
+                } else {
+                    vibrator.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
+                }
+            } else {
+                @Suppress("DEPRECATION")
+                if (pattern != null) {
+                    vibrator.vibrate(pattern, -1)
+                } else {
+                    vibrator.vibrate(durationMs)
+                }
+            }
+        } catch (_: Exception) {
         }
     }
 
@@ -263,6 +319,7 @@ class MainActivity : ComponentActivity() {
 
         createHighPriorityNotificationChannel()
         askNotificationPermissionIfNeeded()
+        scheduleMidnightWidgetReset(this)
 
         val container = FrameLayout(this).apply {
             setBackgroundColor(Color.parseColor("#070B14"))
@@ -352,7 +409,96 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
+        const val ACTION_MIDNIGHT_WIDGET_RESET = "com.systemrpg.productivity.ACTION_MIDNIGHT_WIDGET_RESET"
+        const val REQ_CODE_MIDNIGHT_RESET = 1099
+
+        fun refreshAllAppWidgets(context: Context) {
+            SystemWidgetProvider.updateAllWidgets(context)
+            SystemMiniStatsWidget.updateAllWidgets(context)
+        }
+
+        // Fitur #4: Jadwalkan Alarm Otomatis Pukul 00:01 Setiap Hari untuk Reset Widget
+        fun scheduleMidnightWidgetReset(context: Context) {
+            try {
+                val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val intent = Intent(context, ReminderReceiver::class.java).apply {
+                    action = ACTION_MIDNIGHT_WIDGET_RESET
+                }
+                val pendingIntent = PendingIntent.getBroadcast(
+                    context,
+                    REQ_CODE_MIDNIGHT_RESET,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+
+                alarmManager.cancel(pendingIntent)
+
+                val cal = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 1)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                    if (timeInMillis <= System.currentTimeMillis()) {
+                        add(Calendar.DAY_OF_YEAR, 1)
+                    }
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pendingIntent)
+                } else {
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pendingIntent)
+                }
+            } catch (_: Exception) {
+            }
+        }
+
+        // Fitur #4: Logika Reset Widget Tengah Malam (00:01) Tanpa Buka Aplikasi
+        fun handleMidnightWidgetReset(context: Context) {
+            try {
+                val prefs = context.getSharedPreferences("SystemRpgWidgetPrefs", Context.MODE_PRIVATE)
+                val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+                val lastUpdated = prefs.getString("lastUpdatedDate", "") ?: ""
+
+                if (lastUpdated != todayStr) {
+                    val prevDailyPct = prefs.getInt("dailyPct", 0)
+                    var streak = prefs.getInt("streak", 0)
+                    val oldHistory = prefs.getString("weekHistory", "0000000") ?: "0000000"
+
+                    // Jika kemarin < 70%, streak reset ke 0
+                    if (prevDailyPct < 70) {
+                        streak = 0
+                    }
+
+                    // Jika hari ini Senin, mulai pekan baru "0000000"
+                    val cal = Calendar.getInstance()
+                    val isMonday = cal.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY
+                    val newHistory = if (isMonday) {
+                        "0000000"
+                    } else {
+                        val dow = cal.get(Calendar.DAY_OF_WEEK)
+                        val todayIdx = if (dow == Calendar.SUNDAY) 6 else dow - 2
+                        val chars = oldHistory.padEnd(7, '0').take(7).toCharArray()
+                        if (todayIdx in 0..6) chars[todayIdx] = '0'
+                        String(chars)
+                    }
+
+                    prefs.edit()
+                        .putInt("streak", streak)
+                        .putInt("dailyPct", 0)
+                        .putString("weekHistory", newHistory)
+                        .putString("lastUpdatedDate", todayStr)
+                        .apply()
+
+                    refreshAllAppWidgets(context)
+                }
+            } catch (_: Exception) {
+            } finally {
+                scheduleMidnightWidgetReset(context)
+            }
+        }
+
         fun scheduleExactAlarmsFromPrefs(context: Context) {
+            scheduleMidnightWidgetReset(context)
             try {
                 val prefs = context.getSharedPreferences("SystemRpgReminderPrefs", Context.MODE_PRIVATE)
                 if (!prefs.getBoolean("enabled", false)) return

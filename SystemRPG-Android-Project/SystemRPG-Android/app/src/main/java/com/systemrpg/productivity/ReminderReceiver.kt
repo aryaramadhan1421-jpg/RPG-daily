@@ -13,24 +13,57 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 
 class ReminderReceiver : BroadcastReceiver() {
+
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED ||
-            intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
+        val action = intent.action
+
+        // 1. Jika perangkat baru menyala atau aplikasi diperbarui -> jadwalkan ulang semua alarm
+        if (action == Intent.ACTION_BOOT_COMPLETED || action == Intent.ACTION_MY_PACKAGE_REPLACED) {
+            MainActivity.scheduleExactAlarmsFromPrefs(context)
+            MainActivity.scheduleMidnightWidgetReset(context)
+            return
+        }
+
+        // 2. Fitur #4: Jika alarm tengah malam (00:01) berbunyi -> reset widget otomatis
+        if (action == MainActivity.ACTION_MIDNIGHT_WIDGET_RESET) {
+            MainActivity.handleMidnightWidgetReset(context)
+            return
+        }
+
+        // 3. Notifikasi pengingat Daily Quest
+        val prefs = context.getSharedPreferences("SystemRpgReminderPrefs", Context.MODE_PRIVATE)
+        if (!prefs.getBoolean("enabled", false)) return
+
+        val slot = intent.getStringExtra("slot") ?: "Harian"
+        val pendingCount = intent.getIntExtra("pendingCount", prefs.getInt("pendingCount", 1))
+        val playerName = intent.getStringExtra("playerName") ?: (prefs.getString("playerName", "Hunter") ?: "Hunter")
+
+        // Cek apakah target hari ini sudah >= 70%
+        val widgetPrefs = context.getSharedPreferences("SystemRpgWidgetPrefs", Context.MODE_PRIVATE)
+        val dailyPct = widgetPrefs.getInt("dailyPct", 0)
+        if (dailyPct >= 70 && slot != "Malam") {
             MainActivity.scheduleExactAlarmsFromPrefs(context)
             return
         }
 
+        val title = when (slot) {
+            "Pagi" -> "[SYSTEM] Daily Quest Pagi Siap, $playerName"
+            "Sore" -> "[SYSTEM] Evaluasi Sore ($dailyPct% Clear)"
+            "Malam" -> "[PERINGATAN PENALTI] Selesaikan Quest Sebelum 00:00!"
+            else -> "[SYSTEM] Pengingat Daily Quest"
+        }
+
+        val body = if (dailyPct >= 70) {
+            "Target harian sudah aman ($dailyPct%). Pertahankan momentum dan streak kamu!"
+        } else {
+            "Progress hari ini baru $dailyPct% (masih ada $pendingCount quest tersisa). Capai minimal 70% agar terhindar dari penalti HP!"
+        }
+
+        showReminderNotification(context, title, body)
         MainActivity.scheduleExactAlarmsFromPrefs(context)
+    }
 
-        val prefs = context.getSharedPreferences("SystemRpgReminderPrefs", Context.MODE_PRIVATE)
-        val slot = intent.getStringExtra("slot") ?: "Harian"
-        val playerName = intent.getStringExtra("playerName")
-            ?: prefs.getString("playerName", "Hunter")
-            ?: "Hunter"
-        val pendingCount = intent.getIntExtra("pendingCount", prefs.getInt("pendingCount", 1))
-
-        if (pendingCount <= 0) return
-
+    private fun showReminderNotification(context: Context, title: String, body: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
             != PackageManager.PERMISSION_GRANTED
@@ -59,16 +92,14 @@ class ReminderReceiver : BroadcastReceiver() {
         }
         val contentIntent = PendingIntent.getActivity(
             context,
-            slot.hashCode(),
+            0,
             launchIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val body = "Hunter $playerName, masih ada $pendingCount Daily Quest belum selesai. Ayo buka SYSTEM RPG!"
-
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_launcher)
-            .setContentTitle("⚔️ SYSTEM // Pengingat $slot")
+            .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -78,6 +109,6 @@ class ReminderReceiver : BroadcastReceiver() {
             .setAutoCancel(true)
             .build()
 
-        manager.notify(slot.hashCode(), notification)
+        manager.notify(System.currentTimeMillis().toInt(), notification)
     }
 }
