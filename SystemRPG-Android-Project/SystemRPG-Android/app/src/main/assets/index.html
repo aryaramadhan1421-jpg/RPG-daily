@@ -266,7 +266,6 @@
             animation: modalFadeIn 0.22s ease-out forwards;
         }
 
-
         @keyframes critFlash {
             0% { box-shadow: 0 0 0 rgba(251, 191, 36, 0); border-color: rgba(251, 191, 36, 0.9); }
             40% { box-shadow: 0 0 24px rgba(251, 191, 36, 0.65); border-color: #fbbf24; }
@@ -274,6 +273,19 @@
         }
         .animate-crit-flash {
             animation: critFlash 0.9s ease-out;
+        }
+
+        /* Gacha Chest Shake Animation */
+        @keyframes chestShake {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            20% { transform: rotate(-12deg) scale(1.1); }
+            40% { transform: rotate(12deg) scale(1.15); }
+            60% { transform: rotate(-10deg) scale(1.1); }
+            80% { transform: rotate(10deg) scale(1.15); }
+        }
+        .animate-chest-shake {
+            animation: chestShake 0.65s ease-in-out infinite;
+            display: inline-block;
         }
 
         /* Modal Backdrop */
@@ -451,7 +463,7 @@
                     </div>
                 </div>
 
-                <!-- Active Title Selector (2. Instant Cycle + Long/Detail Modal Option) -->
+                <!-- Active Title Selector -->
                 <div style="margin-top: 0.75rem; padding-top: 0.625rem; border-top: 1px solid rgba(30,41,59,0.85);" class="flex items-center justify-between gap-2">
                     <div class="flex items-center gap-1-5 min-w-0" style="font-size: 0.75rem;">
                         <svg class="icon shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
@@ -928,7 +940,7 @@
                     </div>
                 </div>
 
-                <!-- 3. Offline Ambient Sound Selector (Web Audio API) -->
+                <!-- Offline Ambient Sound Selector (Web Audio API) -->
                 <div style="margin-top: 0.75rem; background: rgba(2,6,23,0.75); border: 1px solid var(--bg-slate-800); border-radius: 0.75rem; padding: 0.5rem;">
                     <div class="flex items-center justify-between" style="font-size: 10px; color: var(--text-muted); margin-bottom: 0.375rem; padding: 0 2px;">
                         <span class="font-display uppercase" style="font-weight: 700; color: #c084fc;">Ambient Fokus</span>
@@ -1056,6 +1068,35 @@
             <!-- Shop Items Container -->
             <div id="shop-list" class="space-y-2-5"></div>
 
+            <!-- Mystery Chest Gacha Banner -->
+            <div class="system-card space-y-2-5 shadow-neon-purple" style="border-color: rgba(168,85,247,0.55); background: linear-gradient(135deg, rgba(15,19,31,0.96), rgba(46,16,101,0.75));">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2-5 min-w-0">
+                        <div style="width: 2.75rem; height: 2.75rem; border-radius: 0.75rem; background: rgba(168,85,247,0.2); border: 1px solid rgba(192,132,252,0.55); display: flex; align-items: center; justify-content: center; font-size: 1.35rem; flex-shrink: 0;">
+                            🎁
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-1-5">
+                                <h4 class="font-display truncate" style="font-size: 0.875rem; font-weight: 800; color: #e9d5ff;">MYSTERY SYSTEM CHEST</h4>
+                                <span class="font-display" style="font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 4px; background: rgba(251,191,36,0.2); color: #fcd34d; border: 1px solid rgba(251,191,36,0.45);">GACHA</span>
+                            </div>
+                            <p style="font-size: 11px; color: #cbd5e1; margin-top: 2px;">Uji keberuntungan: XP, HP, Streak Shield, atau Jackpot Gold!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: rgba(2,6,23,0.65); border: 1px solid rgba(168,85,247,0.28); border-radius: 0.65rem; padding: 0.45rem 0.6rem; font-size: 10px; color: #94a3b8; line-height: 1.45;">
+                    <span style="color: #94a3b8; font-weight: 700;">Common (50%):</span> +35 XP / +20% HP •
+                    <span style="color: #38bdf8; font-weight: 700;">Rare (30%):</span> +80 XP / +120 G •
+                    <span style="color: #c084fc; font-weight: 700;">Epic (15%):</span> +1 Streak Shield •
+                    <span style="color: #fbbf24; font-weight: 700;">Legendary (5%):</span> Jackpot 300 G + Full HP!
+                </div>
+
+                <button type="button" id="btn-open-gacha" onclick="openMysteryGacha()" class="w-full font-display flex items-center justify-center gap-2 shadow-neon-purple" style="background: linear-gradient(to right, #9333ea, #06b6d4); color: #fff; font-weight: 800; font-size: 0.8125rem; padding: 0.65rem; border-radius: 0.75rem;">
+                    <span>🎲 BUKA PETI MISTERI (100 GOLD)</span>
+                </button>
+            </div>
+
             <!-- Riwayat Redeem / Penukaran Reward -->
             <div id="redeem-history-card" class="system-card space-y-3" style="border-color: rgba(245, 158, 11, 0.28); margin-top: 1rem;">
                 <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--bg-slate-800); padding-bottom: 0.5rem;">
@@ -1100,6 +1141,27 @@
     </nav>
 
     <!-- ==================== MODALS ==================== -->
+
+    <!-- Mystery Chest Gacha Result Modal -->
+    <div id="modal-gacha" class="hidden modal-backdrop">
+        <div id="gacha-modal-card" class="system-card max-w-xs w-full text-center modal-enter" style="border-color: #c084fc; padding: 1.5rem;">
+            <p id="gacha-rarity-badge" class="font-display" style="display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; padding: 3px 10px; border-radius: 9999px; background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.5);">
+                MYSTERY CHEST
+            </p>
+            <div id="gacha-chest-icon" style="font-size: 3.5rem; margin: 0.85rem 0 0.5rem 0; line-height: 1;">
+                📦
+            </div>
+            <h3 id="gacha-reward-title" class="font-display" style="font-weight: 800; font-size: 1.25rem; color: #fff;">
+                Membuka Peti...
+            </h3>
+            <p id="gacha-reward-desc" style="font-size: 0.75rem; color: #cbd5e1; margin-top: 0.4rem; line-height: 1.45;">
+                Sistem sedang mengacak hadiah keberuntunganmu...
+            </p>
+            <button id="btn-close-gacha" onclick="closeModal('modal-gacha')" class="hidden w-full font-display" style="margin-top: 1.25rem; background: linear-gradient(to right, #9333ea, #06b6d4); color: #fff; font-weight: 700; padding: 0.625rem; border-radius: 0.75rem;">
+                KLAIM HADIAH
+            </button>
+        </div>
+    </div>
 
     <!-- Level Up Celebration Modal -->
     <div id="modal-levelup" class="hidden modal-backdrop">
@@ -1318,8 +1380,7 @@
         </div>
     </div>
 
-
-    <!-- Daily Awakening Journal Modal (Fitur D) -->
+    <!-- Daily Awakening Journal Modal -->
     <div id="modal-daily-journal" class="hidden modal-backdrop">
         <div class="system-card max-w-xs w-full modal-enter space-y-3" style="border-color: rgba(168,85,247,0.6); padding: 1.25rem;">
             <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--bg-slate-800); padding-bottom: 0.5rem;">
@@ -1530,7 +1591,6 @@
                 this.ambientGain = masterGain;
 
                 if (mode === 'synth') {
-                    // Deep Dark Synth Drone (A1 55Hz + E2 82.41Hz + A2 110Hz + slow LFO filter)
                     const filter = this.ctx.createBiquadFilter();
                     filter.type = 'lowpass';
                     filter.frequency.setValueAtTime(240, this.ctx.currentTime);
@@ -1561,7 +1621,6 @@
                         this.ambientNodes.push(osc);
                     });
                 } else if (mode === 'rain') {
-                    // Offline Procedural Pink/Brown Noise Rain Generator
                     const bufferSize = this.ctx.sampleRate * 3;
                     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
                     const data = buffer.getChannelData(0);
@@ -1647,14 +1706,12 @@
                 this.isActive = true;
                 this.updateBadge(true);
 
-                // 1. Native Android WebView Bridge (if wrapped in APK)
                 try {
                     if (window.AndroidBridge && typeof window.AndroidBridge.setKeepScreenOn === 'function') {
                         window.AndroidBridge.setKeepScreenOn(true);
                     }
                 } catch (e) {}
 
-                // 2. Standard W3C Screen Wake Lock API (Modern Mobile Browsers / PWA)
                 try {
                     if ('wakeLock' in navigator) {
                         this.wakeLockSentinel = await navigator.wakeLock.request('screen');
@@ -1662,9 +1719,7 @@
                             if (this.isActive) this.updateBadge(false);
                         });
                     }
-                } catch (err) {
-                    // Fallback gracefully on unsupported devices
-                }
+                } catch (err) {}
             },
 
             async disable() {
@@ -1693,7 +1748,6 @@
             }
         };
 
-        // Re-acquire Wake Lock automatically if user switches back to the app during active Dungeon
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible' && isDungeonRunning && ScreenWakeManager.isActive) {
                 ScreenWakeManager.enable();
@@ -1706,336 +1760,39 @@
         const STORAGE_KEY = 'system_rpg_productivity_offline_v2';
 
         const DEFAULT_DAILY_HABITS = [
-            {
-                id: 'dh_subuh',
-                timeSlot: 'Pagi',
-                title: 'Shalat Subuh',
-                category: 'Daily Quest',
-                stat: 'WIS',
-                xp: 25,
-                gold: 20,
-                completed: false
-            },
-            {
-                id: 'dh_dzikir_pagi',
-                timeSlot: 'Pagi',
-                title: 'Dzikir Pagi',
-                category: 'Daily Quest',
-                stat: 'WIS',
-                xp: 20,
-                gold: 15,
-                completed: false
-            },
-            {
-                id: 'dh_quran',
-                timeSlot: 'Pagi',
-                title: 'Baca Alquran dan Artinya',
-                category: 'Daily Quest',
-                stat: 'WIS',
-                xp: 25,
-                gold: 20,
-                completed: false
-            },
-            {
-                id: 'dh_duolingo',
-                timeSlot: 'Pagi',
-                title: 'Duolingo, Airlearn, Elevate',
-                category: 'Daily Quest',
-                stat: 'INT',
-                xp: 25,
-                gold: 20,
-                completed: false
-            },
-            {
-                id: 'dh_volingo',
-                timeSlot: 'Pagi',
-                title: 'Volingo',
-                category: 'Daily Quest',
-                stat: 'INT',
-                xp: 20,
-                gold: 15,
-                completed: false
-            },
-            {
-                id: 'dh_neuronation',
-                timeSlot: 'Pagi',
-                title: 'Neuronation',
-                category: 'Daily Quest',
-                stat: 'INT',
-                xp: 20,
-                gold: 15,
-                completed: false
-            },
-            {
-                id: 'dh_hiragana',
-                timeSlot: 'Pagi',
-                title: 'Tulis latihan hiragana katakan',
-                category: 'Daily Quest',
-                stat: 'INT',
-                xp: 25,
-                gold: 20,
-                completed: false
-            },
-            {
-                id: 'dh_baca_buku',
-                timeSlot: 'Pagi',
-                title: 'Baca buku',
-                category: 'Daily Quest',
-                stat: 'INT',
-                xp: 25,
-                gold: 20,
-                completed: false
-            },
-            {
-                id: 'dh_rapih',
-                timeSlot: 'Pagi',
-                title: 'Rapih rapih',
-                category: 'Daily Quest',
-                stat: 'WIS',
-                xp: 15,
-                gold: 15,
-                completed: false
-            },
-            {
-                id: 'dh_plank_pushup',
-                timeSlot: 'Pagi',
-                title: 'Plank 1 menit dan Push Up 10x',
-                category: 'Daily Quest',
-                stat: 'STR',
-                xp: 25,
-                gold: 20,
-                completed: false
-            },
-            {
-                id: 'dh_angkat_beban_pagi',
-                timeSlot: 'Pagi',
-                title: 'Angkat beban',
-                category: 'Daily Quest',
-                stat: 'STR',
-                xp: 30,
-                gold: 25,
-                completed: false
-            },
-            {
-                id: 'dh_olahraga_kardio',
-                timeSlot: 'Pagi',
-                title: 'Olahraga, senam, jalan atau aktivitas yang mengeluarkan keringat minimal 10 menit',
-                category: 'Daily Quest',
-                stat: 'STR',
-                xp: 30,
-                gold: 25,
-                completed: false
-            },
-            {
-                id: 'dh_jepang_volingo',
-                timeSlot: 'Pagi',
-                title: 'Belajar bahasa jepang 1 bab volingo',
-                category: 'Daily Quest',
-                stat: 'INT',
-                xp: 25,
-                gold: 20,
-                completed: false
-            },
-            {
-                id: 'dh_inggris_volingo',
-                timeSlot: 'Pagi',
-                title: 'Belajar bahasa inggris 1 bab volingo',
-                category: 'Daily Quest',
-                stat: 'INT',
-                xp: 25,
-                gold: 20,
-                completed: false
-            },
-            {
-                id: 'dh_sarapan',
-                timeSlot: 'Pagi',
-                title: 'Sarapan',
-                category: 'Daily Quest',
-                stat: 'STR',
-                xp: 15,
-                gold: 10,
-                completed: false
-            },
-            {
-                id: 'dh_mandi_pagi',
-                timeSlot: 'Pagi',
-                title: 'Mandi pagi',
-                category: 'Daily Quest',
-                stat: 'CHR',
-                xp: 15,
-                gold: 15,
-                completed: false
-            },
-            {
-                id: 'dh_skincare_pagi',
-                timeSlot: 'Pagi',
-                title: 'Skincare mosturizer dan sunscreen',
-                category: 'Daily Quest',
-                stat: 'CHR',
-                xp: 20,
-                gold: 15,
-                completed: false
-            },
-            {
-                id: 'dh_podcast_self',
-                timeSlot: 'Siang',
-                title: 'Podcast self improvement',
-                category: 'Daily Quest',
-                stat: 'WIS',
-                xp: 20,
-                gold: 15,
-                completed: false
-            },
-            {
-                id: 'dh_zuhur',
-                timeSlot: 'Siang',
-                title: 'Shalat Zuhur',
-                category: 'Daily Quest',
-                stat: 'WIS',
-                xp: 20,
-                gold: 15,
-                completed: false
-            },
-            {
-                id: 'dh_makan_siang',
-                timeSlot: 'Siang',
-                title: 'Makan siang',
-                category: 'Daily Quest',
-                stat: 'STR',
-                xp: 15,
-                gold: 10,
-                completed: false
-            },
-            {
-                id: 'dh_youtube_english',
-                timeSlot: 'Siang',
-                title: 'YouTube podcast english',
-                category: 'Daily Quest',
-                stat: 'INT',
-                xp: 20,
-                gold: 15,
-                completed: false
-            },
-            {
-                id: 'dh_brainstorm_gpt',
-                timeSlot: 'Siang',
-                title: 'Brainstorm dengan chatgpt, latihan berbicara bahasa inggris atau jepang',
-                category: 'Daily Quest',
-                stat: 'CHR',
-                xp: 30,
-                gold: 25,
-                completed: false
-            },
-            {
-                id: 'dh_belajar_karir',
-                timeSlot: 'Siang',
-                title: 'Belajar persiapan karir',
-                category: 'Daily Quest',
-                stat: 'INT',
-                xp: 35,
-                gold: 30,
-                completed: false
-            },
-            {
-                id: 'dh_ashar',
-                timeSlot: 'Sore',
-                title: 'Shalat Ashar',
-                category: 'Daily Quest',
-                stat: 'WIS',
-                xp: 20,
-                gold: 15,
-                completed: false
-            },
-            {
-                id: 'dh_dzikir_sore',
-                timeSlot: 'Sore',
-                title: 'Dzikir sore',
-                category: 'Daily Quest',
-                stat: 'WIS',
-                xp: 20,
-                gold: 15,
-                completed: false
-            },
-            {
-                id: 'dh_angkat_beban_sore',
-                timeSlot: 'Sore',
-                title: 'Angkat beban sore',
-                category: 'Daily Quest',
-                stat: 'STR',
-                xp: 30,
-                gold: 25,
-                completed: false
-            },
-            {
-                id: 'dh_mandi_sore',
-                timeSlot: 'Sore',
-                title: 'Mandi sore',
-                category: 'Daily Quest',
-                stat: 'CHR',
-                xp: 15,
-                gold: 15,
-                completed: false
-            },
-            {
-                id: 'dh_magrib',
-                timeSlot: 'Malam',
-                title: 'Shalat Magrib',
-                category: 'Daily Quest',
-                stat: 'WIS',
-                xp: 20,
-                gold: 15,
-                completed: false
-            },
-            {
-                id: 'dh_makan_malam',
-                timeSlot: 'Malam',
-                title: 'Makan malam',
-                category: 'Daily Quest',
-                stat: 'STR',
-                xp: 15,
-                gold: 10,
-                completed: false
-            },
-            {
-                id: 'dh_isya',
-                timeSlot: 'Malam',
-                title: 'Shalat Isya',
-                category: 'Daily Quest',
-                stat: 'WIS',
-                xp: 20,
-                gold: 15,
-                completed: false
-            },
-            {
-                id: 'dh_no_sugar',
-                timeSlot: 'Malam',
-                title: 'No sugar',
-                category: 'Daily Quest',
-                stat: 'STR',
-                xp: 30,
-                gold: 25,
-                completed: false
-            },
-            {
-                id: 'dh_plank_situp',
-                timeSlot: 'Malam',
-                title: 'Plank sit-up',
-                category: 'Daily Quest',
-                stat: 'STR',
-                xp: 25,
-                gold: 20,
-                completed: false
-            },
-            {
-                id: 'dh_skincare_malam',
-                timeSlot: 'Malam',
-                title: 'Gosok gigi facial wash moisturizer',
-                category: 'Daily Quest',
-                stat: 'CHR',
-                xp: 20,
-                gold: 15,
-                completed: false
-            }
+            { id: 'dh_subuh', timeSlot: 'Pagi', title: 'Shalat Subuh', category: 'Daily Quest', stat: 'WIS', xp: 25, gold: 20, completed: false },
+            { id: 'dh_dzikir_pagi', timeSlot: 'Pagi', title: 'Dzikir Pagi', category: 'Daily Quest', stat: 'WIS', xp: 20, gold: 15, completed: false },
+            { id: 'dh_quran', timeSlot: 'Pagi', title: 'Baca Alquran dan Artinya', category: 'Daily Quest', stat: 'WIS', xp: 25, gold: 20, completed: false },
+            { id: 'dh_duolingo', timeSlot: 'Pagi', title: 'Duolingo, Airlearn, Elevate', category: 'Daily Quest', stat: 'INT', xp: 25, gold: 20, completed: false },
+            { id: 'dh_volingo', timeSlot: 'Pagi', title: 'Volingo', category: 'Daily Quest', stat: 'INT', xp: 20, gold: 15, completed: false },
+            { id: 'dh_neuronation', timeSlot: 'Pagi', title: 'Neuronation', category: 'Daily Quest', stat: 'INT', xp: 20, gold: 15, completed: false },
+            { id: 'dh_hiragana', timeSlot: 'Pagi', title: 'Tulis latihan hiragana katakan', category: 'Daily Quest', stat: 'INT', xp: 25, gold: 20, completed: false },
+            { id: 'dh_baca_buku', timeSlot: 'Pagi', title: 'Baca buku', category: 'Daily Quest', stat: 'INT', xp: 25, gold: 20, completed: false },
+            { id: 'dh_rapih', timeSlot: 'Pagi', title: 'Rapih rapih', category: 'Daily Quest', stat: 'WIS', xp: 15, gold: 15, completed: false },
+            { id: 'dh_plank_pushup', timeSlot: 'Pagi', title: 'Plank 1 menit dan Push Up 10x', category: 'Daily Quest', stat: 'STR', xp: 25, gold: 20, completed: false },
+            { id: 'dh_angkat_beban_pagi', timeSlot: 'Pagi', title: 'Angkat beban', category: 'Daily Quest', stat: 'STR', xp: 30, gold: 25, completed: false },
+            { id: 'dh_olahraga_kardio', timeSlot: 'Pagi', title: 'Olahraga, senam, jalan atau aktivitas yang mengeluarkan keringat minimal 10 menit', category: 'Daily Quest', stat: 'STR', xp: 30, gold: 25, completed: false },
+            { id: 'dh_jepang_volingo', timeSlot: 'Pagi', title: 'Belajar bahasa jepang 1 bab volingo', category: 'Daily Quest', stat: 'INT', xp: 25, gold: 20, completed: false },
+            { id: 'dh_inggris_volingo', timeSlot: 'Pagi', title: 'Belajar bahasa inggris 1 bab volingo', category: 'Daily Quest', stat: 'INT', xp: 25, gold: 20, completed: false },
+            { id: 'dh_sarapan', timeSlot: 'Pagi', title: 'Sarapan', category: 'Daily Quest', stat: 'STR', xp: 15, gold: 10, completed: false },
+            { id: 'dh_mandi_pagi', timeSlot: 'Pagi', title: 'Mandi pagi', category: 'Daily Quest', stat: 'CHR', xp: 15, gold: 15, completed: false },
+            { id: 'dh_skincare_pagi', timeSlot: 'Pagi', title: 'Skincare mosturizer dan sunscreen', category: 'Daily Quest', stat: 'CHR', xp: 20, gold: 15, completed: false },
+            { id: 'dh_podcast_self', timeSlot: 'Siang', title: 'Podcast self improvement', category: 'Daily Quest', stat: 'WIS', xp: 20, gold: 15, completed: false },
+            { id: 'dh_zuhur', timeSlot: 'Siang', title: 'Shalat Zuhur', category: 'Daily Quest', stat: 'WIS', xp: 20, gold: 15, completed: false },
+            { id: 'dh_makan_siang', timeSlot: 'Siang', title: 'Makan siang', category: 'Daily Quest', stat: 'STR', xp: 15, gold: 10, completed: false },
+            { id: 'dh_youtube_english', timeSlot: 'Siang', title: 'YouTube podcast english', category: 'Daily Quest', stat: 'INT', xp: 20, gold: 15, completed: false },
+            { id: 'dh_brainstorm_gpt', timeSlot: 'Siang', title: 'Brainstorm dengan chatgpt, latihan berbicara bahasa inggris atau jepang', category: 'Daily Quest', stat: 'CHR', xp: 30, gold: 25, completed: false },
+            { id: 'dh_belajar_karir', timeSlot: 'Siang', title: 'Belajar persiapan karir', category: 'Daily Quest', stat: 'INT', xp: 35, gold: 30, completed: false },
+            { id: 'dh_ashar', timeSlot: 'Sore', title: 'Shalat Ashar', category: 'Daily Quest', stat: 'WIS', xp: 20, gold: 15, completed: false },
+            { id: 'dh_dzikir_sore', timeSlot: 'Sore', title: 'Dzikir sore', category: 'Daily Quest', stat: 'WIS', xp: 20, gold: 15, completed: false },
+            { id: 'dh_angkat_beban_sore', timeSlot: 'Sore', title: 'Angkat beban sore', category: 'Daily Quest', stat: 'STR', xp: 30, gold: 25, completed: false },
+            { id: 'dh_mandi_sore', timeSlot: 'Sore', title: 'Mandi sore', category: 'Daily Quest', stat: 'CHR', xp: 15, gold: 15, completed: false },
+            { id: 'dh_magrib', timeSlot: 'Malam', title: 'Shalat Magrib', category: 'Daily Quest', stat: 'WIS', xp: 20, gold: 15, completed: false },
+            { id: 'dh_makan_malam', timeSlot: 'Malam', title: 'Makan malam', category: 'Daily Quest', stat: 'STR', xp: 15, gold: 10, completed: false },
+            { id: 'dh_isya', timeSlot: 'Malam', title: 'Shalat Isya', category: 'Daily Quest', stat: 'WIS', xp: 20, gold: 15, completed: false },
+            { id: 'dh_no_sugar', timeSlot: 'Malam', title: 'No sugar', category: 'Daily Quest', stat: 'STR', xp: 30, gold: 25, completed: false },
+            { id: 'dh_plank_situp', timeSlot: 'Malam', title: 'Plank sit-up', category: 'Daily Quest', stat: 'STR', xp: 25, gold: 20, completed: false },
+            { id: 'dh_skincare_malam', timeSlot: 'Malam', title: 'Gosok gigi facial wash moisturizer', category: 'Daily Quest', stat: 'CHR', xp: 20, gold: 15, completed: false }
         ];
 
         const DEFAULT_STATE = {
@@ -2050,18 +1807,8 @@
                 shields: 0,
                 activeTitle: 't_novice',
                 dungeonClears: 0,
-                stats: {
-                    STR: 1,
-                    INT: 1,
-                    WIS: 1,
-                    CHR: 1
-                },
-                statXp: {
-                    STR: 0,
-                    INT: 0,
-                    WIS: 0,
-                    CHR: 0
-                }
+                stats: { STR: 1, INT: 1, WIS: 1, CHR: 1 },
+                statXp: { STR: 0, INT: 0, WIS: 0, CHR: 0 }
             },
             quests: [
                 ...JSON.parse(JSON.stringify(DEFAULT_DAILY_HABITS)),
@@ -2180,21 +1927,17 @@
             }
         ];
 
-
         const SYSTEM_QUOTES_CATALOG = [
-            // General / System Mastery
             { text: "Kamu tidak naik ke level tujuanmu. Kamu jatuh ke level sistemmu.", author: "James Clear (Atomic Habits)", tag: "system" },
             { text: "Setiap tindakan yang kamu ambil adalah suara untuk tipe orang yang kamu inginkan.", author: "James Clear", tag: "system" },
             { text: "Kita adalah apa yang kita lakukan berulang kali. Keunggulan bukanlah tindakan, melainkan kebiasaan.", author: "Aristoteles", tag: "system" },
             { text: "Disiplin adalah memilih antara apa yang kamu inginkan sekarang dan apa yang paling kamu inginkan.", author: "Abraham Lincoln", tag: "system" },
             { text: "Orang yang menaklukkan dirinya sendiri adalah pejuang yang paling perkasa.", author: "Konfusius", tag: "system" },
             { text: "Mulailah dari tempatmu berada. Gunakan apa yang kamu miliki. Lakukan apa yang kamu bisa.", author: "Arthur Ashe", tag: "system" },
-            // Focus / Dungeon
             { text: "Kemampuan untuk melakukan Deep Work semakin langka, dan pada saat yang sama semakin berharga.", author: "Cal Newport (Deep Work)", tag: "focus" },
             { text: "Pejuang yang sukses adalah manusia biasa dengan fokus setajam laser.", author: "Bruce Lee", tag: "focus" },
             { text: "Ketenangan pikiran adalah puncak dari penguasaan diri.", author: "Marcus Aurelius", tag: "focus" },
             { text: "Bukan karena waktu kita singkat, melainkan karena kita banyak menyia-nyiakannya.", author: "Seneca", tag: "focus" },
-            // Resilience / Low HP or Reset
             { text: "Hambatan di jalan bukan penghalang jalan; hambatan itu sendiri adalah jalannya.", author: "Marcus Aurelius", tag: "recovery" },
             { text: "Jatuh tujuh kali, bangkit delapan kali.", author: "Pepatah Jepang (Nanakorobi Yaoki)", tag: "recovery" },
             { text: "Kesuksesan bukanlah akhir, kegagalan bukanlah hal yang fatal: keberanian untuk terus melangkah itulah yang terpenting.", author: "Winston Churchill", tag: "recovery" },
@@ -2396,7 +2139,7 @@
 
         let currentQuestFilter = 'ALL';
         let currentTimeSlotFilter = 'ALL';
-        let currentQuestStatusFilter = 'ALL'; // 'ALL' | 'ACTIVE' | 'DONE'
+        let currentQuestStatusFilter = 'ALL';
         let questSearchQuery = '';
         let shopSearchQuery = '';
         let showAllHistoryLogs = false;
@@ -2429,7 +2172,6 @@
                     if (parsed.player.shields > 2) parsed.player.shields = 2;
                     if (!parsed.player.statXp) {
                         parsed.player.statXp = { STR: 0, INT: 0, WIS: 0, CHR: 0 };
-                        // Migrate old inflated stats (which started at 10) down to realistic Stat Level starting from 1
                         ['STR', 'INT', 'WIS', 'CHR'].forEach(st => {
                             const oldVal = parsed.player.stats[st] || 10;
                             parsed.player.stats[st] = Math.max(1, Math.min(100, oldVal >= 10 ? (oldVal - 9) : oldVal));
@@ -2574,7 +2316,6 @@
         // 4. CORE RPG CALCULATIONS & RANKING
         // ==========================================
         function getRequiredXP(level) {
-            // Kurva progresif realistis: Lvl 1->2 butuh 250 XP, Lvl 2->3 butuh 420 XP, Lvl 3->4 butuh 640 XP, dst.
             return Math.round(250 * Math.pow(level, 1.35));
         }
 
@@ -2706,20 +2447,18 @@
         const MAX_STAT_LEVEL = 100;
 
         function getRequiredStatXP(statLevel) {
-            // Level 1 -> 2 butuh 100 Stat XP, Level 2 -> 3 butuh 200 Stat XP, dst.
             return Math.max(100, statLevel * 100);
         }
 
         function getQuestStatXpGain(questOrCategory) {
             const cat = typeof questOrCategory === 'string' ? questOrCategory : (questOrCategory.category || 'Daily Quest');
             const baseXp = typeof questOrCategory === 'object' ? (questOrCategory.xp || 20) : 20;
-            if (cat === 'Boss Fight') return 100; // S-Rank / Boss
-            if (cat === 'Main Quest') return 50;  // A-Rank / Hard
-            if (baseXp >= 30) return 25;          // Medium Daily
-            return 15;                            // Easy Daily
+            if (cat === 'Boss Fight') return 100;
+            if (cat === 'Main Quest') return 50;
+            if (baseXp >= 30) return 25;
+            return 15;
         }
 
-        // Dynamic Stat Tier Scale (Max Level 100)
         function getStatTierInfo(maxStatVal) {
             if (maxStatVal < 20) return { cap: 20, tier: 'Rank E' };
             if (maxStatVal < 40) return { cap: 40, tier: 'Rank D' };
@@ -2728,14 +2467,13 @@
             return { cap: MAX_STAT_LEVEL, tier: 'Rank S' };
         }
 
-        // Attribute Passive Bonuses derived from STR, INT, WIS, CHR Level above baseline (1)
         function getAttributePassives() {
             const s = gameState.player.stats;
             const bonusMaxHp = Math.max(0, (s.STR - 1) * 3);
             const effectiveMaxHp = 100 + bonusMaxHp;
-            const intXpBonus = Math.min(0.40, Math.max(0, (s.INT - 1) * 0.008)); // +0.8% XP per INT Lv above 1 (max +40%)
-            const wisDmgReduce = Math.min(0.40, Math.max(0, (s.WIS - 1) * 0.008)); // -0.8% damage per WIS Lv above 1 (max -40%)
-            const chrShopDiscount = Math.min(0.25, Math.max(0, Math.floor((s.CHR - 1) / 2) * 0.01)); // -1% shop cost per 2 CHR Lv (max -25%)
+            const intXpBonus = Math.min(0.40, Math.max(0, (s.INT - 1) * 0.008));
+            const wisDmgReduce = Math.min(0.40, Math.max(0, (s.WIS - 1) * 0.008));
+            const chrShopDiscount = Math.min(0.25, Math.max(0, Math.floor((s.CHR - 1) / 2) * 0.01));
             return { bonusMaxHp, effectiveMaxHp, intXpBonus, wisDmgReduce, chrShopDiscount };
         }
 
@@ -2750,7 +2488,6 @@
             }
         }
 
-        // HP Condition Modifier: Prima (>=80% HP: +10% XP & Gold), Normal (30-79%: 0%), Exhausted (<30%: -25% XP & Gold)
         function getHpCondition() {
             syncPlayerMaxHp();
             const ratio = gameState.player.maxHp > 0 ? (gameState.player.hp / gameState.player.maxHp) : 1;
@@ -2881,7 +2618,6 @@
                 syncPlayerMaxHp();
             }
 
-            // Roll back XP accurately across levels if needed
             let remainingToSubtract = xpAmount;
             while (remainingToSubtract > 0) {
                 if (gameState.player.xp >= remainingToSubtract) {
@@ -3356,7 +3092,6 @@
                     const matchSearch = !questSearchQuery || q.title.toLowerCase().includes(questSearchQuery);
                     return matchCat && matchTime && matchStatus && matchSearch;
                 })
-                // Auto-sort: quest yang belum selesai selalu di atas, yang sudah selesai turun ke bawah
                 .sort((a, b) => Number(a.completed) - Number(b.completed));
 
             if (filtered.length === 0) {
@@ -3458,9 +3193,8 @@
             }
         }
 
-
         // ==========================================
-        // 6. QUEST ACTIONS (TOGGLE, ADD, FILTER, DELETE) & SHOP FORM
+        // 6. QUEST ACTIONS & SHOP FORM + GACHA CHEST
         // ==========================================
         function toggleQuestForm() {
             SoundFX.playClick();
@@ -3548,13 +3282,11 @@
             if (!q.completed) {
                 q.completed = true;
 
-                // Diminishing returns untuk Daily Quest jika XP harian sudah >= 350 XP agar kenaikan level tetap menantang
                 let effectiveBaseXp = q.xp;
                 if (q.category === 'Daily Quest' && getTodayDailyXpEarned() >= 350) {
                     effectiveBaseXp = Math.max(8, Math.round(q.xp * 0.5));
                 }
 
-                // Fitur A1: Critical Clear (12% peluang dapat 1.5x Gold)
                 const isCrit = Math.random() < 0.12;
                 const effectiveBaseGold = isCrit ? Math.round(q.gold * 1.5) : q.gold;
                 if (isCrit) {
@@ -3578,7 +3310,6 @@
 
                 recordActivityHistory(q.title, q.category, q.stat, rewardResult.finalXp, rewardResult.finalGold, q.id);
 
-                // Fitur A2: Slot Sweep Combo Bonus (100% Daily Quest pada slot Pagi/Siang/Sore/Malam)
                 if (q.category === 'Daily Quest') {
                     const slot = inferQuestTimeSlot(q);
                     if (['Pagi', 'Siang', 'Sore', 'Malam'].includes(slot)) {
@@ -3598,7 +3329,6 @@
                         }
                     }
 
-                    // Streak naik +1 HANYA SEKALI per hari ketika minimal 80% Daily Quest selesai (tanpa mengganti tanggal hari ini)
                     const dailyQuests = gameState.quests.filter(item => item.category === 'Daily Quest');
                     const doneCount = dailyQuests.filter(item => item.completed).length;
                     const ratio = dailyQuests.length > 0 ? (doneCount / dailyQuests.length) : 0;
@@ -3613,7 +3343,6 @@
                 }
                 syncSystemReminders();
             } else {
-                // Undo quest completion
                 q.completed = false;
                 SoundFX.playUndo();
 
@@ -3621,7 +3350,6 @@
                 revokeRewards(rev.xp, rev.gold, rev.stat, rev.statXpGain ?? rev.statGain ?? getQuestStatXpGain(q));
                 delete q.lastReward;
 
-                // Hapus log terakhir untuk quest ini di tanggal aktif
                 if (gameState.history && Array.isArray(gameState.history.logs)) {
                     const logIdx = gameState.history.logs.findIndex(l => (l.questId === q.id || l.title === q.title) && l.dateStr === todayKey);
                     if (logIdx !== -1) {
@@ -3632,7 +3360,6 @@
                     }
                 }
 
-                // Tarik kembali Slot Sweep Combo jika di-undo di hari yang sama
                 if (q.category === 'Daily Quest') {
                     const slot = inferQuestTimeSlot(q);
                     const comboKey = `${todayKey}_${slot}`;
@@ -3642,7 +3369,6 @@
                         delete gameState.history.slotCombosClaimed[comboKey];
                     }
 
-                    // Jika di-undo hingga di bawah 80% pada hari yang sama, tarik kembali kenaikan streak hari ini
                     if (gameState.lastStreakDate === todayKey) {
                         const dailyQuests = gameState.quests.filter(item => item.category === 'Daily Quest');
                         const doneCount = dailyQuests.filter(item => item.completed).length;
@@ -3720,6 +3446,13 @@
             const container = document.getElementById('shop-list');
             container.innerHTML = '';
 
+            // Update status tombol Gacha
+            const gachaBtn = document.getElementById('btn-open-gacha');
+            if (gachaBtn) {
+                const canGacha = gameState.player.gold >= 100;
+                gachaBtn.style.opacity = canGacha ? '1' : '0.55';
+            }
+
             const filteredShop = gameState.shop.filter(item => {
                 if (!shopSearchQuery) return true;
                 return item.title.toLowerCase().includes(shopSearchQuery) || (item.desc || '').toLowerCase().includes(shopSearchQuery);
@@ -3772,25 +3505,27 @@
                             ${iconSvg}
                         </div>
                         <div class="min-w-0">
-                            <h4 class="truncate" style="font-size: 0.875rem; font-weight: 600; color: #fff;">${escapeHtml(item.title)}</h4>
-                            <p class="truncate" style="font-size: 11px; color: var(--text-muted);">${escapeHtml(item.desc || 'Reward dunia nyata pilihanmu')}</p>
+                            <h4 class="truncate" style="font-size: 0.875rem; font-weight: 700; color: #f1f5f9;">${escapeHtml(item.title)}</h4>
+                            <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${escapeHtml(item.desc || 'Reward Kustom')}</p>
+                            ${isShield ? `<span class="font-display" style="display: inline-block; margin-top: 3px; font-size: 10px; font-weight: 700; color: ${isShieldMaxed ? '#fbbf24' : '#38bdf8'};">Stok Dimiliki: ${currentShields} / ${MAX_STREAK_SHIELDS}${isShieldMaxed ? ' (MAKS)' : ''}</span>` : ''}
                         </div>
                     </div>
                     <div class="flex items-center gap-1 shrink-0">
-                        <button onclick="buyShopItem('${item.id}')" ${isShieldMaxed ? 'disabled' : ''} class="font-display flex items-center gap-1 ${canAfford ? 'shadow-neon-gold' : ''}" 
-                            style="padding: 0.5rem 0.65rem; border-radius: 0.75rem; font-weight: 700; font-size: 0.75rem; ${buyBtnStyle}">
-                            ${isShieldMaxed ? `Maks (${currentShields}/${MAX_STREAK_SHIELDS})` : `
-                                <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/></svg>
-                                ${hasDiscount ? `<span style="text-decoration:line-through;opacity:0.65;font-size:10px;">${item.cost}</span> ${finalCost}` : finalCost}
-                            `}
+                        <button onclick="buyShopItem('${item.id}')" ${!canAfford ? 'disabled' : ''} class="font-display"
+                            style="padding: 0.5rem 0.65rem; border-radius: 0.75rem; font-weight: 700; font-size: 0.75rem; display: flex; flex-direction: column; align-items: center; ${buyBtnStyle}">
+                            ${isShieldMaxed
+                                ? `<span>MAKS</span><span style="font-size: 9px; opacity: 0.8;">2 / 2</span>`
+                                : `<span>${finalCost} G${hasDiscount ? ` <span style="text-decoration: line-through; opacity: 0.65; font-size: 9px;">${item.cost}</span>` : ''}</span>
+                                   <span style="font-size: 9px; text-transform: uppercase; opacity: 0.85;">Beli</span>`
+                            }
                         </button>
-                        <button onclick="openEditShopModal('${item.id}')" style="color: #94a3b8; padding: 5px;" title="Edit Item">
+                        <button onclick="openEditShopModal('${item.id}')" style="color: #94a3b8; padding: 4px;" title="Edit Item">
                             <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                         </button>
-                        ${!isPotion ? `
-                            <button onclick="deleteShopItem('${item.id}')" style="color: #64748b; padding: 5px;" title="Hapus Item">
-                                <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                            </button>
+                        ${!['s1', 's_elixir', 's2', 's3', 's4'].includes(item.id) ? `
+                        <button onclick="deleteShopItem('${item.id}')" style="color: #64748b; padding: 4px;" title="Hapus Item">
+                            <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
                         ` : ''}
                     </div>
                 `;
@@ -3802,111 +3537,50 @@
         function handleAddShopItem(e) {
             e.preventDefault();
             const title = document.getElementById('s-title').value.trim();
-            const cost = parseInt(document.getElementById('s-cost').value, 10) || 100;
+            const cost = parseInt(document.getElementById('s-cost').value, 10);
             const type = document.getElementById('s-type').value;
 
-            if (!title) return;
+            if (!title || isNaN(cost) || cost <= 0) return;
 
             const descMap = {
+                reward: 'Reward Dunia Nyata Kustom',
                 potion: 'Memulihkan 25% Max HP secara instan.',
-                elixir: 'Memulihkan HP hingga penuh (100% Max HP) dalam kondisi darurat.',
-                shield: 'Melindungi Streak 1x dari reset otomatis.',
-                reward: 'Reward kustom dunia nyata.'
+                elixir: 'Memulihkan HP hingga penuh (100% Max HP) secara instan.',
+                shield: 'Pelindung Streak otomatis saat terlewat.'
             };
 
-            const newItem = {
+            gameState.shop.push({
                 id: 's_' + Date.now(),
                 title,
                 cost,
                 type,
-                desc: descMap[type] || 'Reward kustom dunia nyata.'
-            };
-            if (type === 'potion') newItem.healPct = 0.25;
-            if (type === 'elixir') newItem.healPct = 1.0;
+                healPct: type === 'elixir' ? 1.0 : (type === 'potion' ? 0.25 : 0),
+                desc: descMap[type] || 'Reward Kustom'
+            });
 
-            gameState.shop.push(newItem);
-
-            SoundFX.playClick();
+            SoundFX.playCoin();
             document.getElementById('shop-form').reset();
             document.getElementById('shop-form').classList.add('hidden');
             saveState();
-            renderAll();
-            spawnFloatingReward('Item Ditambahkan ke Shop!');
+            renderShop();
+            spawnFloatingReward('🛍️ Item Ditambahkan ke Shop!');
         }
 
-        function buyShopItem(id) {
-            const item = gameState.shop.find(s => s.id === id);
-            if (!item) return;
-            const finalCost = getDiscountedShopCost(item.cost);
-
-            if (gameState.player.gold < finalCost) {
-                SoundFX.playDamage();
-                spawnFloatingReward('❌ Gold Tidak Cukup!');
-                return;
-            }
-
-            const paidItemRecord = { ...item, cost: finalCost };
-
-            if (item.type === 'potion' || item.type === 'elixir') {
-                syncPlayerMaxHp();
-                if (gameState.player.hp >= gameState.player.maxHp) {
-                    SoundFX.playClick();
-                    spawnFloatingReward(`HP Sudah Penuh (${gameState.player.hp}/${gameState.player.maxHp})!`);
-                    return;
-                }
-                const pct = typeof item.healPct === 'number'
-                    ? item.healPct
-                    : (item.type === 'elixir' ? 1.0 : 0.25);
-                const healAmount = Math.max(1, Math.round(gameState.player.maxHp * pct));
-                const prevHp = gameState.player.hp;
-                gameState.player.gold -= finalCost;
-                gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + healAmount);
-                const actualHealed = gameState.player.hp - prevHp;
-                recordRedeemHistory(paidItemRecord);
-                SoundFX.playCoin();
-                spawnFloatingReward(item.type === 'elixir'
-                    ? `✨ Elixir Aktif! HP Pulih Penuh (+${actualHealed} HP)`
-                    : `🧪 Minor Potion! +${actualHealed} HP (+25% Max HP)`);
-            } else if (item.type === 'shield') {
-                if ((gameState.player.shields || 0) >= 2) {
-                    SoundFX.playClick();
-                    spawnFloatingReward('🛡️ Stok Streak Freeze Sudah Maksimal (2/2)!');
-                    return;
-                }
-                gameState.player.gold -= finalCost;
-                gameState.player.shields = Math.min(2, (gameState.player.shields || 0) + 1);
-                recordRedeemHistory(paidItemRecord);
-                SoundFX.playCoin();
-                spawnFloatingReward(`🛡️ Streak Freeze Aktif! (${gameState.player.shields}/2)`);
-            } else {
-                gameState.player.gold -= finalCost;
-                recordRedeemHistory(paidItemRecord);
-                SoundFX.playCoin();
-                spawnFloatingReward(`🎁 Klaim Reward: ${item.title}!`);
-            }
-
-            saveState();
-            renderAll();
-        }
-
-        function recordRedeemHistory(item) {
+        function recordRedeemHistory(title, cost, type, effectNote) {
             if (!Array.isArray(gameState.redeemHistory)) {
                 gameState.redeemHistory = [];
             }
             const now = new Date();
-            const hh = String(now.getHours()).padStart(2, '0');
-            const mm = String(now.getMinutes()).padStart(2, '0');
-            const dateStr = getCurrentGameDateKey();
-
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
             gameState.redeemHistory.unshift({
                 id: 'rdm_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
-                title: item.title,
-                cost: item.cost,
-                type: item.type,
-                dateStr: dateStr,
-                timeStr: `${hh}:${mm}`
+                title,
+                cost,
+                type,
+                effectNote,
+                dateStr: getCurrentGameDateKey(),
+                timeStr
             });
-
             if (gameState.redeemHistory.length > 80) {
                 gameState.redeemHistory = gameState.redeemHistory.slice(0, 80);
             }
@@ -3915,68 +3589,60 @@
         function renderRedeemHistory() {
             const listEl = document.getElementById('redeem-history-list');
             const badgeEl = document.getElementById('redeem-count-badge');
+            const headerCountEl = document.getElementById('header-redeem-count');
             const clearBtn = document.getElementById('btn-clear-redeem');
             if (!listEl) return;
 
-            const history = gameState.redeemHistory || [];
-            if (badgeEl) badgeEl.textContent = `${history.length}x Klaim`;
-            const headerCountEl = document.getElementById('header-redeem-count');
-            if (headerCountEl) headerCountEl.textContent = history.length;
+            const records = Array.isArray(gameState.redeemHistory) ? gameState.redeemHistory : [];
+            if (badgeEl) badgeEl.textContent = `${records.length}x Klaim`;
+            if (headerCountEl) headerCountEl.textContent = records.length;
             if (clearBtn) {
-                if (history.length > 0) clearBtn.classList.remove('hidden');
+                if (records.length > 0) clearBtn.classList.remove('hidden');
                 else clearBtn.classList.add('hidden');
             }
 
-            listEl.innerHTML = '';
-            if (history.length === 0) {
-                listEl.innerHTML = `<p style="font-size: 0.75rem; color: #64748b; text-align: center; padding: 0.75rem 0;">Belum ada reward atau potion yang di-redeem.</p>`;
+            if (records.length === 0) {
+                listEl.innerHTML = `<p style="font-size: 0.75rem; color: #64748b; text-align: center; padding: 0.75rem 0;">Belum ada reward yang di-redeem.</p>`;
                 return;
             }
 
-            history.forEach(entry => {
-                const isPotion = entry.type === 'potion' || entry.type === 'elixir';
-                const tagStyle = isPotion
-                    ? 'color: #fb7185; background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.3);'
-                    : 'color: #34d399; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3);';
+            const typeIcons = {
+                potion: '🧪',
+                elixir: '💖',
+                shield: '🛡️',
+                reward: '🎁',
+                gacha: '🎲'
+            };
 
-                const row = document.createElement('div');
-                row.style.cssText = 'background: rgba(15,23,42,0.75); border: 1px solid rgba(30,41,59,0.9); border-radius: 0.75rem; padding: 0.5rem 0.75rem;';
-                row.className = 'flex items-center justify-between gap-2';
-                row.innerHTML = `
+            listEl.innerHTML = records.map(r => `
+                <div style="background: rgba(15,23,42,0.75); border: 1px solid rgba(30,41,59,0.9); border-radius: 0.75rem; padding: 0.5rem 0.75rem;" class="flex items-center justify-between gap-2">
                     <div class="min-w-0 flex-1">
-                        <p class="truncate" style="font-size: 0.75rem; font-weight: 600; color: #f1f5f9;">${escapeHtml(entry.title)}</p>
-                        <div class="flex items-center gap-1-5" style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">
-                            <span class="font-display" style="font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 4px; ${tagStyle}">${isPotion ? 'POTION' : 'REWARD'}</span>
-                            <span>${entry.dateStr}${entry.timeStr ? ' • ' + entry.timeStr : ''}</span>
+                        <p class="truncate" style="font-size: 0.75rem; font-weight: 600; color: #f1f5f9;">
+                            ${typeIcons[r.type] || '🎁'} ${escapeHtml(r.title)}
+                        </p>
+                        <div class="flex items-center gap-2" style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">
+                            <span style="color: #67e8f9; font-weight: 600;">${escapeHtml(r.effectNote || 'Terklaim')}</span>
+                            <span>•</span>
+                            <span>${r.dateStr}${r.timeStr ? ' ' + r.timeStr : ''}</span>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
-                        <span class="font-display" style="font-weight: 700; font-size: 11px; color: var(--amber-400);">-${entry.cost} G</span>
-                        <button onclick="deleteRedeemEntry('${entry.id}')" style="color: #64748b; padding: 4px;" title="Hapus Riwayat Ini">
-                            <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                        <span class="font-display" style="font-size: 11px; font-weight: 700; color: var(--amber-400);">-${r.cost} G</span>
+                        <button onclick="deleteRedeemRecord('${r.id}')" style="color: #64748b; padding: 3px;" title="Hapus Catatan Ini">
+                            <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
                     </div>
-                `;
-                listEl.appendChild(row);
-            });
+                </div>
+            `).join('');
         }
 
-        function deleteRedeemEntry(id) {
+        function deleteRedeemRecord(id) {
+            if (!Array.isArray(gameState.redeemHistory)) return;
             SoundFX.playClick();
-            gameState.redeemHistory = (gameState.redeemHistory || []).filter(item => item.id !== id);
+            gameState.redeemHistory = gameState.redeemHistory.filter(r => r.id !== id);
             saveState();
             renderRedeemHistory();
-            spawnFloatingReward('Riwayat redeem dihapus');
-        }
-
-        function scrollToRedeemHistory() {
-            SoundFX.playClick();
-            const card = document.getElementById('redeem-history-card');
-            if (card) {
-                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                card.style.boxShadow = '0 0 18px rgba(251, 191, 36, 0.45)';
-                setTimeout(() => { card.style.boxShadow = ''; }, 1200);
-            }
+            spawnFloatingReward('Catatan redeem dihapus');
         }
 
         function clearRedeemHistory() {
@@ -3984,89 +3650,285 @@
             gameState.redeemHistory = [];
             saveState();
             renderRedeemHistory();
-            spawnFloatingReward('Semua riwayat redeem dibersihkan');
+            spawnFloatingReward('Riwayat redeem dibersihkan');
+        }
+
+        function scrollToRedeemHistory() {
+            SoundFX.playClick();
+            const card = document.getElementById('redeem-history-card');
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function buyShopItem(id) {
+            const item = gameState.shop.find(s => s.id === id);
+            if (!item) return;
+
+            const MAX_STREAK_SHIELDS = 2;
+            const finalCost = getDiscountedShopCost(item.cost);
+            if (gameState.player.gold < finalCost) return;
+
+            if (item.type === 'shield' && (gameState.player.shields || 0) >= MAX_STREAK_SHIELDS) {
+                SoundFX.playDamage();
+                spawnFloatingReward(`⚠️ Stok Streak Shield Penuh (Maks ${MAX_STREAK_SHIELDS})!`);
+                return;
+            }
+
+            syncPlayerMaxHp();
+            if ((item.type === 'potion' || item.type === 'elixir') && gameState.player.hp >= gameState.player.maxHp) {
+                SoundFX.playDamage();
+                spawnFloatingReward(`❤️ HP Sudah Penuh (${gameState.player.hp}/${gameState.player.maxHp})!`);
+                return;
+            }
+
+            SoundFX.playCoin();
+            gameState.player.gold -= finalCost;
+
+            let effectNote = 'Reward Dunia Nyata';
+            if (item.type === 'potion' || item.type === 'elixir') {
+                const pct = item.healPct || (item.type === 'elixir' ? 1.0 : 0.25);
+                const rawHeal = Math.max(1, Math.round(gameState.player.maxHp * pct));
+                const oldHp = gameState.player.hp;
+                gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + rawHeal);
+                const actualHealed = gameState.player.hp - oldHp;
+                effectNote = `Pulih +${actualHealed} HP (${Math.round(pct * 100)}% Max HP)`;
+                spawnFloatingReward(`🧪 +${actualHealed} HP Dipulihkan! (${gameState.player.hp}/${gameState.player.maxHp})`);
+            } else if (item.type === 'shield') {
+                gameState.player.shields = Math.min(MAX_STREAK_SHIELDS, (gameState.player.shields || 0) + 1);
+                effectNote = `Streak Shield (${gameState.player.shields}/${MAX_STREAK_SHIELDS})`;
+                spawnFloatingReward(`🛡️ +1 Streak Freeze! (Stok: ${gameState.player.shields}/${MAX_STREAK_SHIELDS})`);
+            } else {
+                effectNote = 'Reward Dunia Nyata';
+                spawnFloatingReward(`🎁 Reward Diklaim: ${item.title}`);
+            }
+
+            recordRedeemHistory(item.title, finalCost, item.type, effectNote);
+
+            saveState();
+            renderAll();
         }
 
         function deleteShopItem(id) {
             SoundFX.playClick();
             gameState.shop = gameState.shop.filter(s => s.id !== id);
             saveState();
-            renderAll();
+            renderShop();
         }
 
         // ==========================================
-        // 7. DUNGEON MODE (FOCUS TIMER + AMBIENT + WAKE LOCK)
+        // MYSTERY CHEST GACHA SYSTEM (100 GOLD)
         // ==========================================
-        let dungeonConfig = { duration: 1500, xp: 100, gold: 80 };
-        let dungeonRemaining = 1500;
+        function openMysteryGacha() {
+            const GACHA_COST = 100;
+            if (gameState.player.gold < GACHA_COST) {
+                SoundFX.playDamage();
+                spawnFloatingReward('⚠️ Gold tidak cukup! Butuh 100 Gold.');
+                return;
+            }
+
+            // Potong 100 Gold langsung
+            gameState.player.gold -= GACHA_COST;
+            SoundFX.playClick();
+            saveState();
+            renderStatus();
+
+            // Tampilkan modal dengan animasi peti bergetar
+            const modal = document.getElementById('modal-gacha');
+            const card = document.getElementById('gacha-modal-card');
+            const badge = document.getElementById('gacha-rarity-badge');
+            const icon = document.getElementById('gacha-chest-icon');
+            const titleEl = document.getElementById('gacha-reward-title');
+            const descEl = document.getElementById('gacha-reward-desc');
+            const closeBtn = document.getElementById('btn-close-gacha');
+
+            card.style.borderColor = '#c084fc';
+            card.style.boxShadow = '0 0 20px rgba(168,85,247,0.35)';
+            badge.textContent = 'SYSTEM GACHA';
+            badge.style.cssText = 'display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; padding: 3px 10px; border-radius: 9999px; background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.5);';
+            icon.innerHTML = '<span class="animate-chest-shake">🎁</span>';
+            titleEl.textContent = 'Membuka Peti Misteri...';
+            titleEl.style.color = '#ffffff';
+            descEl.textContent = 'Sistem sedang mengacak hadiah keberuntunganmu...';
+            closeBtn.classList.add('hidden');
+
+            openModal('modal-gacha');
+
+            setTimeout(() => {
+                const roll = Math.random() * 100;
+                syncPlayerMaxHp();
+                const statsPool = ['STR', 'INT', 'WIS', 'CHR'];
+                const randStat = statsPool[Math.floor(Math.random() * statsPool.length)];
+
+                let rarity = 'COMMON';
+                let rarityStyle = 'background: rgba(100,116,139,0.25); color: #cbd5e1; border: 1px solid #64748b;';
+                let borderCol = '#94a3b8';
+                let glowShadow = '0 0 18px rgba(148,163,184,0.28)';
+                let emoji = '📦';
+                let rewardTitle = '';
+                let rewardDesc = '';
+                let logEffect = '';
+
+                if (roll < 5) {
+                    // 5% LEGENDARY JACKPOT
+                    rarity = '★ LEGENDARY JACKPOT (5%) ★';
+                    rarityStyle = 'background: rgba(245,158,11,0.25); color: #fcd34d; border: 1px solid #fbbf24;';
+                    borderCol = '#fbbf24';
+                    glowShadow = '0 0 28px rgba(251,191,36,0.55)';
+                    emoji = '👑';
+                    gameState.player.gold += 300;
+                    gameState.player.hp = gameState.player.maxHp;
+                    addRewards(100, 0, randStat, 30, true);
+                    rewardTitle = '+300 GOLD + FULL HP + 100 XP!';
+                    rewardDesc = `Keberuntungan tertinggi! HP pulih penuh (${gameState.player.maxHp}/${gameState.player.maxHp}) & +30 ${randStat} XP.`;
+                    logEffect = 'Legendary: +300G, Full HP, +100XP';
+                    SoundFX.playLevelUp();
+                } else if (roll < 20) {
+                    // 15% EPIC
+                    rarity = '✦ EPIC REWARD (15%) ✦';
+                    rarityStyle = 'background: rgba(168,85,247,0.25); color: #e9d5ff; border: 1px solid #c084fc;';
+                    borderCol = '#c084fc';
+                    glowShadow = '0 0 24px rgba(192,132,252,0.45)';
+                    emoji = '🛡️';
+                    if ((gameState.player.shields || 0) < 2) {
+                        gameState.player.shields = (gameState.player.shields || 0) + 1;
+                        addRewards(40, 0, 'WIS', 20, true);
+                        rewardTitle = '+1 STREAK SHIELD & +40 XP!';
+                        rewardDesc = `Pelindung Streak ditambahkan (Stok: ${gameState.player.shields}/2) +20 WIS XP.`;
+                        logEffect = 'Epic: +1 Streak Shield & +40 XP';
+                    } else {
+                        gameState.player.gold += 180;
+                        addRewards(50, 0, 'WIS', 20, true);
+                        rewardTitle = '+180 GOLD & +50 XP!';
+                        rewardDesc = 'Stok Shield penuh (2/2), dikonversi menjadi +180 Gold & +50 XP!';
+                        logEffect = 'Epic: +180 Gold & +50 XP';
+                    }
+                    SoundFX.playCritical();
+                } else if (roll < 50) {
+                    // 30% RARE
+                    rarity = '◆ RARE REWARD (30%) ◆';
+                    rarityStyle = 'background: rgba(6,182,212,0.22); color: #67e8f9; border: 1px solid #22d3ee;';
+                    borderCol = '#22d3ee';
+                    glowShadow = '0 0 20px rgba(34,211,238,0.4)';
+                    emoji = '💎';
+                    if (Math.random() < 0.5) {
+                        addRewards(85, 0, randStat, 25, true);
+                        rewardTitle = `+85 XP & +25 ${randStat} XP!`;
+                        rewardDesc = `Lonjakan pengalaman instan untuk meningkatkan Level Hunter dan atribut ${randStat}.`;
+                        logEffect = `Rare: +85 XP & +25 ${randStat} XP`;
+                    } else {
+                        gameState.player.gold += 130;
+                        addRewards(25, 0, randStat, 15, true);
+                        rewardTitle = '+130 GOLD & +25 XP!';
+                        rewardDesc = 'Profit bersih +30 Gold beserta tambahan XP bonus!';
+                        logEffect = 'Rare: +130 Gold & +25 XP';
+                    }
+                    SoundFX.playQuestComplete();
+                } else {
+                    // 50% COMMON
+                    rarity = '• COMMON SUPPLY (50%) •';
+                    emoji = '🧪';
+                    if (Math.random() < 0.5) {
+                        addRewards(45, 0, randStat, 15, true);
+                        rewardTitle = `+45 XP & +15 ${randStat} XP!`;
+                        rewardDesc = 'Suplai energi harian untuk mempercepat progres levelmu.';
+                        logEffect = `Common: +45 XP & +15 ${randStat} XP`;
+                    } else {
+                        const healAmt = Math.max(10, Math.round(gameState.player.maxHp * 0.25));
+                        const oldHp = gameState.player.hp;
+                        gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + healAmt);
+                        const healed = gameState.player.hp - oldHp;
+                        addRewards(30, 0, 'STR', 10, true);
+                        rewardTitle = `+${healed > 0 ? healed : healAmt} HP & +30 XP!`;
+                        rewardDesc = `Vitality dipulihkan ke ${gameState.player.hp}/${gameState.player.maxHp} HP beserta bonus +30 XP.`;
+                        logEffect = `Common: +${healed} HP & +30 XP`;
+                    }
+                    SoundFX.playCoin();
+                }
+
+                card.style.borderColor = borderCol;
+                card.style.boxShadow = glowShadow;
+                badge.textContent = rarity;
+                badge.style.cssText = `display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 10px; border-radius: 9999px; ${rarityStyle}`;
+                icon.textContent = emoji;
+                titleEl.textContent = rewardTitle;
+                titleEl.style.color = borderCol;
+                descEl.textContent = rewardDesc;
+                closeBtn.classList.remove('hidden');
+
+                recordRedeemHistory('Mystery System Chest', GACHA_COST, 'gacha', logEffect);
+                saveState();
+                renderAll();
+            }, 750);
+        }
+
+        // ==========================================
+        // 7. DUNGEON FOCUS TIMER + AMBIENT + WAKE LOCK
+        // ==========================================
+        let dungeonTotalSec = 1500;
+        let dungeonRemainingSec = 1500;
+        let dungeonRewardXp = 100;
+        let dungeonRewardGold = 80;
         let dungeonInterval = null;
         let isDungeonRunning = false;
 
+        function populateDungeonLinkedQuests() {
+            const sel = document.getElementById('dungeon-linked-quest');
+            if (!sel) return;
+            const prevVal = sel.value;
+            const activeQuests = gameState.quests.filter(q => !q.completed);
+            sel.innerHTML = `<option value="">-- Fokus Umum (+INT saja) --</option>` +
+                activeQuests.map(q => `<option value="${q.id}">[${q.category === 'Daily Quest' ? 'Daily' : (q.category === 'Main Quest' ? 'Main' : 'Boss')}] ${escapeHtml(q.title)}</option>`).join('');
+            if (activeQuests.some(q => q.id === prevVal)) {
+                sel.value = prevVal;
+            }
+        }
+
         function setDungeonAmbient(mode) {
-            SoundFX.playClick();
             SoundFX.ambientMode = mode;
             updateAmbientButtonsUI();
-            saveState();
-
             if (isDungeonRunning) {
-                if (mode === 'none') {
-                    SoundFX.stopAmbient();
-                } else {
-                    SoundFX.startAmbient(mode);
-                }
+                if (mode === 'none' || SoundFX.muted) SoundFX.stopAmbient();
+                else SoundFX.startAmbient(mode);
+            } else {
+                SoundFX.playClick();
             }
+            saveState();
         }
 
         function updateAmbientButtonsUI() {
             const modes = ['none', 'synth', 'rain'];
-            const labels = {
-                none: 'Mode: Hening',
-                synth: 'Mode: Dark Synth',
-                rain: 'Mode: Suara Hujan'
-            };
-            const lblEl = document.getElementById('ambient-active-label');
-            if (lblEl) lblEl.textContent = labels[SoundFX.ambientMode] || 'Mode: Hening';
-
-            const activeStyle = 'padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: rgba(34,211,238,0.2); color: #67e8f9; border: 1px solid rgba(34,211,238,0.5);';
-            const inactiveStyle = 'padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;';
+            const labels = { none: 'Mode: Hening', synth: 'Mode: Dark Synth', rain: 'Mode: Suara Hujan' };
+            const activeLabel = document.getElementById('ambient-active-label');
+            if (activeLabel) activeLabel.textContent = labels[SoundFX.ambientMode] || 'Mode: Hening';
 
             modes.forEach(m => {
                 const btn = document.getElementById(`amb-${m}`);
-                if (btn) btn.style.cssText = SoundFX.ambientMode === m ? activeStyle : inactiveStyle;
+                if (!btn) return;
+                if (m === SoundFX.ambientMode) {
+                    btn.style.cssText = 'padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: rgba(34,211,238,0.2); color: #67e8f9; border: 1px solid rgba(34,211,238,0.5);';
+                } else {
+                    btn.style.cssText = 'padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;';
+                }
             });
         }
 
-        function populateDungeonLinkedQuests() {
-            const selectEl = document.getElementById('dungeon-linked-quest');
-            if (!selectEl) return;
-            const prevVal = selectEl.value;
-            selectEl.innerHTML = '<option value="">-- Fokus Umum (+INT saja) --</option>';
-
-            const openQuests = gameState.quests.filter(q => !q.completed);
-            openQuests.forEach(q => {
-                const opt = document.createElement('option');
-                opt.value = q.id;
-                opt.textContent = `[${q.category}] ${q.title}`;
-                selectEl.appendChild(opt);
-            });
-
-            if (openQuests.some(q => q.id === prevVal)) {
-                selectEl.value = prevVal;
-            }
-        }
-
-        function selectDungeonDuration(seconds, xp, gold, activeKey = null) {
+        function selectDungeonDuration(seconds, xp, gold, modeKey) {
             if (isDungeonRunning) return;
             SoundFX.playClick();
-            dungeonConfig = { duration: seconds, xp, gold };
-            dungeonRemaining = seconds;
-
-            const activeModeStyle = 'padding: 6px 10px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.5);';
-            const inactiveModeStyle = 'padding: 6px 10px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;';
+            dungeonTotalSec = seconds;
+            dungeonRemainingSec = seconds;
+            dungeonRewardXp = xp;
+            dungeonRewardGold = gold;
 
             ['10m', '25m', '45m', '60m'].forEach(k => {
                 const btn = document.getElementById(`mode-${k}`);
-                if (btn) btn.style.cssText = (activeKey === k) ? activeModeStyle : inactiveModeStyle;
+                if (!btn) return;
+                if (k === modeKey) {
+                    btn.style.cssText = 'padding: 6px 10px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.5);';
+                } else {
+                    btn.style.cssText = 'padding: 6px 10px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;';
+                }
             });
 
             document.getElementById('dungeon-reward-xp').textContent = `+${xp} XP`;
@@ -4077,59 +3939,55 @@
         function applyCustomDungeonDuration() {
             if (isDungeonRunning) return;
             const input = document.getElementById('custom-dungeon-mins');
+            if (!input) return;
             const mins = parseInt(input.value, 10);
-            if (!mins || mins < 1 || mins > 180) {
-                SoundFX.playDamage();
-                spawnFloatingReward('⚠️ Masukkan durasi 1 - 180 menit!');
+            if (isNaN(mins) || mins < 1 || mins > 180) {
+                spawnFloatingReward('⚠️ Masukkan durasi antara 1 – 180 menit');
                 return;
             }
             const seconds = mins * 60;
-            const xp = Math.round(mins * 4.2);
-            const gold = Math.round(mins * 3.4);
-            selectDungeonDuration(seconds, xp, gold, null);
-            spawnFloatingReward(`⏱️ Durasi Dungeon diset: ${mins} Menit`);
+            const xp = Math.max(10, Math.round(mins * 4));
+            const gold = Math.max(8, Math.round(mins * 3.2));
+            selectDungeonDuration(seconds, xp, gold, 'custom');
+            spawnFloatingReward(`⏱️ Durasi Dungeon diset ke ${mins} Menit!`);
         }
 
         function updateDungeonTimerUI() {
-            const mins = Math.floor(dungeonRemaining / 60).toString().padStart(2, '0');
-            const secs = (dungeonRemaining % 60).toString().padStart(2, '0');
+            const mins = Math.floor(dungeonRemainingSec / 60).toString().padStart(2, '0');
+            const secs = (dungeonRemainingSec % 60).toString().padStart(2, '0');
             document.getElementById('dungeon-timer-text').textContent = `${mins}:${secs}`;
 
+            const ring = document.getElementById('dungeon-progress-ring');
             const circumference = 276.46;
-            const progress = dungeonRemaining / dungeonConfig.duration;
+            const progress = dungeonRemainingSec / dungeonTotalSec;
             const offset = circumference * (1 - progress);
-            document.getElementById('dungeon-progress-ring').style.strokeDashoffset = offset;
+            ring.style.strokeDashoffset = offset;
         }
 
         function startDungeon() {
             if (isDungeonRunning) return;
             SoundFX.playClick();
             isDungeonRunning = true;
-            dungeonRemaining = dungeonConfig.duration;
 
             ScreenWakeManager.enable();
-            if (SoundFX.ambientMode !== 'none') {
+
+            if (SoundFX.ambientMode !== 'none' && !SoundFX.muted) {
                 SoundFX.startAmbient(SoundFX.ambientMode);
             }
 
+            document.getElementById('dungeon-mode-selector').classList.add('hidden');
             document.getElementById('btn-start-dungeon').classList.add('hidden');
             document.getElementById('btn-abort-dungeon').classList.remove('hidden');
-            const selector = document.getElementById('dungeon-mode-selector');
-            selector.style.opacity = '0.4';
-            selector.style.pointerEvents = 'none';
 
-            const statusLbl = document.getElementById('dungeon-status-label');
-            statusLbl.textContent = 'IN COMBAT // FOCUSING';
-            statusLbl.style.color = '#22d3ee';
-
-            renderOracle();
-            updateDungeonTimerUI();
+            const label = document.getElementById('dungeon-status-label');
+            label.textContent = 'IN COMBAT // FOKUS';
+            label.style.color = '#22d3ee';
 
             dungeonInterval = setInterval(() => {
-                dungeonRemaining -= 1;
+                dungeonRemainingSec -= 1;
                 updateDungeonTimerUI();
 
-                if (dungeonRemaining <= 0) {
+                if (dungeonRemainingSec <= 0) {
                     completeDungeon();
                 }
             }, 1000);
@@ -4138,35 +3996,35 @@
         function completeDungeon() {
             clearInterval(dungeonInterval);
             isDungeonRunning = false;
-            SoundFX.stopAmbient();
+
             ScreenWakeManager.disable();
+            SoundFX.stopAmbient();
+            SoundFX.playLevelUp();
 
-            const linkedSelect = document.getElementById('dungeon-linked-quest');
-            const linkedQuestId = linkedSelect ? linkedSelect.value : '';
-
-            resetDungeonUI();
-
+            const intXpGain = Math.max(15, Math.round(dungeonTotalSec / 50));
+            const rewardResult = addRewards(dungeonRewardXp, dungeonRewardGold, 'INT', intXpGain);
             gameState.player.dungeonClears = (gameState.player.dungeonClears || 0) + 1;
+            const mins = Math.round(dungeonTotalSec / 60);
 
-            const minsLabel = Math.round(dungeonConfig.duration / 60);
-            const label = `Deep Focus Raid (${minsLabel}m)`;
-            recordActivityHistory(label, 'Dungeon Clear', 'INT', dungeonConfig.xp, dungeonConfig.gold);
-
-            SoundFX.playQuestComplete();
-            addRewards(dungeonConfig.xp, dungeonConfig.gold, 'INT', 30);
-
-            let linkedNotice = '';
+            const linkedSel = document.getElementById('dungeon-linked-quest');
+            const linkedQuestId = linkedSel ? linkedSel.value : '';
+            let linkedNote = '';
             if (linkedQuestId) {
-                const targetQuest = gameState.quests.find(q => q.id === linkedQuestId && !q.completed);
-                if (targetQuest) {
-                    toggleQuest(targetQuest.id);
-                    linkedNotice = ` Sekaligus menyelesaikan quest: "${targetQuest.title}"!`;
+                const targetQ = gameState.quests.find(q => q.id === linkedQuestId && !q.completed);
+                if (targetQ) {
+                    toggleQuest(targetQ.id);
+                    linkedNote = `\n\n🎯 Quest Tertaut "${targetQ.title}" otomatis selesai!`;
                 }
             }
 
+            recordActivityHistory(`Deep Focus Dungeon (${mins} Menit)`, 'Dungeon Clear', 'INT', rewardResult.finalXp, rewardResult.finalGold);
+            saveState();
+            renderHistory();
+            resetDungeonUI();
+
             showSystemModal(
                 'DUNGEON CLEARED!',
-                `Kamu berhasil menaklukkan gerbang fokus ${minsLabel} menit! Hadiah +${dungeonConfig.xp} XP, +${dungeonConfig.gold} Gold, dan +30 INT XP telah ditambahkan.${linkedNotice}`
+                `Luar biasa! Kamu bertahan fokus selama ${mins} menit dan mendapatkan +${rewardResult.finalXp} XP, +${rewardResult.finalGold} Gold, dan +${intXpGain} INT XP!${linkedNote}`
             );
         }
 
@@ -4174,200 +4032,81 @@
             if (!isDungeonRunning) return;
             clearInterval(dungeonInterval);
             isDungeonRunning = false;
-            SoundFX.stopAmbient();
+
             ScreenWakeManager.disable();
-            resetDungeonUI();
+            SoundFX.stopAmbient();
+
             takeDamage(10);
-            renderOracle();
+            resetDungeonUI();
+            showSystemModal(
+                'DUNGEON FAILED',
+                'Kamu kabur dari Dungeon sebelum waktunya habis. Sistem memberikan penalti -10 HP!'
+            );
         }
 
         function resetDungeonUI() {
-            dungeonRemaining = dungeonConfig.duration;
+            dungeonRemainingSec = dungeonTotalSec;
             updateDungeonTimerUI();
+            document.getElementById('dungeon-mode-selector').classList.remove('hidden');
             document.getElementById('btn-start-dungeon').classList.remove('hidden');
             document.getElementById('btn-abort-dungeon').classList.add('hidden');
-            const selector = document.getElementById('dungeon-mode-selector');
-            selector.style.opacity = '1';
-            selector.style.pointerEvents = 'auto';
-
-            const statusLbl = document.getElementById('dungeon-status-label');
-            statusLbl.textContent = 'GATE READY';
-            statusLbl.style.color = '#c084fc';
+            const label = document.getElementById('dungeon-status-label');
+            label.textContent = 'GATE READY';
+            label.style.color = '#c084fc';
         }
 
         // ==========================================
-        // 8. NEXT DAY EVALUATION & PENALTY SYSTEM
+        // 8. DAILY SIMULATION, TITLES & MODALS
         // ==========================================
-        function simulateNextDay() {
+        function openTitlesModal() {
             SoundFX.playClick();
-            const gIn = document.getElementById('journal-gratitude');
-            const iIn = document.getElementById('journal-improve');
-            if (gIn) gIn.value = '';
-            if (iIn) iIn.value = '';
-            openModal('modal-daily-journal');
-        }
+            const listEl = document.getElementById('titles-list');
+            listEl.innerHTML = '';
 
-        function confirmJournalAndAdvance(saveJournal) {
-            const currentDateKey = getCurrentGameDateKey();
-            if (saveJournal) {
-                const gratitude = (document.getElementById('journal-gratitude')?.value || '').trim();
-                const improve = (document.getElementById('journal-improve')?.value || '').trim();
-                if (gratitude || improve) {
-                    if (!Array.isArray(gameState.history.journals)) gameState.history.journals = [];
-                    gameState.history.journals.unshift({
-                        id: 'jrn_' + Date.now(),
-                        dateStr: currentDateKey,
-                        gratitude,
-                        improve
-                    });
-                    addRewards(0, 0, 'WIS', 15, true);
-                }
-            }
-            closeModal('modal-daily-journal');
-            executeAdvanceNextDay();
-        }
+            TITLES_CATALOG.forEach(t => {
+                const unlocked = t.checkUnlocked(gameState);
+                const isActive = gameState.player.activeTitle === t.id;
 
-        function executeAdvanceNextDay() {
-            const currentDateKey = getCurrentGameDateKey();
-            const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
-            const doneCount = dailyQuests.filter(q => q.completed).length;
-            const totalDaily = dailyQuests.length;
-            const ratio = totalDaily > 0 ? (doneCount / totalDaily) : 1;
-            const pct = Math.round(ratio * 100);
-
-            const nextDateObj = parseDateKey(currentDateKey);
-            nextDateObj.setDate(nextDateObj.getDate() + 1);
-            const nextDateKey = formatDateKey(nextDateObj);
-            gameState.selectedDate = nextDateKey;
-
-            gameState.quests.forEach(q => {
-                if (q.category === 'Daily Quest') {
-                    q.completed = false;
-                    delete q.lastReward;
-                }
+                const card = document.createElement('div');
+                card.style.cssText = `padding: 0.75rem; border-radius: 0.75rem; border: 1px solid ${isActive ? '#fbbf24' : (unlocked ? '#334155' : '#1e293b')}; background: ${isActive ? 'rgba(245,158,11,0.12)' : (unlocked ? 'rgba(15,23,42,0.85)' : 'rgba(2,6,23,0.6)')}; ${!unlocked ? 'opacity: 0.55;' : ''}`;
+                card.innerHTML = `
+                    <div class="flex items-center justify-between gap-2">
+                        <div>
+                            <div class="flex items-center gap-1-5">
+                                <span style="font-size: 0.875rem;">${unlocked ? '👑' : '🔒'}</span>
+                                <h4 class="font-display" style="font-size: 0.875rem; font-weight: 700; color: ${isActive ? '#fcd34d' : '#fff'};">${t.name}</h4>
+                            </div>
+                            <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${t.reqText}</p>
+                            <p class="font-display" style="font-size: 10px; font-weight: 700; color: var(--cyan-400); margin-top: 4px;">${t.buffText}</p>
+                        </div>
+                        <button onclick="selectActiveTitle('${t.id}')" ${!unlocked || isActive ? 'disabled' : ''} class="font-display shrink-0"
+                            style="padding: 6px 10px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; ${isActive ? 'background: var(--amber-500); color: #020617;' : (unlocked ? 'background: var(--bg-slate-800); color: #67e8f9; border: 1px solid #334155;' : 'background: var(--bg-slate-900); color: #475569;')}">
+                            ${isActive ? 'Aktif' : (unlocked ? 'Pakai' : 'Terkunci')}
+                        </button>
+                    </div>
+                `;
+                listEl.appendChild(card);
             });
 
-            syncPlayerMaxHp();
-            const tier = evaluateDailyTier(ratio, gameState.player.maxHp);
-
-            if (tier.rawDamage > 0) {
-                let shieldText = '';
-                if (tier.resetStreak) {
-                    if ((gameState.player.shields || 0) > 0 && gameState.player.streak > 0) {
-                        gameState.player.shields -= 1;
-                        shieldText = ` 🛡️ Streak Shield terpakai! Streak ${gameState.player.streak} hari terlindungi (sisa Shield: ${gameState.player.shields}).`;
-                    } else {
-                        gameState.player.streak = 0;
-                        shieldText = ' Streak di-reset ke 0 (progres <80%).';
-                    }
-                } else {
-                    shieldText = ` Streak tetap aman di ${gameState.player.streak} hari (≥80%), tetapi tidak mendapat regen HP.`;
-                }
-
-                const { wisDmgReduce } = getAttributePassives();
-                const mitigatedDmg = Math.max(1, Math.round(tier.rawDamage * (1 - wisDmgReduce)));
-                const wisNote = mitigatedDmg < tier.rawDamage ? ` (WIS menahan ${tier.rawDamage - mitigatedDmg} dmg)` : '';
-                const wasKnockedOut = (gameState.player.hp - mitigatedDmg) <= 0;
-
-                takeDamage(tier.rawDamage);
-
-                if (!wasKnockedOut) {
-                    showSystemModal(
-                        `EVALUASI ${currentDateKey} -> ${nextDateKey} [${tier.rank}]`,
-                        `Progres Daily Habit ${pct}% (${doneCount}/${totalDaily}) • Penalti ${Math.round(tier.penaltyRate * 100)}% Max HP (-${mitigatedDmg} HP${wisNote}).${shieldText} Semua Daily Habit telah di-reset untuk hari baru.`
-                    );
-                }
-            } else {
-                const healAmt = Math.min(tier.regenAmt, gameState.player.maxHp - gameState.player.hp);
-                gameState.player.hp += healAmt;
-                SoundFX.playQuestComplete();
-                saveState();
-                renderAll();
-                showSystemModal(
-                    `HARI BARU: ${nextDateKey} [${tier.rank}]`,
-                    `Perfect Clear ${pct}% (${doneCount}/${totalDaily} selesai)! ${healAmt > 0 ? `Vitality pulih +${healAmt} HP (+15% Max HP → ${gameState.player.hp}/${gameState.player.maxHp}), dan ` : `Vitality sudah penuh (${gameState.player.hp}/${gameState.player.maxHp}), dan `}Streak terjaga di ${gameState.player.streak} hari.`
-                );
-            }
+            openModal('modal-titles');
         }
 
-        // ==========================================
-        // 9. NAVIGATION, MODALS, INSTANT TITLE & UTILITIES
-        // ==========================================
-        function switchTab(tabName) {
-            SoundFX.playClick();
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`nav-${tabName}`).classList.add('active');
-        }
-
-        function spawnFloatingReward(text) {
-            const container = document.getElementById('floating-container');
-            const badge = document.createElement('div');
-            badge.className = 'animate-float-reward font-display shadow-neon-blue text-center';
-            badge.style.cssText = 'background: rgba(15,23,42,0.96); border: 1px solid rgba(34,211,238,0.65); color: #67e8f9; font-weight: 700; font-size: 0.75rem; padding: 0.5rem 1rem; border-radius: 9999px;';
-            badge.textContent = text;
-            container.appendChild(badge);
-
-            setTimeout(() => {
-                badge.remove();
-            }, 1850);
-        }
-
-        function openModal(id) {
-            document.getElementById(id).classList.remove('hidden');
-        }
-
-        function closeModal(id) {
-            SoundFX.playClick();
-            document.getElementById(id).classList.add('hidden');
-        }
-
-        function showSystemModal(title, body) {
-            document.getElementById('sys-msg-title').textContent = title;
-            document.getElementById('sys-msg-body').textContent = body;
-            openModal('modal-system-msg');
-        }
-
-        function openEditNameModal() {
-            SoundFX.playClick();
-            document.getElementById('input-player-name').value = gameState.player.name;
-            openModal('modal-edit-name');
-        }
-
-        function savePlayerName() {
-            const newName = document.getElementById('input-player-name').value.trim();
-            if (newName) {
-                gameState.player.name = newName;
-                saveState();
-                renderStatus();
-            }
-            closeModal('modal-edit-name');
-        }
-
-        function openResetModal() {
-            SoundFX.playClick();
-            openModal('modal-reset');
-        }
-
-        function confirmResetData() {
-            localStorage.removeItem(STORAGE_KEY);
-            gameState = initDemoHistory(JSON.parse(JSON.stringify(DEFAULT_STATE)));
-            SoundFX.ambientMode = 'none';
-            SoundFX.stopAmbient();
+        function selectActiveTitle(titleId) {
+            const titleObj = TITLES_CATALOG.find(t => t.id === titleId);
+            if (!titleObj || !titleObj.checkUnlocked(gameState)) return;
+            SoundFX.playQuestComplete();
+            gameState.player.activeTitle = titleId;
             saveState();
-            closeModal('modal-reset');
-            renderAll();
-            spawnFloatingReward('Sistem Direset ke Data Awal');
+            renderStatus();
+            openTitlesModal();
+            spawnFloatingReward(`👑 Gelar Aktif: ${titleObj.name}`);
         }
 
-        // 2. Instant Cycle Active Title without opening modal
         function cycleActiveTitle() {
             const unlockedList = TITLES_CATALOG.filter(t => t.checkUnlocked(gameState));
             if (unlockedList.length <= 1) {
-                SoundFX.playClick();
-                spawnFloatingReward('🔒 Baru 1 Title Terbuka! Cek daftar syarat di tombol sebelah.');
+                openTitlesModal();
+                spawnFloatingReward('ℹ️ Selesaikan misi & streak untuk membuka Title baru!');
                 return;
             }
             const currentIdx = unlockedList.findIndex(t => t.id === gameState.player.activeTitle);
@@ -4381,102 +4120,164 @@
             spawnFloatingReward(`👑 Title: ${nextTitle.name} (${nextTitle.buffText})`);
         }
 
-        function openTitlesModal() {
+        function simulateNextDay() {
             SoundFX.playClick();
-            const listEl = document.getElementById('titles-list');
-            listEl.innerHTML = '';
+            const gEl = document.getElementById('journal-gratitude');
+            const iEl = document.getElementById('journal-improve');
+            if (gEl) gEl.value = '';
+            if (iEl) iEl.value = '';
+            openModal('modal-daily-journal');
+        }
 
-            TITLES_CATALOG.forEach(t => {
-                const unlocked = t.checkUnlocked(gameState);
-                const isEquipped = gameState.player.activeTitle === t.id;
+        function confirmJournalAndAdvance(saveJournal) {
+            closeModal('modal-daily-journal');
+            const currentKey = getCurrentGameDateKey();
 
-                const cardStyle = isEquipped 
-                    ? 'background: rgba(245,158,11,0.15); border: 1px solid #fbbf24;' 
-                    : (unlocked ? 'background: rgba(15,23,42,0.9); border: 1px solid #334155;' : 'background: rgba(2,6,23,0.6); border: 1px solid #1e293b; opacity: 0.6;');
+            if (saveJournal) {
+                const gratitude = (document.getElementById('journal-gratitude')?.value || '').trim();
+                const improve = (document.getElementById('journal-improve')?.value || '').trim();
+                if (gratitude || improve) {
+                    if (!gameState.history.journals) gameState.history.journals = [];
+                    gameState.history.journals.unshift({ dateStr: currentKey, gratitude, improve });
+                    addRewards(10, 5, 'WIS', 15, true);
+                    spawnFloatingReward('📜 Jurnal Tersimpan: +15 WIS XP & +10 XP!');
+                }
+            }
 
-                const btnStyle = isEquipped 
-                    ? 'background: #fbbf24; color: #020617;' 
-                    : (unlocked ? 'background: var(--bg-slate-800); color: #fcd34d; border: 1px solid rgba(245,158,11,0.45);' : 'background: var(--bg-slate-900); color: #475569;');
+            const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
+            const doneCount = dailyQuests.filter(q => q.completed).length;
+            const totalDaily = dailyQuests.length;
+            const ratio = totalDaily > 0 ? (doneCount / totalDaily) : 1;
+            const pct = Math.round(ratio * 100);
 
-                const card = document.createElement('div');
-                card.style.cssText = `padding: 0.75rem; border-radius: 0.75rem; ${cardStyle}`;
-                card.innerHTML = `
-                    <div class="flex items-start justify-between gap-2">
-                        <div>
-                            <div class="flex items-center gap-1-5">
-                                <span class="font-display" style="font-weight: 700; font-size: 0.875rem; color: ${unlocked ? '#fcd34d' : '#94a3b8'};">${t.name}</span>
-                                ${!unlocked ? '🔒' : ''}
-                            </div>
-                            <p style="font-size: 11px; color: var(--cyan-400); font-weight: 500; margin-top: 2px;">${t.buffText}</p>
-                            <p style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Syarat: ${t.reqText}</p>
-                        </div>
-                        <button onclick="equipTitle('${t.id}')" ${!unlocked || isEquipped ? 'disabled' : ''} class="font-display shrink-0" 
-                            style="padding: 6px 10px; border-radius: 0.5rem; font-weight: 700; font-size: 0.75rem; ${btnStyle}">
-                            ${isEquipped ? 'Dipakai' : (unlocked ? 'Pakai' : 'Terkunci')}
-                        </button>
-                    </div>
-                `;
-                listEl.appendChild(card);
+            gameState.quests.forEach(q => {
+                if (q.category === 'Daily Quest') {
+                    q.completed = false;
+                    delete q.lastReward;
+                }
             });
 
-            openModal('modal-titles');
-        }
+            const curDate = parseDateKey(currentKey);
+            curDate.setDate(curDate.getDate() + 1);
+            const nextDateKey = formatDateKey(curDate);
+            gameState.selectedDate = nextDateKey;
+            gameState.lastRealDate = nextDateKey;
 
-        function equipTitle(titleId) {
-            const target = TITLES_CATALOG.find(t => t.id === titleId);
-            if (!target || !target.checkUnlocked(gameState)) return;
-            SoundFX.playQuestComplete();
-            gameState.player.activeTitle = titleId;
-            saveState();
-            renderStatus();
-            openTitlesModal();
-            spawnFloatingReward(`👑 Gelar Aktif: ${target.name}`);
-        }
+            syncPlayerMaxHp();
+            const tier = evaluateDailyTier(ratio, gameState.player.maxHp);
 
-        function exportBackupData() {
-            SoundFX.playClick();
-            const dataStr = JSON.stringify(gameState, null, 2);
-            if (window.AndroidBridge && typeof window.AndroidBridge.saveBackup === 'function') {
-                const encoded = btoa(unescape(encodeURIComponent(dataStr)));
-                window.AndroidBridge.saveBackup(encoded, `system-rpg-backup-${formatDateKey(new Date())}.json`);
-                spawnFloatingReward('💾 Siapkan lokasi penyimpanan backup...');
-                return;
-            }
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `system-rpg-backup-${formatDateKey(new Date())}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            spawnFloatingReward('💾 File Backup Berhasil Diunduh!');
-        }
-
-        function importBackupData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    if (!imported.player || !imported.quests) {
-                        throw new Error('Format file tidak valid');
+            if (tier.rawDamage > 0) {
+                let shieldMsg = '';
+                if (tier.resetStreak) {
+                    if ((gameState.player.shields || 0) > 0 && gameState.player.streak > 0) {
+                        gameState.player.shields -= 1;
+                        shieldMsg = ` 🛡️ Streak Shield otomatis menahan Streak ${gameState.player.streak} hari (sisa Shield: ${gameState.player.shields})!`;
+                    } else {
+                        gameState.player.streak = 0;
+                        gameState.lastStreakDate = null;
+                        shieldMsg = ' Streak di-reset ke 0.';
                     }
-                    if (!Array.isArray(imported.redeemHistory)) imported.redeemHistory = [];
-                    gameState = imported;
-                    saveState();
-                    renderAll();
-                    SoundFX.playLevelUp();
-                    spawnFloatingReward('✅ Data Berhasil Dipulihkan!');
-                } catch (err) {
-                    SoundFX.playDamage();
-                    spawnFloatingReward('❌ File Backup Tidak Valid!');
+                } else {
+                    shieldMsg = ` Streak ${gameState.player.streak} hari tetap aman (≥80%), namun tanpa regen HP.`;
                 }
-                event.target.value = '';
-            };
-            reader.readAsText(file);
+                takeDamage(tier.rawDamage);
+                const { wisDmgReduce } = getAttributePassives();
+                const actualDmg = Math.max(1, Math.round(tier.rawDamage * (1 - wisDmgReduce)));
+                showSystemModal(
+                    `EVALUASI HARIAN // ${tier.rank.toUpperCase()}`,
+                    `Progres Daily Quest tanggal ${currentKey}: ${pct}% (${doneCount}/${totalDaily}). Penalti ${Math.round(tier.penaltyRate * 100)}% Max HP (-${actualDmg} HP).${shieldMsg} Tanggal sistem maju ke ${formatReadableDate(nextDateKey)}.`
+                );
+            } else {
+                SoundFX.playQuestComplete();
+                if (gameState.lastStreakDate !== currentKey) {
+                    gameState.player.streak += 1;
+                }
+                gameState.lastStreakDate = null;
+                const healAmt = Math.min(tier.regenAmt, gameState.player.maxHp - gameState.player.hp);
+                gameState.player.hp += healAmt;
+                showSystemModal(
+                    'EVALUASI HARIAN // S-RANK PERFECT CLEAR!',
+                    `Sempurna! 100% Daily Quest (${doneCount}/${totalDaily}) selesai pada ${currentKey}. Streak menjadi ${gameState.player.streak} Hari!${healAmt > 0 ? ` Regen +${healAmt} HP (+15% Max HP).` : ' HP sudah penuh.'} Tanggal sistem maju ke ${formatReadableDate(nextDateKey)}.`
+                );
+            }
+
+            saveState();
+            renderAll();
+        }
+
+        function openEditNameModal() {
+            SoundFX.playClick();
+            document.getElementById('input-player-name').value = gameState.player.name;
+            openModal('modal-edit-name');
+        }
+
+        function savePlayerName() {
+            const val = document.getElementById('input-player-name').value.trim();
+            if (val) {
+                SoundFX.playCoin();
+                gameState.player.name = val;
+                saveState();
+                renderStatus();
+            }
+            closeModal('modal-edit-name');
+        }
+
+        function openResetModal() {
+            SoundFX.playClick();
+            openModal('modal-reset');
+        }
+
+        function confirmResetData() {
+            SoundFX.playDamage();
+            localStorage.removeItem(STORAGE_KEY);
+            gameState = initDemoHistory(JSON.parse(JSON.stringify(DEFAULT_STATE)));
+            saveState();
+            closeModal('modal-reset');
+            renderAll();
+            spawnFloatingReward('🔄 Sistem Di-reset ke Awal');
+        }
+
+        // ==========================================
+        // 9. NAVIGATION & VISUAL HELPERS
+        // ==========================================
+        function switchTab(tabName) {
+            SoundFX.playClick();
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.color = '#64748b';
+            });
+
+            const activeBtn = document.getElementById(`nav-${tabName}`);
+            activeBtn.classList.add('active');
+            activeBtn.style.color = '#22d3ee';
+        }
+
+        function spawnFloatingReward(text) {
+            const container = document.getElementById('floating-container');
+            const badge = document.createElement('div');
+            badge.className = 'animate-float-reward font-display shadow-neon-blue';
+            badge.style.cssText = 'padding: 0.5rem 1rem; border-radius: 9999px; background: rgba(15,23,42,0.95); border: 1px solid #22d3ee; color: #67e8f9; font-weight: 700; font-size: 0.75rem; text-align: center;';
+            badge.textContent = text;
+            container.appendChild(badge);
+            setTimeout(() => badge.remove(), 1850);
+        }
+
+        function showSystemModal(title, body) {
+            document.getElementById('sys-msg-title').textContent = title;
+            document.getElementById('sys-msg-body').textContent = body;
+            openModal('modal-system-msg');
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            SoundFX.playClick();
+            document.getElementById(id).classList.add('hidden');
         }
 
         function escapeHtml(str) {
@@ -4485,30 +4286,10 @@
             return div.innerHTML;
         }
 
-        // Native Android bridge: restore a JSON backup selected with the system file picker.
-        window.importBackupFromAndroid = function(base64) {
-            try {
-                const binary = atob(base64);
-                const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
-                const json = new TextDecoder('utf-8').decode(bytes);
-                const imported = JSON.parse(json);
-                if (!imported.player || !imported.quests) throw new Error('Format file tidak valid');
-                gameState = imported;
-                saveState();
-                renderAll();
-                SoundFX.playLevelUp();
-                spawnFloatingReward('✅ Data Berhasil Dipulihkan!');
-            } catch (err) {
-                SoundFX.playDamage();
-                spawnFloatingReward('❌ File Backup Tidak Valid!');
-            }
-        };
-
-
         // ==========================================
-        // 11. PUSH NOTIFICATION REMINDER (LAYAR ATAS HP)
+        // 10. MOBILE PUSH NOTIFICATION REMINDERS
         // ==========================================
-        function getReminderConfig() {
+        function ensureReminderState() {
             if (!gameState.reminders) {
                 gameState.reminders = {
                     enabled: false,
@@ -4520,231 +4301,211 @@
         }
 
         function renderReminderUI() {
-            const cfg = getReminderConfig();
+            const rem = ensureReminderState();
             const badge = document.getElementById('notif-status-badge');
             const btn = document.getElementById('btn-toggle-notif');
-            const pIn = document.getElementById('rem-time-pagi');
-            const sIn = document.getElementById('rem-time-sore');
-            const mIn = document.getElementById('rem-time-malam');
+            const inPagi = document.getElementById('rem-time-pagi');
+            const inSore = document.getElementById('rem-time-sore');
+            const inMalam = document.getElementById('rem-time-malam');
 
-            if (pIn && cfg.times?.Pagi) pIn.value = cfg.times.Pagi;
-            if (sIn && cfg.times?.Sore) sIn.value = cfg.times.Sore;
-            if (mIn && cfg.times?.Malam) mIn.value = cfg.times.Malam;
+            if (inPagi) inPagi.value = rem.times.Pagi || '07:30';
+            if (inSore) inSore.value = rem.times.Sore || '16:30';
+            if (inMalam) inMalam.value = rem.times.Malam || '20:30';
 
-            const permGranted = (typeof Notification !== 'undefined' && Notification.permission === 'granted') ||
-                (window.AndroidBridge && typeof window.AndroidBridge.scheduleReminder === 'function');
-            const isActive = cfg.enabled && permGranted;
-
-            if (badge) {
-                if (isActive) {
+            if (badge && btn) {
+                if (rem.enabled) {
                     badge.textContent = 'AKTIF';
-                    badge.style.cssText = 'font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 9999px; background: rgba(16,185,129,0.18); color: #34d399; border: 1px solid rgba(16,185,129,0.45);';
+                    badge.style.cssText = 'font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 9999px; background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.45);';
+                    btn.textContent = '🔕 Matikan Notifikasi';
+                    btn.style.cssText = 'flex: 1; font-weight: 700; font-size: 0.75rem; padding: 0.55rem 0.65rem; border-radius: 0.75rem; background: rgba(244,63,94,0.16); color: #fda4af; border: 1px solid rgba(244,63,94,0.45);';
                 } else {
                     badge.textContent = 'NONAKTIF';
                     badge.style.cssText = 'font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 9999px; background: rgba(100,116,139,0.2); color: #94a3b8; border: 1px solid #475569;';
+                    btn.textContent = '🔔 Aktifkan Notifikasi';
+                    btn.style.cssText = 'flex: 1; font-weight: 700; font-size: 0.75rem; padding: 0.55rem 0.65rem; border-radius: 0.75rem; background: rgba(6,182,212,0.18); color: #67e8f9; border: 1px solid rgba(6,182,212,0.45);';
                 }
-            }
-            if (btn) {
-                btn.textContent = isActive ? '🔕 Matikan Notifikasi' : '🔔 Aktifkan Notifikasi';
             }
         }
 
         function saveReminderSettings() {
-            const cfg = getReminderConfig();
-            cfg.times = {
-                Pagi: document.getElementById('rem-time-pagi')?.value || '07:30',
-                Sore: document.getElementById('rem-time-sore')?.value || '16:30',
-                Malam: document.getElementById('rem-time-malam')?.value || '20:30'
-            };
+            const rem = ensureReminderState();
+            const p = document.getElementById('rem-time-pagi')?.value;
+            const s = document.getElementById('rem-time-sore')?.value;
+            const m = document.getElementById('rem-time-malam')?.value;
+            if (p) rem.times.Pagi = p;
+            if (s) rem.times.Sore = s;
+            if (m) rem.times.Malam = m;
             saveState();
             syncSystemReminders();
+            spawnFloatingReward('⏰ Jadwal Reminder Disimpan');
         }
 
         async function togglePushReminder() {
             SoundFX.playClick();
-            const cfg = getReminderConfig();
+            const rem = ensureReminderState();
 
-            if (cfg.enabled) {
-                cfg.enabled = false;
+            if (!rem.enabled) {
+                if ('Notification' in window) {
+                    if (Notification.permission === 'default') {
+                        const perm = await Notification.requestPermission();
+                        if (perm !== 'granted') {
+                            showSystemModal(
+                                'IZIN NOTIFIKASI DIBUTUHKAN',
+                                'Browser / HP memblokir izin notifikasi. Buka Pengaturan Browser / Info Aplikasi Android → Notifikasi → Izinkan agar pengingat layar atas muncul.'
+                            );
+                            return;
+                        }
+                    } else if (Notification.permission === 'denied') {
+                        showSystemModal(
+                            'NOTIFIKASI DIBLOKIR SISTEM',
+                            'Izin notifikasi saat ini berstatus Diblokir. Silakan aktifkan izin Notifikasi untuk aplikasi/situs ini di Pengaturan HP Anda.'
+                        );
+                        return;
+                    }
+                }
+                rem.enabled = true;
                 saveState();
                 renderReminderUI();
                 syncSystemReminders();
-                spawnFloatingReward('🔕 Notifikasi Reminder Dimatikan');
-                return;
-            }
-
-            // 1. Native Android WebView bridge check (APK)
-            if (window.AndroidBridge && typeof window.AndroidBridge.scheduleReminder === 'function') {
-                try {
-                    if (typeof window.AndroidBridge.requestNotificationPermission === 'function') {
-                        window.AndroidBridge.requestNotificationPermission();
-                    }
-                } catch (e) {}
-                cfg.enabled = true;
-                saveReminderSettings();
-                renderReminderUI();
-                spawnFloatingReward('🔔 Notifikasi Android Aktif!');
-                showTopScreenNotification(
-                    '⚔️ SYSTEM RPG // REMINDER AKTIF',
-                    'Sistem akan mengingatkanmu di layar atas HP jika ada Daily Quest tersisa!'
-                );
-                return;
-            }
-
-            // 2. WebView / file:// check (Android WebView disables Web Notification API unless native bridge is added)
-            if (typeof Notification === 'undefined' || window.location.protocol === 'file:') {
-                showSystemModal(
-                    'IZIN NOTIFIKASI ANDROID DIPERLUKAN',
-                    'Android WebView / file lokal memblokir pop-up notifikasi web standar. Untuk memunculkan notifikasi di layar atas HP, aplikasi APK perlu izin POST_NOTIFICATIONS di AndroidManifest.xml dan jembatan AndroidBridge di MainActivity.'
-                );
-                return;
-            }
-
-            let perm = Notification.permission;
-            if (perm !== 'granted') {
-                perm = await Notification.requestPermission();
-            }
-
-            if (perm === 'granted') {
-                cfg.enabled = true;
-                saveReminderSettings();
-                renderReminderUI();
-                spawnFloatingReward('🔔 Notifikasi Layar Atas HP Aktif!');
-                showTopScreenNotification(
-                    '⚔️ SYSTEM RPG // REMINDER AKTIF',
-                    'Sistem akan mengingatkanmu jika masih ada Daily Quest yang belum selesai!'
-                );
+                spawnFloatingReward('🔔 Reminder Notifikasi HP Aktif!');
             } else {
-                cfg.enabled = false;
+                rem.enabled = false;
                 saveState();
                 renderReminderUI();
-                showSystemModal(
-                    'IZIN NOTIFIKASI BELUM DIBERIKAN',
-                    'Izin notifikasi saat ini berstatus "' + perm + '". Buka Setelan HP > Aplikasi > SYSTEM RPG (atau Browser) > Notifikasi, lalu aktifkan "Izinkan Notifikasi" dan "Pop-up di layar".'
-                );
+                cancelNativeSystemReminders();
+                spawnFloatingReward('🔕 Reminder Notifikasi Dimatikan');
             }
         }
 
-        function showTopScreenNotification(title, body) {
-            // 1. Android Native Notification Bridge (jika dibungkus APK)
+        function getPendingDailySummary() {
+            const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
+            const pending = dailyQuests.filter(q => !q.completed);
+            return {
+                total: dailyQuests.length,
+                done: dailyQuests.length - pending.length,
+                pendingCount: pending.length,
+                sampleTitles: pending.slice(0, 3).map(q => q.title)
+            };
+        }
+
+        async function fireOsNotification(title, body, tag = 'system-rpg-reminder') {
+            if (window.AndroidBridge && typeof window.AndroidBridge.showNotification === 'function') {
+                window.AndroidBridge.showNotification(title, body);
+                return true;
+            }
+            if (!('Notification' in window) || Notification.permission !== 'granted') {
+                return false;
+            }
             try {
-                if (window.AndroidBridge && typeof window.AndroidBridge.showNotification === 'function') {
-                    window.AndroidBridge.showNotification(title, body);
-                    return;
+                if ('serviceWorker' in navigator) {
+                    const reg = await navigator.serviceWorker.getRegistration();
+                    if (reg && typeof reg.showNotification === 'function') {
+                        await reg.showNotification(title, {
+                            body,
+                            tag,
+                            renotify: true,
+                            vibrate: [200, 100, 200]
+                        });
+                        return true;
+                    }
                 }
             } catch (e) {}
 
-            // 2. Web Notification API (muncul di status bar atas HP / Android)
-            if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-                try {
-                    const notif = new Notification(title, {
-                        body: body,
-                        tag: 'system-rpg-daily-reminder',
-                        renotify: true
-                    });
-                    notif.onclick = () => {
-                        window.focus();
-                        switchTab('quests');
-                        notif.close();
-                    };
-                } catch (e) {
-                    // Fallback jika ServiceWorker registration dibutuhkan di beberapa Chrome Android
-                    if (navigator.serviceWorker && navigator.serviceWorker.ready) {
-                        navigator.serviceWorker.ready.then(reg => {
-                            reg.showNotification(title, {
-                                body: body,
-                                tag: 'system-rpg-daily-reminder',
-                                renotify: true
-                            });
-                        }).catch(() => {});
-                    }
-                }
+            try {
+                new Notification(title, { body, tag });
+                return true;
+            } catch (e) {
+                return false;
             }
         }
 
-        function sendTestSystemNotification() {
+        async function sendTestSystemNotification() {
             SoundFX.playClick();
-            const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
-            const remaining = dailyQuests.filter(q => !q.completed).length;
-            const pct = dailyQuests.length > 0 ? Math.round(((dailyQuests.length - remaining) / dailyQuests.length) * 100) : 100;
-
-            const title = remaining > 0
-                ? `⚠️ SYSTEM ALERT: ${remaining} Daily Quest Tersisa!`
-                : '🔥 SYSTEM RPG: Semua Daily Quest Selesai!';
-            const body = remaining > 0
-                ? `Progres hari ini ${pct}%. Ayo selesaikan minimal 80% agar Streak ${gameState.player.streak} hari tidak reset!`
-                : `Mantap Hunter ${gameState.player.name}! Target hari ini sudah aman 100%.`;
-
-            const hasNativeBridge = !!(window.AndroidBridge && typeof window.AndroidBridge.showNotification === 'function');
-            if (!hasNativeBridge && (typeof Notification === 'undefined' || window.location.protocol === 'file:' || Notification.permission !== 'granted')) {
-                togglePushReminder();
-                return;
+            if ('Notification' in window && Notification.permission === 'default') {
+                await Notification.requestPermission();
             }
-            showTopScreenNotification(title, body);
-            spawnFloatingReward('📲 Notifikasi Tes Dikirim ke Layar Atas HP!');
+            const summary = getPendingDailySummary();
+            const body = summary.pendingCount > 0
+                ? `Hunter ${gameState.player.name}, masih ada ${summary.pendingCount} Daily Quest belum selesai (${summary.sampleTitles.join(', ')})!`
+                : `Luar biasa Hunter ${gameState.player.name}! Semua Daily Quest hari ini sudah selesai 100%!`;
+
+            const ok = await fireOsNotification('⚔️ SYSTEM // Daily Quest Alert', body, 'system-rpg-test');
+            if (ok) {
+                spawnFloatingReward('📲 Notifikasi Terkirim ke Layar Atas HP!');
+            } else {
+                showSystemModal(
+                    'PREVIEW NOTIFIKASI',
+                    `Izin notifikasi OS belum diizinkan di browser ini, namun isi pesan pengingatmu adalah:\n\n"${body}"`
+                );
+            }
         }
 
         function syncSystemReminders() {
-            const cfg = getReminderConfig();
-            const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
-            const remaining = dailyQuests.filter(q => !q.completed).length;
-
-            // Sinkronisasi jadwal ke AndroidBridge jika dijalankan sebagai APK
+            const rem = ensureReminderState();
+            if (!rem.enabled) return;
+            const summary = getPendingDailySummary();
             try {
-                if (window.AndroidBridge && typeof window.AndroidBridge.scheduleReminder === 'function') {
-                    window.AndroidBridge.scheduleReminder(JSON.stringify({
-                        enabled: cfg.enabled,
-                        times: cfg.times,
-                        remainingDailyCount: remaining,
-                        streak: gameState.player.streak
-                    }));
+                if (window.AndroidBridge && typeof window.AndroidBridge.scheduleDailyReminders === 'function') {
+                    window.AndroidBridge.scheduleDailyReminders(
+                        JSON.stringify(rem.times),
+                        summary.pendingCount,
+                        gameState.player.name
+                    );
                 }
             } catch (e) {}
         }
 
-        function checkScheduledRemindersTick() {
-            const cfg = getReminderConfig();
-            if (!cfg.enabled) return;
+        function cancelNativeSystemReminders() {
+            try {
+                if (window.AndroidBridge && typeof window.AndroidBridge.cancelDailyReminders === 'function') {
+                    window.AndroidBridge.cancelDailyReminders();
+                }
+            } catch (e) {}
+        }
+
+        function checkScheduledReminderTick() {
+            const rem = ensureReminderState();
+            if (!rem.enabled) return;
 
             const now = new Date();
             const todayKey = formatDateKey(now);
             const hh = String(now.getHours()).padStart(2, '0');
             const mm = String(now.getMinutes()).padStart(2, '0');
-            const currentHHMM = `${hh}:${mm}`;
+            const nowTime = `${hh}:${mm}`;
 
-            if (!cfg.lastFired) cfg.lastFired = {};
+            if (!rem.lastFired) rem.lastFired = {};
 
-            const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
-            const remaining = dailyQuests.filter(q => !q.completed).length;
-            if (remaining === 0) return;
+            ['Pagi', 'Sore', 'Malam'].forEach(slot => {
+                const targetTime = rem.times[slot];
+                const fireKey = `${todayKey}_${slot}`;
+                if (targetTime && nowTime === targetTime && !rem.lastFired[fireKey]) {
+                    const summary = getPendingDailySummary();
+                    if (summary.pendingCount > 0) {
+                        rem.lastFired[fireKey] = true;
+                        saveState();
+                        const slotPending = gameState.quests.filter(
+                            q => q.category === 'Daily Quest' && !q.completed && inferQuestTimeSlot(q) === slot
+                        );
+                        const focusText = slotPending.length > 0
+                            ? `${slotPending.length} misi ${slot} menunggumu (${slotPending.slice(0, 2).map(q => q.title).join(', ')})`
+                            : `${summary.pendingCount} Daily Quest hari ini masih menunggu diselesaikan`;
 
-            const pct = dailyQuests.length > 0 ? Math.round(((dailyQuests.length - remaining) / dailyQuests.length) * 100) : 0;
-
-            Object.entries(cfg.times || {}).forEach(([slotName, targetTime]) => {
-                const fireKey = `${todayKey}_${slotName}_${targetTime}`;
-                if (currentHHMM === targetTime && !cfg.lastFired[fireKey]) {
-                    cfg.lastFired[fireKey] = true;
-                    saveState();
-                    showTopScreenNotification(
-                        `⚔️ SYSTEM RPG // REMINDER ${slotName.toUpperCase()}`,
-                        `Masih ada ${remaining} Daily Quest belum selesai (Progres ${pct}%). Jangan lupa isi SYSTEM RPG agar Streak ${gameState.player.streak} hari aman!`
-                    );
+                        fireOsNotification(
+                            `⚔️ SYSTEM // Pengingat ${slot}`,
+                            `Hunter ${gameState.player.name}, ${focusText}. Jaga Streak ${gameState.player.streak} harimu!`,
+                            `system-rpg-${slot.toLowerCase()}`
+                        );
+                    }
                 }
             });
         }
 
-        // ==========================================
-        // 10. INITIALIZE APP ON LOAD
-        // ==========================================
-        window.addEventListener('DOMContentLoaded', () => {
-            checkRealDayRollover();
-            currentOracleIndex = pickContextualOracleIndex();
-            renderAll();
-            renderReminderUI();
-            updateDungeonTimerUI();
-            syncSystemReminders();
-            setInterval(checkScheduledRemindersTick, 20000);
-        });
+        // Initial Boot
+        checkRealDayRollover();
+        currentOracleIndex = pickContextualOracleIndex();
+        renderAll();
+        syncSystemReminders();
+        setInterval(checkScheduledReminderTick, 20000);
     </script>
 </body>
 </html>
