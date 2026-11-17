@@ -807,15 +807,15 @@
                 <div class="grid grid-cols-3 gap-1-5">
                     <div>
                         <label style="display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 3px;">🌅 Pagi</label>
-                        <input type="time" id="rem-time-pagi" value="07:30" onchange="saveReminderSettings()" class="input-cyber font-display" style="font-size: 0.75rem; padding: 0.35rem 0.4rem;">
+                        <input type="time" id="rem-time-pagi" value="07:30" onchange="saveReminders()" class="input-cyber font-display" style="font-size: 0.75rem; padding: 0.35rem 0.4rem;">
                     </div>
                     <div>
                         <label style="display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 3px;">🌇 Sore</label>
-                        <input type="time" id="rem-time-sore" value="16:30" onchange="saveReminderSettings()" class="input-cyber font-display" style="font-size: 0.75rem; padding: 0.35rem 0.4rem;">
+                        <input type="time" id="rem-time-sore" value="16:30" onchange="saveReminders()" class="input-cyber font-display" style="font-size: 0.75rem; padding: 0.35rem 0.4rem;">
                     </div>
                     <div>
                         <label style="display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 3px;">🌙 Malam</label>
-                        <input type="time" id="rem-time-malam" value="20:30" onchange="saveReminderSettings()" class="input-cyber font-display" style="font-size: 0.75rem; padding: 0.35rem 0.4rem;">
+                        <input type="time" id="rem-time-malam" value="20:30" onchange="saveReminders()" class="input-cyber font-display" style="font-size: 0.75rem; padding: 0.35rem 0.4rem;">
                     </div>
                 </div>
 
@@ -4793,7 +4793,7 @@
 
         function syncSystemReminders() {
             const rem = ensureReminderState();
-            if (!rem.enabled) return;
+            if (!rem.enabled) { cancelNativeSystemReminders(); return; }
             const summary = getPendingDailySummary();
             try {
                 if (window.AndroidBridge && typeof window.AndroidBridge.scheduleDailyReminders === 'function') {
