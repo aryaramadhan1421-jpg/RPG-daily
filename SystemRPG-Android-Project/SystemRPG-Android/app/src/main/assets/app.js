@@ -5010,7 +5010,6 @@ function completeFingerprintUnlock() {
 }
 
 // ==========================================
-// ==========================================
 // 16. UNIFIED MULTILINGUAL ENGINE (ID / EN / JA)
 // ==========================================
 (function () {
@@ -5449,7 +5448,6 @@ function completeFingerprintUnlock() {
         }
     };
 
-    // Menangani elemen campuran (teks + child <span>/<svg>) termasuk tombol Ganti Title & deskripsi panjang
     const HTML_BLOCK_RULES = {
         en: [
             {
@@ -5728,6 +5726,7 @@ function completeFingerprintUnlock() {
         if (!rootElement || !rootElement.querySelectorAll) return;
         const blocks = rootElement.querySelectorAll('p, button');
         blocks.forEach((el) => {
+            if (el.closest && el.closest('#tutorial-modal')) return;
             if (el.children.length === 0) return;
             if (el.querySelector('button, input, select, textarea, section, form, nav')) return;
             const text = el.textContent || '';
@@ -5778,7 +5777,8 @@ function completeFingerprintUnlock() {
         }
 
         if (node.nodeType === Node.ELEMENT_NODE) {
-            if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'SVG'].includes(node.tagName)) return;
+            if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'SVG', 'CANVAS'].includes(node.tagName)) return;
+            if (node.id === 'tutorial-modal') return;
 
             if (['TEXTAREA', 'INPUT'].includes(node.tagName)) {
                 if (node.hasAttribute('placeholder')) {
@@ -5835,10 +5835,12 @@ function completeFingerprintUnlock() {
                 if (mutation.type === 'childList') {
                     for (let j = 0; j < mutation.addedNodes.length; j++) {
                         const added = mutation.addedNodes[j];
-                        if (added.nodeType === Node.ELEMENT_NODE) {
+                        if (added.nodeType === Node.ELEMENT_NODE && added.id !== 'tutorial-modal') {
                             translateMixedHtmlBlocks(added, lang);
+                            translateNode(added, lang);
+                        } else if (added.nodeType === Node.TEXT_NODE) {
+                            translateNode(added, lang);
                         }
-                        translateNode(added, lang);
                     }
                 }
             }
@@ -5959,7 +5961,7 @@ const TUTORIAL_STEPS_DICT = {
         { icon: '⚡', title: '1. SYSTEM RPGへようこそ', desc: 'このアプリは、毎日の活動、良い習慣、人生の目標をRPGのようにクエスト化します。', tip: 'クエストをクリアするとEXP（経験値）が貯まり、レベルアップやゴールドが手に入ります！' },
         { icon: '📋', title: '2. クエストと数値トラッキング', desc: 'クエストタブで日課やスケジュール目標を作成。通常のチェックボックスや数値目標（例：水8杯、読書20ページ）が使えます。', tip: '実施曜日やリマインダーを設定して、タスクの忘れを防ぎましょう。' },
         { icon: '⚔️', title: '3. 集中ダンジョン（タイマー）', desc: '勉強、仕事、運動に集中したいときはダンジョンタブへ。タイマーで時間を区切って挑みます。', tip: '時間内にクリアすると大ボーナスEXPを獲得し、ハンターランクが上がります！' },
-        { icon: '💰', title: '4. トジャラリー（現実の家計簿）', desc: 'トレジャリータブで実際の収入と支出をカテゴリ別にしっかり記録できます。', tip: '家計管理の徹底が、現実世界のハンターとしての安定を保ちます。' },
+        { icon: '💰', title: '4. トレジャリー（現実の家計簿）', desc: 'トレジャリータブで実際の収入と支出をカテゴリ別にしっかり記録できます。', tip: '家計管理の徹底が、現実世界のハンターとしての安定を保ちます。' },
         { icon: '🛡️', title: '5. ショップ＆アーモリー', desc: 'クエストで稼いだゴールドを使って、ご褒美（ショップ）やモチベーションアイテム（アーモリー）を購入。', tip: '自分の頑張った成果で、罪悪感なく自分にご褒美をあげましょう！' },
         { icon: '⚙️', title: '6. 設定・言語・バックアップ', desc: '右上の歯車アイコン（⚙️）から、言語切替（ID/EN/JA）、音声設定、データのエクスポート、このガイドの再確認が行えます。', tip: 'システムの準備は万全です。ハンター、レベルアップを目指して頑張りましょう！' }
     ]
@@ -5974,9 +5976,7 @@ function getTutorialStepsData() {
 
 function ensureTutorialModalExists() {
     let existing = document.getElementById('tutorial-modal');
-    if (existing) {
-        existing.remove();
-    }
+    if (existing) existing.remove();
 
     const wrapper = document.createElement('div');
     wrapper.id = 'tutorial-modal';
@@ -6100,11 +6100,19 @@ function prevTutorialStep() {
 // ==========================================
 // 17. INITIAL SYSTEM BOOT
 // ==========================================
-checkRealDayRollover();
-initTreasuryDefaults();
-currentOracleIndex = pickContextualOracleIndex();
-if (typeof applySavedFontSettings === 'function') applySavedFontSettings();
-renderAll();
-if (typeof applyAppLanguage === 'function') applyAppLanguage();
-syncSystemReminders();
-setInterval(checkScheduledReminderTick, 20000);
+function bootSystemRPG() {
+    checkRealDayRollover();
+    initTreasuryDefaults();
+    currentOracleIndex = pickContextualOracleIndex();
+    if (typeof applySavedFontSettings === 'function') applySavedFontSettings();
+    renderAll();
+    if (typeof applyAppLanguage === 'function') applyAppLanguage();
+    syncSystemReminders();
+    setInterval(checkScheduledReminderTick, 20000);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootSystemRPG);
+} else {
+    bootSystemRPG();
+}
