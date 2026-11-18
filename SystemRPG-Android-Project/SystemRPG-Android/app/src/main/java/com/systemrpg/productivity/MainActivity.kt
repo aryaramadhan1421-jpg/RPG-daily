@@ -233,6 +233,8 @@ class MainActivity : ComponentActivity() {
             weekHistory: String
         ) {
             val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+           val remTarget = getSharedPreferences("SystemRpgReminderPrefs", Context.MODE_PRIVATE)
+                .getInt("thresholdPct", 70)
             val prefs = getSharedPreferences("SystemRpgWidgetPrefs", Context.MODE_PRIVATE)
             prefs.edit()
                 .putInt("streak", streak)
@@ -241,6 +243,7 @@ class MainActivity : ComponentActivity() {
                 .putInt("hp", hp)
                 .putInt("maxHp", maxHp)
                 .putInt("dailyPct", dailyPct)
+                .putInt("dailyTargetPct", remTarget)
                 .putString("weekHistory", weekHistory)
                 .putString("lastUpdatedDate", todayStr)
                 .apply()
