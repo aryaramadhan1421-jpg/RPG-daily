@@ -22,7 +22,29 @@ const SoundFX = {
         }
     },
 
+   ambientTimer: null,
+
+    triggerHaptic(type) {
+        try {
+            if (window.AndroidBridge && typeof window.AndroidBridge.hapticFeedback === 'function') {
+                window.AndroidBridge.hapticFeedback(type);
+                return;
+            }
+            if (navigator && typeof navigator.vibrate === 'function') {
+                const map = {
+                    tap: 18,
+                    quest: 30,
+                    complete: [40, 45, 70],
+                    levelup: [55, 45, 80, 50, 140],
+                    damage: [110, 55, 110]
+                };
+                navigator.vibrate(map[type] || 20);
+            }
+        } catch (e) {}
+    },
+
     playClick() {
+        this.triggerHaptic('tap');
         if (this.muted) return;
         this.init();
         const now = this.ctx.currentTime;
@@ -42,6 +64,7 @@ const SoundFX = {
     },
 
     playUndo() {
+        this.triggerHaptic('tap');
         if (this.muted) return;
         this.init();
         const now = this.ctx.currentTime;
@@ -61,6 +84,7 @@ const SoundFX = {
     },
 
     playQuestComplete() {
+        this.triggerHaptic('complete');
         if (this.muted) return;
         this.init();
         const notes = [523.25, 659.25, 783.99, 1046.50];
@@ -82,6 +106,7 @@ const SoundFX = {
     },
 
     playLevelUp() {
+        this.triggerHaptic('levelup');
         if (this.muted) return;
         this.init();
         const melody = [
@@ -113,6 +138,7 @@ const SoundFX = {
     },
 
     playCritical() {
+        this.triggerHaptic('levelup');
         if (this.muted) return;
         this.init();
         const notes = [659.25, 880, 1174.66, 1567.98];
@@ -132,6 +158,7 @@ const SoundFX = {
     },
 
     playCoin() {
+        this.triggerHaptic('quest');
         if (this.muted) return;
         this.init();
         const now = this.ctx.currentTime;
@@ -151,6 +178,7 @@ const SoundFX = {
     },
 
     playDamage() {
+        this.triggerHaptic('damage');
         if (this.muted) return;
         this.init();
         const now = this.ctx.currentTime;
@@ -169,7 +197,7 @@ const SoundFX = {
         osc.stop(now + 0.31);
     },
 
-    // Offline Ambient Generator for Dungeon Mode
+    // Rich Offline Ambient Generator for Dungeon Mode
     startAmbient(mode) {
         this.stopAmbient();
         if (mode === 'none' || this.muted) return;
@@ -177,40 +205,75 @@ const SoundFX = {
 
         const masterGain = this.ctx.createGain();
         masterGain.gain.setValueAtTime(0.001, this.ctx.currentTime);
-        masterGain.gain.linearRampToValueAtTime(mode === 'synth' ? 0.14 : 0.18, this.ctx.currentTime + 1.2);
+        masterGain.gain.linearRampToValueAtTime(mode === 'synth' ? 0.24 : 0.22, this.ctx.currentTime + 1.0);
         masterGain.connect(this.ctx.destination);
         this.ambientGain = masterGain;
 
         if (mode === 'synth') {
-            const filter = this.ctx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(240, this.ctx.currentTime);
+            // Ethereal Shadow Temple: Warm Pad Chords + Crystal Chime Arpeggio (Jernih di Speaker HP)
+            const chords = [
+                [220.00, 261.63, 329.63, 493.88], // Am9
+                [174.61, 220.00, 261.63, 329.63], // Fmaj7
+                [130.81, 196.00, 246.94, 329.63], // Cmaj7
+                [164.81, 196.00, 293.66, 392.00]  // Em7
+            ];
+            const chimes = [659.25, 783.99, 987.77, 1174.66, 880.00, 659.25];
+            let step = 0;
 
-            const lfo = this.ctx.createOscillator();
-            const lfoGain = this.ctx.createGain();
-            lfo.frequency.setValueAtTime(0.12, this.ctx.currentTime);
-            lfoGain.gain.setValueAtTime(95, this.ctx.currentTime);
-            lfo.connect(lfoGain);
-            lfoGain.connect(filter.frequency);
-            lfo.start();
-            this.ambientNodes.push(lfo);
+            const playPadCycle = () => {
+                if (!this.ambientGain || this.muted) return;
+                const now = this.ctx.currentTime;
+                const chord = chords[step % chords.length];
 
-            filter.connect(masterGain);
+                // 1. Warm Stereo-feel Pad Chord
+                chord.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const filter = this.ctx.createBiquadFilter();
+                    const g = this.ctx.createGain();
 
-            const freqs = [55, 82.41, 110];
-            const types = ['sawtooth', 'triangle', 'sine'];
-            freqs.forEach((f, idx) => {
-                const osc = this.ctx.createOscillator();
-                const oscGain = this.ctx.createGain();
-                osc.type = types[idx];
-                osc.frequency.setValueAtTime(f, this.ctx.currentTime);
-                osc.detune.setValueAtTime((idx - 1) * 6, this.ctx.currentTime);
-                oscGain.gain.setValueAtTime(idx === 0 ? 0.45 : 0.35, this.ctx.currentTime);
-                osc.connect(oscGain);
-                oscGain.connect(filter);
-                osc.start();
-                this.ambientNodes.push(osc);
-            });
+                    osc.type = idx % 2 === 0 ? 'triangle' : 'sine';
+                    osc.frequency.setValueAtTime(freq, now);
+                    osc.detune.setValueAtTime((idx - 1.5) * 7, now);
+
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(680, now);
+                    filter.frequency.linearRampToValueAtTime(1150, now + 2.2);
+                    filter.frequency.linearRampToValueAtTime(620, now + 4.4);
+
+                    g.gain.setValueAtTime(0.0001, now);
+                    g.gain.linearRampToValueAtTime(0.11, now + 1.1);
+                    g.gain.setValueAtTime(0.11, now + 3.1);
+                    g.gain.exponentialRampToValueAtTime(0.0001, now + 4.5);
+
+                    osc.connect(filter);
+                    filter.connect(g);
+                    g.connect(masterGain);
+
+                    osc.start(now);
+                    osc.stop(now + 4.55);
+                });
+
+                // 2. Soft Crystal Chime Bell (terdengar jelas di speaker HP)
+                const bellFreq = chimes[step % chimes.length];
+                const bellOsc = this.ctx.createOscillator();
+                const bellGain = this.ctx.createGain();
+                bellOsc.type = 'sine';
+                bellOsc.frequency.setValueAtTime(bellFreq, now + 0.6);
+
+                bellGain.gain.setValueAtTime(0.0001, now + 0.6);
+                bellGain.gain.linearRampToValueAtTime(0.055, now + 0.72);
+                bellGain.gain.exponentialRampToValueAtTime(0.0001, now + 3.2);
+
+                bellOsc.connect(bellGain);
+                bellGain.connect(masterGain);
+                bellOsc.start(now + 0.6);
+                bellOsc.stop(now + 3.25);
+
+                step++;
+            };
+
+            playPadCycle();
+            this.ambientTimer = setInterval(playPadCycle, 4200);
         } else if (mode === 'rain') {
             const bufferSize = this.ctx.sampleRate * 3;
             const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
@@ -229,13 +292,13 @@ const SoundFX = {
 
             const bandpass = this.ctx.createBiquadFilter();
             bandpass.type = 'bandpass';
-            bandpass.frequency.setValueAtTime(750, this.ctx.currentTime);
-            bandpass.Q.setValueAtTime(0.65, this.ctx.currentTime);
+            bandpass.frequency.setValueAtTime(820, this.ctx.currentTime);
+            bandpass.Q.setValueAtTime(0.6, this.ctx.currentTime);
 
             const highshelf = this.ctx.createBiquadFilter();
             highshelf.type = 'highshelf';
-            highshelf.frequency.setValueAtTime(2200, this.ctx.currentTime);
-            highshelf.gain.setValueAtTime(-6, this.ctx.currentTime);
+            highshelf.frequency.setValueAtTime(2400, this.ctx.currentTime);
+            highshelf.gain.setValueAtTime(-4, this.ctx.currentTime);
 
             noise.connect(bandpass);
             bandpass.connect(highshelf);
@@ -246,6 +309,10 @@ const SoundFX = {
     },
 
     stopAmbient() {
+        if (this.ambientTimer) {
+            clearInterval(this.ambientTimer);
+            this.ambientTimer = null;
+        }
         if (this.ambientNodes.length > 0) {
             this.ambientNodes.forEach(node => {
                 try { node.stop(); node.disconnect(); } catch (e) {}
@@ -257,7 +324,6 @@ const SoundFX = {
             this.ambientGain = null;
         }
     }
-};
 
 function updateAudioIcon() {
     const wrap = document.getElementById('icon-audio-wrap');
@@ -1093,8 +1159,17 @@ function saveState() {
     try {
         gameState.muted = SoundFX.muted;
         gameState.ambientMode = SoundFX.ambientMode;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
-        if (typeof syncAndroidHomeWidget === 'function') {
+        const serialized = JSON.stringify(gameState);
+        localStorage.setItem(STORAGE_KEY, serialized);
+
+        // Silent Auto-Backup ke penyimpanan internal Android (tanpa popup/teks)
+        if (window.AndroidBridge && typeof window.AndroidBridge.saveAutoBackup === 'function') {
+            window.AndroidBridge.saveAutoBackup(serialized);
+        }
+
+       if (typeof syncHomeScreenWidget === 'function') {
+            syncHomeScreenWidget();
+        } else if (typeof syncAndroidHomeWidget === 'function') {
             syncAndroidHomeWidget();
         }
     } catch (e) {
@@ -1102,6 +1177,47 @@ function saveState() {
     }
 }
 
+// Silent Auto-Restore saat halaman dimuat jika localStorage ter-reset
+// Silent Auto-Restore saat halaman selesai dimuat jika localStorage ter-reset
+function runSilentAutoRestore() {
+    try {
+        if (!window.AndroidBridge || typeof window.AndroidBridge.loadAutoBackup !== 'function') return;
+        const currentLocal = localStorage.getItem(STORAGE_KEY);
+        const backupStr = window.AndroidBridge.loadAutoBackup();
+        if (!backupStr || backupStr.length < 20) return;
+
+        let shouldRestore = !currentLocal;
+        if (!shouldRestore) {
+            try {
+                const parsedLocal = JSON.parse(currentLocal);
+                const parsedBackup = JSON.parse(backupStr);
+                const localLvl = parsedLocal?.player?.level || 1;
+                const backupLvl = parsedBackup?.player?.level || 1;
+                const localLogs = parsedLocal?.history?.logs?.length || 0;
+                const backupLogs = parsedBackup?.history?.logs?.length || 0;
+                if (localLvl === 1 && localLogs === 0 && (backupLvl > 1 || backupLogs > 0)) {
+                    shouldRestore = true;
+                }
+            } catch (_) {}
+        }
+
+        if (shouldRestore) {
+            localStorage.setItem(STORAGE_KEY, backupStr);
+            const restored = JSON.parse(backupStr);
+            if (typeof gameState !== 'undefined' && restored && typeof restored === 'object') {
+                Object.assign(gameState, restored);
+                if (typeof renderAll === 'function') renderAll();
+            }
+        }
+        if (typeof syncHomeScreenWidget === 'function') syncHomeScreenWidget();
+    } catch (_) {}
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(runSilentAutoRestore, 150));
+} else {
+    setTimeout(runSilentAutoRestore, 150);
+}
 // ==========================================
 // 4. CORE RPG CALCULATIONS & RANKING
 // ==========================================
@@ -1604,7 +1720,6 @@ function renderAll() {
     if (typeof renderReminderUI === 'function') renderReminderUI();
     if (typeof renderTreasury === 'function') renderTreasury();
     if (typeof renderGrimoireBookmarks === 'function') renderGrimoireBookmarks();
-    if (typeof syncHomeScreenWidget === 'function') syncHomeScreenWidget();
 }
 
 function renderStatus() {
