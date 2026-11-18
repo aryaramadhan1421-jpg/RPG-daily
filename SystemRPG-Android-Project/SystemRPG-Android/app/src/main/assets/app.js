@@ -4999,11 +4999,14 @@ function completeFingerprintUnlock() {
     }
 
     setTimeout(() => {
-        if (splash) splash.classList.add('fade-out');
-        setTimeout(() => {
-            if (splash) splash.style.display = 'none';
-        }, 680);
-    }, 450);
+            if (splash) splash.classList.add('fade-out');
+            setTimeout(() => {
+                if (splash) splash.style.display = 'none';
+                if (!localStorage.getItem('sysrpg_tutorial_seen')) {
+                    openTutorialModal(0);
+                }
+            }, 680);
+        }, 450);
 }
 
 // ==========================================
@@ -5932,6 +5935,128 @@ function completeFingerprintUnlock() {
     }
 })();
 
+// ==========================================
+// 16B. HUNTER TUTORIAL / GUIDE SYSTEM
+// ==========================================
+const TUTORIAL_STEPS = [
+    {
+        icon: '⚡',
+        title: '1. Selamat Datang di SYSTEM RPG',
+        desc: 'Aplikasi ini mengubah aktivitas harian, kebiasaan baik, dan target hidupmu menjadi misi layaknya game RPG.',
+        tip: 'Setiap misi yang selesai akan memberikan EXP untuk naik Level dan Gold untuk belanja hadiah!'
+    },
+    {
+        icon: '📋',
+        title: '2. Quest & Pelacakan Angka',
+        desc: 'Buat misi harian atau target terjadwal di tab Quest. Kamu bisa memakai misi centang biasa atau pelacakan angka (misal: minum 8 gelas air / baca 20 halaman).',
+        tip: 'Atur jadwal hari aktif (Weekday / Weekend) dan pengingat waktu agar tidak terlewat.'
+    },
+    {
+        icon: '⚔️',
+        title: '3. Dungeon Fokus (Timer)',
+        desc: 'Masuk ke tab Dungeon saat ingin belajar, bekerja, atau olahraga tanpa gangguan dalam durasi waktu tertentu.',
+        tip: 'Menyelesaikan Dungeon tepat waktu memberikan bonus EXP besar dan meningkatkan Rank Hunter-mu!'
+    },
+    {
+        icon: '💰',
+        title: '4. Treasury (Keuangan Nyata)',
+        desc: 'Catat pemasukan dan pengeluaran uang aslimu di tab Treasury lengkap dengan kategori dan riwayat transaksi.',
+        tip: 'Disiplin mencatat keuangan menjaga stabilitas status Hunter-mu di dunia nyata.'
+    },
+    {
+        icon: '🛡️',
+        title: '5. Shop & Armory (Self-Reward)',
+        desc: 'Gunakan Gold hasil menyelesaikan misi untuk membeli hadiah hiburan (Shop) atau item/relic penyemangat (Armory).',
+        tip: 'Beri dirimu hadiah tanpa rasa bersalah karena sudah dibayar dengan kerja kerasmu!'
+    },
+    {
+        icon: '⚙️',
+        title: '6. Pengaturan, Bahasa & Backup',
+        desc: 'Buka ikon Pengaturan (⚙️) di pojok atas untuk mengganti bahasa (ID / EN / JA), mengatur suara, ekspor data cadangan, atau membuka panduan ini lagi.',
+        tip: 'Sistem siap digunakan. Selamat berjuang meningkatkan levelmu, Hunter!'
+    }
+];
+
+let currentTutorialStep = 0;
+
+function openTutorialModal(startIndex = 0) {
+    const modal = document.getElementById('tutorial-modal');
+    if (!modal) return;
+    currentTutorialStep = startIndex;
+    renderTutorialStep();
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+}
+
+function closeTutorialModal(markSeen = true) {
+    const modal = document.getElementById('tutorial-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+    if (markSeen) {
+        localStorage.setItem('sysrpg_tutorial_seen', '1');
+    }
+    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+}
+
+function renderTutorialStep() {
+    const step = TUTORIAL_STEPS[currentTutorialStep];
+    if (!step) return;
+
+    const total = TUTORIAL_STEPS.length;
+    const titleEl = document.getElementById('tut-step-title');
+    const counterEl = document.getElementById('tut-step-counter');
+    const iconEl = document.getElementById('tut-step-icon');
+    const descEl = document.getElementById('tut-step-desc');
+    const tipEl = document.getElementById('tut-step-tip');
+    const dotsEl = document.getElementById('tut-dots');
+    const prevBtn = document.getElementById('tut-prev-btn');
+    const nextBtn = document.getElementById('tut-next-btn');
+
+    if (titleEl) titleEl.textContent = step.title;
+    if (counterEl) counterEl.textContent = `${currentTutorialStep + 1} / ${total}`;
+    if (iconEl) iconEl.textContent = step.icon;
+    if (descEl) descEl.textContent = step.desc;
+    if (tipEl) tipEl.textContent = `💡 ${step.tip}`;
+
+    if (dotsEl) {
+        dotsEl.innerHTML = TUTORIAL_STEPS.map((_, idx) => {
+            const active = idx === currentTutorialStep;
+            return `<span style="width:${active ? '18px' : '6px'};height:6px;border-radius:999px;background:${active ? '#22d3ee' : '#334155'};transition:all 0.2s;"></span>`;
+        }).join('');
+    }
+
+    if (prevBtn) {
+        prevBtn.style.visibility = currentTutorialStep === 0 ? 'hidden' : 'visible';
+    }
+    if (nextBtn) {
+        nextBtn.textContent = currentTutorialStep === total - 1 ? 'Mulai Petualangan ✓' : 'Lanjut →';
+    }
+}
+
+function nextTutorialStep() {
+    if (currentTutorialStep < TUTORIAL_STEPS.length - 1) {
+        currentTutorialStep++;
+        renderTutorialStep();
+        if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+    } else {
+        closeTutorialModal(true);
+    }
+}
+
+function prevTutorialStep() {
+    if (currentTutorialStep > 0) {
+        currentTutorialStep--;
+        renderTutorialStep();
+        if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+    }
+}
+
+// ==========================================
+// 17. INITIAL SYSTEM BOOT
+// ==========================================
 
 // ==========================================
 // INITIAL BOOT (ALL MODULES READY)
