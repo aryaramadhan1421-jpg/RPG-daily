@@ -4,10 +4,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="14dp"
+    android:padding="12dp"
     android:gravity="center_vertical"
     android:background="@drawable/widget_bg_cyber">
 
+    <!-- BARIS 1: SYSTEM HEADER & RANK BADGE -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -15,82 +16,143 @@
         android:gravity="center_vertical">
 
         <TextView
-            android:id="@+id/widget_streak"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="🔥 0 DAYS"
-            android:textColor="#FB923C"
+            android:text="💠 SYSTEM // HUNTER HUD"
+            android:textColor="#38BDF8"
             android:textStyle="bold"
-            android:textSize="20sp"
-            android:letterSpacing="0.03" />
+            android:textSize="9sp"
+            android:letterSpacing="0.12"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
         <TextView
             android:id="@+id/widget_rank_lv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="#172554"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
+            android:paddingLeft="9dp"
+            android:paddingRight="9dp"
             android:paddingTop="3dp"
             android:paddingBottom="3dp"
             android:text="E-RANK • Lv.1"
             android:textColor="#22D3EE"
             android:textStyle="bold"
-            android:textSize="11sp" />
+            android:textSize="10sp"
+            android:letterSpacing="0.04" />
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/widget_daily_status"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="Daily Quest: 0% Clear! (Target ≥70%)"
-        android:textColor="#CBD5E1"
-        android:textSize="12sp"
-        android:maxLines="1"
-        android:ellipsize="end" />
-
+    <!-- BARIS 2: STREAK HERO & STATUS QUEST -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="6dp"
         android:orientation="horizontal"
-        android:gravity="center">
+        android:gravity="center_vertical">
 
-        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
-            <TextView android:id="@+id/day_icon_0" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
-            <TextView android:id="@+id/day_label_0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="S" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
+        <TextView
+            android:id="@+id/widget_streak"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🔥 0 DAYS"
+            android:textColor="#FB923C"
+            android:textStyle="bold"
+            android:textSize="21sp"
+            android:letterSpacing="0.03" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginLeft="10dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_daily_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Daily Quest: 0% Clear! (Target ≥70%)"
+                android:textColor="#E2E8F0"
+                android:textStyle="bold"
+                android:textSize="11sp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <!-- Visual Progress Bar -->
+            <ProgressBar
+                android:id="@+id/widget_daily_progress"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="6dp"
+                android:layout_marginTop="4dp"
+                android:max="100"
+                android:progress="0"
+                android:progressTint="#22D3EE"
+                android:progressBackgroundTint="#1E293B" />
         </LinearLayout>
+    </LinearLayout>
 
-        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
-            <TextView android:id="@+id/day_icon_1" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
-            <TextView android:id="@+id/day_label_1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="S" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
-        </LinearLayout>
+    <!-- GARIS PEMBATAS CYBER -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="7dp"
+        android:background="#1E293B"
+        android:contentDescription="@null" />
 
-        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
-            <TextView android:id="@+id/day_icon_2" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
-            <TextView android:id="@+id/day_label_2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="R" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
-        </LinearLayout>
+    <!-- BARIS 3: PANEL WEEKLY CONSISTENCY -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#0B1120"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:paddingLeft="6dp"
+        android:paddingRight="6dp">
 
-        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
-            <TextView android:id="@+id/day_icon_3" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
-            <TextView android:id="@+id/day_label_3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="K" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
-        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
 
-        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
-            <TextView android:id="@+id/day_icon_4" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
-            <TextView android:id="@+id/day_label_4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="J" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
-        </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <TextView android:id="@+id/day_icon_0" android:layout_width="25dp" android:layout_height="25dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+                <TextView android:id="@+id/day_label_0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="S" android:textColor="#94A3B8" android:textSize="9sp" android:textStyle="bold" />
+            </LinearLayout>
 
-        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
-            <TextView android:id="@+id/day_icon_5" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
-            <TextView android:id="@+id/day_label_5" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="S" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
-        </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <TextView android:id="@+id/day_icon_1" android:layout_width="25dp" android:layout_height="25dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+                <TextView android:id="@+id/day_label_1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="S" android:textColor="#94A3B8" android:textSize="9sp" android:textStyle="bold" />
+            </LinearLayout>
 
-        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
-            <TextView android:id="@+id/day_icon_6" android:layout_width="24dp" android:layout_height="24dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
-            <TextView android:id="@+id/day_label_6" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="M" android:textColor="#94A3B8" android:textSize="10sp" android:textStyle="bold" />
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <TextView android:id="@+id/day_icon_2" android:layout_width="25dp" android:layout_height="25dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+                <TextView android:id="@+id/day_label_2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="R" android:textColor="#94A3B8" android:textSize="9sp" android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <TextView android:id="@+id/day_icon_3" android:layout_width="25dp" android:layout_height="25dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+                <TextView android:id="@+id/day_label_3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="K" android:textColor="#94A3B8" android:textSize="9sp" android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <TextView android:id="@+id/day_icon_4" android:layout_width="25dp" android:layout_height="25dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+                <TextView android:id="@+id/day_label_4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="J" android:textColor="#94A3B8" android:textSize="9sp" android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <TextView android:id="@+id/day_icon_5" android:layout_width="25dp" android:layout_height="25dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+                <TextView android:id="@+id/day_label_5" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="S" android:textColor="#94A3B8" android:textSize="9sp" android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <TextView android:id="@+id/day_icon_6" android:layout_width="25dp" android:layout_height="25dp" android:gravity="center" android:background="@drawable/day_circle_pending" android:text="•" android:textColor="#64748B" android:textStyle="bold" android:textSize="12sp" />
+                <TextView android:id="@+id/day_label_6" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="M" android:textColor="#94A3B8" android:textSize="9sp" android:textStyle="bold" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>
