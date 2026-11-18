@@ -1681,17 +1681,17 @@
                     🌐 Bahasa Antarmuka (Language)
                 </label>
                 <div class="grid grid-cols-3 gap-1-5">
-                    <button type="button" onclick="setAppLanguage('id'); if(window.setSystemLanguage) setSystemLanguage('id')" id="lang-btn-id"
+                    <button type="button" onclick="setAppLanguage('id')" id="lang-btn-id"
                         class="app-lang-btn font-display"
                         style="padding: 0.55rem 0.25rem; border-radius: 0.5rem; border: 1px solid #06b6d4; background: #083344; font-size: 11px; font-weight: 700; color: #67e8f9;">
                         🇮🇩 Indo
                     </button>
-                    <button type="button" onclick="setAppLanguage('en'); if(window.setSystemLanguage) setSystemLanguage('en')" id="lang-btn-en"
+                    <button type="button" onclick="setAppLanguage('en')" id="lang-btn-en"
                         class="app-lang-btn font-display"
                         style="padding: 0.55rem 0.25rem; border-radius: 0.5rem; border: 1px solid #334155; background: #020617; font-size: 11px; font-weight: 700; color: #cbd5e1;">
                         🇬🇧 English
                     </button>
-                    <button type="button" onclick="setAppLanguage('ja'); if(window.setSystemLanguage) setSystemLanguage('ja')" id="lang-btn-ja"
+                    <button type="button" onclick="setAppLanguage('ja')" id="lang-btn-ja"
                         class="app-lang-btn font-display"
                         style="padding: 0.55rem 0.25rem; border-radius: 0.5rem; border: 1px solid #334155; background: #020617; font-size: 11px; font-weight: 700; color: #cbd5e1;">
                         🇯🇵 日本語
@@ -1706,37 +1706,10 @@
             </div>
         </div>
     </div>
-    <script src="i18n_engine.js"></script>
     <script src="app.js"></script>
 
     <script>
     (function () {
-        // 1. Pastikan tombol Fingerprint SELALU bisa membuka gerbang saat ditekan/ditahan
-        const fpBtn = document.getElementById('btn-fingerprint-auth');
-        const splash = document.getElementById('system-splash-screen');
-        if (fpBtn && splash) {
-            let fallbackTimer = null;
-            const unlockGate = function () {
-                if (typeof completeFingerprintAuth === 'function') {
-                    completeFingerprintAuth();
-                } else {
-                    splash.style.opacity = '0';
-                    splash.style.pointerEvents = 'none';
-                    setTimeout(function () { splash.style.display = 'none'; }, 350);
-                }
-            };
-            fpBtn.addEventListener('click', function () {
-                if (typeof startFingerprintHold !== 'function') unlockGate();
-            });
-            fpBtn.addEventListener('touchstart', function () {
-                fallbackTimer = setTimeout(unlockGate, 650);
-            }, { passive: true });
-            fpBtn.addEventListener('touchend', function () {
-                clearTimeout(fallbackTimer);
-            });
-        }
-
-        // 2. Modal Panduan Hunter (Tutorial) & Terjemahan Otomatis
         let tutStep = 0;
         const TUT_DATA = {
             id: [
@@ -1765,42 +1738,7 @@
             ]
         };
 
-        const PDF_HINT_HTML = {
-            id: 'Pilih file <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> dari HP untuk membaca sambil timer fokus berjalan. Halaman terakhir otomatis tersimpan saat kamu menekan <span style="color: #fcd34d; font-weight: 700;">🔖 Tandai Hal Ini</span>.',
-            en: 'Select a <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> file from your device to read while the focus timer runs. Your last page is automatically saved when you tap <span style="color: #fcd34d; font-weight: 700;">🔖 Bookmark This Page</span>.',
-            ja: '集中タイマーの作動中に読むための <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> ファイルを選択してください。<span style="color: #fcd34d; font-weight: 700;">🔖 このページをブックマーク</span> を押すと最後のページが自動保存されます。'
-        };
-
-        const TREASURY_CAT_DICT = {
-            'Makan & Jajan': { id: 'Makan & Jajan', en: 'Food & Snacks', ja: '食費・間食' },
-            'Makan & Minum': { id: 'Makan & Minum', en: 'Food & Drinks', ja: '飲食費' },
-            'Transportasi': { id: 'Transportasi', en: 'Transportation', ja: '交通費' },
-            'Belanja': { id: 'Belanja', en: 'Shopping', ja: '買い物' },
-            'Tagihan & Kuota': { id: 'Tagihan & Kuota', en: 'Bills & Data Plan', ja: '公共料金・通信費' },
-            'Tagihan & Utilitas': { id: 'Tagihan & Utilitas', en: 'Bills & Utilities', ja: '光熱費・請求書' },
-            'Hiburan & Game': { id: 'Hiburan & Game', en: 'Entertainment & Games', ja: '娯楽・ゲーム' },
-            'Kesehatan': { id: 'Kesehatan', en: 'Health & Fitness', ja: '健康・医療' },
-            'Pendidikan & Buku': { id: 'Pendidikan & Buku', en: 'Education & Books', ja: '教育・書籍' },
-            'Lainnya': { id: 'Lainnya', en: 'Others', ja: 'その他' },
-            'Gaji / Honor': { id: 'Gaji / Honor', en: 'Salary / Wage', ja: '給与・報酬' },
-            'Gaji': { id: 'Gaji', en: 'Salary', ja: '給与' },
-            'Uang Saku': { id: 'Uang Saku', en: 'Allowance', ja: 'お小遣い' },
-            'Bonus / Freelance': { id: 'Bonus / Freelance', en: 'Bonus / Freelance', ja: 'ボーナス・副業' },
-            'Investasi / Tabungan': { id: 'Investasi / Tabungan', en: 'Investment / Savings', ja: '投資・貯蓄' },
-            'Hadiah': { id: 'Hadiah', en: 'Gift / Reward', ja: 'ギフト・臨時収入' }
-        };
-
-        const TX_TYPE_DICT = {
-            expense: { id: '📤 Pengeluaran (-)', en: '📤 Expense (-)', ja: '📤 支出 (-)' },
-            income: { id: '📥 Pemasukan (+)', en: '📥 Income (+)', ja: '📥 収入 (+)' }
-        };
-
         function getActiveLang() {
-            const jaBtn = document.getElementById('lang-btn-ja');
-            const enBtn = document.getElementById('lang-btn-en');
-            if (jaBtn && jaBtn.style.background && jaBtn.style.background.indexOf('8, 51, 68') !== -1) return 'ja';
-            if (enBtn && enBtn.style.background && enBtn.style.background.indexOf('8, 51, 68') !== -1) return 'en';
-
             const saved = localStorage.getItem('sysrpg_language') ||
                           localStorage.getItem('sysrpg_lang') ||
                           localStorage.getItem('appLanguage') ||
@@ -1808,66 +1746,6 @@
             if (saved.indexOf('ja') === 0) return 'ja';
             if (saved.indexOf('en') === 0) return 'en';
             return 'id';
-        }
-
-        function translateCategoryLabel(rawText, lang) {
-            const clean = rawText.replace(/^[^\w\u3040-\u30ff\u4e00-\u9faf]+/, '').trim();
-            const emojiMatch = rawText.match(/^([^\w\u3040-\u30ff\u4e00-\u9faf]+\s*)/);
-            const prefix = emojiMatch ? emojiMatch[1] : '';
-
-            for (const key in TREASURY_CAT_DICT) {
-                const map = TREASURY_CAT_DICT[key];
-                if (clean.toLowerCase() === key.toLowerCase() ||
-                    map.id.toLowerCase() === clean.toLowerCase() ||
-                    map.en.toLowerCase() === clean.toLowerCase() ||
-                    map.ja.toLowerCase() === clean.toLowerCase()) {
-                    return prefix + (map[lang] || map.id);
-                }
-            }
-            return rawText;
-        }
-
-        function syncAllTranslations() {
-            const lang = getActiveLang();
-
-            const btnLabels = {
-                id: '📖 BANTUAN & PANDUAN HUNTER (TUTORIAL)',
-                en: '📖 HUNTER HELP & GUIDE (TUTORIAL)',
-                ja: '📖 ハンターガイド＆チュートリアル'
-            };
-            document.querySelectorAll('#font-settings-modal button').forEach(function (btn) {
-                if ((btn.getAttribute('onclick') || '').indexOf('openTutorialModal') !== -1) {
-                    btn.textContent = btnLabels[lang] || btnLabels.id;
-                }
-            });
-
-            const pdfHint = document.getElementById('grimoire-empty-hint');
-            if (pdfHint) pdfHint.innerHTML = PDF_HINT_HTML[lang] || PDF_HINT_HTML.id;
-
-            const txTypeSelect = document.getElementById('tx-type');
-            if (txTypeSelect) {
-                Array.from(txTypeSelect.options).forEach(function (opt) {
-                    if (TX_TYPE_DICT[opt.value]) {
-                        opt.textContent = TX_TYPE_DICT[opt.value][lang] || TX_TYPE_DICT[opt.value].id;
-                    }
-                });
-            }
-
-            const txCatSelect = document.getElementById('tx-category');
-            if (txCatSelect) {
-                Array.from(txCatSelect.options).forEach(function (opt) {
-                    if (!opt.dataset.origLabel) opt.dataset.origLabel = opt.textContent;
-                    opt.textContent = translateCategoryLabel(opt.dataset.origLabel, lang);
-                });
-            }
-
-            document.querySelectorAll('#tr-category-breakdown span, #tr-transaction-list span').forEach(function (el) {
-                if (el.children.length === 0 && el.textContent.trim()) {
-                    if (!el.dataset.origCat) el.dataset.origCat = el.textContent;
-                    const translated = translateCategoryLabel(el.dataset.origCat, lang);
-                    if (translated !== el.dataset.origCat) el.textContent = translated;
-                }
-            });
         }
 
         function renderTutorialBox() {
@@ -1888,8 +1766,8 @@
             box.querySelector('#sft-title').textContent = item.title;
             box.querySelector('#sft-desc').textContent = item.desc;
             box.querySelector('#sft-tip').textContent = item.tip;
-
             box.querySelector('#sft-skip').textContent = uiText.skip;
+
             const prevBtn = box.querySelector('#sft-prev');
             const nextBtn = box.querySelector('#sft-next');
             prevBtn.textContent = uiText.prev;
@@ -1904,7 +1782,6 @@
 
         window.openTutorialModal = function (startIndex) {
             if (typeof startIndex !== 'number') startIndex = 0;
-
             const fontModal = document.getElementById('font-settings-modal');
             if (fontModal) fontModal.classList.add('hidden');
 
@@ -1961,22 +1838,6 @@
             tutStep = Math.max(0, Math.min(startIndex, total - 1));
             renderTutorialBox();
         };
-
-        document.addEventListener('click', function (e) {
-            if (e.target.closest('button')) setTimeout(syncAllTranslations, 50);
-        });
-
-        const txTypeEl = document.getElementById('tx-type');
-        if (txTypeEl) {
-            txTypeEl.addEventListener('change', function () {
-                setTimeout(syncAllTranslations, 30);
-            });
-        }
-
-        window.addEventListener('DOMContentLoaded', function () {
-            setTimeout(syncAllTranslations, 250);
-        });
-        setInterval(syncAllTranslations, 1500);
     })();
     </script>
 </body>
