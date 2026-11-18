@@ -1010,7 +1010,7 @@ function checkRealDayRollover() {
         const todayDateObj = parseDateKey(realToday);
         const diffDays = Math.max(1, Math.round((todayDateObj - prevDateObj) / (1000 * 60 * 60 * 24)));
 
-        const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
+        const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest' && isQuestActiveOnDate(q, gameState.lastRealDate));
         const doneCount = dailyQuests.filter(q => q.completed).length;
         const totalDaily = dailyQuests.length;
         const ratio = totalDaily > 0 ? (doneCount / totalDaily) : 1;
@@ -1802,7 +1802,7 @@ function renderAnalyticsMetrics() {
 
     const rateEl = document.getElementById('metric-weekly-rate');
     if (rateEl) {
-        const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
+        const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest' && isQuestActiveOnDate(q, getCurrentGameDateKey()));
         const totalDailyPerDay = Math.max(1, dailyQuests.length);
         const dailyCounts = (gameState.history && gameState.history.dailyCounts) || {};
         const baseDate = parseDateKey(getCurrentGameDateKey());
@@ -2108,6 +2108,80 @@ function clearQuestSearch() {
     handleQuestSearch('');
 }
 
+
+// ==========================================
+// ACTIVE DAYS SCHEDULE (WEEKDAY / WEEKEND / CUSTOM)
+// ==========================================
+let currentQuestDayFilter = 'TODAY'; // 'TODAY' | 'ALL'
+
+function getQuestActiveDays(q) {
+    if (Array.isArray(q && q.activeDays) && q.activeDays.length > 0) {
+        return q.activeDays;
+    }
+    return [0, 1, 2, 3, 4, 5, 6];
+}
+
+function isQuestActiveOnDate(q, dateKey) {
+    const d = dateKey ? parseDateKey(dateKey) : new Date();
+    const dayIdx = d.getDay();
+    return getQuestActiveDays(q).includes(dayIdx);
+}
+
+function formatActiveDaysLabel(days) {
+    const sorted = [...new Set(days)].sort((a, b) => a - b);
+    if (sorted.length === 7) return '';
+    if (sorted.length === 5 && sorted.join(',') === '1,2,3,4,5') return 'Weekday';
+    if (sorted.length === 2 && sorted.join(',') === '0,6') return 'Weekend';
+    const lang = (typeof gameState !== 'undefined' && gameState.language) || localStorage.getItem('sysrpg_lang') || 'id';
+    const dayNamesMap = {
+        id: ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'],
+        en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+        ja: ['日', '月', '火', '水', '木', '金', '土']
+    };
+    const names = dayNamesMap[lang] || dayNamesMap.id;
+    return sorted.map(d => names[d]).join('·');
+}
+
+function toggleDayChip(btn) {
+    btn.classList.toggle('active');
+    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+}
+
+function applyDayPreset(mode, daysArr) {
+    const containerId = mode === 'edit' ? 'edit-q-days' : 'add-q-days';
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.querySelectorAll('.day-chip').forEach(btn => {
+        const day = parseInt(btn.getAttribute('data-day'), 10);
+        btn.classList.toggle('active', daysArr.includes(day));
+    });
+    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+}
+
+function readSelectedDays(mode) {
+    const containerId = mode === 'edit' ? 'edit-q-days' : 'add-q-days';
+    const container = document.getElementById(containerId);
+    if (!container) return [0, 1, 2, 3, 4, 5, 6];
+    const selected = [];
+    container.querySelectorAll('.day-chip.active').forEach(btn => {
+        selected.push(parseInt(btn.getAttribute('data-day'), 10));
+    });
+    return selected.length > 0 ? selected : [0, 1, 2, 3, 4, 5, 6];
+}
+
+function setQuestDayFilter(mode) {
+    currentQuestDayFilter = mode;
+    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+    document.querySelectorAll('.day-filter-btn').forEach(btn => {
+        btn.style.cssText = 'padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);';
+    });
+    const activeBtn = document.getElementById(`day-filter-${mode}`);
+    if (activeBtn) {
+        activeBtn.style.cssText = 'padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: rgba(251,191,36,0.2); color: #fcd34d; border: 1px solid rgba(251,191,36,0.45);';
+    }
+    renderQuests();
+}
+
 function openEditQuestModal(id) {
     const q = gameState.quests.find(item => item.id === id);
     if (!q) return;
@@ -2119,6 +2193,7 @@ function openEditQuestModal(id) {
     document.getElementById('edit-q-stat').value = q.stat;
     document.getElementById('edit-q-xp').value = q.xp;
     document.getElementById('edit-q-gold').value = q.gold;
+    applyDayPreset('edit', getQuestActiveDays(q));
 
     const isCount = q.trackingType === 'count';
     const trackSel = document.getElementById('edit-q-tracking-type');
@@ -2144,6 +2219,7 @@ function saveEditedQuest(e) {
     q.stat = document.getElementById('edit-q-stat').value;
     q.xp = Math.max(5, parseInt(document.getElementById('edit-q-xp').value, 10) || q.xp);
     q.gold = Math.max(5, parseInt(document.getElementById('edit-q-gold').value, 10) || q.gold);
+    q.activeDays = readSelectedDays('edit');
 
     const trackMode = document.getElementById('edit-q-tracking-type')?.value || 'check';
     q.trackingType = trackMode;
@@ -2170,7 +2246,7 @@ function renderQuests() {
     const container = document.getElementById('quest-list');
     container.innerHTML = '';
 
-    const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
+    const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest' && isQuestActiveOnDate(q, getCurrentGameDateKey()));
     const doneDailyCount = dailyQuests.filter(q => q.completed).length;
     const totalDailyCount = dailyQuests.length;
 
@@ -2214,7 +2290,8 @@ function renderQuests() {
                 (currentQuestStatusFilter === 'ACTIVE' && !q.completed) ||
                 (currentQuestStatusFilter === 'DONE' && q.completed);
             const matchSearch = !questSearchQuery || q.title.toLowerCase().includes(questSearchQuery);
-            return matchCat && matchTime && matchStatus && matchSearch;
+            const matchDay = currentQuestDayFilter === 'ALL' || isQuestActiveOnDate(q, getCurrentGameDateKey());
+            return matchCat && matchTime && matchStatus && matchSearch && matchDay;
         })
         .sort((a, b) => Number(a.completed) - Number(b.completed));
 
@@ -2597,6 +2674,7 @@ function handleAddQuest(e) {
         xp,
         gold,
         trackingType,
+        activeDays: readSelectedDays('add'),
         completed: false
     };
 
@@ -2613,6 +2691,7 @@ function handleAddQuest(e) {
     const form = document.getElementById('quest-form');
     if (form) {
         form.reset();
+        applyDayPreset('add', [0, 1, 2, 3, 4, 5, 6]);
         toggleQuestCountInputs('add');
         form.classList.add('hidden');
     }
@@ -3530,7 +3609,7 @@ function confirmJournalAndAdvance(saveJournal) {
         }
     }
 
-    const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
+    const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest' && isQuestActiveOnDate(q, getCurrentGameDateKey()));
     const doneCount = dailyQuests.filter(q => q.completed).length;
     const totalDaily = dailyQuests.length;
     const ratio = totalDaily > 0 ? (doneCount / totalDaily) : 1;
@@ -3772,7 +3851,7 @@ async function togglePushReminder() {
 }
 
 function getPendingDailySummary() {
-    const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
+    const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest' && isQuestActiveOnDate(q, getCurrentGameDateKey()));
     const pending = dailyQuests.filter(q => !q.completed);
     return {
         total: dailyQuests.length,
@@ -4668,7 +4747,7 @@ function syncAndroidHomeWidget() {
         if (!window.AndroidBridge) return;
         const p = gameState.player;
         const rank = getPlayerRank(p.level);
-        const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest');
+        const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest' && isQuestActiveOnDate(q, getCurrentGameDateKey()));
         const doneCount = dailyQuests.filter(q => q.completed).length;
         const totalDaily = dailyQuests.length;
         const pct = totalDaily > 0 ? Math.round((doneCount / totalDaily) * 100) : 0;
@@ -4830,7 +4909,38 @@ const APP_I18N = {
         shopTitle: 'SYSTEM SHOP',
         shopSub: 'Tukarkan Gold dengan Potion atau Reward Dunia Nyata',
         treasuryTitle: 'TREASURY VAULT',
-        dungeonTitle: 'DEEP FOCUS RAID'
+        dungeonTitle: 'DEEP FOCUS RAID',
+        lbl_schedule_days: 'Jadwal Hari Aktif',
+        preset_all_days: 'Semua',
+        preset_weekday: 'Weekday',
+        preset_weekend: 'Weekend',
+        filter_day_today: '📅 Jadwal Hari Ini',
+        filter_day_all: '🗓️ Semua Jadwal',
+        form_new_quest_title: 'Buat Misi Baru',
+        lbl_quest_name: 'Nama Misi / Tugas',
+        btn_add_to_board: 'TAMBAHKAN KE QUEST BOARD',
+        btn_preset_habit: 'Preset Habit',
+        btn_new_quest: 'Quest Baru',
+        time_all: '🕒 Semua Waktu',
+        time_morning: '🌅 Pagi',
+        time_afternoon: '☀️ Siang',
+        time_evening: '🌇 Sore',
+        time_night: '🌙 Malam',
+        status_active: 'Aktif (Belum)',
+        status_done: 'Selesai',
+        btn_eval_next_day: 'Evaluasi & Lanjut Hari',
+        btn_enable_notif: '🔔 Aktifkan Notifikasi',
+        btn_test_popup: 'Tes Pop-up',
+        btn_new_item: 'Item Baru',
+        btn_save_shop: 'SIMPAN KE SHOP',
+        statAttrTitle: 'Status Atribut',
+        habitTrackerTitle: 'Habit Tracker & Riwayat',
+        sysControlTitle: 'Kontrol Sistem & Evaluasi Harian',
+        notifTitle: 'Reminder Notifikasi Layar HP',
+        btnStartDungeon: 'MASUKI DUNGEON',
+        btnAbortDungeon: 'MENYERAH (-10 HP)',
+        redeemHistoryTitle: 'Riwayat Redeem',
+        dayChips: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
     },
     en: {
         navStatus: 'Status',
@@ -4843,7 +4953,38 @@ const APP_I18N = {
         shopTitle: 'SYSTEM SHOP',
         shopSub: 'Exchange Gold for Potions or Real-World Rewards',
         treasuryTitle: 'TREASURY VAULT',
-        dungeonTitle: 'DEEP FOCUS RAID'
+        dungeonTitle: 'DEEP FOCUS RAID',
+        lbl_schedule_days: 'Active Days Schedule',
+        preset_all_days: 'Every Day',
+        preset_weekday: 'Weekday',
+        preset_weekend: 'Weekend',
+        filter_day_today: '📅 Today’s Schedule',
+        filter_day_all: '🗓️ All Schedules',
+        form_new_quest_title: 'Create New Quest',
+        lbl_quest_name: 'Quest / Task Name',
+        btn_add_to_board: 'ADD TO QUEST BOARD',
+        btn_preset_habit: 'Habit Presets',
+        btn_new_quest: 'New Quest',
+        time_all: '🕒 All Times',
+        time_morning: '🌅 Morning',
+        time_afternoon: '☀️ Afternoon',
+        time_evening: '🌇 Evening',
+        time_night: '🌙 Night',
+        status_active: 'Active',
+        status_done: 'Completed',
+        btn_eval_next_day: 'Evaluate & Next Day',
+        btn_enable_notif: '🔔 Enable Notifications',
+        btn_test_popup: 'Test Pop-up',
+        btn_new_item: 'New Item',
+        btn_save_shop: 'SAVE TO SHOP',
+        statAttrTitle: 'Attribute Status',
+        habitTrackerTitle: 'Habit Tracker & History',
+        sysControlTitle: 'System Control & Daily Evaluation',
+        notifTitle: 'Phone Reminder Notifications',
+        btnStartDungeon: 'ENTER DUNGEON',
+        btnAbortDungeon: 'SURRENDER (-10 HP)',
+        redeemHistoryTitle: 'Redeem History',
+        dayChips: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     },
     ja: {
         navStatus: 'ステータス',
@@ -4856,7 +4997,38 @@ const APP_I18N = {
         shopTitle: 'システムショップ',
         shopSub: 'ゴールドをポーションや現実の報酬と交換',
         treasuryTitle: 'トレジャリー金庫',
-        dungeonTitle: '集中レイド'
+        dungeonTitle: '集中レイド',
+        lbl_schedule_days: '実行曜日スケジュール',
+        preset_all_days: '毎日',
+        preset_weekday: '平日',
+        preset_weekend: '週末',
+        filter_day_today: '📅 今日の予定',
+        filter_day_all: '🗓️ すべての予定',
+        form_new_quest_title: '新規クエスト作成',
+        lbl_quest_name: 'クエスト名 / タスク',
+        btn_add_to_board: 'クエストボードに追加',
+        btn_preset_habit: '習慣プリセット',
+        btn_new_quest: '新規クエスト',
+        time_all: '🕒 すべての時間',
+        time_morning: '🌅 朝',
+        time_afternoon: '☀️ 昼',
+        time_evening: '🌇 夕方',
+        time_night: '🌙 夜',
+        status_active: '未完了',
+        status_done: '完了済み',
+        btn_eval_next_day: '日次評価＆翌日へ',
+        btn_enable_notif: '🔔 通知を有効化',
+        btn_test_popup: '通知テスト',
+        btn_new_item: '新規アイテム',
+        btn_save_shop: 'ショップに保存',
+        statAttrTitle: 'ステータス属性',
+        habitTrackerTitle: '習慣トラッカー＆履歴',
+        sysControlTitle: 'システム制御＆日次評価',
+        notifTitle: 'スマホ通知リマインダー',
+        btnStartDungeon: 'ダンジョン突入',
+        btnAbortDungeon: '撤退する (-10 HP)',
+        redeemHistoryTitle: '交換履歴',
+        dayChips: ['月', '火', '水', '木', '金', '土', '日']
     }
 };
 
@@ -4870,6 +5042,22 @@ function applyAppLanguage() {
     document.querySelectorAll('.app-lang-btn').forEach(b => b.style.cssText = btnInactive);
     const activeLangBtn = document.getElementById(`lang-btn-${lang}`);
     if (activeLangBtn) activeLangBtn.style.cssText = btnActive;
+
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (t[key]) el.textContent = t[key];
+    });
+
+    // Update day chip labels (Mon..Sun / Sen..Min / 月..日)
+    const chipOrder = [1, 2, 3, 4, 5, 6, 0];
+    ['add-q-days', 'edit-q-days'].forEach(boxId => {
+        const box = document.getElementById(boxId);
+        if (!box) return;
+        chipOrder.forEach((dayNum, idx) => {
+            const btn = box.querySelector(`[data-day="${dayNum}"]`);
+            if (btn && t.dayChips[idx]) btn.textContent = t.dayChips[idx];
+        });
+    });
 
     const navMap = {
         'nav-status': t.navStatus,
@@ -4898,6 +5086,20 @@ function applyAppLanguage() {
 
     const dH2 = document.querySelector('#tab-dungeon h2');
     if (dH2) dH2.textContent = t.dungeonTitle;
+
+    const btnStartD = document.getElementById('btn-start-dungeon');
+    const btnAbortD = document.getElementById('btn-abort-dungeon');
+    if (btnStartD) btnStartD.textContent = t.btnStartDungeon;
+    if (btnAbortD) btnAbortD.textContent = t.btnAbortDungeon;
+
+    const statusH3s = document.querySelectorAll('#tab-status h3');
+    if (statusH3s[0] && statusH3s[0].lastChild) statusH3s[0].lastChild.textContent = ' ' + t.statAttrTitle;
+    if (statusH3s[1] && statusH3s[1].lastChild) statusH3s[1].lastChild.textContent = ' ' + t.habitTrackerTitle;
+    if (statusH3s[2] && statusH3s[2].lastChild) statusH3s[2].lastChild.textContent = ' ' + t.sysControlTitle;
+    if (statusH3s[3] && statusH3s[3].lastChild) statusH3s[3].lastChild.textContent = ' ' + t.notifTitle;
+
+    const shopH3s = document.querySelectorAll('#tab-shop h3');
+    if (shopH3s[1] && shopH3s[1].lastChild) shopH3s[1].lastChild.textContent = ' ' + t.redeemHistoryTitle;
 }
 
 function setAppLanguage(lang) {
@@ -4907,10 +5109,11 @@ function setAppLanguage(lang) {
         if (typeof saveState === 'function') saveState();
     }
     applyAppLanguage();
+    if (typeof renderQuests === 'function') renderQuests();
     if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
     if (typeof spawnFloatingReward === 'function') {
         const names = { id: 'Bahasa Indonesia', en: 'English', ja: '日本語 (Japanese)' };
-        spawnFloatingReward(`🌐 Bahasa: ${names[lang] || lang}`);
+        spawnFloatingReward(`🌐 ${names[lang] || lang}`);
     }
 }
 

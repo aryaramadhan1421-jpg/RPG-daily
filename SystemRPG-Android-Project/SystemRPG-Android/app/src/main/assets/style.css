@@ -487,3 +487,29 @@ button {
     background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, rgba(2, 6, 23, 0.95) 80%);
     box-shadow: 0 0 36px rgba(16, 185, 129, 0.85);
 }
+
+/* ==================== ACTIVE DAYS SCHEDULE CHIPS ==================== */
+.day-chip {
+    padding: 5px 2px;
+    border-radius: 0.45rem;
+    font-size: 10px;
+    font-weight: 700;
+    text-align: center;
+    background: var(--bg-slate-900);
+    color: var(--text-muted);
+    border: 1px solid #334155;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.day-chip.active {
+    background: rgba(6, 182, 212, 0.24);
+    color: #67e8f9;
+    border-color: rgba(34, 211, 238, 0.65);
+    box-shadow: 0 0 8px rgba(34, 211, 238, 0.25);
+}
+
+.grid-cols-7 {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+}

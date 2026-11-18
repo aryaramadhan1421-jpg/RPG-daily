@@ -569,14 +569,14 @@
             <!-- Add Quest Form -->
             <form id="quest-form" onsubmit="handleAddQuest(event)" class="hidden system-card space-y-3 modal-enter" style="border-color: rgba(34,211,238,0.45);">
                 <div class="flex justify-between items-center" style="border-bottom: 1px solid var(--bg-slate-800); padding-bottom: 0.5rem;">
-                    <span class="font-display" style="font-weight: 700; font-size: 0.875rem; color: var(--cyan-400); text-transform: uppercase;">Buat Misi Baru</span>
+                    <span class="font-display" style="font-weight: 700; font-size: 0.875rem; color: var(--cyan-400); text-transform: uppercase;" data-i18n="form_new_quest_title">Buat Misi Baru</span>
                     <button type="button" onclick="toggleQuestForm()" style="color: var(--text-muted);">
                         <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>
                 </div>
 
                 <div>
-                    <label style="display: block; font-size: 0.75rem; color: #cbd5e1; margin-bottom: 4px;">Nama Misi / Tugas</label>
+                    <label style="display: block; font-size: 0.75rem; color: #cbd5e1; margin-bottom: 4px;" data-i18n="lbl_quest_name">Nama Misi / Tugas</label>
                     <input type="text" id="q-title" required placeholder="Contoh: Push-up 30x atau Baca Buku 20 Hal" class="input-cyber">
                 </div>
 
@@ -607,6 +607,27 @@
                             <option value="WIS">WIS</option>
                             <option value="CHR">CHR</option>
                         </select>
+                    </div>
+                </div>
+
+                                <!-- Jadwal Hari Aktif (Active Days) -->
+                <div style="background: rgba(2,6,23,0.65); border: 1px solid #334155; border-radius: 0.75rem; padding: 0.6rem;" class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label data-i18n="lbl_schedule_days" style="font-size: 0.75rem; color: #67e8f9; font-weight: 700;">Jadwal Hari Aktif</label>
+                        <div class="flex gap-1">
+                            <button type="button" onclick="applyDayPreset('add', [0,1,2,3,4,5,6])" data-i18n="preset_all_days" style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(6,182,212,0.18); color: #67e8f9; border: 1px solid rgba(6,182,212,0.4);">Semua</button>
+                            <button type="button" onclick="applyDayPreset('add', [1,2,3,4,5])" data-i18n="preset_weekday" style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(168,85,247,0.18); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.4);">Weekday</button>
+                            <button type="button" onclick="applyDayPreset('add', [0,6])" data-i18n="preset_weekend" style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(251,191,36,0.18); color: #fcd34d; border: 1px solid rgba(251,191,36,0.4);">Weekend</button>
+                        </div>
+                    </div>
+                    <div id="add-q-days" class="grid grid-cols-7 gap-1">
+                        <button type="button" data-day="1" onclick="toggleDayChip(this)" class="day-chip active">Sen</button>
+                        <button type="button" data-day="2" onclick="toggleDayChip(this)" class="day-chip active">Sel</button>
+                        <button type="button" data-day="3" onclick="toggleDayChip(this)" class="day-chip active">Rab</button>
+                        <button type="button" data-day="4" onclick="toggleDayChip(this)" class="day-chip active">Kam</button>
+                        <button type="button" data-day="5" onclick="toggleDayChip(this)" class="day-chip active">Jum</button>
+                        <button type="button" data-day="6" onclick="toggleDayChip(this)" class="day-chip active">Sab</button>
+                        <button type="button" data-day="0" onclick="toggleDayChip(this)" class="day-chip active">Min</button>
                     </div>
                 </div>
 
@@ -668,18 +689,24 @@
 
             <!-- Time-of-Day Sub-tabs (Pagi / Siang / Sore / Malam) -->
             <div class="flex gap-1-5" style="overflow-x: auto; padding-bottom: 2px;">
-                <button onclick="setTimeSlotFilter('ALL')" id="time-filter-ALL" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: rgba(168,85,247,0.22); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.5); white-space: nowrap;">🕒 Semua Waktu</button>
-                <button onclick="setTimeSlotFilter('Pagi')" id="time-filter-Pagi" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;">🌅 Pagi</button>
-                <button onclick="setTimeSlotFilter('Siang')" id="time-filter-Siang" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;">☀️ Siang</button>
-                <button onclick="setTimeSlotFilter('Sore')" id="time-filter-Sore" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;">🌇 Sore</button>
-                <button onclick="setTimeSlotFilter('Malam')" id="time-filter-Malam" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;">🌙 Malam</button>
+                <button onclick="setTimeSlotFilter('ALL')" id="time-filter-ALL" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: rgba(168,85,247,0.22); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.5); white-space: nowrap;" data-i18n="time_all">🕒 Semua Waktu</button>
+                <button onclick="setTimeSlotFilter('Pagi')" id="time-filter-Pagi" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;" data-i18n="time_morning">🌅 Pagi</button>
+                <button onclick="setTimeSlotFilter('Siang')" id="time-filter-Siang" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;" data-i18n="time_afternoon">☀️ Siang</button>
+                <button onclick="setTimeSlotFilter('Sore')" id="time-filter-Sore" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;" data-i18n="time_evening">🌇 Sore</button>
+                <button onclick="setTimeSlotFilter('Malam')" id="time-filter-Malam" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;" data-i18n="time_night">🌙 Malam</button>
             </div>
 
             <!-- Completion Status Filter Tabs (Semua | Aktif | Selesai) -->
             <div class="grid grid-cols-3 gap-1-5" style="padding-bottom: 2px;">
                 <button onclick="setQuestStatusFilter('ALL')" id="status-filter-ALL" class="status-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.45);">Semua</button>
-                <button onclick="setQuestStatusFilter('ACTIVE')" id="status-filter-ACTIVE" class="status-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);">Aktif (Belum)</button>
-                <button onclick="setQuestStatusFilter('DONE')" id="status-filter-DONE" class="status-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);">Selesai</button>
+                <button onclick="setQuestStatusFilter('ACTIVE')" id="status-filter-ACTIVE" class="status-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);" data-i18n="status_active">Aktif (Belum)</button>
+                <button onclick="setQuestStatusFilter('DONE')" id="status-filter-DONE" class="status-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);" data-i18n="status_done">Selesai</button>
+            </div>
+
+                        <!-- Schedule Day Mode Toggle (Hari Ini vs Semua Jadwal) -->
+            <div class="grid grid-cols-2 gap-1-5" style="padding-bottom: 2px;">
+                <button onclick="setQuestDayFilter('TODAY')" id="day-filter-TODAY" data-i18n="filter_day_today" class="day-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: rgba(251,191,36,0.2); color: #fcd34d; border: 1px solid rgba(251,191,36,0.45);">📅 Jadwal Hari Ini</button>
+                <button onclick="setQuestDayFilter('ALL')" id="day-filter-ALL" data-i18n="filter_day_all" class="day-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);">🗓️ Semua Jadwal</button>
             </div>
 
             <!-- Quest List Container -->
@@ -1400,6 +1427,27 @@
                     </select>
                 </div>
             </div>
+            <!-- Jadwal Hari Aktif (Edit Quest) -->
+            <div style="background: rgba(2,6,23,0.65); border: 1px solid #334155; border-radius: 0.65rem; padding: 0.5rem;" class="space-y-1-5">
+                <div class="flex justify-between items-center">
+                    <label data-i18n="lbl_schedule_days" style="font-size: 11px; color: #67e8f9; font-weight: 700;">Jadwal Hari Aktif</label>
+                    <div class="flex gap-1">
+                        <button type="button" onclick="applyDayPreset('edit', [0,1,2,3,4,5,6])" data-i18n="preset_all_days" style="font-size: 9px; padding: 2px 5px; border-radius: 4px; background: rgba(6,182,212,0.18); color: #67e8f9; border: 1px solid rgba(6,182,212,0.4);">Semua</button>
+                        <button type="button" onclick="applyDayPreset('edit', [1,2,3,4,5])" data-i18n="preset_weekday" style="font-size: 9px; padding: 2px 5px; border-radius: 4px; background: rgba(168,85,247,0.18); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.4);">Weekday</button>
+                        <button type="button" onclick="applyDayPreset('edit', [0,6])" data-i18n="preset_weekend" style="font-size: 9px; padding: 2px 5px; border-radius: 4px; background: rgba(251,191,36,0.18); color: #fcd34d; border: 1px solid rgba(251,191,36,0.4);">Weekend</button>
+                    </div>
+                </div>
+                <div id="edit-q-days" class="grid grid-cols-7 gap-1">
+                    <button type="button" data-day="1" onclick="toggleDayChip(this)" class="day-chip active">Sen</button>
+                    <button type="button" data-day="2" onclick="toggleDayChip(this)" class="day-chip active">Sel</button>
+                    <button type="button" data-day="3" onclick="toggleDayChip(this)" class="day-chip active">Rab</button>
+                    <button type="button" data-day="4" onclick="toggleDayChip(this)" class="day-chip active">Kam</button>
+                    <button type="button" data-day="5" onclick="toggleDayChip(this)" class="day-chip active">Jum</button>
+                    <button type="button" data-day="6" onclick="toggleDayChip(this)" class="day-chip active">Sab</button>
+                    <button type="button" data-day="0" onclick="toggleDayChip(this)" class="day-chip active">Min</button>
+                </div>
+            </div>
+
             <div style="background: rgba(2,6,23,0.65); border: 1px solid #334155; border-radius: 0.65rem; padding: 0.5rem;" class="space-y-2">
                 <div>
                     <label style="display: block; font-size: 11px; color: #67e8f9; font-weight: 700; margin-bottom: 3px;">Tipe Progres</label>
