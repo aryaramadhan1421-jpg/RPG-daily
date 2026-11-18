@@ -3883,8 +3883,97 @@ function ensureReminderState() {
     return gameState.reminders;
 }
 
+function getReminderLang() {
+    const saved = (typeof gameState !== 'undefined' && gameState.language) ||
+                  localStorage.getItem('system_rpg_lang') ||
+                  (typeof appLanguage !== 'undefined' ? appLanguage : 'id');
+    if (saved.startsWith('ja')) return 'ja';
+    if (saved.startsWith('en')) return 'en';
+    return 'id';
+}
+
+function getReminderDict() {
+    const lang = getReminderLang();
+    const dicts = {
+        id: {
+            active: 'AKTIF',
+            inactive: 'NONAKTIF',
+            turnOff: '🔕 Matikan Notifikasi',
+            turnOn: '🔔 Aktifkan Notifikasi',
+            saved: '⏰ Jadwal Reminder Disimpan',
+            permTitle: 'IZIN NOTIFIKASI DIBUTUHKAN',
+            permBody: 'Browser / HP memblokir izin notifikasi. Buka Pengaturan Browser / Info Aplikasi Android → Notifikasi → Izinkan agar pengingat layar atas muncul.',
+            deniedTitle: 'NOTIFIKASI DIBLOKIR SISTEM',
+            deniedBody: 'Izin notifikasi saat ini berstatus Diblokir. Silakan aktifkan izin Notifikasi untuk aplikasi/situs ini di Pengaturan HP Anda.',
+            enabledToast: '🔔 Reminder Notifikasi HP Aktif!',
+            disabledToast: '🔕 Reminder Notifikasi Dimatikan',
+            slots: { Pagi: 'Pagi', Sore: 'Sore', Malam: 'Malam' },
+            testPending: (name, count, list) => `Hunter ${name}, masih ada ${count} Daily Quest belum selesai (${list})!`,
+            testDone: (name) => `Luar biasa Hunter ${name}! Semua Daily Quest hari ini sudah selesai 100%!`,
+            testTitle: '⚔️ SYSTEM // Pengingat Daily Quest',
+            testSent: '📲 Notifikasi Terkirim ke Layar Atas HP!',
+            previewTitle: 'PREVIEW NOTIFIKASI',
+            previewBody: (body) => `Izin notifikasi OS belum diizinkan di browser ini, namun isi pesan pengingatmu adalah:\n\n"${body}"`,
+            slotFocus: (cnt, slotLbl, list) => `${cnt} misi ${slotLbl} menunggumu (${list})`,
+            dayFocus: (cnt) => `${cnt} Daily Quest hari ini masih menunggu diselesaikan`,
+            schedTitle: (slotLbl) => `⚔️ SYSTEM // Pengingat ${slotLbl}`,
+            schedBody: (name, focus, streak) => `Hunter ${name}, ${focus}. Jaga Streak ${streak} harimu!`
+        },
+        en: {
+            active: 'ACTIVE',
+            inactive: 'INACTIVE',
+            turnOff: '🔕 Disable Notifications',
+            turnOn: '🔔 Enable Notifications',
+            saved: '⏰ Reminder Schedule Saved',
+            permTitle: 'NOTIFICATION PERMISSION REQUIRED',
+            permBody: 'Your browser/device blocked notifications. Open Browser Settings / Android App Info → Notifications → Allow to receive top-bar alerts.',
+            deniedTitle: 'NOTIFICATIONS BLOCKED BY SYSTEM',
+            deniedBody: 'Notifications are currently blocked. Please enable Notification permission for this app/site in your phone Settings.',
+            enabledToast: '🔔 Mobile Push Reminders Enabled!',
+            disabledToast: '🔕 Push Reminders Disabled',
+            slots: { Pagi: 'Morning', Sore: 'Afternoon', Malam: 'Night' },
+            testPending: (name, count, list) => `Hunter ${name}, you still have ${count} unfinished Daily Quests (${list})!`,
+            testDone: (name) => `Outstanding, Hunter ${name}! All Daily Quests for today are 100% complete!`,
+            testTitle: '⚔️ SYSTEM // Daily Quest Alert',
+            testSent: '📲 Notification Sent to Phone Status Bar!',
+            previewTitle: 'NOTIFICATION PREVIEW',
+            previewBody: (body) => `OS notification permission is not granted in this browser, but your reminder message is:\n\n"${body}"`,
+            slotFocus: (cnt, slotLbl, list) => `${cnt} ${slotLbl} quests await you (${list})`,
+            dayFocus: (cnt) => `${cnt} Daily Quests today are still waiting to be completed`,
+            schedTitle: (slotLbl) => `⚔️ SYSTEM // ${slotLbl} Reminder`,
+            schedBody: (name, focus, streak) => `Hunter ${name}, ${focus}. Protect your ${streak}-day Streak!`
+        },
+        ja: {
+            active: '有効',
+            inactive: '無効',
+            turnOff: '🔕 通知をオフにする',
+            turnOn: '🔔 通知をオンにする',
+            saved: '⏰ リマインダー時間を保存しました',
+            permTitle: '通知の許可が必要です',
+            permBody: 'ブラウザまたは端末で通知がブロックされています。設定 → 通知 → 許可をオンにしてください。',
+            deniedTitle: 'システムにより通知がブロックされています',
+            deniedBody: '現在通知がブロックされています。端末の設定からこのアプリ/サイトの通知を許可してください。',
+            enabledToast: '🔔 スマホ通知リマインダーを有効にしました！',
+            disabledToast: '🔕 通知リマインダーをオフにしました',
+            slots: { Pagi: '朝', Sore: '夕方', Malam: '夜' },
+            testPending: (name, count, list) => `ハンター ${name}、未完了のデイリークエストが残り ${count} 件あります（${list}）！`,
+            testDone: (name) => `素晴らしい、ハンター ${name}！本日のデイリークエストは100%完了しています！`,
+            testTitle: '⚔️ SYSTEM // デイリークエスト通知',
+            testSent: '📲 ステータスバーに通知を送信しました！',
+            previewTitle: '通知プレビュー',
+            previewBody: (body) => `このブラウザではOS通知が許可されていません。送信されるメッセージ内容：\n\n「${body}」`,
+            slotFocus: (cnt, slotLbl, list) => `${slotLbl}のクエスト ${cnt} 件が待機中です（${list}）`,
+            dayFocus: (cnt) => `本日のデイリークエスト ${cnt} 件がまだ未完了です`,
+            schedTitle: (slotLbl) => `⚔️ SYSTEM // ${slotLbl}のリマインダー`,
+            schedBody: (name, focus, streak) => `ハンター ${name}、${focus}。${streak}日連続ストリークを守り抜け！`
+        }
+    };
+    return dicts[lang] || dicts.id;
+}
+
 function renderReminderUI() {
     const rem = ensureReminderState();
+    const d = getReminderDict();
     const badge = document.getElementById('notif-status-badge');
     const btn = document.getElementById('btn-toggle-notif');
     const inPagi = document.getElementById('rem-time-pagi');
@@ -3897,14 +3986,14 @@ function renderReminderUI() {
 
     if (badge && btn) {
         if (rem.enabled) {
-            badge.textContent = 'AKTIF';
+            badge.textContent = d.active;
             badge.style.cssText = 'font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 9999px; background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.45);';
-            btn.textContent = '🔕 Matikan Notifikasi';
+            btn.textContent = d.turnOff;
             btn.style.cssText = 'flex: 1; font-weight: 700; font-size: 0.75rem; padding: 0.55rem 0.65rem; border-radius: 0.75rem; background: rgba(244,63,94,0.16); color: #fda4af; border: 1px solid rgba(244,63,94,0.45);';
         } else {
-            badge.textContent = 'NONAKTIF';
+            badge.textContent = d.inactive;
             badge.style.cssText = 'font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 9999px; background: rgba(100,116,139,0.2); color: #94a3b8; border: 1px solid #475569;';
-            btn.textContent = '🔔 Aktifkan Notifikasi';
+            btn.textContent = d.turnOn;
             btn.style.cssText = 'flex: 1; font-weight: 700; font-size: 0.75rem; padding: 0.55rem 0.65rem; border-radius: 0.75rem; background: rgba(6,182,212,0.18); color: #67e8f9; border: 1px solid rgba(6,182,212,0.45);';
         }
     }
@@ -3912,6 +4001,7 @@ function renderReminderUI() {
 
 function saveReminders() {
     const rem = ensureReminderState();
+    const d = getReminderDict();
     const p = document.getElementById('rem-time-pagi')?.value;
     const s = document.getElementById('rem-time-sore')?.value;
     const m = document.getElementById('rem-time-malam')?.value;
@@ -3920,29 +4010,24 @@ function saveReminders() {
     if (m) rem.times.Malam = m;
     saveState();
     syncSystemReminders();
-    spawnFloatingReward('⏰ Jadwal Reminder Disimpan');
+    spawnFloatingReward(d.saved);
 }
 
 async function togglePushReminder() {
     SoundFX.playClick();
     const rem = ensureReminderState();
+    const d = getReminderDict();
 
     if (!rem.enabled) {
         if ('Notification' in window) {
             if (Notification.permission === 'default') {
                 const perm = await Notification.requestPermission();
                 if (perm !== 'granted') {
-                    showSystemModal(
-                        'IZIN NOTIFIKASI DIBUTUHKAN',
-                        'Browser / HP memblokir izin notifikasi. Buka Pengaturan Browser / Info Aplikasi Android → Notifikasi → Izinkan agar pengingat layar atas muncul.'
-                    );
+                    showSystemModal(d.permTitle, d.permBody);
                     return;
                 }
             } else if (Notification.permission === 'denied') {
-                showSystemModal(
-                    'NOTIFIKASI DIBLOKIR SISTEM',
-                    'Izin notifikasi saat ini berstatus Diblokir. Silakan aktifkan izin Notifikasi untuk aplikasi/situs ini di Pengaturan HP Anda.'
-                );
+                showSystemModal(d.deniedTitle, d.deniedBody);
                 return;
             }
         }
@@ -3950,16 +4035,15 @@ async function togglePushReminder() {
         saveState();
         renderReminderUI();
         syncSystemReminders();
-        spawnFloatingReward('🔔 Reminder Notifikasi HP Aktif!');
+        spawnFloatingReward(d.enabledToast);
     } else {
         rem.enabled = false;
         saveState();
         renderReminderUI();
         cancelNativeSystemReminders();
-        spawnFloatingReward('🔕 Reminder Notifikasi Dimatikan');
+        spawnFloatingReward(d.disabledToast);
     }
 }
-
 function getPendingDailySummary() {
     const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest' && isQuestActiveOnDate(q, getCurrentGameDateKey()));
     const pending = dailyQuests.filter(q => !q.completed);
@@ -4004,22 +4088,20 @@ async function fireOsNotification(title, body, tag = 'system-rpg-reminder') {
 
 async function sendTestSystemNotification() {
     SoundFX.playClick();
+    const d = getReminderDict();
     if ('Notification' in window && Notification.permission === 'default') {
         await Notification.requestPermission();
     }
     const summary = getPendingDailySummary();
     const body = summary.pendingCount > 0
-        ? `Hunter ${gameState.player.name}, masih ada ${summary.pendingCount} Daily Quest belum selesai (${summary.sampleTitles.join(', ')})!`
-        : `Luar biasa Hunter ${gameState.player.name}! Semua Daily Quest hari ini sudah selesai 100%!`;
+        ? d.testPending(gameState.player.name, summary.pendingCount, summary.sampleTitles.join(', '))
+        : d.testDone(gameState.player.name);
 
-    const ok = await fireOsNotification('⚔️ SYSTEM // Daily Quest Alert', body, 'system-rpg-test');
+    const ok = await fireOsNotification(d.testTitle, body, 'system-rpg-test');
     if (ok) {
-        spawnFloatingReward('📲 Notifikasi Terkirim ke Layar Atas HP!');
+        spawnFloatingReward(d.testSent);
     } else {
-        showSystemModal(
-            'PREVIEW NOTIFIKASI',
-            `Izin notifikasi OS belum diizinkan di browser ini, namun isi pesan pengingatmu adalah:\n\n"${body}"`
-        );
+        showSystemModal(d.previewTitle, d.previewBody(body));
     }
 }
 
@@ -4029,6 +4111,7 @@ function syncSystemReminders() {
     const summary = getPendingDailySummary();
     const pct = summary.total > 0 ? Math.round((summary.done / summary.total) * 100) : 0;
     const thresholdPct = getStreakThresholdPct();
+    const lang = getReminderLang();
     try {
         if (window.AndroidBridge) {
             if (typeof window.AndroidBridge.scheduleDailyRemindersFull === 'function') {
@@ -4040,7 +4123,8 @@ function syncSystemReminders() {
                     pct: pct,
                     thresholdPct: thresholdPct,
                     playerName: gameState.player.name,
-                    streak: gameState.player.streak
+                    streak: gameState.player.streak,
+                    language: lang
                 }));
             }
             if (typeof window.AndroidBridge.scheduleDailyReminders === 'function') {
@@ -4065,6 +4149,7 @@ function cancelNativeSystemReminders() {
 function checkScheduledReminderTick() {
     const rem = ensureReminderState();
     if (!rem.enabled) return;
+    const d = getReminderDict();
 
     const now = new Date();
     const todayKey = formatDateKey(now);
@@ -4082,16 +4167,17 @@ function checkScheduledReminderTick() {
             if (summary.pendingCount > 0) {
                 rem.lastFired[fireKey] = true;
                 saveState();
+                const slotLbl = d.slots[slot] || slot;
                 const slotPending = gameState.quests.filter(
                     q => q.category === 'Daily Quest' && !q.completed && inferQuestTimeSlot(q) === slot
                 );
                 const focusText = slotPending.length > 0
-                    ? `${slotPending.length} misi ${slot} menunggumu (${slotPending.slice(0, 2).map(q => q.title).join(', ')})`
-                    : `${summary.pendingCount} Daily Quest hari ini masih menunggu diselesaikan`;
+                    ? d.slotFocus(slotPending.length, slotLbl, slotPending.slice(0, 2).map(q => q.title).join(', '))
+                    : d.dayFocus(summary.pendingCount);
 
                 fireOsNotification(
-                    `⚔️ SYSTEM // Pengingat ${slot}`,
-                    `Hunter ${gameState.player.name}, ${focusText}. Jaga Streak ${gameState.player.streak} harimu!`,
+                    d.schedTitle(slotLbl),
+                    d.schedBody(gameState.player.name, focusText, gameState.player.streak),
                     `system-rpg-${slot.toLowerCase()}`
                 );
             }
