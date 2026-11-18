@@ -6236,16 +6236,56 @@ if (document.readyState === 'loading') {
         ]
     };
 
+    function detectActiveLang() {
+        // Cek tombol bahasa yang sedang aktif di modal pengaturan (paling akurat)
+        if (document.getElementById('lang-btn-ja')?.style.borderColor.includes('6, 182, 212') ||
+            document.getElementById('lang-btn-ja')?.style.background.includes('8, 51, 68')) return 'ja';
+        if (document.getElementById('lang-btn-en')?.style.borderColor.includes('6, 182, 212') ||
+            document.getElementById('lang-btn-en')?.style.background.includes('8, 51, 68')) return 'en';
+
+        // Cek semua kemungkinan key localStorage yang dipakai app.js
+        const saved = localStorage.getItem('sysrpg_language') ||
+                      localStorage.getItem('sysrpg_lang') ||
+                      localStorage.getItem('appLanguage') ||
+                      localStorage.getItem('language') ||
+                      (typeof currentLang !== 'undefined' ? currentLang : '') ||
+                      document.documentElement.lang || 'id';
+
+        if (saved.startsWith('ja')) return 'ja';
+        if (saved.startsWith('en')) return 'en';
+        return 'id';
+    }
+
     function getSteps() {
-        const lang = localStorage.getItem('sysrpg_lang') || document.documentElement.lang || 'id';
-        return TUT_DATA[lang] || TUT_DATA.id;
+        return TUT_DATA[detectActiveLang()] || TUT_DATA.id;
+    }
+
+    function updateTutorialTriggerButtonLabel() {
+        const lang = detectActiveLang();
+        const labels = {
+            id: '📖 BANTUAN & PANDUAN HUNTER (TUTORIAL)',
+            en: '📖 HUNTER HELP & GUIDE (TUTORIAL)',
+            ja: '📖 ハンターガイド＆チュートリアル'
+        };
+        document.querySelectorAll('#font-settings-modal button').forEach(btn => {
+            if ((btn.getAttribute('onclick') || '').includes('openTutorialModal')) {
+                btn.textContent = labels[lang] || labels.id;
+            }
+        });
     }
 
     function renderBox() {
+        const lang = detectActiveLang();
         const steps = getSteps();
         const item = steps[tutStep] || steps[0];
         const box = document.getElementById('sysrpg-force-tutorial');
         if (!box) return;
+
+        const uiText = {
+            id: { skip: 'Lewati', prev: '← Kembali', next: 'Lanjut →', done: 'Selesai ✓' },
+            en: { skip: 'Skip', prev: '← Back', next: 'Next →', done: 'Finish ✓' },
+            ja: { skip: 'スキップ', prev: '← 戻る', next: '次へ →', done: '完了 ✓' }
+        }[lang] || { skip: 'Lewati', prev: '← Kembali', next: 'Lanjut →', done: 'Selesai ✓' };
 
         box.querySelector('#sft-counter').textContent = (tutStep + 1) + ' / ' + steps.length;
         box.querySelector('#sft-icon').textContent = item.icon;
@@ -6253,10 +6293,12 @@ if (document.readyState === 'loading') {
         box.querySelector('#sft-desc').textContent = item.desc;
         box.querySelector('#sft-tip').textContent = item.tip;
 
+        box.querySelector('#sft-skip').textContent = uiText.skip;
         const prevBtn = box.querySelector('#sft-prev');
         const nextBtn = box.querySelector('#sft-next');
+        prevBtn.textContent = uiText.prev;
         prevBtn.style.visibility = tutStep === 0 ? 'hidden' : 'visible';
-        nextBtn.textContent = tutStep === steps.length - 1 ? 'Selesai ✓' : 'Lanjut →';
+        nextBtn.textContent = tutStep === steps.length - 1 ? uiText.done : uiText.next;
 
         const dots = box.querySelector('#sft-dots');
         dots.innerHTML = steps.map((_, idx) =>
@@ -6325,15 +6367,148 @@ if (document.readyState === 'loading') {
         renderBox();
     };
 
-    // Tangkap klik tombol panduan di modal pengaturan secara langsung
+  // Perbarui bahasa tombol panduan saat bahasa diganti & tangkap klik tombol panduan
     document.addEventListener('click', function (e) {
         const btn = e.target.closest('button');
         if (!btn) return;
+
+        if (btn.id === 'lang-btn-id' || btn.id === 'lang-btn-en' || btn.id === 'lang-btn-ja') {
+            setTimeout(updateTutorialTriggerButtonLabel, 50);
+            return;
+        }
+
+        const onclickStr = btn.getAttribute('onclick') || '';
         const label = (btn.textContent || '').toUpperCase();
-        if (label.includes('BANTUAN & PANDUAN HUNTER') || label.includes('TUTORIAL')) {
+        if (onclickStr.includes('openTutorialModal') || label.includes('TUTORIAL') || label.includes('PANDUAN') || label.includes('チュートリアル')) {
             e.preventDefault();
             e.stopPropagation();
             window.openTutorialModal(0);
         }
     }, true);
+
+    window.addEventListener('DOMContentLoaded', updateTutorialTriggerButtonLabel);
+    setTimeout(updateTutorialTriggerButtonLabel, 200);
+
+    // =========================================================
+// AUTO-TRANSLATE: DUNGEON PDF HINT & TREASURY CATEGORIES
+// =========================================================
+(function () {
+    function getActiveSystemLang() {
+        if (document.getElementById('lang-btn-ja')?.style.borderColor.includes('6, 182, 212') ||
+            document.getElementById('lang-btn-ja')?.style.background.includes('8, 51, 68')) return 'ja';
+        if (document.getElementById('lang-btn-en')?.style.borderColor.includes('6, 182, 212') ||
+            document.getElementById('lang-btn-en')?.style.background.includes('8, 51, 68')) return 'en';
+
+        const saved = localStorage.getItem('sysrpg_language') ||
+                      localStorage.getItem('sysrpg_lang') ||
+                      localStorage.getItem('appLanguage') ||
+                      localStorage.getItem('language') ||
+                      document.documentElement.lang || 'id';
+
+        if (saved.startsWith('ja')) return 'ja';
+        if (saved.startsWith('en')) return 'en';
+        return 'id';
+    }
+
+    const PDF_HINT_HTML = {
+        id: 'Pilih file <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> dari HP untuk membaca sambil timer fokus berjalan. Halaman terakhir otomatis tersimpan saat kamu menekan <span style="color: #fcd34d; font-weight: 700;">🔖 Tandai Hal Ini</span>.',
+        en: 'Select a <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> file from your device to read while the focus timer runs. Your last page is automatically saved when you tap <span style="color: #fcd34d; font-weight: 700;">🔖 Bookmark This Page</span>.',
+        ja: '集中タイマーの作動中に読むための <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> ファイルを選択してください。<span style="color: #fcd34d; font-weight: 700;">🔖 このページをブックマーク</span> を押すと最後のページが自動保存されます。'
+    };
+
+    const TREASURY_CAT_DICT = {
+        // Pengeluaran
+        'Makan & Jajan': { id: 'Makan & Jajan', en: 'Food & Snacks', ja: '食費・間食' },
+        'Makan & Minum': { id: 'Makan & Minum', en: 'Food & Drinks', ja: '飲食費' },
+        'Transportasi': { id: 'Transportasi', en: 'Transportation', ja: '交通費' },
+        'Belanja': { id: 'Belanja', en: 'Shopping', ja: '買い物' },
+        'Tagihan & Kuota': { id: 'Tagihan & Kuota', en: 'Bills & Data Plan', ja: '公共料金・通信費' },
+        'Tagihan & Utilitas': { id: 'Tagihan & Utilitas', en: 'Bills & Utilities', ja: '光熱費・請求書' },
+        'Hiburan & Game': { id: 'Hiburan & Game', en: 'Entertainment & Games', ja: '娯楽・ゲーム' },
+        'Kesehatan': { id: 'Kesehatan', en: 'Health & Fitness', ja: '健康・医療' },
+        'Pendidikan & Buku': { id: 'Pendidikan & Buku', en: 'Education & Books', ja: '教育・書籍' },
+        'Lainnya': { id: 'Lainnya', en: 'Others', ja: 'その他' },
+        // Pemasukan
+        'Gaji / Honor': { id: 'Gaji / Honor', en: 'Salary / Wage', ja: '給与・報酬' },
+        'Gaji': { id: 'Gaji', en: 'Salary', ja: '給与' },
+        'Uang Saku': { id: 'Uang Saku', en: 'Allowance', ja: 'お小遣い' },
+        'Bonus / Freelance': { id: 'Bonus / Freelance', en: 'Bonus / Freelance', ja: 'ボーナス・副業' },
+        'Investasi / Tabungan': { id: 'Investasi / Tabungan', en: 'Investment / Savings', ja: '投資・貯蓄' },
+        'Hadiah': { id: 'Hadiah', en: 'Gift / Reward', ja: 'ギフト・臨時収入' }
+    };
+
+    const TX_TYPE_DICT = {
+        expense: { id: '📤 Pengeluaran (-)', en: '📤 Expense (-)', ja: '📤 支出 (-)' },
+        income: { id: '📥 Pemasukan (+)', en: '📥 Income (+)', ja: '📥 収入 (+)' }
+    };
+
+    function translateCategoryLabel(rawText, lang) {
+        const clean = rawText.replace(/^[^\w\u3040-\u30ff\u4e00-\u9faf]+/, '').trim();
+        const emojiMatch = rawText.match(/^([^\w\u3040-\u30ff\u4e00-\u9faf]+\s*)/);
+        const prefix = emojiMatch ? emojiMatch[1] : '';
+
+        for (const [key, map] of Object.entries(TREASURY_CAT_DICT)) {
+            if (clean.toLowerCase() === key.toLowerCase() || Object.values(map).some(v => v.toLowerCase() === clean.toLowerCase())) {
+                return prefix + (map[lang] || map.id);
+            }
+        }
+        return rawText;
+    }
+
+    function syncDungeonAndTreasuryLanguage() {
+        const lang = getActiveSystemLang();
+
+        // 1. Terjemahkan petunjuk PDF di Tab Dungeon
+        const pdfHint = document.getElementById('grimoire-empty-hint');
+        if (pdfHint) {
+            pdfHint.innerHTML = PDF_HINT_HTML[lang] || PDF_HINT_HTML.id;
+        }
+
+        // 2. Terjemahkan opsi Jenis Arus Kas (Pengeluaran / Pemasukan)
+        const txTypeSelect = document.getElementById('tx-type');
+        if (txTypeSelect) {
+            Array.from(txTypeSelect.options).forEach(opt => {
+                if (TX_TYPE_DICT[opt.value]) {
+                    opt.textContent = TX_TYPE_DICT[opt.value][lang] || TX_TYPE_DICT[opt.value].id;
+                }
+            });
+        }
+
+        // 3. Terjemahkan opsi Dropdown Kategori di Treasury (tanpa mengubah value asli)
+        const txCatSelect = document.getElementById('tx-category');
+        if (txCatSelect) {
+            Array.from(txCatSelect.options).forEach(opt => {
+                if (!opt.dataset.origLabel) opt.dataset.origLabel = opt.textContent;
+                opt.textContent = translateCategoryLabel(opt.dataset.origLabel, lang);
+            });
+        }
+
+        // 4. Terjemahkan nama kategori di Rincian Pengeluaran & Riwayat Transaksi Treasury
+        document.querySelectorAll('#tr-category-breakdown span, #tr-transaction-list span').forEach(el => {
+            if (el.children.length === 0 && el.textContent.trim()) {
+                if (!el.dataset.origCat) el.dataset.origCat = el.textContent;
+                const translated = translateCategoryLabel(el.dataset.origCat, lang);
+                if (translated !== el.dataset.origCat) {
+                    el.textContent = translated;
+                }
+            }
+        });
+    }
+
+    // Jalankan saat halaman dimuat, saat bahasa diganti, atau saat form/tab Treasury berubah
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        if (btn.id === 'lang-btn-id' || btn.id === 'lang-btn-en' || btn.id === 'lang-btn-ja' || btn.id === 'nav-treasury' || btn.id === 'nav-dungeon') {
+            setTimeout(syncDungeonAndTreasuryLanguage, 60);
+        }
+    }, true);
+
+    const txTypeEl = document.getElementById('tx-type');
+    if (txTypeEl) {
+        txTypeEl.addEventListener('change', () => setTimeout(syncDungeonAndTreasuryLanguage, 30));
+    }
+
+    window.addEventListener('DOMContentLoaded', () => setTimeout(syncDungeonAndTreasuryLanguage, 250));
+    setInterval(syncDungeonAndTreasuryLanguage, 1200);
 })();
