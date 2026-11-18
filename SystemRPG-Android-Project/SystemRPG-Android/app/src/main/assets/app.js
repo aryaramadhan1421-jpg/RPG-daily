@@ -6158,6 +6158,10 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
     updateDungeonTimerUI();
     syncSystemReminders();
 
+    if (typeof applyAppLanguage === 'function') {
+        applyAppLanguage();
+    }
+
     // Cek pengingat jadwal Pagi / Sore / Malam setiap 20 detik
     setInterval(checkScheduledReminderTick, 20000);
 })();
