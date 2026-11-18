@@ -6388,3 +6388,4 @@ if (document.readyState === 'loading') {
 
     window.addEventListener('DOMContentLoaded', updateTutorialTriggerButtonLabel);
     setTimeout(updateTutorialTriggerButtonLabel, 200);
+    })();
