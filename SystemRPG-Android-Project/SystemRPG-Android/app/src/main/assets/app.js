@@ -4114,9 +4114,10 @@ function applyCalcToNominal() {
     if (amountInput && val > 0) {
         amountInput.value = val;
         const formatted = val.toLocaleString('id-ID');
-        if (appLanguage === 'en') {
+        const curLang = (typeof gameState !== 'undefined' && gameState.language) || localStorage.getItem('system_rpg_lang') || 'id';
+        if (curLang === 'en') {
             spawnFloatingReward(`✓ Amount Rp ${formatted} inserted!`);
-        } else if (appLanguage === 'ja') {
+        } else if (curLang === 'ja') {
             spawnFloatingReward(`✓ 金額 Rp ${formatted} を入力しました！`);
         } else {
             spawnFloatingReward(`✓ Nominal Rp ${formatted} dimasukkan!`);
@@ -4152,9 +4153,10 @@ function handleAddTreasuryTx(e) {
         SoundFX.playQuestComplete();
         addRewards(10, 0, 'WIS', 10, true);
         const count = tr.dailyBonusCounts[todayKey];
-        if (appLanguage === 'en') {
+        const curLang = (typeof gameState !== 'undefined' && gameState.language) || localStorage.getItem('system_rpg_lang') || 'id';
+        if (curLang === 'en') {
             spawnFloatingReward(`💰 Recorded! +10 XP & +10 WIS XP (${count}/3 today)`);
-        } else if (appLanguage === 'ja') {
+        } else if (curLang === 'ja') {
             spawnFloatingReward(`💰 記録完了！ +10 XP & +10 WIS XP (本日 ${count}/3)`);
         } else {
             spawnFloatingReward(`💰 Tercatat! +10 XP & +10 WIS XP (${count}/3 hari ini)`);
@@ -6079,7 +6081,9 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
             document.getElementById('lang-btn-en')?.style.background.includes('8, 51, 68')) return 'en';
 
         // Cek semua kemungkinan key localStorage yang dipakai app.js
-        const saved = localStorage.getItem('sysrpg_language') ||
+        const saved = (typeof gameState !== 'undefined' && gameState.language) ||
+                      localStorage.getItem('system_rpg_lang') ||
+                      localStorage.getItem('sysrpg_language') ||
                       localStorage.getItem('sysrpg_lang') ||
                       localStorage.getItem('appLanguage') ||
                       localStorage.getItem('language') ||
