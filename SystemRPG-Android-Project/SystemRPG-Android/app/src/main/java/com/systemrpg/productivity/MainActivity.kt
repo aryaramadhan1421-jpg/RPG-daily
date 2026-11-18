@@ -111,7 +111,7 @@ class MainActivity : ComponentActivity() {
             scheduleExactAlarmsFromPrefs(this@MainActivity)
         }
 
-        // Jembatan baru yang dipanggil oleh index_5.html setiap kali progres quest berubah
+        // Jembatan yang diperbarui untuk menangkap streak & thresholdPct secara dinamis dari HTML
         @JavascriptInterface
         fun scheduleDailyRemindersFull(payloadJson: String) {
             try {
@@ -123,6 +123,11 @@ class MainActivity : ComponentActivity() {
                 val pct = obj.optInt("pct", 0)
                 val thresholdPct = obj.optInt("thresholdPct", 70)
                 val playerName = obj.optString("playerName", "Hunter")
+                
+                // Ambil streak yang dikirimkan dari JavaScript (jika tidak ada, fallback ke SharedPreferences)
+                val widgetPrefs = getSharedPreferences("SystemRpgWidgetPrefs", Context.MODE_PRIVATE)
+                val streak = obj.optInt("streak", widgetPrefs.getInt("streak", 0))
+
                 val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
 
                 val remPrefs = getSharedPreferences("SystemRpgReminderPrefs", Context.MODE_PRIVATE)
@@ -141,12 +146,12 @@ class MainActivity : ComponentActivity() {
                 }
                 editor.apply()
 
-                // Ikut sinkronkan dailyPct ke WidgetPrefs agar widget & notifikasi selalu sama
-                val widgetPrefs = getSharedPreferences("SystemRpgWidgetPrefs", Context.MODE_PRIVATE)
-                val streak = widgetPrefs.getInt("streak", 0)
+                // Simpan streak, dailyPct, dan target dinamis (dailyTargetPct) ke WidgetPrefs
                 val weekHistory = computeWeekHistory(streak, pct)
                 widgetPrefs.edit()
+                    .putInt("streak", streak)
                     .putInt("dailyPct", pct)
+                    .putInt("dailyTargetPct", thresholdPct)
                     .putString("weekHistory", weekHistory)
                     .putString("lastUpdatedDate", todayStr)
                     .apply()
@@ -179,7 +184,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Fitur #5: Haptic Feedback (Getaran Fisik HP)
+        // Fitur Haptic Feedback (Getaran Fisik HP)
         @JavascriptInterface
         fun vibrate(durationMs: Long) {
             triggerVibration(durationMs.coerceIn(10L, 2000L), null)
@@ -196,7 +201,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Fitur #3 & #4: Update Kedua Widget + Simpan Tanggal Sinkronisasi Terakhir
         @JavascriptInterface
         fun updateWidgetData(streak: Int, rank: String, level: Int, hp: Int, maxHp: Int, dailyPct: Int) {
             val weekHistory = computeWeekHistory(streak, dailyPct)
@@ -254,10 +258,14 @@ class MainActivity : ComponentActivity() {
             val todayIdx = if (dow == Calendar.SUNDAY) 6 else dow - 2
             val chars = CharArray(7) { '0' }
 
-            if (dailyPct >= 70) {
+            // Ambil threshold target dinamis dari prefs (default 70 jika belum ada)
+            val prefs = getSharedPreferences("SystemRpgWidgetPrefs", Context.MODE_PRIVATE)
+            val threshold = prefs.getInt("dailyTargetPct", 70)
+
+            if (dailyPct >= threshold) {
                 chars[todayIdx] = '1'
             }
-            val pastDays = if (dailyPct >= 70) (streak - 1).coerceAtLeast(0) else streak.coerceAtLeast(0)
+            val pastDays = if (dailyPct >= threshold) (streak - 1).coerceAtLeast(0) else streak.coerceAtLeast(0)
             var i = 1
             while (i <= pastDays && todayIdx - i >= 0) {
                 chars[todayIdx - i] = '1'
@@ -470,7 +478,6 @@ class MainActivity : ComponentActivity() {
             SystemMiniStatsWidget.updateAllWidgets(context)
         }
 
-        // Fitur #4: Jadwalkan Alarm Otomatis Pukul 00:01 Setiap Hari untuk Reset Widget
         fun scheduleMidnightWidgetReset(context: Context) {
             try {
                 val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -505,7 +512,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Fitur #4: Logika Reset Widget Tengah Malam (00:01) Tanpa Buka Aplikasi
         fun handleMidnightWidgetReset(context: Context) {
             try {
                 val prefs = context.getSharedPreferences("SystemRpgWidgetPrefs", Context.MODE_PRIVATE)
@@ -516,13 +522,13 @@ class MainActivity : ComponentActivity() {
                     val prevDailyPct = prefs.getInt("dailyPct", 0)
                     var streak = prefs.getInt("streak", 0)
                     val oldHistory = prefs.getString("weekHistory", "0000000") ?: "0000000"
+                    val threshold = prefs.getInt("dailyTargetPct", 70)
 
-                    // Jika kemarin < 70%, streak reset ke 0
-                    if (prevDailyPct < 70) {
+                    // Jika kemarin < threshold target, streak reset ke 0
+                    if (prevDailyPct < threshold) {
                         streak = 0
                     }
 
-                    // Jika hari ini Senin, mulai pekan baru "0000000"
                     val cal = Calendar.getInstance()
                     val isMonday = cal.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY
                     val newHistory = if (isMonday) {
@@ -542,7 +548,6 @@ class MainActivity : ComponentActivity() {
                         .putString("lastUpdatedDate", todayStr)
                         .apply()
 
-                    // Reset juga angka harian di ReminderPrefs
                     context.getSharedPreferences("SystemRpgReminderPrefs", Context.MODE_PRIVATE).edit()
                         .putInt("pct", 0)
                         .putInt("dailyPct", 0)
