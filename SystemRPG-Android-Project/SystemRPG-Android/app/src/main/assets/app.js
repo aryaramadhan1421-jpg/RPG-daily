@@ -3503,7 +3503,89 @@ function completeDungeon() {
     );
 }
 
+let isDungeonConfirmOpen = false;
+
 function abortDungeon() {
+    if (!isDungeonRunning || isDungeonConfirmOpen) return;
+    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+
+    // Jeda sementara hitungan mundur saat modal konfirmasi terbuka
+    isDungeonConfirmOpen = true;
+    clearInterval(dungeonInterval);
+    const pausedRemainingSec = dungeonRemainingSec;
+
+    // Hapus modal lama jika masih ada
+    const oldModal = document.getElementById('sysrpg-dungeon-confirm-modal');
+    if (oldModal) oldModal.remove();
+
+    const minsLeft = Math.floor(pausedRemainingSec / 60).toString().padStart(2, '0');
+    const secsLeft = (pausedRemainingSec % 60).toString().padStart(2, '0');
+
+    const modal = document.createElement('div');
+    modal.id = 'sysrpg-dungeon-confirm-modal';
+    modal.style.cssText = `
+        position: fixed; inset: 0; z-index: 999998;
+        background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(6px);
+        display: flex; align-items: center; justify-content: center;
+        padding: 1rem; animation: fadeIn 0.2s ease;
+    `;
+
+    modal.innerHTML = `
+        <div style="width: 100%; max-width: 340px; background: linear-gradient(145deg, #0f172a, #020617); border: 1px solid rgba(244, 63, 94, 0.55); border-radius: 1rem; padding: 1.25rem; box-shadow: 0 0 28px rgba(244, 63, 94, 0.25);">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.65rem;">
+                <span style="font-size: 1.25rem;">⚠️</span>
+                <h3 class="font-display" style="font-size: 0.9rem; font-weight: 800; color: #fb7185; letter-spacing: 0.05em; margin: 0;">
+                    PERINGATAN SISTEM // DUNGEON
+                </h3>
+            </div>
+            <p style="font-size: 0.8rem; color: #e2e8f0; line-height: 1.5; margin-bottom: 0.6rem;">
+                Sisa waktu fokusmu masih <strong style="color: #22d3ee;">${minsLeft}:${secsLeft}</strong>. Apakah kamu yakin ingin berhenti dan keluar dari Dungeon sekarang?
+            </p>
+            <div style="background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.35); border-radius: 0.6rem; padding: 0.55rem 0.7rem; margin-bottom: 1rem; font-size: 0.72rem; color: #fda4af;">
+                ⚡ Konsekuensi: Kamu akan kehilangan <strong style="color: #fb7185;">-10 HP</strong> dan seluruh reward XP & Gold sesi ini hangus.
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <button type="button" id="btn-dungeon-keep-going" class="font-display"
+                    style="width: 100%; padding: 0.65rem; border-radius: 0.65rem; font-size: 0.78rem; font-weight: 800; background: linear-gradient(135deg, #06b6d4, #3b82f6); color: #020617; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.35);">
+                    ⚔️ TETAP LANJUT FOKUS
+                </button>
+                <button type="button" id="btn-dungeon-confirm-quit" class="font-display"
+                    style="width: 100%; padding: 0.55rem; border-radius: 0.65rem; font-size: 0.72rem; font-weight: 700; background: rgba(244, 63, 94, 0.14); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.45); cursor: pointer;">
+                    🚪 YA, BERHENTI & KELUAR (-10 HP)
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Opsi 1: Tetap lanjut fokus -> lanjutkan timer dari detik terakhir
+    document.getElementById('btn-dungeon-keep-going').onclick = () => {
+        if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+        modal.remove();
+        isDungeonConfirmOpen = false;
+        if (!isDungeonRunning) return;
+
+        dungeonEndTimeMs = Date.now() + (pausedRemainingSec * 1000);
+        dungeonInterval = setInterval(() => {
+            dungeonRemainingSec = Math.max(0, Math.ceil((dungeonEndTimeMs - Date.now()) / 1000));
+            updateDungeonTimerUI();
+
+            if (dungeonRemainingSec <= 0) {
+                completeDungeon();
+            }
+        }, 500);
+    };
+
+    // Opsi 2: Ya, berhenti -> eksekusi keluar & penalti HP
+    document.getElementById('btn-dungeon-confirm-quit').onclick = () => {
+        modal.remove();
+        isDungeonConfirmOpen = false;
+        executeDungeonAbort();
+    };
+}
+
+function executeDungeonAbort() {
     if (!isDungeonRunning) return;
     clearInterval(dungeonInterval);
     isDungeonRunning = false;
@@ -3518,6 +3600,14 @@ function abortDungeon() {
         'Kamu kabur dari Dungeon sebelum waktunya habis. Sistem memberikan penalti -10 HP!'
     );
 }
+
+// Proteksi tambahan jika pengguna mencoba menutup/refresh browser saat Dungeon berjalan
+window.addEventListener('beforeunload', (e) => {
+    if (isDungeonRunning) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
 
 function resetDungeonUI() {
     dungeonRemainingSec = dungeonTotalSec;
@@ -4005,6 +4095,96 @@ function checkScheduledReminderTick() {
 // ==========================================
 let calcExpr = '';
 let treasuryPeriodMode = 'daily'; // 'daily' | 'monthly' | 'yearly'
+let selectedTreasuryCategoryFilter = null;
+
+const TREASURY_PIE_COLORS = [
+    '#f43f5e', // Rose
+    '#22d3ee', // Cyan
+    '#fbbf24', // Amber
+    '#a855f7', // Purple
+    '#34d399', // Emerald
+    '#fb923c', // Orange
+    '#60a5fa', // Blue
+    '#e879f9'  // Fuchsia
+];
+
+function toggleTreasuryCategoryFilter(cat) {
+    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+    selectedTreasuryCategoryFilter = (selectedTreasuryCategoryFilter === cat) ? null : cat;
+    renderTreasury();
+}
+
+function buildTreasuryPieChartSVG(entries, totalOut) {
+    if (!entries.length || totalOut <= 0) return '';
+    const size = 128;
+    const cx = size / 2;
+    const cy = size / 2;
+    const radius = 44;
+    const strokeWidth = 18;
+    const circumference = 2 * Math.PI * radius;
+
+    let cumulativePct = 0;
+    const segments = entries.map(([cat, amt], idx) => {
+        const pct = amt / totalOut;
+        const dashLength = pct * circumference;
+        const dashOffset = -cumulativePct * circumference;
+        cumulativePct += pct;
+        const color = TREASURY_PIE_COLORS[idx % TREASURY_PIE_COLORS.length];
+        const isSelected = selectedTreasuryCategoryFilter === cat;
+        const isDimmed = selectedTreasuryCategoryFilter && !isSelected;
+        const safeCat = cat.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+        return `<circle
+            cx="${cx}" cy="${cy}" r="${radius}"
+            fill="transparent"
+            stroke="${color}"
+            stroke-width="${isSelected ? strokeWidth + 4 : strokeWidth}"
+            stroke-dasharray="${dashLength} ${circumference}"
+            stroke-dashoffset="${dashOffset}"
+            transform="rotate(-90 ${cx} ${cy})"
+            style="cursor: pointer; transition: all 0.25s ease; opacity: ${isDimmed ? '0.32' : '1'};"
+            onclick="toggleTreasuryCategoryFilter('${safeCat}')"
+        />`;
+    }).join('');
+
+    const activeAmt = selectedTreasuryCategoryFilter
+        ? (entries.find(([c]) => c === selectedTreasuryCategoryFilter)?.[1] || 0)
+        : totalOut;
+    const centerLabel = selectedTreasuryCategoryFilter ? 'TERPILIH' : 'TOTAL KELUAR';
+
+    return `
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; background: rgba(2,6,23,0.65); border: 1px solid #1e293b; border-radius: 0.75rem; padding: 0.65rem; margin-bottom: 0.6rem;">
+            <div style="position: relative; width: ${size}px; height: ${size}px; flex-shrink: 0;">
+                <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+                    <circle cx="${cx}" cy="${cy}" r="${radius}" fill="transparent" stroke="#0f172a" stroke-width="${strokeWidth}" />
+                    ${segments}
+                </svg>
+                <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; text-align: center; padding: 0 14px;">
+                    <span class="font-display" style="font-size: 8px; font-weight: 700; color: #94a3b8; letter-spacing: 0.04em;">${centerLabel}</span>
+                    <span class="font-display" style="font-size: 10px; font-weight: 800; color: #f8fafc; margin-top: 1px;">${formatRupiah(activeAmt)}</span>
+                </div>
+            </div>
+            <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; max-height: 128px; overflow-y: auto;">
+                ${entries.map(([cat, amt], idx) => {
+                    const pct = Math.round((amt / totalOut) * 100);
+                    const color = TREASURY_PIE_COLORS[idx % TREASURY_PIE_COLORS.length];
+                    const isSelected = selectedTreasuryCategoryFilter === cat;
+                    const safeCat = cat.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                    return `
+                        <button type="button" onclick="toggleTreasuryCategoryFilter('${safeCat}')"
+                            style="display: flex; align-items: center; justify-content: space-between; gap: 4px; text-align: left; padding: 3px 6px; border-radius: 0.4rem; background: ${isSelected ? 'rgba(34,211,238,0.16)' : 'transparent'}; border: 1px solid ${isSelected ? 'rgba(34,211,238,0.45)' : 'transparent'}; cursor: pointer;">
+                            <span class="truncate" style="display: flex; align-items: center; gap: 5px; font-size: 10px; color: ${isSelected ? '#67e8f9' : '#cbd5e1'}; font-weight: ${isSelected ? '700' : '500'};">
+                                <span style="width: 8px; height: 8px; border-radius: 9999px; background: ${color}; flex-shrink: 0;"></span>
+                                <span class="truncate">${escapeHtml(tTreasury(cat))}</span>
+                            </span>
+                            <span class="font-display shrink-0" style="font-size: 10px; font-weight: 700; color: ${color};">${pct}%</span>
+                        </button>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
+}
 
 const TREASURY_CATEGORIES = {
     expense: ['🍔 Makan & Jajan', '🚗 Transportasi', '🛒 Belanja & Kebutuhan', '📱 Tagihan & Kuota', '📚 Edukasi & Buku', '🎮 Hiburan', '💊 Kesehatan', '📦 Lainnya'],
@@ -4137,7 +4317,7 @@ function handleAddTreasuryTx(e) {
     const note = document.getElementById('tx-note').value.trim();
     if (!amount || !note) return;
 
-    tr.transactions.unshift({
+   tr.transactions.unshift({
         id: 'tx_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
         type,
         dateStr,
@@ -4145,6 +4325,17 @@ function handleAddTreasuryTx(e) {
         category,
         note
     });
+
+    // Urutkan transaksi dari tanggal terbaru ke terlama agar input tanggal mundur/maju tetap rapi
+    tr.transactions.sort((a, b) => (b.dateStr || '').localeCompare(a.dateStr || ''));
+
+    // Sesuaikan filter periode agar transaksi yang baru diinput langsung terlihat
+    const fDateEl = document.getElementById('tr-filter-date');
+    const fMonthEl = document.getElementById('tr-filter-month');
+    const fYearEl = document.getElementById('tr-filter-year');
+    if (fDateEl) fDateEl.value = dateStr;
+    if (fMonthEl) fMonthEl.value = dateStr.slice(0, 7);
+    if (fYearEl) fYearEl.value = dateStr.slice(0, 4);
 
     const todayKey = getCurrentGameDateKey();
     const usedToday = tr.dailyBonusCounts[todayKey] || 0;
@@ -4216,6 +4407,43 @@ function setTreasuryPeriodMode(mode) {
     renderTreasury();
 }
 
+function getOffsetGameDateKey(offsetDays = 0) {
+    const baseKey = getCurrentGameDateKey();
+    const [y, m, d] = baseKey.split('-').map(Number);
+    const dt = new Date(y, (m || 1) - 1, (d || 1) + offsetDays);
+    const yy = dt.getFullYear();
+    const mm = String(dt.getMonth() + 1).padStart(2, '0');
+    const dd = String(dt.getDate()).padStart(2, '0');
+    return `${yy}-${mm}-${dd}`;
+}
+
+function setQuickTxDate(offsetDays) {
+    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+    const txDate = document.getElementById('tx-date');
+    if (!txDate) return;
+    txDate.value = getOffsetGameDateKey(offsetDays);
+    updateQuickTxDateButtons();
+}
+
+function updateQuickTxDateButtons() {
+    const txDate = document.getElementById('tx-date');
+    const wrap = document.getElementById('tx-quick-date-pills');
+    if (!txDate || !wrap) return;
+    const val = txDate.value;
+    const map = {
+        '-1': getOffsetGameDateKey(-1),
+        '0': getOffsetGameDateKey(0),
+        '1': getOffsetGameDateKey(1)
+    };
+    wrap.querySelectorAll('button[data-offset]').forEach(btn => {
+        const off = btn.getAttribute('data-offset');
+        const active = val === map[off];
+        btn.style.background = active ? 'rgba(6,182,212,0.22)' : 'rgba(15,23,42,0.85)';
+        btn.style.color = active ? '#67e8f9' : '#94a3b8';
+        btn.style.borderColor = active ? 'rgba(34,211,238,0.55)' : '#1e293b';
+    });
+}
+
 function initTreasuryDefaults() {
     const todayKey = getCurrentGameDateKey();
     const txDate = document.getElementById('tx-date');
@@ -4223,7 +4451,26 @@ function initTreasuryDefaults() {
     const fMonth = document.getElementById('tr-filter-month');
     const fYear = document.getElementById('tr-filter-year');
 
-    if (txDate && !txDate.value) txDate.value = todayKey;
+    if (txDate) {
+        if (!txDate.value) txDate.value = todayKey;
+        txDate.removeAttribute('min');
+        txDate.removeAttribute('max');
+
+        if (!document.getElementById('tx-quick-date-pills') && txDate.parentElement) {
+            const pills = document.createElement('div');
+            pills.id = 'tx-quick-date-pills';
+            pills.style.cssText = 'display: flex; gap: 4px; margin-top: 5px;';
+            pills.innerHTML = `
+                <button type="button" data-offset="-1" onclick="setQuickTxDate(-1)" style="flex:1; padding: 3px 6px; border-radius: 0.4rem; font-size: 10px; font-weight: 700; border: 1px solid #1e293b; cursor: pointer;">Kemarin</button>
+                <button type="button" data-offset="0" onclick="setQuickTxDate(0)" style="flex:1; padding: 3px 6px; border-radius: 0.4rem; font-size: 10px; font-weight: 700; border: 1px solid #1e293b; cursor: pointer;">Hari Ini</button>
+                <button type="button" data-offset="1" onclick="setQuickTxDate(1)" style="flex:1; padding: 3px 6px; border-radius: 0.4rem; font-size: 10px; font-weight: 700; border: 1px solid #1e293b; cursor: pointer;">Besok</button>
+            `;
+            txDate.parentElement.appendChild(pills);
+            txDate.addEventListener('change', updateQuickTxDateButtons);
+        }
+        updateQuickTxDateButtons();
+    }
+
     if (fDate && !fDate.value) fDate.value = todayKey;
     if (fMonth && !fMonth.value) fMonth.value = todayKey.slice(0, 7);
     if (fYear && fYear.options.length === 0) {
@@ -4300,35 +4547,70 @@ function renderTreasury() {
     if (elInBar) elInBar.style.width = `${inPct}%`;
     if (elOutBar) elOutBar.style.width = `${outPct}%`;
 
+    // Reset filter jika kategori yang dipilih sudah tidak ada di periode ini
+    if (selectedTreasuryCategoryFilter && !catTotals[selectedTreasuryCategoryFilter]) {
+        selectedTreasuryCategoryFilter = null;
+    }
+
     const catBox = document.getElementById('tr-category-breakdown');
     if (catBox) {
         const entries = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
         if (entries.length === 0) {
             catBox.innerHTML = `<p style="font-size: 11px; color: #64748b;">${escapeHtml(tTreasury('Belum ada pengeluaran pada periode ini.'))}</p>`;
         } else {
-            catBox.innerHTML = entries.map(([cat, amt]) => {
+            const pieChartHtml = buildTreasuryPieChartSVG(entries, totalOut);
+            const hintHtml = `<p style="font-size: 10px; color: #94a3b8; margin-bottom: 6px;">💡 Ketuk kategori / irisan grafik di bawah untuk melihat riwayat transaksi kategori tersebut:</p>`;
+            const listHtml = entries.map(([cat, amt], idx) => {
                 const pct = totalOut > 0 ? Math.round((amt / totalOut) * 100) : 0;
+                const color = TREASURY_PIE_COLORS[idx % TREASURY_PIE_COLORS.length];
+                const isSelected = selectedTreasuryCategoryFilter === cat;
+                const safeCat = cat.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                const txCount = filtered.filter(t => t.type !== 'income' && t.category === cat).length;
+
                 return `
-                    <div style="background: rgba(15,23,42,0.75); border: 1px solid #1e293b; border-radius: 0.55rem; padding: 0.4rem 0.6rem;">
-                        <div class="flex justify-between" style="font-size: 11px; margin-bottom: 3px;">
-                            <span style="color: #e2e8f0; font-weight: 600;">${escapeHtml(tTreasury(cat))}</span>
-                            <span class="font-display" style="color: #fb7185; font-weight: 700;">${formatRupiah(amt)} (${pct}%)</span>
+                    <div onclick="toggleTreasuryCategoryFilter('${safeCat}')"
+                        style="cursor: pointer; background: ${isSelected ? 'rgba(6,182,212,0.16)' : 'rgba(15,23,42,0.75)'}; border: 1px solid ${isSelected ? '#22d3ee' : '#1e293b'}; border-radius: 0.55rem; padding: 0.45rem 0.6rem; transition: all 0.2s;">
+                        <div class="flex justify-between items-center" style="font-size: 11px; margin-bottom: 4px;">
+                            <span style="color: ${isSelected ? '#67e8f9' : '#e2e8f0'}; font-weight: 700; display: flex; align-items: center; gap: 5px;">
+                                <span style="width: 8px; height: 8px; border-radius: 9999px; background: ${color}; display: inline-block;"></span>
+                                ${escapeHtml(tTreasury(cat))}
+                                <span style="font-size: 9px; color: #94a3b8; font-weight: 500;">(${txCount}x)</span>
+                            </span>
+                            <span class="font-display" style="color: ${color}; font-weight: 700;">${formatRupiah(amt)} (${pct}%)</span>
                         </div>
                         <div class="progress-track-sm">
-                            <div class="progress-fill" style="width: ${pct}%; background: linear-gradient(to right, #f43f5e, #fb923c);"></div>
+                            <div class="progress-fill" style="width: ${pct}%; background: ${color};"></div>
                         </div>
                     </div>
                 `;
             }).join('');
+
+            catBox.innerHTML = pieChartHtml + hintHtml + listHtml;
         }
     }
 
     const txListEl = document.getElementById('tr-transaction-list');
     if (txListEl) {
-        if (filtered.length === 0) {
-            txListEl.innerHTML = `<p style="font-size: 11px; color: #64748b; text-align: center; padding: 0.65rem 0;">${escapeHtml(tTreasury('Tidak ada transaksi pada periode ini.'))}</p>`;
+        const displayedTx = selectedTreasuryCategoryFilter
+            ? filtered.filter(tx => tx.type !== 'income' && tx.category === selectedTreasuryCategoryFilter)
+            : filtered;
+
+        const filterBannerHtml = selectedTreasuryCategoryFilter ? `
+            <div class="flex items-center justify-between gap-2" style="background: rgba(6,182,212,0.14); border: 1px solid rgba(34,211,238,0.45); border-radius: 0.6rem; padding: 0.45rem 0.65rem; margin-bottom: 0.45rem;">
+                <div style="font-size: 11px; color: #67e8f9; font-weight: 700;">
+                    🔍 Filter: ${escapeHtml(tTreasury(selectedTreasuryCategoryFilter))} • Total ${formatRupiah(catTotals[selectedTreasuryCategoryFilter] || 0)}
+                </div>
+                <button type="button" onclick="toggleTreasuryCategoryFilter(null)" class="font-display"
+                    style="font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 0.4rem; background: rgba(15,23,42,0.9); color: #cbd5e1; border: 1px solid #334155; cursor: pointer;">
+                    ✕ Semua
+                </button>
+            </div>
+        ` : '';
+
+        if (displayedTx.length === 0) {
+            txListEl.innerHTML = filterBannerHtml + `<p style="font-size: 11px; color: #64748b; text-align: center; padding: 0.65rem 0;">${escapeHtml(tTreasury('Tidak ada transaksi pada periode ini.'))}</p>`;
         } else {
-            txListEl.innerHTML = filtered.map(tx => {
+            txListEl.innerHTML = filterBannerHtml + displayedTx.map(tx => {
                 const isInc = tx.type === 'income';
                 return `
                     <div style="background: rgba(15,23,42,0.75); border: 1px solid rgba(30,41,59,0.9); border-radius: 0.65rem; padding: 0.5rem 0.65rem;" class="flex items-center justify-between gap-2">
@@ -4347,7 +4629,6 @@ function renderTreasury() {
             }).join('');
         }
     }
-}
 
 // ==========================================
 // 12. ANCIENT GRIMOIRE READER (PDF IN DUNGEON)
@@ -4904,7 +5185,6 @@ setTimeout(syncAndroidHomeWidget, 800);
 
 let isSplashUnlocking = false;
 let fpHoldTimer = null;
-let fpScanSoundInterval = null;
 let fpAudioCtx = null;
 
 function playBiometricAudio(stage) {
@@ -4917,48 +5197,53 @@ function playBiometricAudio(stage) {
         const now = fpAudioCtx.currentTime;
 
         if (stage === 'pulse') {
+            // 1 tap halus saat jari menyentuh sensor
             const osc = fpAudioCtx.createOscillator();
             const gain = fpAudioCtx.createGain();
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(520, now);
-            osc.frequency.exponentialRampToValueAtTime(980, now + 0.14);
-
-            gain.gain.setValueAtTime(0.08, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-
-            osc.connect(gain);
-            gain.connect(fpAudioCtx.destination);
-            osc.start(now);
-            osc.stop(now + 0.16);
-        } else if (stage === 'cancel') {
-            const osc = fpAudioCtx.createOscillator();
-            const gain = fpAudioCtx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(300, now);
-            osc.frequency.linearRampToValueAtTime(160, now + 0.18);
+            osc.frequency.setValueAtTime(340, now);
+            osc.frequency.exponentialRampToValueAtTime(440, now + 0.06);
 
             gain.gain.setValueAtTime(0.06, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.19);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
 
             osc.connect(gain);
             gain.connect(fpAudioCtx.destination);
             osc.start(now);
-            osc.stop(now + 0.2);
+            osc.stop(now + 0.07);
+        } else if (stage === 'cancel') {
+            // 1 ketukan rendah lembut jika dilepas terlalu cepat
+            const osc = fpAudioCtx.createOscillator();
+            const gain = fpAudioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(240, now);
+            osc.frequency.exponentialRampToValueAtTime(170, now + 0.09);
+
+            gain.gain.setValueAtTime(0.05, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+            osc.connect(gain);
+            gain.connect(fpAudioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.1);
         } else if (stage === 'success') {
-            const freqs = [587.33, 880, 1174.66];
+            // 2 nada chime bersih & modern saat akses terbuka
+            const freqs = [523.25, 659.25];
             freqs.forEach((f, idx) => {
                 const osc = fpAudioCtx.createOscillator();
                 const gain = fpAudioCtx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(f, now + idx * 0.08);
+                const start = now + idx * 0.07;
 
-                gain.gain.setValueAtTime(0.11, now + idx * 0.08);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.35);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(f, start);
+
+                gain.gain.setValueAtTime(0.08, start);
+                gain.gain.exponentialRampToValueAtTime(0.001, start + 0.14);
 
                 osc.connect(gain);
                 gain.connect(fpAudioCtx.destination);
-                osc.start(now + idx * 0.08);
-                osc.stop(now + idx * 0.08 + 0.36);
+                osc.start(start);
+                osc.stop(start + 0.15);
             });
         }
     } catch (e) {}
@@ -4983,32 +5268,20 @@ function startFingerprintHold(e) {
 
     playBiometricAudio('pulse');
     if (navigator.vibrate) {
-        try { navigator.vibrate(30); } catch (err) {}
+        try { navigator.vibrate(25); } catch (err) {}
     }
 
-    fpScanSoundInterval = setInterval(() => {
-        playBiometricAudio('pulse');
-        if (navigator.vibrate) {
-            try { navigator.vibrate(25); } catch (err) {}
-        }
-    }, 220);
-
     fpHoldTimer = setTimeout(() => {
-        clearInterval(fpScanSoundInterval);
-        fpScanSoundInterval = null;
         fpHoldTimer = null;
         completeFingerprintUnlock();
     }, 900);
 }
 
 function cancelFingerprintHold() {
-    if (isSplashUnlocking) return;
-    if (!fpHoldTimer && !fpScanSoundInterval) return;
+    if (isSplashUnlocking || !fpHoldTimer) return;
 
     clearTimeout(fpHoldTimer);
-    clearInterval(fpScanSoundInterval);
     fpHoldTimer = null;
-    fpScanSoundInterval = null;
 
     playBiometricAudio('cancel');
 
@@ -5036,9 +5309,6 @@ function completeFingerprintUnlock() {
     const splash = document.getElementById('system-splash-screen');
 
     playBiometricAudio('success');
-    if (typeof SoundFX !== 'undefined' && SoundFX.playQuestComplete) {
-        SoundFX.playQuestComplete();
-    }
     if (navigator.vibrate) {
         try { navigator.vibrate([50, 40, 100]); } catch (e) {}
     }
