@@ -3825,8 +3825,17 @@ function switchTab(tabName) {
     });
 
     const activeBtn = document.getElementById(`nav-${tabName}`);
-    activeBtn.classList.add('active');
-    activeBtn.style.color = '#22d3ee';
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+        activeBtn.style.color = '#22d3ee';
+    }
+
+    // Reset posisi scroll ke paling atas setiap kali berpindah tab
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    const mainWrap = document.querySelector('main');
+    if (mainWrap) mainWrap.scrollTop = 0;
 }
 
 function spawnFloatingReward(text) {
