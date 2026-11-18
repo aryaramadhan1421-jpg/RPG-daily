@@ -4159,6 +4159,9 @@ function syncHomeScreenWidget() {
         const summary = (typeof getPendingDailySummary === 'function') ? getPendingDailySummary() : { done: 0, total: 0 };
         const dailyPct = summary.total > 0 ? Math.round((summary.done / summary.total) * 100) : 0;
 
+       if (typeof window.AndroidBridge.setAppLanguage === 'function') {
+            window.AndroidBridge.setAppLanguage(getReminderLang());
+        }
         if (typeof window.AndroidBridge.updateWidgetData === 'function') {
             window.AndroidBridge.updateWidgetData(
                 p.streak || 0,
@@ -4168,8 +4171,7 @@ function syncHomeScreenWidget() {
                 p.maxHp || 100,
                 dailyPct
             );
-        }
-    } catch (e) {}
+        } catch (e) {}
 }
 
 function checkScheduledReminderTick() {
