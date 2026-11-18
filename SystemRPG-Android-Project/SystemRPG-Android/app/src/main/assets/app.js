@@ -4845,55 +4845,165 @@ setTimeout(syncAndroidHomeWidget, 800);
 // ==========================================
 
 let isSplashUnlocking = false;
+let fpHoldTimer = null;
+let fpScanSoundInterval = null;
+let fpAudioCtx = null;
 
-function triggerFingerprintScan() {
+function playBiometricAudio(stage) {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        if (!fpAudioCtx) fpAudioCtx = new AudioContext();
+        if (fpAudioCtx.state === 'suspended') fpAudioCtx.resume();
+
+        const now = fpAudioCtx.currentTime;
+
+        if (stage === 'pulse') {
+            const osc = fpAudioCtx.createOscillator();
+            const gain = fpAudioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(520, now);
+            osc.frequency.exponentialRampToValueAtTime(980, now + 0.14);
+
+            gain.gain.setValueAtTime(0.08, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+            osc.connect(gain);
+            gain.connect(fpAudioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.16);
+        } else if (stage === 'cancel') {
+            const osc = fpAudioCtx.createOscillator();
+            const gain = fpAudioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.linearRampToValueAtTime(160, now + 0.18);
+
+            gain.gain.setValueAtTime(0.06, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.19);
+
+            osc.connect(gain);
+            gain.connect(fpAudioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.2);
+        } else if (stage === 'success') {
+            const freqs = [587.33, 880, 1174.66];
+            freqs.forEach((f, idx) => {
+                const osc = fpAudioCtx.createOscillator();
+                const gain = fpAudioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(f, now + idx * 0.08);
+
+                gain.gain.setValueAtTime(0.11, now + idx * 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.35);
+
+                osc.connect(gain);
+                gain.connect(fpAudioCtx.destination);
+                osc.start(now + idx * 0.08);
+                osc.stop(now + idx * 0.08 + 0.36);
+            });
+        }
+    } catch (e) {}
+}
+
+function startFingerprintHold(e) {
+    if (e && e.button !== undefined && e.button !== 0) return;
+    if (isSplashUnlocking || fpHoldTimer) return;
+
+    const pad = document.getElementById('btn-fingerprint-auth');
+    const statusText = document.getElementById('fp-status-text');
+    const subText = document.getElementById('fp-sub-text');
+
+    if (pad) pad.classList.add('scanning');
+    if (statusText) {
+        statusText.textContent = 'TAHAN JARI • MEMINDAI BIOMETRIK...';
+        statusText.style.color = '#38bdf8';
+    }
+    if (subText) {
+        subText.textContent = 'Jangan lepaskan jari sampai verifikasi penuh...';
+    }
+
+    playBiometricAudio('pulse');
+    if (navigator.vibrate) {
+        try { navigator.vibrate(30); } catch (err) {}
+    }
+
+    fpScanSoundInterval = setInterval(() => {
+        playBiometricAudio('pulse');
+        if (navigator.vibrate) {
+            try { navigator.vibrate(25); } catch (err) {}
+        }
+    }, 220);
+
+    fpHoldTimer = setTimeout(() => {
+        clearInterval(fpScanSoundInterval);
+        fpScanSoundInterval = null;
+        fpHoldTimer = null;
+        completeFingerprintUnlock();
+    }, 900);
+}
+
+function cancelFingerprintHold() {
     if (isSplashUnlocking) return;
+    if (!fpHoldTimer && !fpScanSoundInterval) return;
+
+    clearTimeout(fpHoldTimer);
+    clearInterval(fpScanSoundInterval);
+    fpHoldTimer = null;
+    fpScanSoundInterval = null;
+
+    playBiometricAudio('cancel');
+
+    const pad = document.getElementById('btn-fingerprint-auth');
+    const statusText = document.getElementById('fp-status-text');
+    const subText = document.getElementById('fp-sub-text');
+
+    if (pad) pad.classList.remove('scanning');
+    if (statusText) {
+        statusText.textContent = 'PEMINDAIAN TERPUTUS • TAHAN LEBIH LAMA';
+        statusText.style.color = '#f87171';
+    }
+    if (subText) {
+        subText.textContent = 'Tekan dan tahan sensor sidik jari untuk masuk';
+    }
+}
+
+function completeFingerprintUnlock() {
     isSplashUnlocking = true;
 
     const pad = document.getElementById('btn-fingerprint-auth');
     const icon = document.getElementById('fp-svg-icon');
     const statusText = document.getElementById('fp-status-text');
     const subText = document.getElementById('fp-sub-text');
+    const splash = document.getElementById('system-splash-screen');
 
-    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) {
-        SoundFX.playClick();
+    playBiometricAudio('success');
+    if (typeof SoundFX !== 'undefined' && SoundFX.playQuestComplete) {
+        SoundFX.playQuestComplete();
     }
     if (navigator.vibrate) {
-        try { navigator.vibrate([35, 40, 70]); } catch (e) {}
+        try { navigator.vibrate([50, 40, 100]); } catch (e) {}
     }
 
-    if (pad) pad.classList.add('scanning');
+    if (pad) {
+        pad.classList.remove('scanning');
+        pad.classList.add('verified');
+    }
+    if (icon) icon.setAttribute('stroke', '#34d399');
     if (statusText) {
-        statusText.textContent = 'MEMINDAI BIOMETRIK HUNTER...';
-        statusText.style.color = '#fcd34d';
+        statusText.textContent = '[ AKSES DITERIMA • SELAMAT DATANG HUNTER ]';
+        statusText.style.color = '#34d399';
+    }
+    if (subText) {
+        subText.textContent = 'Memasuki antarmuka SYSTEM RPG...';
     }
 
     setTimeout(() => {
-        if (pad) {
-            pad.classList.remove('scanning');
-            pad.classList.add('verified');
-        }
-        if (icon) icon.setAttribute('stroke', '#34d399');
-        if (statusText) {
-            statusText.textContent = '✓ AKSES DITERIMA • WELCOME, HUNTER';
-            statusText.style.color = '#34d399';
-        }
-        if (subText) subText.textContent = 'Sinkronisasi Status & Quest Board...';
-
-        if (typeof SoundFX !== 'undefined' && SoundFX.playQuestComplete) {
-            SoundFX.playQuestComplete();
-        }
-
+        if (splash) splash.classList.add('fade-out');
         setTimeout(() => {
-            const splash = document.getElementById('system-splash-screen');
-            if (splash) {
-                splash.classList.add('fade-out');
-                setTimeout(() => {
-                    if (splash && splash.parentNode) splash.remove();
-                }, 650);
-            }
-        }, 420);
-    }, 520);
+            if (splash) splash.style.display = 'none';
+        }, 680);
+    }, 450);
 }
 
 // ==========================================
