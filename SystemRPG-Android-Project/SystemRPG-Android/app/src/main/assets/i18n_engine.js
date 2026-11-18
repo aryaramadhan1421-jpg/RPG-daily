@@ -1,542 +1,543 @@
 /**
  * SYSTEM RPG - Full Multilingual Engine (ID / EN / JA)
  * Comprehensive localization interceptor for static & dynamic UI elements,
- * including Dungeon descriptions, Treasury/Finance Cashflow Dashboards, Modals, and System Controls.
+ * matching exact strings from index.html & dynamic renders from app.js.
  */
 (function () {
   'use strict';
 
   const STORAGE_KEY = 'system_rpg_lang';
 
-  // 1. EXACT PHRASE & SENTENCE DICTIONARY
+  // 1. EXACT PHRASE & SENTENCE DICTIONARY (Extracted directly from index.html)
   const DICTIONARY = {
     en: {
-      // Navigation & Tabs
-      'Beranda': 'Home',
-      'Status': 'Status',
-      'Misi': 'Quests',
-      'Dungeon': 'Dungeon',
-      'Toko': 'Shop',
-      'Pengaturan': 'Settings',
-      'Riwayat': 'History',
-      'Profil': 'Profile',
-      'Perbendaharaan': 'Treasury',
-      'Keuangan': 'Finance',
-      'Statistik': 'Statistics',
+      // Splash Screen & Header
+      '[ TAP FINGERPRINT UNTUK AWAKENING ]': '[ TAP FINGERPRINT FOR AWAKENING ]',
+      'Autentikasi Hunter diperlukan sebelum masuk ke Sistem': 'Hunter authentication required before entering the System',
+      'Hunter Interface': 'Hunter Interface',
 
-      // Stats & Attributes
+      // System Oracle
+      '+ Kutipan': '+ Quote',
+      '✨ Terima Petuah (+5 XP / +5 G)': '✨ Receive Wisdom (+5 XP / +5 G)',
+      '"Kamu tidak naik ke level tujuanmu. Kamu jatuh ke level sistemmu."': '"You do not rise to the level of your goals. You fall to the level of your systems."',
+
+      // Player Identity Card
+      'Ganti Title': 'Switch Title',
+      'Lihat Semua': 'View All',
+
+      // Core RPG Stats & Radar Chart
       'Status Atribut': 'Attribute Status',
+      'Distribusi Atribut Hunter': 'Hunter Attribute Distribution',
       'Distribusi Level Atribut': 'Attribute Level Distribution',
-      'Kekuatan': 'Strength',
-      'Kecerdasan': 'Intelligence',
-      'Kebijaksanaan': 'Wisdom',
-      'Karisma': 'Charisma',
-      'Peringkat': 'Rank',
-      'Level': 'Level',
-      'Kesehatan': 'HP',
-      'Energi': 'Stamina',
-      'Koin': 'Coins',
-      'Emas': 'Gold',
-      'Poin Status': 'Stat Points',
-      'Total EXP': 'Total EXP',
-      'Tingkat Penyelesaian': 'Completion Rate',
-      'Hari Aktif': 'Active Days',
+      'Skala Tier: 100': 'Tier Scale: 100',
+      'Pasif: +0 Max HP (Fisik & Vitality)': 'Passive: +0 Max HP (Physical & Vitality)',
+      'Pasif: +0% XP (Belajar & Fokus)': 'Passive: +0% XP (Study & Focus)',
+      'Pasif: -0% Damage Penalti (Mindfulness)': 'Passive: -0% Penalty Damage (Mindfulness)',
+      'Pasif: Diskon Shop 0% (Relasi & Sosial)': 'Passive: 0% Shop Discount (Relations & Social)',
 
-      // Quests & Habits
-      'Misi Harian': 'Daily Quests',
-      'Misi Utama': 'Main Quests',
-      'Misi Tambahan': 'Side Quests',
-      'Quest Baru': 'New Quest',
-      'Tambah Quest': 'Add Quest',
-      'Tambah Misi': 'Add Quest',
-      'Edit Quest': 'Edit Quest',
-      'Judul Quest': 'Quest Title',
-      'Kategori': 'Category',
-      'Atribut': 'Attribute',
-      'Tingkat Kesulitan': 'Difficulty',
-      'Waktu Pelaksanaan': 'Time of Day',
-      'Mudah': 'Easy',
-      'Sedang': 'Medium',
-      'Sulit': 'Hard',
-      'Sangat Sulit': 'Very Hard',
-      'Selesai': 'Completed',
-      'Belum Selesai': 'Incomplete',
-      'Batalkan': 'Undo',
-      'Hapus': 'Delete',
-      'Simpan': 'Save',
-      'Simpan Perubahan': 'Save Changes',
-      'Pagi': 'Morning',
-      'Siang': 'Afternoon',
-      'Sore': 'Evening',
-      'Malam': 'Night',
-      'Kapan Saja': 'Anytime',
-      'Semua': 'All',
-      'Beruntun': 'Streak',
-      'Bekukan Streak': 'Freeze Streak',
+      // Habit Tracker & History
       'Habit Tracker & Riwayat': 'Habit Tracker & History',
-      'Belum ada misi untuk hari ini.': 'No quests for today yet.',
-      'Belum ada riwayat.': 'No history yet.',
+      'Tanggal Aktif Sistem': 'System Active Date',
+      'Hari Ini': 'Today',
+      'Klik kotak tanggal untuk cek riwayat': 'Click a date box to check history',
+      'Log Aktivitas Tanggal Ini': 'Activity Log for This Date',
 
       // System Control & Daily Evaluation
       'Kontrol Sistem & Evaluasi Harian': 'System Control & Daily Evaluation',
+      '🎯 Target Minimal Streak Harian': '🎯 Minimum Daily Streak Target',
+      'Atur persentase minimal Daily Quest selesai': 'Set minimum percentage of completed Daily Quests',
       'Evaluasi & Lanjut Hari': 'Evaluate & Advance Day',
       'Evaluasi dan Lanjut Hari': 'Evaluate and Advance Day',
-      'Evaluasi Harian': 'Daily Evaluation',
-      'Evaluasi Misi Harian': 'Daily Quest Evaluation',
-      'Evaluasi misi pada tanggal terpilih. Misi yang belum selesai akan mengurangi HP kecuali ada Shield.': 'Evaluate quests on the selected date. Incomplete quests will deduct HP unless a Shield is active.',
-      'Evaluasi misi pada tanggal terpilih. Misi yang tidak selesai akan mengurangi HP kecuali ada Shield.': 'Evaluate quests on the selected date. Incomplete quests will deduct HP unless a Shield is active.',
-      'Evaluasi misi pada tanggal terpilih. Quest yang belum selesai akan mengurangi HP kecuali ada Shield.': 'Evaluate quests on the selected date. Incomplete quests will deduct HP unless a Shield is active.',
-      'Misi yang belum selesai akan mengurangi HP kecuali ada Shield.': 'Incomplete quests will deduct HP unless a Shield is active.',
+
+      // Mobile Notification Reminder
       'Reminder Notifikasi Layar HP': 'Mobile Lockscreen Notification Reminder',
+      'NONAKTIF': 'INACTIVE',
+      'AKTIF': 'ACTIVE',
+      'Munculkan notifikasi pop-up di layar atas HP jika masih ada Daily Quest yang belum dikerjakan atau lupa buka SYSTEM RPG.': 'Show pop-up notifications on your phone screen if Daily Quests are still unfinished or you forgot to open SYSTEM RPG.',
+      '🌅 Pagi': '🌅 Morning',
+      '🌇 Sore': '🌇 Evening',
+      '🌙 Malam': '🌙 Night',
+      '🔔 Aktifkan Notifikasi': '🔔 Enable Notifications',
+      '🔕 Matikan Notifikasi': '🔕 Disable Notifications',
       'Aktifkan Notifikasi': 'Enable Notifications',
       'Matikan Notifikasi': 'Disable Notifications',
-      'Nonaktifkan Notifikasi': 'Disable Notifications',
-      'Notifikasi Aktif': 'Notifications Active',
-      'Notifikasi Mati': 'Notifications Off',
-      'Tes Notifikasi': 'Test Notification',
-      'Pengingat Harian': 'Daily Reminder',
-      'Waktu Pengingat': 'Reminder Time',
-      'Cadangkan & Pulihkan Data': 'Backup & Restore Data',
-      'Ekspor Data (JSON)': 'Export Data (JSON)',
-      'Impor Data (JSON)': 'Import Data (JSON)',
-      'Reset Seluruh Data': 'Reset All Data',
+      'Tes Pop-up': 'Test Pop-up',
+
+      // Quests Tab
+      'Centang misi selesai (klik ulang untuk batalkan/undo)': 'Check completed quests (click again to undo)',
+      'Preset Habit': 'Habit Preset',
+      'Quest Baru': 'New Quest',
+      'Buat Misi Baru': 'Create New Quest',
+      'Nama Misi / Tugas': 'Quest / Task Name',
+      'Kategori': 'Category',
+      'Waktu': 'Time',
+      'Atribut': 'Attribute',
+      '🌅 Pagi': '🌅 Morning',
+      '☀️ Siang': '☀️ Afternoon',
+      '🌇 Sore': '🌇 Evening',
+      '🌙 Malam': '🌙 Night',
+      '⚡ Fleksibel': '⚡ Flexible',
+      'Jadwal Hari Aktif': 'Active Days Schedule',
+      'Semua': 'All',
+      'Sen': 'Mon',
+      'Sel': 'Tue',
+      'Rab': 'Wed',
+      'Kam': 'Thu',
+      'Jum': 'Fri',
+      'Sab': 'Sat',
+      'Min': 'Sun',
+      'Tipe Progres Misi': 'Quest Progress Type',
+      '☑️ Ceklis Biasa (Sekali Selesai)': '☑️ Standard Checkbox (One-time)',
+      '🔢 Count / Hitungan (Contoh: 20 Hal, 8 Gelas)': '🔢 Counter (e.g., 20 Pages, 8 Glasses)',
+      'Target Angka': 'Target Count',
+      'Satuan': 'Unit',
+      'Hadiah XP': 'XP Reward',
+      'Hadiah Gold': 'Gold Reward',
+      'TAMBAHKAN KE QUEST BOARD': 'ADD TO QUEST BOARD',
+      '🕒 Semua Waktu': '🕒 All Times',
+      'Aktif (Belum)': 'Active (Incomplete)',
+      'Selesai': 'Completed',
+      '📅 Jadwal Hari Ini': "📅 Today's Schedule",
+      '🗓️ Semua Jadwal': '🗓️ All Schedules',
 
       // Dungeon & Deep Focus Raid
-      'Deep Focus Raid': 'Deep Focus Raid',
-      'Masuki gerbang fokus': 'Enter the focus gate',
-      'Masuki gerbang fokus.': 'Enter the focus gate.',
-      'Masuki gerbang fokus untuk menaklukkan tantangan dan raih hadiah EXP serta Gold.': 'Enter the focus gate to conquer challenges and earn EXP and Gold rewards.',
-      'Masuki gerbang fokus, kalahkan distraksi, dan dapatkan hadiah EXP & Gold.': 'Enter the focus gate, defeat distractions, and earn EXP & Gold rewards.',
-      'Mulai Dungeon': 'Enter Dungeon',
-      'Masuk Dungeon': 'Enter Dungeon',
-      'Jeda': 'Pause',
-      'Lanjutkan': 'Resume',
-      'Menyerah': 'Surrender',
-      'Fokus': 'Focus',
-      'Istirahat': 'Rest',
-      'Durasi Fokus': 'Focus Duration',
-      'Durasi Istirahat': 'Rest Duration',
-      'Suara Latar': 'Ambient Audio',
-      'Kunci Layar': 'Screen Lock',
-      'Mode Kunci Layar': 'Screen Lock Mode',
-      'Dungeon Selesai!': 'Dungeon Cleared!',
-      'Menit': 'Minutes',
+      'MASUKI DUNGEON': 'ENTER DUNGEON',
+      'MENYERAH (-10 HP)': 'SURRENDER (-10 HP)',
+      'Set Waktu': 'Set Time',
+      '🎯 Tautkan Quest Fokus (Opsional — Auto-Selesai saat Clear)': '🎯 Link Focus Quest (Optional — Auto-Complete on Clear)',
+      '-- Fokus Umum (+INT saja) --': '-- General Focus (+INT only) --',
+      'Ambient Fokus': 'Focus Ambient',
+      'Mode: Hening': 'Mode: Silent',
+      '🔇 Hening': '🔇 Silent',
+      '🌌 Dark Synth': '🌌 Dark Synth',
+      '🌧️ Suara Hujan': '🌧️ Rain Sound',
+      'Baca PDF materi belajar/buku sambil Dungeon Raid berjalan': 'Read study material/book PDFs while Dungeon Raid is active',
+      '📂 Buka PDF': '📂 Open PDF',
+      'ANIME LOFI RADIO (1 JAM)': 'ANIME LOFI RADIO (1 HOUR)',
+      'Siap menemani fokus Dungeon • Offline Synth': 'Ready to accompany Dungeon focus • Offline Synth',
+      '▶ Putar Anime Lofi (1 Jam)': '▶ Play Anime Lofi (1 Hour)',
+      '🎵 MP3 HP': '🎵 Phone MP3',
+      '🔖 Bookmark Tersimpan (Per Judul File)': '🔖 Saved Bookmarks (By File Title)',
+      '🔖 Tandai Hal Ini': '🔖 Bookmark Page',
 
-      // Treasury / Finance / Cashflow Dashboard
-      'Pencatatan Keuangan': 'Financial Records',
-      'Pencatatan Keuangan & Arus Kas': 'Financial Records & Cashflow',
+      // Shop & Armory & Mystery Chest
+      'Tukarkan Gold dengan Potion atau Reward Dunia Nyata': 'Exchange Gold for Potions or Real-World Rewards',
+      'Item Baru': 'New Item',
+      'Tambah Item / Reward': 'Add Item / Reward',
+      'Nama Item / Reward': 'Item / Reward Name',
+      'Harga (Gold)': 'Price (Gold)',
+      'Efek Item': 'Item Effect',
+      'SIMPAN KE SHOP': 'SAVE TO SHOP',
+      '🎁 Potion & Real-World Rewards': '🎁 Potions & Real-World Rewards',
+      'Konsumsi & Hadiah Nyata': 'Consumables & Real Rewards',
+      'Relic bersifat sementara (aktif 24 jam sejak dibeli) • Maks 3 slot aktif': 'Relics are temporary (active 24h upon purchase) • Max 3 active slots',
+      'Belum ada Relic terpasang. Pasang Relic di bawah untuk mengaktifkan efek pasif!': 'No Relic equipped yet. Equip a Relic below to activate passive effects!',
+      'MYSTERY SYSTEM CHEST': 'MYSTERY SYSTEM CHEST',
+      'Mystery System Chest': 'Mystery System Chest',
+      'Uji keberuntungan: XP, HP, Streak Shield, atau Jackpot Gold!': 'Test your luck: XP, HP, Streak Shield, or Gold Jackpot!',
+      '🎲 BUKA PETI MISTERI (100 GOLD)': '🎲 OPEN MYSTERY CHEST (100 GOLD)',
+      'Riwayat Redeem': 'Redeem History',
+      'Hapus Semua': 'Clear All',
+
+      // Treasury / Cashflow Dashboard
+      'Catat arus kas & kalkulator jajan (+10 XP & +10 WIS XP, maks 3x/hari)': 'Record cashflow & snack calculator (+10 XP & +10 WIS XP, max 3x/day)',
+      '🧮 Kalkulator Jajan & Belanja': '🧮 Snack & Shopping Calculator',
+      '✓ PAKAI NOMINAL': '✓ USE AMOUNT',
+      '💸 Catat Transaksi Keuangan': '💸 Record Financial Transaction',
+      'Jenis Arus Kas': 'Cashflow Type',
+      '📤 Pengeluaran (-)': '📤 Expense (-)',
+      '📥 Pemasukan (+)': '📥 Income (+)',
+      'Tanggal': 'Date',
+      'Nominal (Rp)': 'Amount (Rp)',
+      'Nominal': 'Amount',
+      'Kategori Pengeluaran': 'Expense Category',
+      'Kategori Pemasukan': 'Income Category',
+      'Catatan / Keterangan': 'Notes / Description',
+      'SIMPAN TRANSAKSI (+10 XP & +10 WIS)': 'SAVE TRANSACTION (+10 XP & +10 WIS)',
+      '📊 Dashboard Arus Kas': '📊 Cashflow Dashboard',
       'Dashboard Arus Kas': 'Cashflow Dashboard',
-      'Arus Kas': 'Cashflow',
-      'Arus Kas Harian': 'Daily Cashflow',
-      'Arus Kas Bulanan': 'Monthly Cashflow',
-      'Arus Kas Tahunan': 'Annual Cashflow',
       'Harian': 'Daily',
       'Bulanan': 'Monthly',
       'Tahunan': 'Yearly',
-      'Ringkasan Keuangan': 'Financial Summary',
-      'Total Pemasukan': 'Total Income',
-      'Total Pengeluaran': 'Total Expenses',
-      'Kategori Pemasukan': 'Income Category',
-      'Kategori Pengeluaran': 'Expense Category',
-      'Selisih Bersih': 'Net Difference',
+      'Filter Tanggal:': 'Filter Date:',
+      'Filter Bulan:': 'Filter Month:',
+      'Filter Tahun:': 'Filter Year:',
       'Pemasukan': 'Income',
       'Pengeluaran': 'Expense',
-      'Saldo': 'Balance',
-      'Saldo Bersih': 'Net Balance',
-      'Sisa Saldo': 'Remaining Balance',
-      'Arus Kas Bersih': 'Net Cashflow',
-      'Catat Transaksi': 'Record Transaction',
-      'Tambah Transaksi': 'Add Transaction',
-      'Riwayat Transaksi': 'Transaction History',
-      'Belum ada transaksi.': 'No transactions recorded yet.',
-      'Belum ada catatan keuangan.': 'No financial records yet.',
-      'Nominal': 'Amount',
-      'Nominal (Rp)': 'Amount (Rp)',
-      'Masukkan Nominal': 'Enter Amount',
-      'Jumlah': 'Amount',
-      'Keterangan': 'Description',
-      'Catatan': 'Notes',
-      'Tanggal': 'Date',
-      'Bulan': 'Month',
-      'Tahun': 'Year',
-      'Periode': 'Period',
-      'Filter Periode': 'Filter Period',
-      'Grafik Arus Kas': 'Cashflow Chart',
-      'Rasio Tabungan': 'Savings Ratio',
-      'Anggaran': 'Budget',
-      'Makan & Minum': 'Food & Beverage',
-      'Transportasi': 'Transportation',
-      'Tagihan & Utilitas': 'Bills & Utilities',
-      'Belanja': 'Shopping',
-      'Hiburan': 'Entertainment',
-      'Kesehatan & Kebugaran': 'Health & Fitness',
-      'Pendidikan': 'Education',
-      'Investasi': 'Investment',
-      'Tabungan': 'Savings',
-      'Gaji': 'Salary',
-      'Bonus': 'Bonus',
-      'Lainnya': 'Others',
+      'Selisih Bersih': 'Net Difference',
+      'Rincian Pengeluaran per Kategori': 'Expense Breakdown by Category',
+      'Daftar Transaksi Periode Ini': 'Transactions in This Period',
 
-      // Shop & Rewards (Ancient Grimoire, Mystery System Chest & Items)
-      'Toko Hadiah': 'Reward Shop',
-      'Ancient Grimoire': 'Ancient Grimoire',
-      'Mystery System Chest': 'Mystery System Chest',
-      'Peti Misteri Sistem': 'Mystery System Chest',
-      'Buka Peti Misteri untuk mendapatkan hadiah acak bernilai tinggi dari Sistem.': 'Open the Mystery Chest to receive high-value random rewards from the System.',
-      'Kitab kuno berisi pengetahuan rahasia dan item langka untuk meningkatkan kekuatan Hunter.': 'An ancient tome containing secret knowledge and rare items to enhance Hunter abilities.',
-      'Tukar hadiah dengan Gold hasil kerja kerasmu.': 'Redeem rewards using the Gold earned from your hard work.',
-      'Gunakan Gold untuk menukar item spesial dan hadiah dunia nyata.': 'Use Gold to redeem special items and real-world rewards.',
-      'Tukar': 'Redeem',
-      'Beli': 'Buy',
-      'Gunakan': 'Use',
-      'Riwayat Penukaran': 'Redemption History',
-      'Tambah Hadiah': 'Add Reward',
-      'Hadiah Baru': 'New Reward',
-      'Nama Hadiah': 'Reward Name',
-      'Harga Koin': 'Coin Price',
-      'Harga Gold': 'Gold Price',
-      'Koin Tidak Cukup': 'Insufficient Coins',
-      'Gold Tidak Cukup': 'Insufficient Gold',
-      'Berhasil Ditukar!': 'Successfully Redeemed!',
-      'Perisai Pelindung Streak': 'Streak Protection Shield',
-      'Melindungi HP dan Streak dari penalti evaluasi harian selama 1 hari.': 'Protects HP and Streak from daily evaluation penalties for 1 day.',
-
-      // Settings & Modals
-      'Bahasa': 'Language',
-      'Pilih Bahasa': 'Select Language',
-      'Efek Suara': 'Sound Effects',
-      'Ekspor Data': 'Export Data',
-      'Impor Data': 'Import Data',
-      'Reset Data': 'Reset Data',
-      'Konfirmasi': 'Confirm',
+      // Modals & Font Settings
+      'Membuka Peti...': 'Opening Chest...',
+      'Sistem sedang mengacak hadiah keberuntunganmu...': 'The System is randomizing your lucky reward...',
+      'KLAIM HADIAH': 'CLAIM REWARD',
+      'TERIMA KEKUATAN': 'ACCEPT POWER',
+      'LAPORAN HARIAN': 'DAILY REPORT',
+      'MENGERTI': 'UNDERSTOOD',
+      'Pilih 6 Avatar Cyber-Fantasy atau unggah foto dari galeri HP': 'Choose from 6 Cyber-Fantasy Avatars or upload a photo from your gallery',
+      '📷 Foto Pribadi / Galeri HP': '📷 Personal Photo / Phone Gallery',
+      'Otomatis dikompres (160×160px) agar ringan di localStorage': 'Automatically compressed (160×160px) for lightweight localStorage',
+      '📁 Pilih Foto dari Galeri': '📁 Choose Photo from Gallery',
+      'SELESAI': 'DONE',
+      'PROFIL HUNTER': 'HUNTER PROFILE',
+      'Nama Hunter': 'Hunter Name',
       'Batal': 'Cancel',
-      'Tutup': 'Close',
-      'Ya, Lanjutkan': 'Yes, Continue',
-      'Peringatan Sistem': 'System Alert'
+      'Simpan': 'Save',
+      'RESET DATA SISTEM?': 'RESET SYSTEM DATA?',
+      'Semua progres akan di-reset bersih ke awal (Level 1, 0 XP, 0 Gold, 0 Streak).': 'All progress will be reset cleanly to the beginning (Level 1, 0 XP, 0 Gold, 0 Streak).',
+      'Nama Misi': 'Quest Name',
+      'Tipe Progres': 'Progress Type',
+      '☑️ Ceklis Biasa': '☑️ Standard Checkbox',
+      '🔢 Count / Hitungan': '🔢 Counter',
+      'Tipe Item': 'Item Type',
+      'Deskripsi Singkat': 'Short Description',
+      'TAMBAH KUTIPAN ORACLE': 'ADD ORACLE QUOTE',
+      'Isi Kata Motivasi / Prinsip': 'Motivational Quote / Principle',
+      'Nama Tokoh / Sumber': 'Author / Source Name',
+      'GELAR & ACHIEVEMENT': 'TITLES & ACHIEVEMENTS',
+      'Pilih gelar aktif untuk mendapatkan bonus pasif permanen:': 'Select an active title to gain permanent passive bonuses:',
+      'TUTUP ROADMAP': 'CLOSE ROADMAP',
+      'Lewati & Lanjut': 'Skip & Advance',
+      'Simpan (+15 WIS)': 'Save (+15 WIS)',
+      'PENGATURAN FONT': 'FONT SETTINGS',
+      '✕ Tutup': '✕ Close',
+      'Ukuran Teks Aplikasi': 'App Text Size',
+      'Kecil (85%)': 'Small (85%)',
+      'Normal (100%)': 'Normal (100%)',
+      'Besar (115%)': 'Large (115%)',
+      'Gaya Huruf Judul (RPG Style)': 'Heading Font Style (RPG Style)',
+      'Tegas': 'Bold Tactical',
+      '🌐 Bahasa Antarmuka (Language)': '🌐 Interface Language'
     },
     ja: {
-      // Navigation & Tabs
-      'Beranda': 'ホーム',
-      'Status': 'ステータス',
-      'Misi': 'クエスト',
-      'Dungeon': 'ダンジョン',
-      'Toko': 'ショップ',
-      'Pengaturan': '設定',
-      'Riwayat': '履歴',
-      'Profil': 'プロフィール',
-      'Perbendaharaan': '宝物庫',
-      'Keuangan': '家計簿・財務',
-      'Statistik': '統計',
+      // Splash Screen & Header
+      '[ TAP FINGERPRINT UNTUK AWAKENING ]': '[ 指紋をタップして覚醒する ]',
+      'Autentikasi Hunter diperlukan sebelum masuk ke Sistem': 'システムに入る前にハンター認証が必要です',
+      'Hunter Interface': 'ハンターインターフェース',
 
-      // Stats & Attributes
+      // System Oracle
+      '+ Kutipan': '+ 名言追加',
+      '✨ Terima Petuah (+5 XP / +5 G)': '✨ 託宣を受け取る (+5 XP / +5 G)',
+      '"Kamu tidak naik ke level tujuanmu. Kamu jatuh ke level sistemmu."': '「人は目標のレベルまで上がるのではなく、システムのレベルまで落ちる。」',
+
+      // Player Identity Card
+      'Ganti Title': '称号変更',
+      'Lihat Semua': 'すべて見る',
+
+      // Core RPG Stats & Radar Chart
       'Status Atribut': 'ステータス能力値',
+      'Distribusi Atribut Hunter': 'ハンター能力値分布',
       'Distribusi Level Atribut': '能力値レベル分布',
-      'Kekuatan': '筋力 (STR)',
-      'Kecerdasan': '知力 (INT)',
-      'Kebijaksanaan': '賢さ (WIS)',
-      'Karisma': '魅力 (CHR)',
-      'Peringkat': 'ランク',
-      'Level': 'レベル',
-      'Kesehatan': 'HP',
-      'Energi': 'スタミナ',
-      'Koin': 'コイン',
-      'Emas': 'ゴールド',
-      'Poin Status': 'ステータスポイント',
-      'Total EXP': '累計EXP',
-      'Tingkat Penyelesaian': '達成率',
-      'Hari Aktif': 'アクティブ日数',
+      'Skala Tier: 100': 'ティア基準: 100',
+      'Pasif: +0 Max HP (Fisik & Vitality)': 'パッシブ: 最大HP +0 (体力・生命力)',
+      'Pasif: +0% XP (Belajar & Fokus)': 'パッシブ: 獲得XP +0% (学習・集中)',
+      'Pasif: -0% Damage Penalti (Mindfulness)': 'パッシブ: ペナルティ軽減 -0% (精神・規律)',
+      'Pasif: Diskon Shop 0% (Relasi & Sosial)': 'パッシブ: ショップ割引 0% (社交・魅力)',
 
-      // Quests & Habits
-      'Misi Harian': 'デイリークエスト',
-      'Misi Utama': 'メインクエスト',
-      'Misi Tambahan': 'サブクエスト',
-      'Quest Baru': '新規クエスト',
-      'Tambah Quest': 'クエスト追加',
-      'Tambah Misi': 'クエスト追加',
-      'Edit Quest': 'クエスト編集',
-      'Judul Quest': 'クエスト名',
-      'Kategori': 'カテゴリー',
-      'Atribut': '能力値',
-      'Tingkat Kesulitan': '難易度',
-      'Waktu Pelaksanaan': '時間帯',
-      'Mudah': '簡単',
-      'Sedang': '普通',
-      'Sulit': '難しい',
-      'Sangat Sulit': '超難関',
-      'Selesai': '完了',
-      'Belum Selesai': '未完了',
-      'Batalkan': '取り消す',
-      'Hapus': '削除',
-      'Simpan': '保存',
-      'Simpan Perubahan': '変更を保存',
-      'Pagi': '朝',
-      'Siang': '昼',
-      'Sore': '夕方',
-      'Malam': '夜',
-      'Kapan Saja': 'いつでも',
-      'Semua': 'すべて',
-      'Beruntun': '連続記録',
-      'Bekukan Streak': 'ストリーク凍結',
+      // Habit Tracker & History
       'Habit Tracker & Riwayat': '習慣トラッカー＆履歴',
-      'Belum ada misi untuk hari ini.': '今日のクエストはまだありません。',
-      'Belum ada riwayat.': '履歴はまだありません。',
+      'Tanggal Aktif Sistem': 'システム現在日付',
+      'Hari Ini': '今日',
+      'Klik kotak tanggal untuk cek riwayat': '日付マスをタップして履歴を確認',
+      'Log Aktivitas Tanggal Ini': '本日のアクティビティログ',
 
       // System Control & Daily Evaluation
       'Kontrol Sistem & Evaluasi Harian': 'システム制御＆日次評価',
+      '🎯 Target Minimal Streak Harian': '🎯 毎日の最小ストリーク目標',
+      'Atur persentase minimal Daily Quest selesai': 'デイリークエストの最小達成率を設定',
       'Evaluasi & Lanjut Hari': '評価して次の日へ',
       'Evaluasi dan Lanjut Hari': '評価して次の日へ',
-      'Evaluasi Harian': '日次評価',
-      'Evaluasi Misi Harian': 'デイリークエスト評価',
-      'Evaluasi misi pada tanggal terpilih. Misi yang belum selesai akan mengurangi HP kecuali ada Shield.': '選択した日付のクエストを評価します。未完了のクエストはシールドがない限りHPを減少させます。',
-      'Evaluasi misi pada tanggal terpilih. Misi yang tidak selesai akan mengurangi HP kecuali ada Shield.': '選択した日付のクエストを評価します。未完了のクエストはシールドがない限りHPを減少させます。',
-      'Evaluasi misi pada tanggal terpilih. Quest yang belum selesai akan mengurangi HP kecuali ada Shield.': '選択した日付のクエストを評価します。未完了のクエストはシールドがない限りHPを減少させます。',
-      'Misi yang belum selesai akan mengurangi HP kecuali ada Shield.': '未完了のクエストはシールドがない限りHPを減少させます。',
+
+      // Mobile Notification Reminder
       'Reminder Notifikasi Layar HP': 'スマホロック画面通知リマインダー',
+      'NONAKTIF': '無効',
+      'AKTIF': '有効',
+      'Munculkan notifikasi pop-up di layar atas HP jika masih ada Daily Quest yang belum dikerjakan atau lupa buka SYSTEM RPG.': '未完了のデイリークエストがある場合やアプリを開き忘れた際に、スマホ画面上部にポップアップ通知を表示します。',
+      '🌅 Pagi': '🌅 朝',
+      '🌇 Sore': '🌇 夕方',
+      '🌙 Malam': '🌙 夜',
+      '🔔 Aktifkan Notifikasi': '🔔 通知を有効化',
+      '🔕 Matikan Notifikasi': '🔕 通知をオフにする',
       'Aktifkan Notifikasi': '通知を有効化',
       'Matikan Notifikasi': '通知をオフにする',
-      'Nonaktifkan Notifikasi': '通知を無効化',
-      'Notifikasi Aktif': '通知有効',
-      'Notifikasi Mati': '通知オフ',
-      'Tes Notifikasi': '通知テスト',
-      'Pengingat Harian': '毎日のリマインダー',
-      'Waktu Pengingat': 'リマインダー時間',
-      'Cadangkan & Pulihkan Data': 'データのバックアップと復元',
-      'Ekspor Data (JSON)': 'データ出力 (JSON)',
-      'Impor Data (JSON)': 'データ読込 (JSON)',
-      'Reset Seluruh Data': '全データ初期化',
+      'Tes Pop-up': 'ポップアップテスト',
+
+      // Quests Tab
+      'Centang misi selesai (klik ulang untuk batalkan/undo)': '完了したクエストにチェック（再タップで取り消し）',
+      'Preset Habit': '習慣プリセット',
+      'Quest Baru': '新規クエスト',
+      'Buat Misi Baru': '新規クエスト作成',
+      'Nama Misi / Tugas': 'クエスト・タスク名',
+      'Kategori': 'カテゴリー',
+      'Waktu': '時間帯',
+      'Atribut': '能力値',
+      '☀️ Siang': '☀️ 昼',
+      '⚡ Fleksibel': '⚡ いつでも',
+      'Jadwal Hari Aktif': '実行曜日スケジュール',
+      'Semua': 'すべて',
+      'Sen': '月',
+      'Sel': '火',
+      'Rab': '水',
+      'Kam': '木',
+      'Jum': '金',
+      'Sab': '土',
+      'Min': '日',
+      'Tipe Progres Misi': '進捗タイプ',
+      '☑️ Ceklis Biasa (Sekali Selesai)': '☑️ 通常チェック（1回で完了）',
+      '🔢 Count / Hitungan (Contoh: 20 Hal, 8 Gelas)': '🔢 カウント形式（例: 20ページ、水8杯）',
+      'Target Angka': '目標回数',
+      'Satuan': '単位',
+      'Hadiah XP': '報酬XP',
+      'Hadiah Gold': '報酬ゴールド',
+      'TAMBAHKAN KE QUEST BOARD': 'クエストボードに追加',
+      '🕒 Semua Waktu': '🕒 全時間帯',
+      'Aktif (Belum)': '進行中（未完了）',
+      'Selesai': '完了',
+      '📅 Jadwal Hari Ini': '📅 今日の予定',
+      '🗓️ Semua Jadwal': '🗓️ 全スケジュール',
 
       // Dungeon & Deep Focus Raid
-      'Deep Focus Raid': 'ディープフォーカス・レイド',
-      'Masuki gerbang fokus': '集中のゲートへ入る',
-      'Masuki gerbang fokus.': '集中のゲートへ入る。',
-      'Masuki gerbang fokus untuk menaklukkan tantangan dan raih hadiah EXP serta Gold.': '集中のゲートに入り、試練を攻略してEXPとゴールド報酬を獲得しよう。',
-      'Masuki gerbang fokus, kalahkan distraksi, dan dapatkan hadiah EXP & Gold.': '集中のゲートに入り、雑念を打ち倒してEXPとゴールド報酬を獲得しよう。',
-      'Mulai Dungeon': 'ダンジョン開始',
-      'Masuk Dungeon': 'ダンジョンに入る',
-      'Jeda': '一時停止',
-      'Lanjutkan': '再開',
-      'Menyerah': '諦める',
-      'Fokus': '集中',
-      'Istirahat': '休憩',
-      'Durasi Fokus': '集中時間',
-      'Durasi Istirahat': '休憩時間',
-      'Suara Latar': '環境音',
-      'Kunci Layar': '画面ロック',
-      'Mode Kunci Layar': '画面ロックモード',
-      'Dungeon Selesai!': 'ダンジョンクリア！',
-      'Menit': '分',
+      'MASUKI DUNGEON': 'ダンジョンに入る',
+      'MENYERAH (-10 HP)': '諦める (-10 HP)',
+      'Set Waktu': '時間設定',
+      '🎯 Tautkan Quest Fokus (Opsional — Auto-Selesai saat Clear)': '🎯 集中クエスト連携（任意 — クリア時に自動完了）',
+      '-- Fokus Umum (+INT saja) --': '-- 通常集中 (+INTのみ) --',
+      'Ambient Fokus': '集中環境音',
+      'Mode: Hening': 'モード: 無音',
+      '🔇 Hening': '🔇 無音',
+      '🌌 Dark Synth': '🌌 ダークシンセ',
+      '🌧️ Suara Hujan': '🌧️ 雨音',
+      'Baca PDF materi belajar/buku sambil Dungeon Raid berjalan': 'ダンジョン攻略中に学習教材や書籍のPDFを閲覧',
+      '📂 Buka PDF': '📂 PDFを開く',
+      'ANIME LOFI RADIO (1 JAM)': 'アニメ Lo-Fi ラジオ (1時間)',
+      'Siap menemani fokus Dungeon • Offline Synth': 'ダンジョン集中をサポート • オフライン音源',
+      '▶ Putar Anime Lofi (1 Jam)': '▶ アニメLo-Fi再生 (1時間)',
+      '🎵 MP3 HP': '🎵 端末MP3',
+      '🔖 Bookmark Tersimpan (Per Judul File)': '🔖 保存済みブックマーク（ファイル別）',
+      '🔖 Tandai Hal Ini': '🔖 このページを保存',
 
-      // Treasury / Finance / Cashflow Dashboard
-      'Pencatatan Keuangan': '家計簿・財務記録',
-      'Pencatatan Keuangan & Arus Kas': '財務記録＆キャッシュフロー',
+      // Shop & Armory & Mystery Chest
+      'Tukarkan Gold dengan Potion atau Reward Dunia Nyata': 'ゴールドをポーションや現実のご褒美と交換',
+      'Item Baru': '新規アイテム',
+      'Tambah Item / Reward': 'アイテム・報酬追加',
+      'Nama Item / Reward': 'アイテム・報酬名',
+      'Harga (Gold)': '価格 (ゴールド)',
+      'Efek Item': 'アイテム効果',
+      'SIMPAN KE SHOP': 'ショップに保存',
+      '🎁 Potion & Real-World Rewards': '🎁 ポーション＆現実の報酬',
+      'Konsumsi & Hadiah Nyata': '消費アイテム＆現実のご褒美',
+      'Relic bersifat sementara (aktif 24 jam sejak dibeli) • Maks 3 slot aktif': 'レリックは一時効果（購入から24時間有効）• 最大3スロット装備可能',
+      'Belum ada Relic terpasang. Pasang Relic di bawah untuk mengaktifkan efek pasif!': 'レリック未装備。下のレリックを装備してパッシブ効果を発動しよう！',
+      'MYSTERY SYSTEM CHEST': 'ミステリー・システムチェスト',
+      'Mystery System Chest': 'ミステリー・システムチェスト',
+      'Uji keberuntungan: XP, HP, Streak Shield, atau Jackpot Gold!': '運試し：XP、HP、ストリークシールド、またはゴールド大当たり！',
+      '🎲 BUKA PETI MISTERI (100 GOLD)': '🎲 ミステリーチェストを開ける (100 GOLD)',
+      'Riwayat Redeem': '交換履歴',
+      'Hapus Semua': 'すべて削除',
+
+      // Treasury / Cashflow Dashboard
+      'Catat arus kas & kalkulator jajan (+10 XP & +10 WIS XP, maks 3x/hari)': '収支記録＆お小遣い電卓（+10 XP & +10 WIS XP、1日3回まで）',
+      '🧮 Kalkulator Jajan & Belanja': '🧮 買い物・出費電卓',
+      '✓ PAKAI NOMINAL': '✓ 金額を反映',
+      '💸 Catat Transaksi Keuangan': '💸 収支取引を記録',
+      'Jenis Arus Kas': '収支タイプ',
+      '📤 Pengeluaran (-)': '📤 支出 (-)',
+      '📥 Pemasukan (+)': '📥 収入 (+)',
+      'Tanggal': '日付',
+      'Nominal (Rp)': '金額 (Rp)',
+      'Nominal': '金額',
+      'Kategori Pengeluaran': '支出カテゴリー',
+      'Kategori Pemasukan': '収入カテゴリー',
+      'Catatan / Keterangan': 'メモ・詳細',
+      'SIMPAN TRANSAKSI (+10 XP & +10 WIS)': '取引を保存 (+10 XP & +10 WIS)',
+      '📊 Dashboard Arus Kas': '📊 キャッシュフローダッシュボード',
       'Dashboard Arus Kas': 'キャッシュフローダッシュボード',
-      'Arus Kas': 'キャッシュフロー',
-      'Arus Kas Harian': '日次キャッシュフロー',
-      'Arus Kas Bulanan': '月次キャッシュフロー',
-      'Arus Kas Tahunan': '年次キャッシュフロー',
       'Harian': '日次',
       'Bulanan': '月次',
       'Tahunan': '年次',
-      'Ringkasan Keuangan': '財務サマリー',
-      'Total Pemasukan': '総収入',
-      'Total Pengeluaran': '総支出',
-      'Kategori Pemasukan': '収入カテゴリー',
-      'Kategori Pengeluaran': '支出カテゴリー',
-      'Selisih Bersih': '純収支差額',
+      'Filter Tanggal:': '日付フィルター:',
+      'Filter Bulan:': '月フィルター:',
+      'Filter Tahun:': '年フィルター:',
       'Pemasukan': '収入',
       'Pengeluaran': '支出',
-      'Saldo': '残高',
-      'Saldo Bersih': '純残高',
-      'Sisa Saldo': '残り残高',
-      'Arus Kas Bersih': '純キャッシュフロー',
-      'Catat Transaksi': '取引を記録',
-      'Tambah Transaksi': '取引を追加',
-      'Riwayat Transaksi': '取引履歴',
-      'Belum ada transaksi.': '取引記録はまだありません。',
-      'Belum ada catatan keuangan.': '財務記録はまだありません。',
-      'Nominal': '金額',
-      'Nominal (Rp)': '金額 (Rp)',
-      'Masukkan Nominal': '金額を入力',
-      'Jumlah': '金額',
-      'Keterangan': '説明',
-      'Catatan': 'メモ',
-      'Tanggal': '日付',
-      'Bulan': '月',
-      'Tahun': '年',
-      'Periode': '期間',
-      'Filter Periode': '期間フィルター',
-      'Grafik Arus Kas': 'キャッシュフローチャート',
-      'Rasio Tabungan': '貯蓄率',
-      'Anggaran': '予算',
-      'Makan & Minum': '食費',
-      'Transportasi': '交通費',
-      'Tagihan & Utilitas': '光熱費・請求書',
-      'Belanja': '買い物',
-      'Hiburan': '娯楽',
-      'Kesehatan & Kebugaran': '健康・フィットネス',
-      'Pendidikan': '教育',
-      'Investasi': '投資',
-      'Tabungan': '貯金',
-      'Gaji': '給与',
-      'Bonus': 'ボーナス',
-      'Lainnya': 'その他',
+      'Selisih Bersih': '純収支差額',
+      'Rincian Pengeluaran per Kategori': 'カテゴリー別支出内訳',
+      'Daftar Transaksi Periode Ini': 'この期間の取引一覧',
 
-      // Shop & Rewards (Ancient Grimoire, Mystery System Chest & Items)
-      'Toko Hadiah': '報酬ショップ',
-      'Ancient Grimoire': 'エンシェント・グリモア',
-      'Mystery System Chest': 'ミステリー・システムチェスト',
-      'Peti Misteri Sistem': 'ミステリー・システムチェスト',
-      'Buka Peti Misteri untuk mendapatkan hadiah acak bernilai tinggi dari Sistem.': 'ミステリーチェストを開けて、システムから高価値のランダム報酬を手に入れよう。',
-      'Kitab kuno berisi pengetahuan rahasia dan item langka untuk meningkatkan kekuatan Hunter.': 'ハンターの力を高める秘伝の知識とレアアイテムが記された古文書。',
-      'Tukar hadiah dengan Gold hasil kerja kerasmu.': '努力して獲得したゴールドで報酬を交換しよう。',
-      'Gunakan Gold untuk menukar item spesial dan hadiah dunia nyata.': 'ゴールドを使って特別アイテムや現実の報酬と交換しよう。',
-      'Tukar': '交換',
-      'Beli': '購入',
-      'Gunakan': '使用',
-      'Riwayat Penukaran': '交換履歴',
-      'Tambah Hadiah': '報酬追加',
-      'Hadiah Baru': '新規報酬',
-      'Nama Hadiah': '報酬名',
-      'Harga Koin': '必要コイン',
-      'Harga Gold': '必要ゴールド',
-      'Koin Tidak Cukup': 'コイン不足',
-      'Gold Tidak Cukup': 'ゴールド不足',
-      'Berhasil Ditukar!': '交換完了！',
-      'Perisai Pelindung Streak': 'ストリーク保護シールド',
-      'Melindungi HP dan Streak dari penalti evaluasi harian selama 1 hari.': '1日間、日次評価のペナルティからHPとストリークを保護します。',
-
-      // Settings & Modals
-      'Bahasa': '言語',
-      'Pilih Bahasa': '言語を選択',
-      'Efek Suara': '効果音',
-      'Ekspor Data': 'データ出力',
-      'Impor Data': 'データ読込',
-      'Reset Data': 'データ初期化',
-      'Konfirmasi': '確認',
+      // Modals & Font Settings
+      'Membuka Peti...': 'チェスト開封中...',
+      'Sistem sedang mengacak hadiah keberuntunganmu...': 'システムが幸運の報酬を抽選中...',
+      'KLAIM HADIAH': '報酬を受け取る',
+      'TERIMA KEKUATAN': '力を受け入れる',
+      'LAPORAN HARIAN': '日次レポート',
+      'MENGERTI': '了解',
+      'Pilih 6 Avatar Cyber-Fantasy atau unggah foto dari galeri HP': '6種類のサイバーファンタジーアバターから選択、または端末から写真をアップロード',
+      '📷 Foto Pribadi / Galeri HP': '📷 個人写真 / スマホギャラリー',
+      'Otomatis dikompres (160×160px) agar ringan di localStorage': '保存容量を節約するため自動圧縮 (160×160px)',
+      '📁 Pilih Foto dari Galeri': '📁 ギャラリーから写真を選択',
+      'SELESAI': '完了',
+      'PROFIL HUNTER': 'ハンタープロフィール',
+      'Nama Hunter': 'ハンター名',
       'Batal': 'キャンセル',
-      'Tutup': '閉じる',
-      'Ya, Lanjutkan': 'はい、続行',
-      'Peringatan Sistem': 'システム警告'
+      'Simpan': '保存',
+      'RESET DATA SISTEM?': 'システムデータを初期化しますか？',
+      'Semua progres akan di-reset bersih ke awal (Level 1, 0 XP, 0 Gold, 0 Streak).': 'すべての進行状況が初期状態（レベル1、0 XP、0 Gold、0 ストリーク）にリセットされます。',
+      'Nama Misi': 'クエスト名',
+      'Tipe Progres': '進捗タイプ',
+      '☑️ Ceklis Biasa': '☑️ 通常チェック',
+      '🔢 Count / Hitungan': '🔢 カウント形式',
+      'Tipe Item': 'アイテムタイプ',
+      'Deskripsi Singkat': '簡単な説明',
+      'TAMBAH KUTIPAN ORACLE': '託宣の名言を追加',
+      'Isi Kata Motivasi / Prinsip': 'モチベーション・格言の内容',
+      'Nama Tokoh / Sumber': '著者・出典名',
+      'GELAR & ACHIEVEMENT': '称号＆実績',
+      'Pilih gelar aktif untuk mendapatkan bonus pasif permanen:': '有効な称号を選択して永続パッシブボーナスを獲得：',
+      'TUTUP ROADMAP': 'ロードマップを閉じる',
+      'Lewati & Lanjut': 'スキップして次へ',
+      'Simpan (+15 WIS)': '保存 (+15 WIS)',
+      'PENGATURAN FONT': 'フォント設定',
+      '✕ Tutup': '✕ 閉じる',
+      'Ukuran Teks Aplikasi': 'アプリ文字サイズ',
+      'Kecil (85%)': '小 (85%)',
+      'Normal (100%)': '標準 (100%)',
+      'Besar (115%)': '大 (115%)',
+      'Gaya Huruf Judul (RPG Style)': '見出しフォントスタイル',
+      'Tegas': 'ボールド',
+      '🌐 Bahasa Antarmuka (Language)': '🌐 表示言語 (Language)'
     }
   };
 
-  // 2. DYNAMIC / REGEX SUBSTRING PATTERNS (Handles partial descriptions, numbers, emojis, & mixed phrases)
+  // 2. HTML-LEVEL BLOCK TRANSLATIONS (Solves paragraphs containing inner <span> / <strong> tags!)
+  const HTML_BLOCK_RULES = {
+    en: [
+      {
+        match: 'Evaluasi misi pada tanggal terpilih lalu lanjut ke hari berikutnya.',
+        html: 'Evaluate quests on the selected date and advance to the next day. Safe target is at least <span id="eval-threshold-label" style="color: #67e8f9; font-weight: 700;">80% Daily Quests</span> completed. If below target, HP decreases &amp; Streak resets (unless protected by a Shield)!'
+      },
+      {
+        match: 'Masuki gerbang fokus. Layar otomatis tetap menyala',
+        html: 'Enter the focus gate. Screen automatically stays awake &amp; do not surrender before time runs out to claim <span style="color: #67e8f9;">+INT</span>, <span style="color: #67e8f9;">XP</span>, and <span style="color: #fcd34d;">Gold</span>!'
+      },
+      {
+        match: 'Pilih file',
+        subMatch: 'dari HP untuk membaca sambil timer fokus berjalan',
+        html: 'Select a <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> file from your phone to read while the focus timer runs. The last page is saved automatically when you tap <span style="color: #fcd34d; font-weight: 700;">🔖 Bookmark Page</span>.'
+      },
+      {
+        match: 'Common (50%):',
+        subMatch: 'Legendary (5%):',
+        html: '<span style="color: #94a3b8; font-weight: 700;">Common (50%):</span> +35 XP / +20% HP • <span style="color: #38bdf8; font-weight: 700;">Rare (30%):</span> +80 XP / +120 G • <span style="color: #c084fc; font-weight: 700;">Epic (15%):</span> +1 Streak Shield • <span style="color: #fbbf24; font-weight: 700;">Legendary (5%):</span> Jackpot 300 G + Full HP!'
+      },
+      {
+        match: 'Isi refleksi singkat sebelum menutup hari',
+        html: 'Write a short reflection before closing the day to earn a bonus <span style="color: #c084fc; font-weight: 700;">+15 WIS XP</span> (optional):'
+      },
+      {
+        match: 'Naikkan Level Hunter untuk membuka tingkatan Rank baru',
+        html: 'Increase your Hunter Level to unlock new Rank tiers and automatically gain <span style="color: #fcd34d; font-weight: 600;">Passive Multiplier Bonuses</span>:'
+      }
+    ],
+    ja: [
+      {
+        match: 'Evaluasi misi pada tanggal terpilih lalu lanjut ke hari berikutnya.',
+        html: '選択した日付のクエストを評価し、次の日へ進みます。安全ラインは <span id="eval-threshold-label" style="color: #67e8f9; font-weight: 700;">デイリークエスト 80%</span> 以上の完了です。目標未満の場合、シールドがない限りHPが減少しストリークがリセットされます！'
+      },
+      {
+        match: 'Masuki gerbang fokus. Layar otomatis tetap menyala',
+        html: '集中のゲートへ入ろう。画面は自動的に点灯し続けます。時間切れ前に諦めずにクリアして <span style="color: #67e8f9;">+INT</span>、<span style="color: #67e8f9;">XP</span>、<span style="color: #fcd34d;">ゴールド</span> を獲得しよう！'
+      },
+      {
+        match: 'Pilih file',
+        subMatch: 'dari HP untuk membaca sambil timer fokus berjalan',
+        html: '端末から <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> ファイルを選択して集中タイマー中に閲覧できます。<span style="color: #fcd34d; font-weight: 700;">🔖 このページを保存</span> を押すと最後のページが自動保存されます。'
+      },
+      {
+        match: 'Common (50%):',
+        subMatch: 'Legendary (5%):',
+        html: '<span style="color: #94a3b8; font-weight: 700;">コモン (50%):</span> +35 XP / +20% HP • <span style="color: #38bdf8; font-weight: 700;">レア (30%):</span> +80 XP / +120 G • <span style="color: #c084fc; font-weight: 700;">エピック (15%):</span> +1 シールド • <span style="color: #fbbf24; font-weight: 700;">レジェンド (5%):</span> 大当たり 300 G + HP全快！'
+      },
+      {
+        match: 'Isi refleksi singkat sebelum menutup hari',
+        html: '1日を締めくくる前に短い振り返りを記入すると、ボーナス <span style="color: #c084fc; font-weight: 700;">+15 WIS XP</span> を獲得できます（任意）：'
+      },
+      {
+        match: 'Naikkan Level Hunter untuk membuka tingkatan Rank baru',
+        html: 'ハンターレベルを上げて新しいランクを開放し、<span style="color: #fcd34d; font-weight: 600;">パッシブ倍率ボーナス</span> を自動獲得しよう：'
+      }
+    ]
+  };
+
+  // 3. DYNAMIC / REGEX SUBSTRING PATTERNS (Handles dynamic numbers, stats & app.js generated labels)
   const PATTERN_RULES = {
     en: [
-      // Specific UI controls & labels requested
       { regex: /Distribusi Level Atribut/gi, replace: 'Attribute Level Distribution' },
+      { regex: /Distribusi Atribut Hunter/gi, replace: 'Hunter Attribute Distribution' },
       { regex: /Evaluasi\s*(&|dan)\s*Lanjut Hari/gi, replace: 'Evaluate $1 Advance Day' },
       { regex: /Matikan Notifikasi/gi, replace: 'Disable Notifications' },
       { regex: /Aktifkan Notifikasi/gi, replace: 'Enable Notifications' },
       { regex: /Mystery System Chest/gi, replace: 'Mystery System Chest' },
-      { regex: /Semua/g, replace: 'All' },
-      // Daily evaluation
-      { regex: /Evaluasi misi pada tanggal terpilih\.\s*(Misi|Quest) yang (belum|tidak) selesai akan mengurangi HP kecuali ada Shield\.?/gi, replace: 'Evaluate quests on the selected date. Incomplete quests will deduct HP unless a Shield is active.' },
-      // Dungeon & Deep Focus Raid descriptions
-      { regex: /Masuki gerbang fokus([^.]*)\.?/gi, replace: 'Enter the focus gate$1.' },
-      { regex: /untuk menaklukkan tantangan/gi, replace: 'to conquer challenges' },
-      { regex: /dan raih hadiah EXP serta Gold/gi, replace: 'and earn EXP and Gold rewards' },
-      { regex: /kalahkan distraksi/gi, replace: 'defeat distractions' },
-      { regex: /dan dapatkan hadiah/gi, replace: 'and earn rewards' },
-      // Ancient Grimoire & Shop descriptions
-      { regex: /Kitab kuno berisi([^.]*)\.?/gi, replace: 'An ancient tome containing$1.' },
-      { regex: /pengetahuan rahasia dan item langka/gi, replace: 'secret knowledge and rare items' },
-      { regex: /untuk meningkatkan kekuatan Hunter/gi, replace: 'to enhance Hunter abilities' },
-      { regex: /Tukar hadiah dengan Gold([^.]*)\.?/gi, replace: 'Redeem rewards with Gold$1.' },
-      { regex: /Gunakan Gold untuk menukar([^.]*)\.?/gi, replace: 'Use Gold to redeem$1.' },
-      // Finance & Cashflow Dashboard
       { regex: /Dashboard Arus Kas/gi, replace: 'Cashflow Dashboard' },
-      { regex: /Pencatatan Keuangan/gi, replace: 'Financial Records' },
-      { regex: /Kategori Pemasukan/gi, replace: 'Income Category' },
       { regex: /Kategori Pengeluaran/gi, replace: 'Expense Category' },
+      { regex: /Kategori Pemasukan/gi, replace: 'Income Category' },
       { regex: /Selisih Bersih/gi, replace: 'Net Difference' },
-      { regex: /Nominal/gi, replace: 'Amount' },
-      { regex: /Arus Kas Harian/gi, replace: 'Daily Cashflow' },
-      { regex: /Arus Kas Bulanan/gi, replace: 'Monthly Cashflow' },
-      { regex: /Arus Kas Tahunan/gi, replace: 'Annual Cashflow' },
-      { regex: /Arus Kas/gi, replace: 'Cashflow' },
-      { regex: /Total Pemasukan/gi, replace: 'Total Income' },
-      { regex: /Total Pengeluaran/gi, replace: 'Total Expenses' },
-      { regex: /Pemasukan/gi, replace: 'Income' },
-      { regex: /Pengeluaran/gi, replace: 'Expense' },
-      { regex: /Saldo Bersih/gi, replace: 'Net Balance' },
-      { regex: /Sisa Saldo/gi, replace: 'Remaining Balance' },
-      { regex: /Saldo/gi, replace: 'Balance' },
-      { regex: /Harian/gi, replace: 'Daily' },
-      { regex: /Bulanan/gi, replace: 'Monthly' },
-      { regex: /Tahunan/gi, replace: 'Annual' },
-      // Stats & Dynamic counters
-      { regex: /Target Streak\s*([≥>=]+)\s*(\d+%)/gi, replace: 'Streak Target $1 $2' },
+      { regex: /Rasio Masuk:/gi, replace: 'Income Ratio:' },
+      { regex: /Keluar:/gi, replace: 'Expense:' },
+      { regex: /Bonus RPG:\s*(\d+\/\d+)\s*Hari Ini/gi, replace: 'RPG Bonus: $1 Today' },
       { regex: /(\d+)\s*Level lagi menuju/gi, replace: '$1 Levels left until' },
+      { regex: /Daily Habit \(Target Streak\s*([≥>=]+)\s*(\d+%)\)/gi, replace: 'Daily Habit (Streak Target $1 $2)' },
       { regex: /Riwayat\s*\((\d+)\)/gi, replace: 'History ($1)' },
-      { regex: /Sisa Shield:\s*(\d+)/gi, replace: 'Remaining Shields: $1' },
-      { regex: /Shield Aktif/gi, replace: 'Shield Active' },
-      { regex: /Tidak ada Shield/gi, replace: 'No Shield' },
-      { regex: /Hari ke-(\d+)/gi, replace: 'Day $1' },
-      { regex: /Tanggal Terpilih:/gi, replace: 'Selected Date:' },
-      { regex: /Penalti HP:/gi, replace: 'HP Penalty:' },
-      { regex: /Kapan Saja/gi, replace: 'Anytime' },
-      { regex: /Pagi/g, replace: 'Morning' },
-      { regex: /Siang/g, replace: 'Afternoon' },
-      { regex: /Sore/g, replace: 'Evening' },
-      { regex: /Malam/g, replace: 'Night' }
+      { regex: /(\d+)x\s*Klaim/gi, replace: '$1x Claimed' },
+      { regex: /(\d+)\s*Selesai/gi, replace: '$1 Completed' },
+      { regex: /(\d+)\s*Hari/gi, replace: '$1 Days' },
+      { regex: /(\d+(?:\.\d+)?)\s*Jam/gi, replace: '$1 Hours' },
+      { regex: /Rate Minggu Ini/gi, replace: 'This Week Rate' },
+      { regex: /Pasif:\s*\+(\d+)\s*Max HP\s*\(Fisik & Vitality\)/gi, replace: 'Passive: +$1 Max HP (Physical & Vitality)' },
+      { regex: /Pasif:\s*\+(\d+%)\s*XP\s*\(Belajar & Fokus\)/gi, replace: 'Passive: +$1 XP (Study & Focus)' },
+      { regex: /Pasif:\s*-(\d+%)\s*Damage Penalti\s*\(Mindfulness\)/gi, replace: 'Passive: -$1 Penalty Damage (Mindfulness)' },
+      { regex: /Pasif:\s*Diskon Shop\s*(\d+%)\s*\(Relasi & Sosial\)/gi, replace: 'Passive: $1 Shop Discount (Relations & Social)' },
+      { regex: /Ganti Title\s*\((\d+\/\d+)\)/gi, replace: 'Switch Title ($1)' },
+      { regex: /Semua/g, replace: 'All' },
+      { regex: /Pemasukan/g, replace: 'Income' },
+      { regex: /Pengeluaran/g, replace: 'Expense' },
+      { regex: /Nominal/g, replace: 'Amount' }
     ],
     ja: [
-      // Specific UI controls & labels requested
       { regex: /Distribusi Level Atribut/gi, replace: '能力値レベル分布' },
+      { regex: /Distribusi Atribut Hunter/gi, replace: 'ハンター能力値分布' },
       { regex: /Evaluasi\s*(&|dan)\s*Lanjut Hari/gi, replace: '評価して次の日へ' },
       { regex: /Matikan Notifikasi/gi, replace: '通知をオフにする' },
       { regex: /Aktifkan Notifikasi/gi, replace: '通知を有効化' },
       { regex: /Mystery System Chest/gi, replace: 'ミステリー・システムチェスト' },
-      { regex: /Semua/g, replace: 'すべて' },
-      // Daily evaluation
-      { regex: /Evaluasi misi pada tanggal terpilih\.\s*(Misi|Quest) yang (belum|tidak) selesai akan mengurangi HP kecuali ada Shield\.?/gi, replace: '選択した日付のクエストを評価します。未完了のクエストはシールドがない限りHPを減少させます。' },
-      // Dungeon & Deep Focus Raid descriptions
-      { regex: /Masuki gerbang fokus([^.]*)\.?/gi, replace: '集中のゲートに入り、試練を攻略してEXPとゴールド報酬を獲得しよう。' },
-      // Ancient Grimoire & Shop descriptions
-      { regex: /Kitab kuno berisi([^.]*)\.?/gi, replace: 'ハンターの力を高める秘伝の知識とレアアイテムが記された古文書。' },
-      { regex: /Tukar hadiah dengan Gold([^.]*)\.?/gi, replace: '努力して獲得したゴールドで報酬を交換しよう。' },
-      { regex: /Gunakan Gold untuk menukar([^.]*)\.?/gi, replace: 'ゴールドを使って特別アイテムや現実の報酬と交換しよう。' },
-      // Finance & Cashflow Dashboard
       { regex: /Dashboard Arus Kas/gi, replace: 'キャッシュフローダッシュボード' },
-      { regex: /Pencatatan Keuangan/gi, replace: '財務記録' },
-      { regex: /Kategori Pemasukan/gi, replace: '収入カテゴリー' },
       { regex: /Kategori Pengeluaran/gi, replace: '支出カテゴリー' },
+      { regex: /Kategori Pemasukan/gi, replace: '収入カテゴリー' },
       { regex: /Selisih Bersih/gi, replace: '純収支差額' },
-      { regex: /Nominal/gi, replace: '金額' },
-      { regex: /Arus Kas Harian/gi, replace: '日次キャッシュフロー' },
-      { regex: /Arus Kas Bulanan/gi, replace: '月次キャッシュフロー' },
-      { regex: /Arus Kas Tahunan/gi, replace: '年次キャッシュフロー' },
-      { regex: /Arus Kas/gi, replace: 'キャッシュフロー' },
-      { regex: /Total Pemasukan/gi, replace: '総収入' },
-      { regex: /Total Pengeluaran/gi, replace: '総支出' },
-      { regex: /Pemasukan/gi, replace: '収入' },
-      { regex: /Pengeluaran/gi, replace: '支出' },
-      { regex: /Saldo Bersih/gi, replace: '純残高' },
-      { regex: /Sisa Saldo/gi, replace: '残り残高' },
-      { regex: /Saldo/gi, replace: '残高' },
-      { regex: /Harian/gi, replace: '日次' },
-      { regex: /Bulanan/gi, replace: '月次' },
-      { regex: /Tahunan/gi, replace: '年次' },
-      // Stats & Dynamic counters
-      { regex: /Target Streak\s*([≥>=]+)\s*(\d+%)/gi, replace: 'ストリーク目標 $1 $2' },
+      { regex: /Rasio Masuk:/gi, replace: '収入比率:' },
+      { regex: /Keluar:/gi, replace: '支出:' },
+      { regex: /Bonus RPG:\s*(\d+\/\d+)\s*Hari Ini/gi, replace: 'RPGボーナス: 本日 $1' },
       { regex: /(\d+)\s*Level lagi menuju/gi, replace: '次のランクまであと $1 レベル' },
+      { regex: /Daily Habit \(Target Streak\s*([≥>=]+)\s*(\d+%)\)/gi, replace: 'デイリー習慣 (ストリーク目標 $1 $2)' },
       { regex: /Riwayat\s*\((\d+)\)/gi, replace: '履歴 ($1)' },
-      { regex: /Sisa Shield:\s*(\d+)/gi, replace: '残りシールド: $1' },
-      { regex: /Shield Aktif/gi, replace: 'シールド有効' },
-      { regex: /Tidak ada Shield/gi, replace: 'シールドなし' },
-      { regex: /Hari ke-(\d+)/gi, replace: '$1日目' },
-      { regex: /Tanggal Terpilih:/gi, replace: '選択日:' },
-      { regex: /Penalti HP:/gi, replace: 'HPペナルティ:' },
-      { regex: /Kapan Saja/gi, replace: 'いつでも' },
-      { regex: /Pagi/g, replace: '朝' },
-      { regex: /Siang/g, replace: '昼' },
-      { regex: /Sore/g, replace: '夕方' },
-      { regex: /Malam/g, replace: '夜' }
+      { regex: /(\d+)x\s*Klaim/gi, replace: '$1回 交換済み' },
+      { regex: /(\d+)\s*Selesai/gi, replace: '$1件 完了' },
+      { regex: /(\d+)\s*Hari/gi, replace: '$1日' },
+      { regex: /(\d+(?:\.\d+)?)\s*Jam/gi, replace: '$1時間' },
+      { regex: /Rate Minggu Ini/gi, replace: '今週の達成率' },
+      { regex: /Pasif:\s*\+(\d+)\s*Max HP\s*\(Fisik & Vitality\)/gi, replace: 'パッシブ: 最大HP +$1 (体力・生命力)' },
+      { regex: /Pasif:\s*\+(\d+%)\s*XP\s*\(Belajar & Fokus\)/gi, replace: 'パッシブ: 獲得XP +$1 (学習・集中)' },
+      { regex: /Pasif:\s*-(\d+%)\s*Damage Penalti\s*\(Mindfulness\)/gi, replace: 'パッシブ: ペナルティ軽減 -$1 (精神・規律)' },
+      { regex: /Pasif:\s*Diskon Shop\s*(\d+%)\s*\(Relasi & Sosial\)/gi, replace: 'パッシブ: ショップ割引 $1 (社交・魅力)' },
+      { regex: /Ganti Title\s*\((\d+\/\d+)\)/gi, replace: '称号変更 ($1)' },
+      { regex: /Semua/g, replace: 'すべて' },
+      { regex: /Pemasukan/g, replace: '収入' },
+      { regex: /Pengeluaran/g, replace: '支出' },
+      { regex: /Nominal/g, replace: '金額' }
     ]
   };
 
-  // Build reverse lookup map so switching EN -> JA or JA -> ID works seamlessly
+  // Reverse map for clean language switching
   const REVERSE_MAP = {};
   Object.entries(DICTIONARY).forEach(([lang, entries]) => {
     Object.entries(entries).forEach(([idText, translatedText]) => {
@@ -545,13 +546,11 @@
     });
   });
 
-  // Sort dictionary keys by length descending so longer phrases match before shorter substrings
   const SORTED_DICT_KEYS = {
     en: Object.keys(DICTIONARY.en).sort((a, b) => b.length - a.length),
     ja: Object.keys(DICTIONARY.ja).sort((a, b) => b.length - a.length)
   };
 
-  // Track original Indonesian text per DOM Text Node so switching languages never loses source text
   const ORIGINAL_TEXT_MAP = new WeakMap();
 
   function getCurrentLang() {
@@ -563,7 +562,6 @@
     const trimmed = rawText.trim();
     if (!trimmed) return rawText;
 
-    // 1. Check exact dictionary match (including reverse map)
     const baseIdKey = REVERSE_MAP[trimmed];
     if (baseIdKey) {
       const translated = targetLang === 'id'
@@ -572,10 +570,8 @@
       return rawText.replace(trimmed, translated);
     }
 
-    // 2. If target is 'id', return raw Indonesian source
     if (targetLang === 'id') return rawText;
 
-    // 3. Apply regex pattern rules (handles multi-word descriptions & dynamic numbers)
     let result = rawText;
     const rules = PATTERN_RULES[targetLang] || [];
     for (const rule of rules) {
@@ -585,7 +581,6 @@
       }
     }
 
-    // 4. Multi-phrase replacement sorted by longest phrase first
     if (DICTIONARY[targetLang] && SORTED_DICT_KEYS[targetLang]) {
       for (const idPhrase of SORTED_DICT_KEYS[targetLang]) {
         if (idPhrase.length >= 4 && result.includes(idPhrase)) {
@@ -595,6 +590,39 @@
     }
 
     return result;
+  }
+
+  // Handle paragraphs & divs that mix plain text + inner <span> tags
+  function translateMixedHtmlBlocks(rootElement, targetLang) {
+    if (!rootElement || !rootElement.querySelectorAll) return;
+    const blocks = rootElement.querySelectorAll('p, div');
+    blocks.forEach((el) => {
+      if (el.children.length === 0) return;
+      if (!el.dataset.origInnerHtml) {
+        const text = el.textContent || '';
+        const isMatch = (HTML_BLOCK_RULES.en || []).some(
+          (r) => text.includes(r.match) && (!r.subMatch || text.includes(r.subMatch))
+        );
+        if (isMatch) {
+          el.dataset.origInnerHtml = el.innerHTML;
+        }
+      }
+      if (el.dataset.origInnerHtml) {
+        if (targetLang === 'id') {
+          if (el.innerHTML !== el.dataset.origInnerHtml) {
+            el.innerHTML = el.dataset.origInnerHtml;
+          }
+        } else {
+          const rules = HTML_BLOCK_RULES[targetLang] || [];
+          const found = rules.find(
+            (r) => el.dataset.origInnerHtml.includes(r.match) && (!r.subMatch || el.dataset.origInnerHtml.includes(r.subMatch))
+          );
+          if (found && el.innerHTML !== found.html) {
+            el.innerHTML = found.html;
+          }
+        }
+      }
+    });
   }
 
   function translateNode(node, targetLang) {
@@ -613,7 +641,9 @@
     }
 
     if (node.nodeType === Node.ELEMENT_NODE) {
-      if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA', 'INPUT'].includes(node.tagName)) {
+      if (['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(node.tagName)) return;
+
+      if (['TEXTAREA', 'INPUT'].includes(node.tagName)) {
         if (node.hasAttribute('placeholder')) {
           if (!node.dataset.origPlaceholder) {
             node.dataset.origPlaceholder = node.getAttribute('placeholder');
@@ -647,6 +677,7 @@
     localStorage.setItem(STORAGE_KEY, validLang);
     document.documentElement.lang = validLang;
     if (document.body) {
+      translateMixedHtmlBlocks(document.body, validLang);
       translateNode(document.body, validLang);
     }
   }
@@ -660,26 +691,36 @@
     return translateString(key, getCurrentLang());
   };
 
-  // Observe dynamic renders & text updates (modals, toasts, daily evaluation text, finance tabs)
+  // Observe dynamic renders from app.js (Treasury categories, Quests, Modals, Notifications)
+  let isApplying = false;
   const observer = new MutationObserver((mutations) => {
+    if (isApplying) return;
     const lang = getCurrentLang();
-    mutations.forEach((mutation) => {
-      if (mutation.type === 'childList') {
-        mutation.addedNodes.forEach((added) => {
-          if (lang !== 'id') translateNode(added, lang);
-        });
-      } else if (mutation.type === 'characterData') {
-        const target = mutation.target;
-        const currentVal = target.nodeValue;
-        const expectedTranslated = translateString(currentVal, lang);
-        if (currentVal !== expectedTranslated) {
-          ORIGINAL_TEXT_MAP.set(target, currentVal);
-          if (lang !== 'id') {
-            target.nodeValue = expectedTranslated;
+    isApplying = true;
+    try {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach((added) => {
+            if (added.nodeType === Node.ELEMENT_NODE) {
+              translateMixedHtmlBlocks(added, lang);
+            }
+            if (lang !== 'id') translateNode(added, lang);
+          });
+        } else if (mutation.type === 'characterData') {
+          const target = mutation.target;
+          const currentVal = target.nodeValue;
+          const expectedTranslated = translateString(currentVal, lang);
+          if (currentVal !== expectedTranslated) {
+            ORIGINAL_TEXT_MAP.set(target, currentVal);
+            if (lang !== 'id') {
+              target.nodeValue = expectedTranslated;
+            }
           }
         }
-      }
-    });
+      });
+    } finally {
+      isApplying = false;
+    }
   });
 
   function init() {
