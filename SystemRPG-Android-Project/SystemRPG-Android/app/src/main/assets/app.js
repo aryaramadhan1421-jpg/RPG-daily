@@ -4920,6 +4920,7 @@ function triggerFingerprintScan() {
             'Dungeon': 'Dungeon',
             'Shop': 'Shop',
             'Treasury': 'Treasury',
+            'Keuangan': 'Treasury',
 
             // Oracle & Status
             '+ Kutipan': '+ Quote',
@@ -5070,7 +5071,7 @@ function triggerFingerprintScan() {
             '[24 Jam] +25% STR Stat XP & +10 Max HP Sementara': '[24h] +25% STR Stat XP & +10 Temporary Max HP',
             '[24 Jam] +20% Gold dari semua Quest & Dungeon +15% CHR Stat XP': '[24h] +20% Gold from all Quests & Dungeons +15% CHR Stat XP',
 
-            // Treasury
+            // Treasury (Keuangan)
             'Catat arus kas & kalkulator jajan (+10 XP & +10 WIS XP, maks 3x/hari)': 'Record cashflow & snack calculator (+10 XP & +10 WIS XP, max 3x/day)',
             '🧮 Kalkulator Jajan & Belanja': '🧮 Snack & Shopping Calculator',
             '✓ PAKAI NOMINAL': '✓ USE AMOUNT',
@@ -5096,6 +5097,18 @@ function triggerFingerprintScan() {
             'Belum ada pengeluaran pada periode ini.': 'No expenses in this period.',
             'Daftar Transaksi Periode Ini': 'Transactions in This Period',
             'Tidak ada transaksi pada periode ini.': 'No transactions in this period.',
+            '🍔 Makan & Jajan': '🍔 Food & Snacks',
+            '🚗 Transportasi': '🚗 Transportation',
+            '🛒 Belanja & Kebutuhan': '🛒 Shopping & Needs',
+            '📱 Tagihan & Kuota': '📱 Bills & Data',
+            '📚 Edukasi & Buku': '📚 Education & Books',
+            '🎮 Hiburan': '🎮 Entertainment',
+            '💊 Kesehatan': '💊 Health',
+            '📦 Lainnya': '📦 Others',
+            '💼 Gaji / Honor': '💼 Salary / Wage',
+            '🎁 Bonus / Hadiah': '🎁 Bonus / Gift',
+            '📈 Usaha / Freelance': '📈 Business / Freelance',
+            '💰 Pemasukan Lain': '💰 Other Income',
 
             // Modals & Settings
             'Membuka Peti...': 'Opening Chest...',
@@ -5152,6 +5165,7 @@ function triggerFingerprintScan() {
             'Dungeon': 'ダンジョン',
             'Shop': 'ショップ',
             'Treasury': '財務庫',
+            'Keuangan': '財務・家計簿',
             '+ Kutipan': '+ 名言追加',
             '✨ Terima Petuah (+5 XP / +5 G)': '✨ 託宣を受け取る (+5 XP / +5 G)',
             '✓ Petuah Diterima Hari Ini': '✓ 本日の託宣は受取済み',
@@ -5276,6 +5290,18 @@ function triggerFingerprintScan() {
             'Belum ada pengeluaran pada periode ini.': 'この期間の支出はありません。',
             'Daftar Transaksi Periode Ini': 'この期間の取引一覧',
             'Tidak ada transaksi pada periode ini.': 'この期間の取引はありません。',
+            '🍔 Makan & Jajan': '🍔 食費・軽食',
+            '🚗 Transportasi': '🚗 交通費',
+            '🛒 Belanja & Kebutuhan': '🛒 買い物・日用品',
+            '📱 Tagihan & Kuota': '📱 通信費・請求',
+            '📚 Edukasi & Buku': '📚 教育・書籍',
+            '🎮 Hiburan': '🎮 娯楽・ゲーム',
+            '💊 Kesehatan': '💊 医療・健康',
+            '📦 Lainnya': '📦 その他',
+            '💼 Gaji / Honor': '💼 給与・報酬',
+            '🎁 Bonus / Hadiah': '🎁 ボーナス・贈与',
+            '📈 Usaha / Freelance': '📈 事業・副業',
+            '💰 Pemasukan Lain': '💰 その他収入',
             'Membuka Peti...': 'チェスト開封中...',
             'Membuka Peti Misteri...': 'ミステリーチェスト開封中...',
             'Sistem sedang mengacak hadiah keberuntunganmu...': 'システムが幸運の報酬を抽選中...',
@@ -5320,7 +5346,6 @@ function triggerFingerprintScan() {
         }
     };
 
-    // Menangani elemen campuran (teks + child <span>/<svg>) termasuk tombol Ganti Title & deskripsi panjang
     const HTML_BLOCK_RULES = {
         en: [
             {
@@ -5331,7 +5356,7 @@ function triggerFingerprintScan() {
                 }
             },
             {
-                match: 'Evaluasi misi pada tanggal terpilih lalu lanjut ke hari berikutnya.',
+                match: 'Evaluasi misi pada tanggal terpilih',
                 getHtml: (el) => {
                     const pct = el.querySelector('#eval-threshold-label')?.textContent || '80% Daily Quest';
                     return `Evaluate quests on the selected date and advance to the next day. Safe target is at least <span id="eval-threshold-label" style="color: #67e8f9; font-weight: 700;">${pct}</span> completed. If below target, HP decreases &amp; Streak resets (unless protected by a Shield)!`;
@@ -5369,7 +5394,7 @@ function triggerFingerprintScan() {
                 }
             },
             {
-                match: 'Evaluasi misi pada tanggal terpilih lalu lanjut ke hari berikutnya.',
+                match: 'Evaluasi misi pada tanggal terpilih',
                 getHtml: (el) => {
                     const pct = el.querySelector('#eval-threshold-label')?.textContent || '80% Daily Quest';
                     return `選択した日付のクエストを評価し、次の日へ進みます。安全ラインは <span id="eval-threshold-label" style="color: #67e8f9; font-weight: 700;">${pct}</span> 以上の完了です。目標未満の場合、シールドがない限りHPが減少しストリークがリセットされます！`;
@@ -5420,8 +5445,8 @@ function triggerFingerprintScan() {
             { regex: /Riwayat\s*\((\d+)\)/gi, replace: 'History ($1)' },
             { regex: /(\d+)x\s*Klaim/gi, replace: '$1x Claimed' },
             { regex: /(\d+)\s*Selesai/gi, replace: '$1 Completed' },
-            { regex: /(\d+)\s*Hari\b/gi, replace: '$1 Days' },
-            { regex: /(\d+(?:\.\d+)?)\s*Jam\b/gi, replace: '$1 Hours' },
+            { regex: /(\d+)\s*Hari/gi, replace: '$1 Days' },
+            { regex: /(\d+(?:\.\d+)?)\s*Jam/gi, replace: '$1 Hours' },
             { regex: /Rate Minggu Ini/gi, replace: 'This Week Rate' },
             { regex: /Pasif:\s*\+(\d+)\s*Max HP\s*\(Fisik & Vitality\)/gi, replace: 'Passive: +$1 Max HP (Physical & Vitality)' },
             { regex: /Pasif:\s*\+(\d+(?:\.\d+)?%)\s*XP\s*\(Belajar & Fokus\)/gi, replace: 'Passive: +$1 XP (Study & Focus)' },
@@ -5431,10 +5456,14 @@ function triggerFingerprintScan() {
             { regex: /📊 Progres:/gi, replace: '📊 Progress:' },
             { regex: /Syarat:/gi, replace: 'Requirement:' },
             { regex: /Efek:/gi, replace: 'Effect:' },
-            { regex: /\bSemua\b/g, replace: 'All' },
-            { regex: /\bPemasukan\b/g, replace: 'Income' },
-            { regex: /\bPengeluaran\b/g, replace: 'Expense' },
-            { regex: /\bNominal\b/g, replace: 'Amount' }
+            { regex: /Keuangan/g, replace: 'Treasury' },
+            { regex: /Harian/g, replace: 'Daily' },
+            { regex: /Bulanan/g, replace: 'Monthly' },
+            { regex: /Tahunan/g, replace: 'Yearly' },
+            { regex: /Semua/g, replace: 'All' },
+            { regex: /Pemasukan/g, replace: 'Income' },
+            { regex: /Pengeluaran/g, replace: 'Expense' },
+            { regex: /Nominal/g, replace: 'Amount' }
         ],
         ja: [
             { regex: /Distribusi Level Atribut \(All-Time\)/gi, replace: '能力値レベル分布 (全期間)' },
@@ -5455,8 +5484,8 @@ function triggerFingerprintScan() {
             { regex: /Riwayat\s*\((\d+)\)/gi, replace: '履歴 ($1)' },
             { regex: /(\d+)x\s*Klaim/gi, replace: '$1回 交換済み' },
             { regex: /(\d+)\s*Selesai/gi, replace: '$1件 完了' },
-            { regex: /(\d+)\s*Hari\b/gi, replace: '$1日' },
-            { regex: /(\d+(?:\.\d+)?)\s*Jam\b/gi, replace: '$1時間' },
+            { regex: /(\d+)\s*Hari/gi, replace: '$1日' },
+            { regex: /(\d+(?:\.\d+)?)\s*Jam/gi, replace: '$1時間' },
             { regex: /Rate Minggu Ini/gi, replace: '今週の達成率' },
             { regex: /Pasif:\s*\+(\d+)\s*Max HP\s*\(Fisik & Vitality\)/gi, replace: 'パッシブ: 最大HP +$1 (体力・生命力)' },
             { regex: /Pasif:\s*\+(\d+(?:\.\d+)?%)\s*XP\s*\(Belajar & Fokus\)/gi, replace: 'パッシブ: 獲得XP +$1 (学習・集中)' },
@@ -5466,10 +5495,14 @@ function triggerFingerprintScan() {
             { regex: /📊 Progres:/gi, replace: '📊 進捗:' },
             { regex: /Syarat:/gi, replace: '条件:' },
             { regex: /Efek:/gi, replace: '効果:' },
-            { regex: /\bSemua\b/g, replace: 'すべて' },
-            { regex: /\bPemasukan\b/g, replace: '収入' },
-            { regex: /\bPengeluaran\b/g, replace: '支出' },
-            { regex: /\bNominal\b/g, replace: '金額' }
+            { regex: /Keuangan/g, replace: '財務・家計簿' },
+            { regex: /Harian/g, replace: '日次' },
+            { regex: /Bulanan/g, replace: '月次' },
+            { regex: /Tahunan/g, replace: '年次' },
+            { regex: /Semua/g, replace: 'すべて' },
+            { regex: /Pemasukan/g, replace: '収入' },
+            { regex: /Pengeluaran/g, replace: '支出' },
+            { regex: /Nominal/g, replace: '金額' }
         ]
     };
 
@@ -5493,17 +5526,23 @@ function triggerFingerprintScan() {
         return ['id', 'en', 'ja'].includes(stored) ? stored : 'id';
     }
 
+    function normalizeWhitespace(str) {
+        return (str || '').replace(/\s+/g, ' ').trim();
+    }
+
     function translateString(rawText, targetLang) {
         if (!rawText || typeof rawText !== 'string') return rawText;
-        const trimmed = rawText.trim();
-        if (!trimmed) return rawText;
+        const normalized = normalizeWhitespace(rawText);
+        if (!normalized) return rawText;
 
-        const baseIdKey = REVERSE_MAP[trimmed];
+        const baseIdKey = REVERSE_MAP[normalized];
         if (baseIdKey) {
             const translated = targetLang === 'id'
                 ? baseIdKey
                 : (DICTIONARY[targetLang] && DICTIONARY[targetLang][baseIdKey]) || baseIdKey;
-            return rawText.replace(trimmed, translated);
+            const leadingSpace = rawText.match(/^\s*/)[0];
+            const trailingSpace = rawText.match(/\s*$/)[0];
+            return leadingSpace + translated + trailingSpace;
         }
 
         if (targetLang === 'id') return rawText;
@@ -5530,16 +5569,17 @@ function triggerFingerprintScan() {
 
     function translateMixedHtmlBlocks(rootElement, targetLang) {
         if (!rootElement || !rootElement.querySelectorAll) return;
-        const blocks = rootElement.querySelectorAll('p, div, button');
+        const blocks = rootElement.querySelectorAll('p, div, button, span');
         blocks.forEach((el) => {
             if (el.children.length === 0) return;
             if (!el.dataset.origInnerHtml) {
-                const text = el.textContent || '';
+                const normText = normalizeWhitespace(el.textContent || '');
                 const isMatch = (HTML_BLOCK_RULES.en || []).some(
-                    (r) => text.includes(r.match) && (!r.subMatch || text.includes(r.subMatch))
+                    (r) => normText.includes(r.match) && (!r.subMatch || normText.includes(r.subMatch))
                 );
                 if (isMatch) {
                     el.dataset.origInnerHtml = el.innerHTML;
+                    el.dataset.origNormText = normText;
                 }
             }
             if (el.dataset.origInnerHtml) {
@@ -5549,8 +5589,9 @@ function triggerFingerprintScan() {
                     }
                 } else {
                     const rules = HTML_BLOCK_RULES[targetLang] || [];
+                    const normOrig = el.dataset.origNormText || normalizeWhitespace(el.dataset.origInnerHtml);
                     const found = rules.find(
-                        (r) => el.dataset.origInnerHtml.includes(r.match) && (!r.subMatch || el.dataset.origInnerHtml.includes(r.subMatch))
+                        (r) => normOrig.includes(r.match) && (!r.subMatch || normOrig.includes(r.subMatch))
                     );
                     if (found) {
                         const nextHtml = found.getHtml ? found.getHtml(el) : found.html;
@@ -5690,11 +5731,16 @@ function triggerFingerprintScan() {
                 } else if (mutation.type === 'characterData') {
                     const target = mutation.target;
                     const currentVal = target.nodeValue;
-                    const expectedTranslated = translateString(currentVal, lang);
-                    if (currentVal !== expectedTranslated) {
+                    const normCurrent = normalizeWhitespace(currentVal);
+                    if (REVERSE_MAP[normCurrent] && REVERSE_MAP[normCurrent] !== normCurrent) {
+                        ORIGINAL_TEXT_MAP.set(target, REVERSE_MAP[normCurrent]);
+                    } else {
                         ORIGINAL_TEXT_MAP.set(target, currentVal);
-                        if (lang !== 'id') {
-                            target.nodeValue = expectedTranslated;
+                    }
+                    if (lang !== 'id') {
+                        const translated = translateString(ORIGINAL_TEXT_MAP.get(target), lang);
+                        if (target.nodeValue !== translated) {
+                            target.nodeValue = translated;
                         }
                     }
                 }
