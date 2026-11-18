@@ -42,6 +42,7 @@ class ReminderReceiver : BroadcastReceiver() {
         val playerName = prefs.getString("playerName", null)
             ?: intent.getStringExtra("playerName")
             ?: "Hunter"
+        val lang = (prefs.getString("language", "id") ?: "id").lowercase(Locale.ROOT)
 
         // Ambil dailyPct dan targetPct terbaru dari SystemRpgWidgetPrefs
         val widgetPrefs = context.getSharedPreferences("SystemRpgWidgetPrefs", Context.MODE_PRIVATE)
@@ -64,17 +65,43 @@ class ReminderReceiver : BroadcastReceiver() {
             return
         }
 
-        val title = when (slot) {
-            "Pagi" -> "[SYSTEM] Daily Quest Pagi Siap, $playerName"
-            "Sore" -> "[SYSTEM] Evaluasi Sore ($dailyPct% Clear)"
-            "Malam" -> "[PERINGATAN PENALTI] Selesaikan Quest Sebelum 00:00!"
-            else -> "[SYSTEM] Pengingat Daily Quest"
+        val title = when {
+            lang.startsWith("en") -> when (slot) {
+                "Pagi" -> "[SYSTEM] Morning Daily Quests Ready, $playerName"
+                "Sore" -> "[SYSTEM] Afternoon Check ($dailyPct% Clear)"
+                "Malam" -> "[PENALTY WARNING] Finish Quests Before 00:00!"
+                else -> "[SYSTEM] Daily Quest Reminder"
+            }
+            lang.startsWith("ja") -> when (slot) {
+                "Pagi" -> "[SYSTEM] 朝のデイリークエスト準備完了、$playerName"
+                "Sore" -> "[SYSTEM] 夕方の進捗確認 (達成率 $dailyPct%)"
+                "Malam" -> "[ペナルティ警告] 00:00までにクエストを完了せよ！"
+                else -> "[SYSTEM] デイリークエスト通知"
+            }
+            else -> when (slot) {
+                "Pagi" -> "[SYSTEM] Daily Quest Pagi Siap, $playerName"
+                "Sore" -> "[SYSTEM] Evaluasi Sore ($dailyPct% Clear)"
+                "Malam" -> "[PERINGATAN PENALTI] Selesaikan Quest Sebelum 00:00!"
+                else -> "[SYSTEM] Pengingat Daily Quest"
+            }
         }
 
-        val body = if (dailyPct >= targetPct) {
-            "Target harian sudah aman ($dailyPct%). Pertahankan momentum dan streak kamu!"
-        } else {
-            "Progress hari ini baru $dailyPct% (masih ada $pendingCount quest tersisa). Capai minimal $targetPct% agar terhindar dari penalti HP!"
+        val body = when {
+            lang.startsWith("en") -> if (dailyPct >= targetPct) {
+                "Daily target is safe ($dailyPct%). Keep up your momentum and streak!"
+            } else {
+                "Today's progress is only $dailyPct% ($pendingCount quests left). Reach at least $targetPct% to avoid HP penalty!"
+            }
+            lang.startsWith("ja") -> if (dailyPct >= targetPct) {
+                "本日の目標達成率は安全圏です ($dailyPct%)。この調子でストリークを維持しよう！"
+            } else {
+                "現在の達成率は $dailyPct% です（残り $pendingCount 件）。HPペナルティを防ぐため $targetPct% 以上を達成しよう！"
+            }
+            else -> if (dailyPct >= targetPct) {
+                "Target harian sudah aman ($dailyPct%). Pertahankan momentum dan streak kamu!"
+            } else {
+                "Progress hari ini baru $dailyPct% (masih ada $pendingCount quest tersisa). Capai minimal $targetPct% agar terhindar dari penalti HP!"
+            }
         }
 
         showReminderNotification(context, title, body)
