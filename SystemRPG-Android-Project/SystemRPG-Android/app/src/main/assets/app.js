@@ -5938,43 +5938,37 @@ function completeFingerprintUnlock() {
 // ==========================================
 // 16B. HUNTER TUTORIAL / GUIDE SYSTEM
 // ==========================================
-const TUTORIAL_STEPS = [
-    {
-        icon: '⚡',
-        title: '1. Selamat Datang di SYSTEM RPG',
-        desc: 'Aplikasi ini mengubah aktivitas harian, kebiasaan baik, dan target hidupmu menjadi misi layaknya game RPG.',
-        tip: 'Setiap misi yang selesai akan memberikan EXP untuk naik Level dan Gold untuk belanja hadiah!'
-    },
-    {
-        icon: '📋',
-        title: '2. Quest & Pelacakan Angka',
-        desc: 'Buat misi harian atau target terjadwal di tab Quest. Kamu bisa memakai misi centang biasa atau pelacakan angka (misal: minum 8 gelas air / baca 20 halaman).',
-        tip: 'Atur jadwal hari aktif (Weekday / Weekend) dan pengingat waktu agar tidak terlewat.'
-    },
-    {
-        icon: '⚔️',
-        title: '3. Dungeon Fokus (Timer)',
-        desc: 'Masuk ke tab Dungeon saat ingin belajar, bekerja, atau olahraga tanpa gangguan dalam durasi waktu tertentu.',
-        tip: 'Menyelesaikan Dungeon tepat waktu memberikan bonus EXP besar dan meningkatkan Rank Hunter-mu!'
-    },
-    {
-        icon: '💰',
-        title: '4. Treasury (Keuangan Nyata)',
-        desc: 'Catat pemasukan dan pengeluaran uang aslimu di tab Treasury lengkap dengan kategori dan riwayat transaksi.',
-        tip: 'Disiplin mencatat keuangan menjaga stabilitas status Hunter-mu di dunia nyata.'
-    },
-    {
-        icon: '🛡️',
-        title: '5. Shop & Armory (Self-Reward)',
-        desc: 'Gunakan Gold hasil menyelesaikan misi untuk membeli hadiah hiburan (Shop) atau item/relic penyemangat (Armory).',
-        tip: 'Beri dirimu hadiah tanpa rasa bersalah karena sudah dibayar dengan kerja kerasmu!'
-    },
-    {
-        icon: '⚙️',
-        title: '6. Pengaturan, Bahasa & Backup',
-        desc: 'Buka ikon Pengaturan (⚙️) di pojok atas untuk mengganti bahasa (ID / EN / JA), mengatur suara, ekspor data cadangan, atau membuka panduan ini lagi.',
-        tip: 'Sistem siap digunakan. Selamat berjuang meningkatkan levelmu, Hunter!'
-    }
+const TUTORIAL_STEPS_DICT = {
+    id: [
+        { icon: '⚡', title: '1. Selamat Datang di SYSTEM RPG', desc: 'Aplikasi ini mengubah aktivitas harian, kebiasaan baik, dan target hidupmu menjadi misi layaknya game RPG.', tip: 'Setiap misi yang selesai akan memberikan EXP untuk naik Level dan Gold untuk belanja hadiah!' },
+        { icon: '📋', title: '2. Quest & Pelacakan Angka', desc: 'Buat misi harian atau target terjadwal di tab Quest. Kamu bisa memakai misi centang biasa atau pelacakan angka (misal: minum 8 gelas air / baca 20 halaman).', tip: 'Atur jadwal hari aktif (Weekday / Weekend) dan pengingat waktu agar tidak terlewat.' },
+        { icon: '⚔️', title: '3. Dungeon Fokus (Timer)', desc: 'Masuk ke tab Dungeon saat ingin belajar, bekerja, atau olahraga tanpa gangguan dalam durasi waktu tertentu.', tip: 'Menyelesaikan Dungeon tepat waktu memberikan bonus EXP besar dan meningkatkan Rank Hunter-mu!' },
+        { icon: '💰', title: '4. Treasury (Keuangan Nyata)', desc: 'Catat pemasukan dan pengeluaran uang aslimu di tab Treasury lengkap dengan kategori dan riwayat transaksi.', tip: 'Disiplin mencatat keuangan menjaga stabilitas status Hunter-mu di dunia nyata.' },
+        { icon: '🛡️', title: '5. Shop & Armory (Self-Reward)', desc: 'Gunakan Gold hasil menyelesaikan misi untuk membeli hadiah hiburan (Shop) atau item/relic penyemangat (Armory).', tip: 'Beri dirimu hadiah tanpa rasa bersalah karena sudah dibayar dengan kerja kerasmu!' },
+        { icon: '⚙️', title: '6. Pengaturan, Bahasa & Backup', desc: 'Buka ikon Pengaturan (⚙️) di pojok atas untuk mengganti bahasa (ID / EN / JA), mengatur suara, ekspor data cadangan, atau membuka panduan ini lagi.', tip: 'Sistem siap digunakan. Selamat berjuang meningkatkan levelmu, Hunter!' }
+    ],
+    en: [
+        { icon: '⚡', title: '1. Welcome to SYSTEM RPG', desc: 'This app turns your daily activities, good habits, and life goals into missions just like an RPG game.', tip: 'Every completed quest gives you EXP to Level Up and Gold to buy rewards!' },
+        { icon: '📋', title: '2. Quests & Numeric Tracking', desc: 'Create daily quests or scheduled targets in the Quest tab. You can use standard checkboxes or numeric tracking (e.g., drink 8 cups of water / read 20 pages).', tip: 'Set active day schedules and reminders so you never miss a task.' },
+        { icon: '⚔️', title: '3. Focus Dungeons (Timer)', desc: 'Enter the Dungeon tab when you want to study, work, or work out without distractions for a set duration.', tip: 'Completing dungeons on time grants massive EXP bonuses and raises your Hunter Rank!' },
+        { icon: '💰', title: '4. Treasury (Real Finances)', desc: 'Record your actual income and expenses in the Treasury tab with categories and full transaction history.', tip: 'Financial discipline keeps your real-world Hunter status stable and secure.' },
+        { icon: '🛡️', title: '5. Shop & Armory (Self-Reward)', desc: 'Use the Gold earned from quests to buy entertainment rewards (Shop) or supportive items/relics (Armory).', tip: 'Treat yourself guilt-free, paid for by your own hard work!' },
+        { icon: '⚙️', title: '6. Settings, Language & Backup', desc: 'Open the Settings icon (⚙️) on top to change language (ID / EN / JA), audio, export backups, or view this guide again.', tip: 'The system is ready. Good luck leveling up, Hunter!' }
+    ],
+    ja: [
+        { icon: '⚡', title: '1. SYSTEM RPGへようこそ', desc: 'このアプリは、毎日の活動、良い習慣、人生の目標をRPGのようにクエスト化します。', tip: 'クエストをクリアするとEXP（経験値）が貯まり、レベルアップやゴールドが手に入ります！' },
+        { icon: '📋', title: '2. クエストと数値トラッキング', desc: 'クエストタブで日課やスケジュール目標を作成。通常のチェックボックスや数値目標（例：水8杯、読書20ページ）が使えます。', tip: '実施曜日やリマインダーを設定して、タスクの忘れを防ぎましょう。' },
+        { icon: '⚔️', title: '3. 集中ダンジョン（タイマー）', desc: '勉強、仕事、運動に集中したいときはダンジョンタブへ。タイマーで時間を区切って挑みます。', tip: '時間内にクリアすると大ボーナスEXPを獲得し、ハンターランクが上がります！' },
+        { icon: '💰', title: '4. トジャラリー（現実の家計簿）', desc: 'トレジャリータブで実際の収入と支出をカテゴリ別にしっかり記録できます。', tip: '家計管理の徹底が、現実世界のハンターとしての安定を保ちます。' },
+        { icon: '🛡️', title: '5. ショップ＆アーモリー', desc: 'クエストで稼いだゴールドを使って、ご褒美（ショップ）やモチベーションアイテム（アーモリー）を購入。', tip: '自分の頑張った成果で、罪悪感なく自分にご褒美をあげましょう！' },
+        { icon: '⚙️', title: '6. 設定・言語・バックアップ', desc: '右上の歯車アイコン（⚙️）から、言語切替（ID/EN/JA）、音声設定、データのエクスポート、このガイドの再確認が行えます。', tip: 'システムの準備は万全です。ハンター、レベルアップを目指して頑張りましょう！' }
+    ]
+};
+
+function getTutorialStepsData() {
+    const lang = (typeof gameState !== 'undefined' && gameState.language) || localStorage.getItem('sysrpg_lang') || 'id';
+    return TUTORIAL_STEPS_DICT[lang] || TUTORIAL_STEPS_DICT.id;
+}
 ];
 
 let currentTutorialStep = 0;
@@ -6050,10 +6044,11 @@ window.closeTutorialModal = function(markSeen = true) {
 }
 
 function renderTutorialStep() {
-    const step = TUTORIAL_STEPS[currentTutorialStep];
+    const stepsList = getTutorialStepsData();
+    const step = stepsList[currentTutorialStep];
     if (!step) return;
-
-    const total = TUTORIAL_STEPS.length;
+    
+    const total = stepsList.length;
     const titleEl = document.getElementById('tut-step-title');
     const counterEl = document.getElementById('tut-step-counter');
     const iconEl = document.getElementById('tut-step-icon');
@@ -6085,7 +6080,8 @@ function renderTutorialStep() {
 }
 
 function nextTutorialStep() {
-    if (currentTutorialStep < TUTORIAL_STEPS.length - 1) {
+    const stepsList = getTutorialStepsData();
+    if (currentTutorialStep < stepsList.length - 1) {
         currentTutorialStep++;
         renderTutorialStep();
         if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
