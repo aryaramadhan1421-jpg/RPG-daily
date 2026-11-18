@@ -51,7 +51,7 @@
         </p>
 
         <!-- Interactive Fingerprint Scanner Button -->
-        <button type="button" id="btn-fingerprint-auth" class="fingerprint-pad" onclick="triggerFingerprintScan()" aria-label="Pindai Sidik Jari untuk Masuk">
+            <button type="button" id="btn-fingerprint-auth" class="fingerprint-pad" onpointerdown="startFingerprintHold(event)" onpointerup="cancelFingerprintHold()" onpointerleave="cancelFingerprintHold()" onpointercancel="cancelFingerprintHold()" oncontextmenu="return false;" aria-label="Tahan Sidik Jari untuk Masuk">
             <div class="fingerprint-scan-line" id="fp-scan-line"></div>
             <svg id="fp-svg-icon" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 4"/>
