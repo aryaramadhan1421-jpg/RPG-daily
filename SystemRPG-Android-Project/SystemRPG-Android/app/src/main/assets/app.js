@@ -4075,7 +4075,7 @@ function evaluateCalcExpression(expr) {
         return (typeof res === 'number' && isFinite(res)) ? Math.round(res) : 0;
     } catch (e) {
         return 0;
-    }
+    } }
 
 function updateCalcDisplay() {
     const exprEl = document.getElementById('calc-expression');
@@ -6146,3 +6146,18 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
     window.addEventListener('DOMContentLoaded', updateTutorialTriggerButtonLabel);
     setTimeout(updateTutorialTriggerButtonLabel, 200);
     })();
+
+// ==========================================
+// 17. INITIAL BOOT SEQUENCE
+// ==========================================
+(function bootSystemRPG() {
+    currentOracleIndex = pickContextualOracleIndex();
+    checkRealDayRollover();
+    initTreasuryDefaults();
+    renderAll();
+    updateDungeonTimerUI();
+    syncSystemReminders();
+
+    // Cek pengingat jadwal Pagi / Sore / Malam setiap 20 detik
+    setInterval(checkScheduledReminderTick, 20000);
+})();
