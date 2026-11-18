@@ -1681,17 +1681,17 @@
                     🌐 Bahasa Antarmuka (Language)
                 </label>
                 <div class="grid grid-cols-3 gap-1-5">
-                    <button type="button" onclick="setAppLanguage('id')" id="lang-btn-id"
+                    <button type="button" onclick="setAppLanguage('id'); if(window.setSystemLanguage) setSystemLanguage('id')" id="lang-btn-id"
                         class="app-lang-btn font-display"
                         style="padding: 0.55rem 0.25rem; border-radius: 0.5rem; border: 1px solid #06b6d4; background: #083344; font-size: 11px; font-weight: 700; color: #67e8f9;">
                         🇮🇩 Indo
                     </button>
-                    <button type="button" onclick="setAppLanguage('en')" id="lang-btn-en"
+                    <button type="button" onclick="setAppLanguage('en'); if(window.setSystemLanguage) setSystemLanguage('en')" id="lang-btn-en"
                         class="app-lang-btn font-display"
                         style="padding: 0.55rem 0.25rem; border-radius: 0.5rem; border: 1px solid #334155; background: #020617; font-size: 11px; font-weight: 700; color: #cbd5e1;">
                         🇬🇧 English
                     </button>
-                    <button type="button" onclick="setAppLanguage('ja')" id="lang-btn-ja"
+                    <button type="button" onclick="setAppLanguage('ja'); if(window.setSystemLanguage) setSystemLanguage('ja')" id="lang-btn-ja"
                         class="app-lang-btn font-display"
                         style="padding: 0.55rem 0.25rem; border-radius: 0.5rem; border: 1px solid #334155; background: #020617; font-size: 11px; font-weight: 700; color: #cbd5e1;">
                         🇯🇵 日本語
@@ -1701,9 +1701,7 @@
         </div>
     </div>
 
-    
-
-    
+    <script src="i18n_engine.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
