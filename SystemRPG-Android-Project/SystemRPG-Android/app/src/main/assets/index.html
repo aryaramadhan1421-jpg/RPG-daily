@@ -1705,263 +1705,279 @@
                 </button>
             </div>
         </div>
-
+    </div>
+    <script src="i18n_engine.js"></script>
     <script src="app.js"></script>
-    <!-- MODAL PANDUAN HUNTER (TUTORIAL) -->
 
     <script>
-(function () {
-    let tutStep = 0;
-
-    const TUT_DATA = {
-        id: [
-            { icon: '⚔️', title: '1. Selamat Datang, Hunter!', desc: 'SYSTEM RPG mengubah kebiasaan harian dan target hidupmu menjadi misi layaknya game RPG.', tip: 'Tips: Pantau Level, HP (Nyawa), dan Rank kamu di tab STATUS.' },
-            { icon: '📋', title: '2. Quest Board & Daily Habit', desc: 'Buka tab QUESTS untuk mencentang misi harian. Selesaikan minimal 80% Daily Quest agar Streak aman dan HP tidak berkurang.', tip: 'Tips: Kamu bisa menambah misi baru atau mengatur jadwal hari aktifnya.' },
-            { icon: '⏳', title: '3. Dungeon Deep Focus', desc: 'Masuk ke tab DUNGEON saat ingin belajar atau bekerja tanpa gangguan. Kamu juga bisa membaca PDF & memutar Anime Lofi Radio di dalamnya.', tip: 'Tips: Jangan menyerah sebelum timer habis agar tidak terkena penalti -10 HP!' },
-            { icon: '🛒', title: '4. System Shop & Armory', desc: 'Tukarkan Gold hasil kerja kerasmu di tab SHOP dengan Potion pemulih HP, Relic pasif, Peti Misteri, atau hadiah dunia nyata.', tip: 'Tips: Tingkatkan atribut CHR untuk mendapatkan diskon otomatis di Shop.' },
-            { icon: '💰', title: '5. Treasury Vault', desc: 'Catat pemasukan dan pengeluaranmu di tab TREASURY menggunakan kalkulator bawaan untuk melatih kedisiplinan finansial.', tip: 'Tips: Mencatat transaksi memberi bonus XP & atribut WIS (maks 3x/hari).' },
-            { icon: '🌙', title: '6. Evaluasi Harian', desc: 'Di akhir hari, tekan tombol "Evaluasi & Lanjut Hari" di tab STATUS untuk merekap progresmu dan melanjutkannya ke hari berikutnya.', tip: 'Sistem siap. Selamat berjuang naik ke Rank tertinggi, Hunter!' }
-        ],
-        en: [
-            { icon: '⚔️', title: '1. Welcome, Hunter!', desc: 'SYSTEM RPG turns your daily habits and life goals into real-life RPG quests.', tip: 'Tip: Track your Level, HP, and Hunter Rank in the STATUS tab.' },
-            { icon: '📋', title: '2. Quest Board & Daily Habits', desc: 'Open the QUESTS tab to check off your missions. Complete at least 80% of Daily Quests to keep your Streak safe.', tip: 'Tip: You can create custom quests and set specific active days.' },
-            { icon: '⏳', title: '3. Dungeon Deep Focus', desc: 'Enter the DUNGEON tab for distraction-free study or work sessions, complete with a PDF Reader and Anime Lofi Radio.', tip: 'Tip: Do not abort early or you will suffer a -10 HP penalty!' },
-            { icon: '🛒', title: '4. System Shop & Armory', desc: 'Spend your earned Gold in the SHOP on HP Potions, passive Relics, Mystery Chests, or real-world rewards.', tip: 'Tip: Level up CHR to unlock automatic Shop discounts.' },
-            { icon: '💰', title: '5. Treasury Vault', desc: 'Log your income and expenses in TREASURY using the built-in calculator to build financial discipline.', tip: 'Tip: Logging transactions grants bonus XP & WIS (up to 3x/day).' },
-            { icon: '🌙', title: '6. Daily Evaluation', desc: 'At the end of the day, tap "Evaluasi & Lanjut Hari" in STATUS to review your progress and advance to the next day.', tip: 'System ready. Rise to the highest Rank, Hunter!' }
-        ],
-        ja: [
-            { icon: '⚔️', title: '1. ようこそ、ハンター！', desc: 'SYSTEM RPGは毎日の習慣や目標をRPGクエストに変えるシステムです。', tip: 'ヒント：STATUSタブでレベル、HP、ランクを確認できます。' },
-            { icon: '📋', title: '2. クエストボード', desc: 'QUESTSタブで毎日のミッションを完了しましょう。80%以上達成するとストリークが維持されます。', tip: 'ヒント：新しいクエストや曜日スケジュールも自由に作成できます。' },
-            { icon: '⏳', title: '3. ダンジョン集中モード', desc: 'DUNGEONタブで集中タイマーを開始。PDFリーダーやアニメLo-Fiラジオも利用できます。', tip: 'ヒント：途中で諦めるとHPが10減少するので注意！' },
-            { icon: '🛒', title: '4. システムショップ', desc: '獲得したゴールドでHPポーション、レリック、ミステリーボックス、現実のご褒美と交換できます。', tip: 'ヒント：CHRを上げるとショップが割引されます。' },
-            { icon: '💰', title: '5. トレジャリー（家計簿）', desc: 'TREASURYタブの電卓を使って収入と支出を記録し、資産管理を習慣化しましょう。', tip: 'ヒント：取引を記録するとボーナスXPとWISを獲得できます（1日3回まで）。' },
-            { icon: '🌙', title: '6. 1日の評価', desc: '1日の終わりにSTATUSタブの「Evaluasi & Lanjut Hari」を押して次の日へ進みましょう。', tip: 'システム準備完了。最高ランクを目指せ、ハンター！' }
-        ]
-    };
-
-    const PDF_HINT_HTML = {
-        id: 'Pilih file <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> dari HP untuk membaca sambil timer fokus berjalan. Halaman terakhir otomatis tersimpan saat kamu menekan <span style="color: #fcd34d; font-weight: 700;">🔖 Tandai Hal Ini</span>.',
-        en: 'Select a <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> file from your device to read while the focus timer runs. Your last page is automatically saved when you tap <span style="color: #fcd34d; font-weight: 700;">🔖 Bookmark This Page</span>.',
-        ja: '集中タイマーの作動中に読むための <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> ファイルを選択してください。<span style="color: #fcd34d; font-weight: 700;">🔖 このページをブックマーク</span> を押すと最後のページが自動保存されます。'
-    };
-
-    const TREASURY_CAT_DICT = {
-        'Makan & Jajan': { id: 'Makan & Jajan', en: 'Food & Snacks', ja: '食費・間食' },
-        'Makan & Minum': { id: 'Makan & Minum', en: 'Food & Drinks', ja: '飲食費' },
-        'Transportasi': { id: 'Transportasi', en: 'Transportation', ja: '交通費' },
-        'Belanja': { id: 'Belanja', en: 'Shopping', ja: '買い物' },
-        'Tagihan & Kuota': { id: 'Tagihan & Kuota', en: 'Bills & Data Plan', ja: '公共料金・通信費' },
-        'Tagihan & Utilitas': { id: 'Tagihan & Utilitas', en: 'Bills & Utilities', ja: '光熱費・請求書' },
-        'Hiburan & Game': { id: 'Hiburan & Game', en: 'Entertainment & Games', ja: '娯楽・ゲーム' },
-        'Kesehatan': { id: 'Kesehatan', en: 'Health & Fitness', ja: '健康・医療' },
-        'Pendidikan & Buku': { id: 'Pendidikan & Buku', en: 'Education & Books', ja: '教育・書籍' },
-        'Lainnya': { id: 'Lainnya', en: 'Others', ja: 'その他' },
-        'Gaji / Honor': { id: 'Gaji / Honor', en: 'Salary / Wage', ja: '給与・報酬' },
-        'Gaji': { id: 'Gaji', en: 'Salary', ja: '給与' },
-        'Uang Saku': { id: 'Uang Saku', en: 'Allowance', ja: 'お小遣い' },
-        'Bonus / Freelance': { id: 'Bonus / Freelance', en: 'Bonus / Freelance', ja: 'ボーナス・副業' },
-        'Investasi / Tabungan': { id: 'Investasi / Tabungan', en: 'Investment / Savings', ja: '投資・貯蓄' },
-        'Hadiah': { id: 'Hadiah', en: 'Gift / Reward', ja: 'ギフト・臨時収入' }
-    };
-
-    const TX_TYPE_DICT = {
-        expense: { id: '📤 Pengeluaran (-)', en: '📤 Expense (-)', ja: '📤 支出 (-)' },
-        income: { id: '📥 Pemasukan (+)', en: '📥 Income (+)', ja: '📥 収入 (+)' }
-    };
-
-    function getActiveLang() {
-        const jaBtn = document.getElementById('lang-btn-ja');
-        const enBtn = document.getElementById('lang-btn-en');
-        if (jaBtn && jaBtn.style.background && jaBtn.style.background.indexOf('8, 51, 68') !== -1) return 'ja';
-        if (enBtn && enBtn.style.background && enBtn.style.background.indexOf('8, 51, 68') !== -1) return 'en';
-
-        const saved = localStorage.getItem('sysrpg_language') ||
-                      localStorage.getItem('sysrpg_lang') ||
-                      localStorage.getItem('appLanguage') ||
-                      document.documentElement.lang || 'id';
-        if (saved.indexOf('ja') === 0) return 'ja';
-        if (saved.indexOf('en') === 0) return 'en';
-        return 'id';
-    }
-
-    function translateCategoryLabel(rawText, lang) {
-        const clean = rawText.replace(/^[^\w\u3040-\u30ff\u4e00-\u9faf]+/, '').trim();
-        const emojiMatch = rawText.match(/^([^\w\u3040-\u30ff\u4e00-\u9faf]+\s*)/);
-        const prefix = emojiMatch ? emojiMatch[1] : '';
-
-        for (const key in TREASURY_CAT_DICT) {
-            const map = TREASURY_CAT_DICT[key];
-            if (clean.toLowerCase() === key.toLowerCase() ||
-                map.id.toLowerCase() === clean.toLowerCase() ||
-                map.en.toLowerCase() === clean.toLowerCase() ||
-                map.ja.toLowerCase() === clean.toLowerCase()) {
-                return prefix + (map[lang] || map.id);
-            }
+    (function () {
+        // 1. Pastikan tombol Fingerprint SELALU bisa membuka gerbang saat ditekan/ditahan
+        const fpBtn = document.getElementById('btn-fingerprint-auth');
+        const splash = document.getElementById('system-splash-screen');
+        if (fpBtn && splash) {
+            let fallbackTimer = null;
+            const unlockGate = function () {
+                if (typeof completeFingerprintAuth === 'function') {
+                    completeFingerprintAuth();
+                } else {
+                    splash.style.opacity = '0';
+                    splash.style.pointerEvents = 'none';
+                    setTimeout(function () { splash.style.display = 'none'; }, 350);
+                }
+            };
+            fpBtn.addEventListener('click', function () {
+                if (typeof startFingerprintHold !== 'function') unlockGate();
+            });
+            fpBtn.addEventListener('touchstart', function () {
+                fallbackTimer = setTimeout(unlockGate, 650);
+            }, { passive: true });
+            fpBtn.addEventListener('touchend', function () {
+                clearTimeout(fallbackTimer);
+            });
         }
-        return rawText;
-    }
 
-    function syncAllTranslations() {
-        const lang = getActiveLang();
-
-        // 1. Tombol Bantuan & Panduan
-        const btnLabels = {
-            id: '📖 BANTUAN & PANDUAN HUNTER (TUTORIAL)',
-            en: '📖 HUNTER HELP & GUIDE (TUTORIAL)',
-            ja: '📖 ハンターガイド＆チュートリアル'
+        // 2. Modal Panduan Hunter (Tutorial) & Terjemahan Otomatis
+        let tutStep = 0;
+        const TUT_DATA = {
+            id: [
+                { icon: '⚔️', title: '1. Selamat Datang, Hunter!', desc: 'SYSTEM RPG mengubah kebiasaan harian dan target hidupmu menjadi misi layaknya game RPG.', tip: 'Tips: Pantau Level, HP (Nyawa), dan Rank kamu di tab STATUS.' },
+                { icon: '📋', title: '2. Quest Board & Daily Habit', desc: 'Buka tab QUESTS untuk mencentang misi harian. Selesaikan minimal 80% Daily Quest agar Streak aman dan HP tidak berkurang.', tip: 'Tips: Kamu bisa menambah misi baru atau mengatur jadwal hari aktifnya.' },
+                { icon: '⏳', title: '3. Dungeon Deep Focus', desc: 'Masuk ke tab DUNGEON saat ingin belajar atau bekerja tanpa gangguan. Kamu juga bisa membaca PDF & memutar Anime Lofi Radio di dalamnya.', tip: 'Tips: Jangan menyerah sebelum timer habis agar tidak terkena penalti -10 HP!' },
+                { icon: '🛒', title: '4. System Shop & Armory', desc: 'Tukarkan Gold hasil kerja kerasmu di tab SHOP dengan Potion pemulih HP, Relic pasif, Peti Misteri, atau hadiah dunia nyata.', tip: 'Tips: Tingkatkan atribut CHR untuk mendapatkan diskon otomatis di Shop.' },
+                { icon: '💰', title: '5. Treasury Vault', desc: 'Catat pemasukan dan pengeluaranmu di tab TREASURY menggunakan kalkulator bawaan untuk melatih kedisiplinan finansial.', tip: 'Tips: Mencatat transaksi memberi bonus XP & atribut WIS (maks 3x/hari).' },
+                { icon: '🌙', title: '6. Evaluasi Harian', desc: 'Di akhir hari, tekan tombol "Evaluasi & Lanjut Hari" di tab STATUS untuk merekap progresmu dan melanjutkannya ke hari berikutnya.', tip: 'Sistem siap. Selamat berjuang naik ke Rank tertinggi, Hunter!' }
+            ],
+            en: [
+                { icon: '⚔️', title: '1. Welcome, Hunter!', desc: 'SYSTEM RPG turns your daily habits and life goals into real-life RPG quests.', tip: 'Tip: Track your Level, HP, and Hunter Rank in the STATUS tab.' },
+                { icon: '📋', title: '2. Quest Board & Daily Habits', desc: 'Open the QUESTS tab to check off your missions. Complete at least 80% of Daily Quests to keep your Streak safe.', tip: 'Tip: You can create custom quests and set specific active days.' },
+                { icon: '⏳', title: '3. Dungeon Deep Focus', desc: 'Enter the DUNGEON tab for distraction-free study or work sessions, complete with a PDF Reader and Anime Lofi Radio.', tip: 'Tip: Do not abort early or you will suffer a -10 HP penalty!' },
+                { icon: '🛒', title: '4. System Shop & Armory', desc: 'Spend your earned Gold in the SHOP on HP Potions, passive Relics, Mystery Chests, or real-world rewards.', tip: 'Tip: Level up CHR to unlock automatic Shop discounts.' },
+                { icon: '💰', title: '5. Treasury Vault', desc: 'Log your income and expenses in TREASURY using the built-in calculator to build financial discipline.', tip: 'Tip: Logging transactions grants bonus XP & WIS (up to 3x/day).' },
+                { icon: '🌙', title: '6. Daily Evaluation', desc: 'At the end of the day, tap "Evaluasi & Lanjut Hari" in STATUS to review your progress and advance to the next day.', tip: 'System ready. Rise to the highest Rank, Hunter!' }
+            ],
+            ja: [
+                { icon: '⚔️', title: '1. ようこそ、ハンター！', desc: 'SYSTEM RPGは毎日の習慣や目標をRPGクエストに変えるシステムです。', tip: 'ヒント：STATUSタブでレベル、HP、ランクを確認できます。' },
+                { icon: '📋', title: '2. クエストボード', desc: 'QUESTSタブで毎日のミッションを完了しましょう。80%以上達成するとストリークが維持されます。', tip: 'ヒント：新しいクエストや曜日スケジュールも自由に作成できます。' },
+                { icon: '⏳', title: '3. ダンジョン集中モード', desc: 'DUNGEONタブで集中タイマーを開始。PDFリーダーやアニメLo-Fiラジオも利用できます。', tip: 'ヒント：途中で諦めるとHPが10減少するので注意！' },
+                { icon: '🛒', title: '4. システムショップ', desc: '獲得したゴールドでHPポーション、レリック、ミステリーボックス、現実のご褒美と交換できます。', tip: 'ヒント：CHRを上げるとショップが割引されます。' },
+                { icon: '💰', title: '5. トレジャリー（家計簿）', desc: 'TREASURYタブの電卓を使って収入と支出を記録し、資産管理を習慣化しましょう。', tip: 'ヒント：取引を記録するとボーナスXPとWISを獲得できます（1日3回まで）。' },
+                { icon: '🌙', title: '6. 1日の評価', desc: '1日の終わりにSTATUSタブの「Evaluasi & Lanjut Hari」を押して次の日へ進みましょう。', tip: 'システム準備完了。最高ランクを目指せ、ハンター！' }
+            ]
         };
-        document.querySelectorAll('#font-settings-modal button').forEach(function (btn) {
-            if ((btn.getAttribute('onclick') || '').indexOf('openTutorialModal') !== -1) {
-                btn.textContent = btnLabels[lang] || btnLabels.id;
-            }
-        });
 
-        // 2. Petunjuk PDF di Tab Dungeon
-        const pdfHint = document.getElementById('grimoire-empty-hint');
-        if (pdfHint) {
-            pdfHint.innerHTML = PDF_HINT_HTML[lang] || PDF_HINT_HTML.id;
+        const PDF_HINT_HTML = {
+            id: 'Pilih file <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> dari HP untuk membaca sambil timer fokus berjalan. Halaman terakhir otomatis tersimpan saat kamu menekan <span style="color: #fcd34d; font-weight: 700;">🔖 Tandai Hal Ini</span>.',
+            en: 'Select a <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> file from your device to read while the focus timer runs. Your last page is automatically saved when you tap <span style="color: #fcd34d; font-weight: 700;">🔖 Bookmark This Page</span>.',
+            ja: '集中タイマーの作動中に読むための <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> ファイルを選択してください。<span style="color: #fcd34d; font-weight: 700;">🔖 このページをブックマーク</span> を押すと最後のページが自動保存されます。'
+        };
+
+        const TREASURY_CAT_DICT = {
+            'Makan & Jajan': { id: 'Makan & Jajan', en: 'Food & Snacks', ja: '食費・間食' },
+            'Makan & Minum': { id: 'Makan & Minum', en: 'Food & Drinks', ja: '飲食費' },
+            'Transportasi': { id: 'Transportasi', en: 'Transportation', ja: '交通費' },
+            'Belanja': { id: 'Belanja', en: 'Shopping', ja: '買い物' },
+            'Tagihan & Kuota': { id: 'Tagihan & Kuota', en: 'Bills & Data Plan', ja: '公共料金・通信費' },
+            'Tagihan & Utilitas': { id: 'Tagihan & Utilitas', en: 'Bills & Utilities', ja: '光熱費・請求書' },
+            'Hiburan & Game': { id: 'Hiburan & Game', en: 'Entertainment & Games', ja: '娯楽・ゲーム' },
+            'Kesehatan': { id: 'Kesehatan', en: 'Health & Fitness', ja: '健康・医療' },
+            'Pendidikan & Buku': { id: 'Pendidikan & Buku', en: 'Education & Books', ja: '教育・書籍' },
+            'Lainnya': { id: 'Lainnya', en: 'Others', ja: 'その他' },
+            'Gaji / Honor': { id: 'Gaji / Honor', en: 'Salary / Wage', ja: '給与・報酬' },
+            'Gaji': { id: 'Gaji', en: 'Salary', ja: '給与' },
+            'Uang Saku': { id: 'Uang Saku', en: 'Allowance', ja: 'お小遣い' },
+            'Bonus / Freelance': { id: 'Bonus / Freelance', en: 'Bonus / Freelance', ja: 'ボーナス・副業' },
+            'Investasi / Tabungan': { id: 'Investasi / Tabungan', en: 'Investment / Savings', ja: '投資・貯蓄' },
+            'Hadiah': { id: 'Hadiah', en: 'Gift / Reward', ja: 'ギフト・臨時収入' }
+        };
+
+        const TX_TYPE_DICT = {
+            expense: { id: '📤 Pengeluaran (-)', en: '📤 Expense (-)', ja: '📤 支出 (-)' },
+            income: { id: '📥 Pemasukan (+)', en: '📥 Income (+)', ja: '📥 収入 (+)' }
+        };
+
+        function getActiveLang() {
+            const jaBtn = document.getElementById('lang-btn-ja');
+            const enBtn = document.getElementById('lang-btn-en');
+            if (jaBtn && jaBtn.style.background && jaBtn.style.background.indexOf('8, 51, 68') !== -1) return 'ja';
+            if (enBtn && enBtn.style.background && enBtn.style.background.indexOf('8, 51, 68') !== -1) return 'en';
+
+            const saved = localStorage.getItem('sysrpg_language') ||
+                          localStorage.getItem('sysrpg_lang') ||
+                          localStorage.getItem('appLanguage') ||
+                          document.documentElement.lang || 'id';
+            if (saved.indexOf('ja') === 0) return 'ja';
+            if (saved.indexOf('en') === 0) return 'en';
+            return 'id';
         }
 
-        // 3. Dropdown Jenis Arus Kas Treasury
-        const txTypeSelect = document.getElementById('tx-type');
-        if (txTypeSelect) {
-            Array.from(txTypeSelect.options).forEach(function (opt) {
-                if (TX_TYPE_DICT[opt.value]) {
-                    opt.textContent = TX_TYPE_DICT[opt.value][lang] || TX_TYPE_DICT[opt.value].id;
+        function translateCategoryLabel(rawText, lang) {
+            const clean = rawText.replace(/^[^\w\u3040-\u30ff\u4e00-\u9faf]+/, '').trim();
+            const emojiMatch = rawText.match(/^([^\w\u3040-\u30ff\u4e00-\u9faf]+\s*)/);
+            const prefix = emojiMatch ? emojiMatch[1] : '';
+
+            for (const key in TREASURY_CAT_DICT) {
+                const map = TREASURY_CAT_DICT[key];
+                if (clean.toLowerCase() === key.toLowerCase() ||
+                    map.id.toLowerCase() === clean.toLowerCase() ||
+                    map.en.toLowerCase() === clean.toLowerCase() ||
+                    map.ja.toLowerCase() === clean.toLowerCase()) {
+                    return prefix + (map[lang] || map.id);
+                }
+            }
+            return rawText;
+        }
+
+        function syncAllTranslations() {
+            const lang = getActiveLang();
+
+            const btnLabels = {
+                id: '📖 BANTUAN & PANDUAN HUNTER (TUTORIAL)',
+                en: '📖 HUNTER HELP & GUIDE (TUTORIAL)',
+                ja: '📖 ハンターガイド＆チュートリアル'
+            };
+            document.querySelectorAll('#font-settings-modal button').forEach(function (btn) {
+                if ((btn.getAttribute('onclick') || '').indexOf('openTutorialModal') !== -1) {
+                    btn.textContent = btnLabels[lang] || btnLabels.id;
+                }
+            });
+
+            const pdfHint = document.getElementById('grimoire-empty-hint');
+            if (pdfHint) pdfHint.innerHTML = PDF_HINT_HTML[lang] || PDF_HINT_HTML.id;
+
+            const txTypeSelect = document.getElementById('tx-type');
+            if (txTypeSelect) {
+                Array.from(txTypeSelect.options).forEach(function (opt) {
+                    if (TX_TYPE_DICT[opt.value]) {
+                        opt.textContent = TX_TYPE_DICT[opt.value][lang] || TX_TYPE_DICT[opt.value].id;
+                    }
+                });
+            }
+
+            const txCatSelect = document.getElementById('tx-category');
+            if (txCatSelect) {
+                Array.from(txCatSelect.options).forEach(function (opt) {
+                    if (!opt.dataset.origLabel) opt.dataset.origLabel = opt.textContent;
+                    opt.textContent = translateCategoryLabel(opt.dataset.origLabel, lang);
+                });
+            }
+
+            document.querySelectorAll('#tr-category-breakdown span, #tr-transaction-list span').forEach(function (el) {
+                if (el.children.length === 0 && el.textContent.trim()) {
+                    if (!el.dataset.origCat) el.dataset.origCat = el.textContent;
+                    const translated = translateCategoryLabel(el.dataset.origCat, lang);
+                    if (translated !== el.dataset.origCat) el.textContent = translated;
                 }
             });
         }
 
-        // 4. Dropdown Kategori Treasury
-        const txCatSelect = document.getElementById('tx-category');
-        if (txCatSelect) {
-            Array.from(txCatSelect.options).forEach(function (opt) {
-                if (!opt.dataset.origLabel) opt.dataset.origLabel = opt.textContent;
-                opt.textContent = translateCategoryLabel(opt.dataset.origLabel, lang);
-            });
+        function renderTutorialBox() {
+            const lang = getActiveLang();
+            const steps = TUT_DATA[lang] || TUT_DATA.id;
+            const item = steps[tutStep] || steps[0];
+            const box = document.getElementById('sysrpg-force-tutorial');
+            if (!box) return;
+
+            const uiText = {
+                id: { skip: 'Lewati', prev: '← Kembali', next: 'Lanjut →', done: 'Selesai ✓' },
+                en: { skip: 'Skip', prev: '← Back', next: 'Next →', done: 'Finish ✓' },
+                ja: { skip: 'スキップ', prev: '← 戻る', next: '次へ →', done: '完了 ✓' }
+            }[lang] || { skip: 'Lewati', prev: '← Kembali', next: 'Lanjut →', done: 'Selesai ✓' };
+
+            box.querySelector('#sft-counter').textContent = (tutStep + 1) + ' / ' + steps.length;
+            box.querySelector('#sft-icon').textContent = item.icon;
+            box.querySelector('#sft-title').textContent = item.title;
+            box.querySelector('#sft-desc').textContent = item.desc;
+            box.querySelector('#sft-tip').textContent = item.tip;
+
+            box.querySelector('#sft-skip').textContent = uiText.skip;
+            const prevBtn = box.querySelector('#sft-prev');
+            const nextBtn = box.querySelector('#sft-next');
+            prevBtn.textContent = uiText.prev;
+            prevBtn.style.visibility = tutStep === 0 ? 'hidden' : 'visible';
+            nextBtn.textContent = tutStep === steps.length - 1 ? uiText.done : uiText.next;
+
+            const dots = box.querySelector('#sft-dots');
+            dots.innerHTML = steps.map(function (_, idx) {
+                return '<span style="width:' + (idx === tutStep ? '18px' : '7px') + ';height:7px;border-radius:99px;background:' + (idx === tutStep ? '#22d3ee' : '#334155') + ';transition:all .2s;"></span>';
+            }).join('');
         }
 
-        // 5. Rincian & Riwayat Kategori Treasury
-        document.querySelectorAll('#tr-category-breakdown span, #tr-transaction-list span').forEach(function (el) {
-            if (el.children.length === 0 && el.textContent.trim()) {
-                if (!el.dataset.origCat) el.dataset.origCat = el.textContent;
-                const translated = translateCategoryLabel(el.dataset.origCat, lang);
-                if (translated !== el.dataset.origCat) el.textContent = translated;
-            }
-        });
-    }
+        window.openTutorialModal = function (startIndex) {
+            if (typeof startIndex !== 'number') startIndex = 0;
 
-    function renderTutorialBox() {
-        const lang = getActiveLang();
-        const steps = TUT_DATA[lang] || TUT_DATA.id;
-        const item = steps[tutStep] || steps[0];
-        const box = document.getElementById('sysrpg-force-tutorial');
-        if (!box) return;
+            const fontModal = document.getElementById('font-settings-modal');
+            if (fontModal) fontModal.classList.add('hidden');
 
-        const uiText = {
-            id: { skip: 'Lewati', prev: '← Kembali', next: 'Lanjut →', done: 'Selesai ✓' },
-            en: { skip: 'Skip', prev: '← Back', next: 'Next →', done: 'Finish ✓' },
-            ja: { skip: 'スキップ', prev: '← 戻る', next: '次へ →', done: '完了 ✓' }
-        }[lang] || { skip: 'Lewati', prev: '← Kembali', next: 'Lanjut →', done: 'Selesai ✓' };
-
-        box.querySelector('#sft-counter').textContent = (tutStep + 1) + ' / ' + steps.length;
-        box.querySelector('#sft-icon').textContent = item.icon;
-        box.querySelector('#sft-title').textContent = item.title;
-        box.querySelector('#sft-desc').textContent = item.desc;
-        box.querySelector('#sft-tip').textContent = item.tip;
-
-        box.querySelector('#sft-skip').textContent = uiText.skip;
-        const prevBtn = box.querySelector('#sft-prev');
-        const nextBtn = box.querySelector('#sft-next');
-        prevBtn.textContent = uiText.prev;
-        prevBtn.style.visibility = tutStep === 0 ? 'hidden' : 'visible';
-        nextBtn.textContent = tutStep === steps.length - 1 ? uiText.done : uiText.next;
-
-        const dots = box.querySelector('#sft-dots');
-        dots.innerHTML = steps.map(function (_, idx) {
-            return '<span style="width:' + (idx === tutStep ? '18px' : '7px') + ';height:7px;border-radius:99px;background:' + (idx === tutStep ? '#22d3ee' : '#334155') + ';transition:all .2s;"></span>';
-        }).join('');
-    }
-
-    window.openTutorialModal = function (startIndex) {
-        if (typeof startIndex !== 'number') startIndex = 0;
-
-        const fontModal = document.getElementById('font-settings-modal');
-        if (fontModal) fontModal.classList.add('hidden');
-
-        let box = document.getElementById('sysrpg-force-tutorial');
-        if (!box) {
-            box = document.createElement('div');
-            box.id = 'sysrpg-force-tutorial';
-            box.setAttribute('style', 'position:fixed;inset:0;width:100vw;height:100vh;background:rgba(2,6,23,0.92);backdrop-filter:blur(8px);z-index:999999;display:flex;align-items:center;justify-content:center;padding:1rem;box-sizing:border-box;');
-            box.innerHTML =
-                '<div style="width:100%;max-width:400px;background:#0f172a;border:1.5px solid #22d3ee;border-radius:1rem;padding:1.25rem;box-shadow:0 0 30px rgba(6,182,212,0.35);color:#f8fafc;box-sizing:border-box;font-family:inherit;">' +
-                    '<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1e293b;padding-bottom:0.75rem;margin-bottom:1rem;">' +
-                        '<div>' +
-                            '<div style="font-size:10px;letter-spacing:0.15em;color:#22d3ee;font-weight:700;">💠 SYSTEM GUIDE</div>' +
-                            '<h3 id="sft-title" style="font-size:15px;font-weight:800;color:#fff;margin:2px 0 0 0;"></h3>' +
+            let box = document.getElementById('sysrpg-force-tutorial');
+            if (!box) {
+                box = document.createElement('div');
+                box.id = 'sysrpg-force-tutorial';
+                box.setAttribute('style', 'position:fixed;inset:0;width:100vw;height:100vh;background:rgba(2,6,23,0.92);backdrop-filter:blur(8px);z-index:999999;display:flex;align-items:center;justify-content:center;padding:1rem;box-sizing:border-box;');
+                box.innerHTML =
+                    '<div style="width:100%;max-width:400px;background:#0f172a;border:1.5px solid #22d3ee;border-radius:1rem;padding:1.25rem;box-shadow:0 0 30px rgba(6,182,212,0.35);color:#f8fafc;box-sizing:border-box;font-family:inherit;">' +
+                        '<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1e293b;padding-bottom:0.75rem;margin-bottom:1rem;">' +
+                            '<div>' +
+                                '<div style="font-size:10px;letter-spacing:0.15em;color:#22d3ee;font-weight:700;">💠 SYSTEM GUIDE</div>' +
+                                '<h3 id="sft-title" style="font-size:15px;font-weight:800;color:#fff;margin:2px 0 0 0;"></h3>' +
+                            '</div>' +
+                            '<span id="sft-counter" style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:#083344;color:#67e8f9;border:1px solid #0e7490;"></span>' +
                         '</div>' +
-                        '<span id="sft-counter" style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:#083344;color:#67e8f9;border:1px solid #0e7490;"></span>' +
-                    '</div>' +
-                    '<div style="text-align:center;padding:0.5rem 0.25rem;">' +
-                        '<div id="sft-icon" style="font-size:2.75rem;margin-bottom:0.65rem;"></div>' +
-                        '<p id="sft-desc" style="font-size:13px;color:#cbd5e1;line-height:1.55;margin:0;"></p>' +
-                        '<div id="sft-tip" style="margin-top:0.85rem;font-size:11.5px;color:#67e8f9;background:rgba(8,51,68,0.65);border:1px solid rgba(34,211,238,0.35);border-radius:0.65rem;padding:0.6rem 0.75rem;line-height:1.45;"></div>' +
-                    '</div>' +
-                    '<div id="sft-dots" style="display:flex;justify-content:center;gap:6px;margin:1rem 0;"></div>' +
-                    '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #1e293b;padding-top:0.75rem;">' +
-                        '<button type="button" id="sft-skip" style="background:transparent;border:none;color:#94a3b8;font-size:12px;font-weight:700;cursor:pointer;padding:6px 8px;">Lewati</button>' +
-                        '<div style="display:flex;gap:8px;">' +
-                            '<button type="button" id="sft-prev" style="background:#1e293b;border:1px solid #334155;color:#e2e8f0;font-size:12px;font-weight:700;border-radius:0.6rem;padding:7px 12px;cursor:pointer;">← Kembali</button>' +
-                            '<button type="button" id="sft-next" style="background:#06b6d4;border:none;color:#020617;font-size:12px;font-weight:800;border-radius:0.6rem;padding:7px 14px;cursor:pointer;">Lanjut →</button>' +
+                        '<div style="text-align:center;padding:0.5rem 0.25rem;">' +
+                            '<div id="sft-icon" style="font-size:2.75rem;margin-bottom:0.65rem;"></div>' +
+                            '<p id="sft-desc" style="font-size:13px;color:#cbd5e1;line-height:1.55;margin:0;"></p>' +
+                            '<div id="sft-tip" style="margin-top:0.85rem;font-size:11.5px;color:#67e8f9;background:rgba(8,51,68,0.65);border:1px solid rgba(34,211,238,0.35);border-radius:0.65rem;padding:0.6rem 0.75rem;line-height:1.45;"></div>' +
                         '</div>' +
-                    '</div>' +
-                '</div>';
-            document.body.appendChild(box);
+                        '<div id="sft-dots" style="display:flex;justify-content:center;gap:6px;margin:1rem 0;"></div>' +
+                        '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #1e293b;padding-top:0.75rem;">' +
+                            '<button type="button" id="sft-skip" style="background:transparent;border:none;color:#94a3b8;font-size:12px;font-weight:700;cursor:pointer;padding:6px 8px;">Lewati</button>' +
+                            '<div style="display:flex;gap:8px;">' +
+                                '<button type="button" id="sft-prev" style="background:#1e293b;border:1px solid #334155;color:#e2e8f0;font-size:12px;font-weight:700;border-radius:0.6rem;padding:7px 12px;cursor:pointer;">← Kembali</button>' +
+                                '<button type="button" id="sft-next" style="background:#06b6d4;border:none;color:#020617;font-size:12px;font-weight:800;border-radius:0.6rem;padding:7px 14px;cursor:pointer;">Lanjut →</button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                document.body.appendChild(box);
 
-            box.querySelector('#sft-skip').onclick = function () {
-                localStorage.setItem('sysrpg_tutorial_v2', 'true');
-                box.remove();
-            };
-            box.querySelector('#sft-prev').onclick = function () {
-                if (tutStep > 0) { tutStep--; renderTutorialBox(); }
-            };
-            box.querySelector('#sft-next').onclick = function () {
-                const total = (TUT_DATA[getActiveLang()] || TUT_DATA.id).length;
-                if (tutStep < total - 1) {
-                    tutStep++;
-                    renderTutorialBox();
-                } else {
+                box.querySelector('#sft-skip').onclick = function () {
                     localStorage.setItem('sysrpg_tutorial_v2', 'true');
                     box.remove();
-                }
-            };
+                };
+                box.querySelector('#sft-prev').onclick = function () {
+                    if (tutStep > 0) { tutStep--; renderTutorialBox(); }
+                };
+                box.querySelector('#sft-next').onclick = function () {
+                    const total = (TUT_DATA[getActiveLang()] || TUT_DATA.id).length;
+                    if (tutStep < total - 1) {
+                        tutStep++;
+                        renderTutorialBox();
+                    } else {
+                        localStorage.setItem('sysrpg_tutorial_v2', 'true');
+                        box.remove();
+                    }
+                };
+            }
+
+            const total = (TUT_DATA[getActiveLang()] || TUT_DATA.id).length;
+            tutStep = Math.max(0, Math.min(startIndex, total - 1));
+            renderTutorialBox();
+        };
+
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('button')) setTimeout(syncAllTranslations, 50);
+        });
+
+        const txTypeEl = document.getElementById('tx-type');
+        if (txTypeEl) {
+            txTypeEl.addEventListener('change', function () {
+                setTimeout(syncAllTranslations, 30);
+            });
         }
 
-        const total = (TUT_DATA[getActiveLang()] || TUT_DATA.id).length;
-        tutStep = Math.max(0, Math.min(startIndex, total - 1));
-        renderTutorialBox();
-    };
-
-    document.addEventListener('click', function (e) {
-        const btn = e.target.closest('button');
-        if (!btn) return;
-        setTimeout(syncAllTranslations, 50);
-    });
-
-    const txTypeEl = document.getElementById('tx-type');
-    if (txTypeEl) {
-        txTypeEl.addEventListener('change', function () {
-            setTimeout(syncAllTranslations, 30);
+        window.addEventListener('DOMContentLoaded', function () {
+            setTimeout(syncAllTranslations, 250);
         });
-    }
-
-    window.addEventListener('DOMContentLoaded', function () {
-        setTimeout(syncAllTranslations, 250);
-    });
-    setInterval(syncAllTranslations, 1500);
-})();
-</script>
+        setInterval(syncAllTranslations, 1500);
+    })();
+    </script>
 </body>
 </html>
