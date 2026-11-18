@@ -203,6 +203,14 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+       @JavascriptInterface
+        fun setAppLanguage(lang: String) {
+            getSharedPreferences("SystemRpgReminderPrefs", Context.MODE_PRIVATE).edit()
+                .putString("language", lang)
+                .apply()
+            refreshAllAppWidgets(this@MainActivity)
+        }
+
         @JavascriptInterface
         fun updateWidgetData(streak: Int, rank: String, level: Int, hp: Int, maxHp: Int, dailyPct: Int) {
             val weekHistory = computeWeekHistory(streak, dailyPct)
