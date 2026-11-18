@@ -4011,6 +4011,14 @@ const TREASURY_CATEGORIES = {
     income: ['💼 Gaji / Honor', '🎁 Bonus / Hadiah', '📈 Usaha / Freelance', '💰 Pemasukan Lain']
 };
 
+function tTreasury(str) {
+    if (typeof appLanguage === 'undefined' || appLanguage === 'id') return str;
+    if (typeof DICTIONARY !== 'undefined' && DICTIONARY[appLanguage] && DICTIONARY[appLanguage][str]) {
+        return DICTIONARY[appLanguage][str];
+    }
+    return str;
+}
+
 function ensureTreasuryState() {
     if (!gameState.treasury) {
         gameState.treasury = { transactions: [], dailyBonusCounts: {} };
@@ -4029,8 +4037,12 @@ function updateTreasuryCategoryOptions() {
     const typeEl = document.getElementById('tx-type');
     const catEl = document.getElementById('tx-category');
     if (!typeEl || !catEl) return;
+    const prevVal = catEl.value;
     const list = TREASURY_CATEGORIES[typeEl.value] || TREASURY_CATEGORIES.expense;
-    catEl.innerHTML = list.map(c => `<option value="${c}">${c}</option>`).join('');
+    catEl.innerHTML = list.map(c => `<option value="${c}">${tTreasury(c)}</option>`).join('');
+    if (prevVal && list.includes(prevVal)) {
+        catEl.value = prevVal;
+    }
 }
 
 function calcInput(val) {
@@ -4068,14 +4080,15 @@ function evaluateCalcExpression(expr) {
         const res = Function('"use strict";return (' + sanitized + ')')();
         if (typeof res === 'number' && !isFinite(res)) {
             if (typeof spawnFloatingReward === 'function') {
-                spawnFloatingReward('⚠️ Error: Tidak bisa membagi dengan nol!');
+                spawnFloatingReward(tTreasury('⚠️ Error: Tidak bisa membagi dengan nol!'));
             }
             return 0;
         }
         return (typeof res === 'number' && isFinite(res)) ? Math.round(res) : 0;
     } catch (e) {
         return 0;
-    } }
+    }
+}
 
 function updateCalcDisplay() {
     const exprEl = document.getElementById('calc-expression');
@@ -4100,9 +4113,16 @@ function applyCalcToNominal() {
     const amountInput = document.getElementById('tx-amount');
     if (amountInput && val > 0) {
         amountInput.value = val;
-        spawnFloatingReward(`✓ Nominal Rp ${val.toLocaleString('id-ID')} dimasukkan!`);
+        const formatted = val.toLocaleString('id-ID');
+        if (appLanguage === 'en') {
+            spawnFloatingReward(`✓ Amount Rp ${formatted} inserted!`);
+        } else if (appLanguage === 'ja') {
+            spawnFloatingReward(`✓ 金額 Rp ${formatted} を入力しました！`);
+        } else {
+            spawnFloatingReward(`✓ Nominal Rp ${formatted} dimasukkan!`);
+        }
     } else {
-        spawnFloatingReward('⚠️ Hitung nominal lebih dari 0 terlebih dahulu');
+        spawnFloatingReward(tTreasury('⚠️ Hitung nominal lebih dari 0 terlebih dahulu'));
     }
 }
 
@@ -4131,10 +4151,17 @@ function handleAddTreasuryTx(e) {
         tr.dailyBonusCounts[todayKey] = usedToday + 1;
         SoundFX.playQuestComplete();
         addRewards(10, 0, 'WIS', 10, true);
-        spawnFloatingReward(`💰 Tercatat! +10 XP & +10 WIS XP (${tr.dailyBonusCounts[todayKey]}/3 hari ini)`);
+        const count = tr.dailyBonusCounts[todayKey];
+        if (appLanguage === 'en') {
+            spawnFloatingReward(`💰 Recorded! +10 XP & +10 WIS XP (${count}/3 today)`);
+        } else if (appLanguage === 'ja') {
+            spawnFloatingReward(`💰 記録完了！ +10 XP & +10 WIS XP (本日 ${count}/3)`);
+        } else {
+            spawnFloatingReward(`💰 Tercatat! +10 XP & +10 WIS XP (${count}/3 hari ini)`);
+        }
     } else {
         SoundFX.playCoin();
-        spawnFloatingReward('💰 Transaksi keuangan berhasil dicatat!');
+        spawnFloatingReward(tTreasury('💰 Transaksi keuangan berhasil dicatat!'));
     }
 
     document.getElementById('tx-amount').value = '';
@@ -4149,7 +4176,7 @@ function deleteTreasuryTx(id) {
     tr.transactions = tr.transactions.filter(t => t.id !== id);
     saveState();
     renderTreasury();
-    spawnFloatingReward('🗑️ Transaksi dihapus');
+    spawnFloatingReward(tTreasury('🗑️ Transaksi dihapus'));
 }
 
 function setTreasuryPeriodMode(mode) {
@@ -4175,13 +4202,13 @@ function setTreasuryPeriodMode(mode) {
     fYear.classList.add('hidden');
 
     if (mode === 'daily') {
-        lbl.textContent = 'Filter Tanggal:';
+        lbl.textContent = tTreasury('Filter Tanggal:');
         fDate.classList.remove('hidden');
     } else if (mode === 'monthly') {
-        lbl.textContent = 'Filter Bulan:';
+        lbl.textContent = tTreasury('Filter Bulan:');
         fMonth.classList.remove('hidden');
     } else {
-        lbl.textContent = 'Filter Tahun:';
+        lbl.textContent = tTreasury('Filter Tahun:');
         fYear.classList.remove('hidden');
     }
     renderTreasury();
@@ -4215,7 +4242,15 @@ function renderTreasury() {
     const todayKey = getCurrentGameDateKey();
     const quotaUsed = tr.dailyBonusCounts[todayKey] || 0;
     const quotaBadge = document.getElementById('treasury-rpg-quota-badge');
-    if (quotaBadge) quotaBadge.textContent = `Bonus RPG: ${quotaUsed}/3 Hari Ini`;
+    if (quotaBadge) {
+        if (typeof appLanguage !== 'undefined' && appLanguage === 'en') {
+            quotaBadge.textContent = `RPG Bonus: ${quotaUsed}/3 Today`;
+        } else if (typeof appLanguage !== 'undefined' && appLanguage === 'ja') {
+            quotaBadge.textContent = `RPGボーナス: 本日 ${quotaUsed}/3`;
+        } else {
+            quotaBadge.textContent = `Bonus RPG: ${quotaUsed}/3 Hari Ini`;
+        }
+    }
 
     const fDate = document.getElementById('tr-filter-date')?.value || todayKey;
     const fMonth = document.getElementById('tr-filter-month')?.value || todayKey.slice(0, 7);
@@ -4267,14 +4302,14 @@ function renderTreasury() {
     if (catBox) {
         const entries = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
         if (entries.length === 0) {
-            catBox.innerHTML = `<p style="font-size: 11px; color: #64748b;">Belum ada pengeluaran pada periode ini.</p>`;
+            catBox.innerHTML = `<p style="font-size: 11px; color: #64748b;">${escapeHtml(tTreasury('Belum ada pengeluaran pada periode ini.'))}</p>`;
         } else {
             catBox.innerHTML = entries.map(([cat, amt]) => {
                 const pct = totalOut > 0 ? Math.round((amt / totalOut) * 100) : 0;
                 return `
                     <div style="background: rgba(15,23,42,0.75); border: 1px solid #1e293b; border-radius: 0.55rem; padding: 0.4rem 0.6rem;">
                         <div class="flex justify-between" style="font-size: 11px; margin-bottom: 3px;">
-                            <span style="color: #e2e8f0; font-weight: 600;">${escapeHtml(cat)}</span>
+                            <span style="color: #e2e8f0; font-weight: 600;">${escapeHtml(tTreasury(cat))}</span>
                             <span class="font-display" style="color: #fb7185; font-weight: 700;">${formatRupiah(amt)} (${pct}%)</span>
                         </div>
                         <div class="progress-track-sm">
@@ -4289,7 +4324,7 @@ function renderTreasury() {
     const txListEl = document.getElementById('tr-transaction-list');
     if (txListEl) {
         if (filtered.length === 0) {
-            txListEl.innerHTML = `<p style="font-size: 11px; color: #64748b; text-align: center; padding: 0.65rem 0;">Tidak ada transaksi pada periode ini.</p>`;
+            txListEl.innerHTML = `<p style="font-size: 11px; color: #64748b; text-align: center; padding: 0.65rem 0;">${escapeHtml(tTreasury('Tidak ada transaksi pada periode ini.'))}</p>`;
         } else {
             txListEl.innerHTML = filtered.map(tx => {
                 const isInc = tx.type === 'income';
@@ -4297,13 +4332,13 @@ function renderTreasury() {
                     <div style="background: rgba(15,23,42,0.75); border: 1px solid rgba(30,41,59,0.9); border-radius: 0.65rem; padding: 0.5rem 0.65rem;" class="flex items-center justify-between gap-2">
                         <div class="min-w-0 flex-1">
                             <p class="truncate" style="font-size: 0.75rem; font-weight: 600; color: #f1f5f9;">${escapeHtml(tx.note)}</p>
-                            <p style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">${escapeHtml(tx.category)} • ${tx.dateStr}</p>
+                            <p style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">${escapeHtml(tTreasury(tx.category))} • ${tx.dateStr}</p>
                         </div>
                         <div class="flex items-center gap-2 shrink-0">
                             <span class="font-display" style="font-size: 0.75rem; font-weight: 700; color: ${isInc ? '#34d399' : '#fb7185'};">
                                 ${isInc ? '+' : '-'}${formatRupiah(tx.amount)}
                             </span>
-                            <button type="button" onclick="deleteTreasuryTx('${tx.id}')" style="color: #64748b; padding: 3px;" title="Hapus">✕</button>
+                            <button type="button" onclick="deleteTreasuryTx('${tx.id}')" style="color: #64748b; padding: 3px;" title="${escapeHtml(tTreasury('Hapus'))}">✕</button>
                         </div>
                     </div>
                 `;
@@ -5576,7 +5611,7 @@ function completeFingerprintUnlock() {
         ]
     };
 
-    const PATTERN_RULES = {
+ const PATTERN_RULES = {
         en: [
             { regex: /\((\d+)\s*Jam\)/gi, replace: '($1h)' },
             { regex: /(\d+)\s*G\s*\/\s*24j/gi, replace: '$1 G / 24h' },
@@ -5619,7 +5654,29 @@ function completeFingerprintUnlock() {
             { regex: /\bSemua\b/g, replace: 'All' },
             { regex: /\bPemasukan\b/g, replace: 'Income' },
             { regex: /\bPengeluaran\b/g, replace: 'Expense' },
-            { regex: /\bNominal\b/g, replace: 'Amount' }
+            { regex: /\bNominal\b/g, replace: 'Amount' },
+
+            // --- TAMBAHAN BARU: TREASURY & PDF READER ---
+            { regex: /Makan & Jajan/g, replace: 'Food & Snacks' },
+            { regex: /Transportasi/g, replace: 'Transportation' },
+            { regex: /Belanja & Kebutuhan/g, replace: 'Shopping & Essentials' },
+            { regex: /Tagihan & Kuota/g, replace: 'Bills & Mobile Data' },
+            { regex: /Edukasi & Buku/g, replace: 'Education & Books' },
+            { regex: /Hiburan/g, replace: 'Entertainment' },
+            { regex: /Kesehatan/g, replace: 'Health' },
+            { regex: /Lainnya/g, replace: 'Others' },
+            { regex: /Gaji \/ Honor/g, replace: 'Salary / Wages' },
+            { regex: /Bonus \/ Hadiah/g, replace: 'Bonus / Gift' },
+            { regex: /Usaha \/ Freelance/g, replace: 'Business / Freelance' },
+            { regex: /Pemasukan Lain/g, replace: 'Other Income' },
+            { regex: /Filter Tanggal:/g, replace: 'Filter Date:' },
+            { regex: /Filter Bulan:/g, replace: 'Filter Month:' },
+            { regex: /Filter Tahun:/g, replace: 'Filter Year:' },
+            { regex: /Belum ada pengeluaran pada periode ini\./g, replace: 'No expenses in this period yet.' },
+            { regex: /Tidak ada transaksi pada periode ini\./g, replace: 'No transactions in this period.' },
+            { regex: /Belum ada file PDF dibuka/g, replace: 'No PDF file opened yet' },
+            { regex: /Ketuk tombol "Buka PDF" di atas untuk memilih materi bacaan/g, replace: 'Tap "Open PDF" above to select reading material' },
+            { regex: /\bHal\s+(\d+)\s*\/\s*(\d+)/gi, replace: 'Page $1 / $2' }
         ],
         ja: [
             { regex: /\((\d+)\s*Jam\)/gi, replace: '($1時間)' },
@@ -5663,10 +5720,31 @@ function completeFingerprintUnlock() {
             { regex: /\bSemua\b/g, replace: 'すべて' },
             { regex: /\bPemasukan\b/g, replace: '収入' },
             { regex: /\bPengeluaran\b/g, replace: '支出' },
-            { regex: /\bNominal\b/g, replace: '金額' }
+            { regex: /\bNominal\b/g, replace: '金額' },
+
+            // --- TAMBAHAN BARU: TREASURY & PDF READER ---
+            { regex: /Makan & Jajan/g, replace: '食事・おやつ' },
+            { regex: /Transportasi/g, replace: '交通費' },
+            { regex: /Belanja & Kebutuhan/g, replace: '買い物・日用品' },
+            { regex: /Tagihan & Kuota/g, replace: '公共料金・通信費' },
+            { regex: /Edukasi & Buku/g, replace: '教育・書籍' },
+            { regex: /Hiburan/g, replace: '娯楽・エンタメ' },
+            { regex: /Kesehatan/g, replace: '健康・医療' },
+            { regex: /Lainnya/g, replace: 'その他' },
+            { regex: /Gaji \/ Honor/g, replace: '給与・報酬' },
+            { regex: /Bonus \/ Hadiah/g, replace: 'ボーナス・賞与' },
+            { regex: /Usaha \/ Freelance/g, replace: '事業・フリーランス' },
+            { regex: /Pemasukan Lain/g, replace: 'その他の収入' },
+            { regex: /Filter Tanggal:/g, replace: '日付フィルター:' },
+            { regex: /Filter Bulan:/g, replace: '月フィルター:' },
+            { regex: /Filter Tahun:/g, replace: '年フィルター:' },
+            { regex: /Belum ada pengeluaran pada periode ini\./g, replace: 'この期間の支出はまだありません。' },
+            { regex: /Tidak ada transaksi pada periode ini\./g, replace: 'この期間の取引はありません。' },
+            { regex: /Belum ada file PDF dibuka/g, replace: 'PDFファイルがまだ開かれていません' },
+            { regex: /Ketuk tombol "Buka PDF" di atas untuk memilih materi bacaan/g, replace: '上の「PDFを開く」をタップして教材を選択してください' },
+            { regex: /\bHal\s+(\d+)\s*\/\s*(\d+)/gi, replace: '$1 / $2 ページ' }
         ]
     };
-
     const REVERSE_MAP = {};
     Object.entries(DICTIONARY).forEach(([lang, entries]) => {
         Object.entries(entries).forEach(([idText, translatedText]) => {
