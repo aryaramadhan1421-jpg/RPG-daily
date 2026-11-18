@@ -1266,7 +1266,7 @@ function updateStreakThreshold(rawVal) {
 
     // Recalculate today's streak credit immediately if quests are already checked
     const todayKey = getCurrentGameDateKey();
-    const dailyQuests = gameState.quests.filter(item => item.category === 'Daily Quest');
+    const dailyQuests = gameState.quests.filter(item => item.category === 'Daily Quest' && isQuestActiveOnDate(item, todayKey));
     const doneCount = dailyQuests.filter(item => item.completed).length;
     const ratio = dailyQuests.length > 0 ? (doneCount / dailyQuests.length) : 0;
 
@@ -2777,7 +2777,7 @@ function toggleQuest(id, preserveCount = false) {
                 }
             }
 
-            const dailyQuests = gameState.quests.filter(item => item.category === 'Daily Quest');
+            const dailyQuests = gameState.quests.filter(item => item.category === 'Daily Quest' && isQuestActiveOnDate(item, todayKey));
             const doneCount = dailyQuests.filter(item => item.completed).length;
             const ratio = dailyQuests.length > 0 ? (doneCount / dailyQuests.length) : 0;
 
@@ -2827,7 +2827,7 @@ function toggleQuest(id, preserveCount = false) {
             }
 
             if (gameState.lastStreakDate === todayKey) {
-                const dailyQuests = gameState.quests.filter(item => item.category === 'Daily Quest');
+                const dailyQuests = gameState.quests.filter(item => item.category === 'Daily Quest' && isQuestActiveOnDate(item, todayKey));
                 const doneCount = dailyQuests.filter(item => item.completed).length;
                 const ratio = dailyQuests.length > 0 ? (doneCount / dailyQuests.length) : 0;
                 if (ratio < getStreakThresholdRatio()) {
@@ -4895,238 +4895,864 @@ function triggerFingerprintScan() {
 }
 
 // ==========================================
-// 16. MULTI-LANGUAGE SYSTEM (ID / EN / JA)
+// 16. UNIFIED MULTILINGUAL ENGINE (ID / EN / JA)
 // ==========================================
-const APP_I18N = {
-    id: {
-        navStatus: 'Status',
-        navQuests: 'Quests',
-        navDungeon: 'Dungeon',
-        navShop: 'Shop',
-        navTreasury: 'Treasury',
-        questBoardTitle: 'QUEST BOARD',
-        questBoardSub: 'Centang misi selesai (klik ulang untuk batalkan/undo)',
-        shopTitle: 'SYSTEM SHOP',
-        shopSub: 'Tukarkan Gold dengan Potion atau Reward Dunia Nyata',
-        treasuryTitle: 'TREASURY VAULT',
-        dungeonTitle: 'DEEP FOCUS RAID',
-        lbl_schedule_days: 'Jadwal Hari Aktif',
-        preset_all_days: 'Semua',
-        preset_weekday: 'Weekday',
-        preset_weekend: 'Weekend',
-        filter_day_today: '📅 Jadwal Hari Ini',
-        filter_day_all: '🗓️ Semua Jadwal',
-        form_new_quest_title: 'Buat Misi Baru',
-        lbl_quest_name: 'Nama Misi / Tugas',
-        btn_add_to_board: 'TAMBAHKAN KE QUEST BOARD',
-        btn_preset_habit: 'Preset Habit',
-        btn_new_quest: 'Quest Baru',
-        time_all: '🕒 Semua Waktu',
-        time_morning: '🌅 Pagi',
-        time_afternoon: '☀️ Siang',
-        time_evening: '🌇 Sore',
-        time_night: '🌙 Malam',
-        status_active: 'Aktif (Belum)',
-        status_done: 'Selesai',
-        btn_eval_next_day: 'Evaluasi & Lanjut Hari',
-        btn_enable_notif: '🔔 Aktifkan Notifikasi',
-        btn_test_popup: 'Tes Pop-up',
-        btn_new_item: 'Item Baru',
-        btn_save_shop: 'SIMPAN KE SHOP',
-        statAttrTitle: 'Status Atribut',
-        habitTrackerTitle: 'Habit Tracker & Riwayat',
-        sysControlTitle: 'Kontrol Sistem & Evaluasi Harian',
-        notifTitle: 'Reminder Notifikasi Layar HP',
-        btnStartDungeon: 'MASUKI DUNGEON',
-        btnAbortDungeon: 'MENYERAH (-10 HP)',
-        redeemHistoryTitle: 'Riwayat Redeem',
-        dayChips: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
-    },
-    en: {
-        navStatus: 'Status',
-        navQuests: 'Quests',
-        navDungeon: 'Dungeon',
-        navShop: 'Shop',
-        navTreasury: 'Treasury',
-        questBoardTitle: 'QUEST BOARD',
-        questBoardSub: 'Check completed quests (tap again to undo)',
-        shopTitle: 'SYSTEM SHOP',
-        shopSub: 'Exchange Gold for Potions or Real-World Rewards',
-        treasuryTitle: 'TREASURY VAULT',
-        dungeonTitle: 'DEEP FOCUS RAID',
-        lbl_schedule_days: 'Active Days Schedule',
-        preset_all_days: 'Every Day',
-        preset_weekday: 'Weekday',
-        preset_weekend: 'Weekend',
-        filter_day_today: '📅 Today’s Schedule',
-        filter_day_all: '🗓️ All Schedules',
-        form_new_quest_title: 'Create New Quest',
-        lbl_quest_name: 'Quest / Task Name',
-        btn_add_to_board: 'ADD TO QUEST BOARD',
-        btn_preset_habit: 'Habit Presets',
-        btn_new_quest: 'New Quest',
-        time_all: '🕒 All Times',
-        time_morning: '🌅 Morning',
-        time_afternoon: '☀️ Afternoon',
-        time_evening: '🌇 Evening',
-        time_night: '🌙 Night',
-        status_active: 'Active',
-        status_done: 'Completed',
-        btn_eval_next_day: 'Evaluate & Next Day',
-        btn_enable_notif: '🔔 Enable Notifications',
-        btn_test_popup: 'Test Pop-up',
-        btn_new_item: 'New Item',
-        btn_save_shop: 'SAVE TO SHOP',
-        statAttrTitle: 'Attribute Status',
-        habitTrackerTitle: 'Habit Tracker & History',
-        sysControlTitle: 'System Control & Daily Evaluation',
-        notifTitle: 'Phone Reminder Notifications',
-        btnStartDungeon: 'ENTER DUNGEON',
-        btnAbortDungeon: 'SURRENDER (-10 HP)',
-        redeemHistoryTitle: 'Redeem History',
-        dayChips: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    },
-    ja: {
-        navStatus: 'ステータス',
-        navQuests: 'クエスト',
-        navDungeon: 'ダンジョン',
-        navShop: 'ショップ',
-        navTreasury: '財務庫',
-        questBoardTitle: 'クエストボード',
-        questBoardSub: '完了した任務にチェック（再タップで取消）',
-        shopTitle: 'システムショップ',
-        shopSub: 'ゴールドをポーションや現実の報酬と交換',
-        treasuryTitle: 'トレジャリー金庫',
-        dungeonTitle: '集中レイド',
-        lbl_schedule_days: '実行曜日スケジュール',
-        preset_all_days: '毎日',
-        preset_weekday: '平日',
-        preset_weekend: '週末',
-        filter_day_today: '📅 今日の予定',
-        filter_day_all: '🗓️ すべての予定',
-        form_new_quest_title: '新規クエスト作成',
-        lbl_quest_name: 'クエスト名 / タスク',
-        btn_add_to_board: 'クエストボードに追加',
-        btn_preset_habit: '習慣プリセット',
-        btn_new_quest: '新規クエスト',
-        time_all: '🕒 すべての時間',
-        time_morning: '🌅 朝',
-        time_afternoon: '☀️ 昼',
-        time_evening: '🌇 夕方',
-        time_night: '🌙 夜',
-        status_active: '未完了',
-        status_done: '完了済み',
-        btn_eval_next_day: '日次評価＆翌日へ',
-        btn_enable_notif: '🔔 通知を有効化',
-        btn_test_popup: '通知テスト',
-        btn_new_item: '新規アイテム',
-        btn_save_shop: 'ショップに保存',
-        statAttrTitle: 'ステータス属性',
-        habitTrackerTitle: '習慣トラッカー＆履歴',
-        sysControlTitle: 'システム制御＆日次評価',
-        notifTitle: 'スマホ通知リマインダー',
-        btnStartDungeon: 'ダンジョン突入',
-        btnAbortDungeon: '撤退する (-10 HP)',
-        redeemHistoryTitle: '交換履歴',
-        dayChips: ['月', '火', '水', '木', '金', '土', '日']
-    }
-};
+(function () {
+    'use strict';
 
-function applyAppLanguage() {
-    const lang = (typeof gameState !== 'undefined' && gameState.language) || localStorage.getItem('sysrpg_lang') || 'id';
-    const t = APP_I18N[lang] || APP_I18N.id;
-    document.documentElement.lang = lang;
+    const LANG_KEY_PRIMARY = 'system_rpg_lang';
+    const LANG_KEY_LEGACY = 'sysrpg_lang';
 
-    const btnInactive = 'padding: 0.55rem 0.25rem; border-radius: 0.5rem; border: 1px solid #334155; background: #020617; font-size: 11px; font-weight: 700; color: #cbd5e1;';
-    const btnActive = 'padding: 0.55rem 0.25rem; border-radius: 0.5rem; border: 1px solid #06b6d4; background: #083344; font-size: 11px; font-weight: 700; color: #67e8f9;';
-    document.querySelectorAll('.app-lang-btn').forEach(b => b.style.cssText = btnInactive);
-    const activeLangBtn = document.getElementById(`lang-btn-${lang}`);
-    if (activeLangBtn) activeLangBtn.style.cssText = btnActive;
+    // Exact phrase dictionary covering static HTML + dynamic app.js outputs
+    const DICTIONARY = {
+        en: {
+            // Splash Screen & Header
+            '[ TAP FINGERPRINT UNTUK AWAKENING ]': '[ TAP FINGERPRINT FOR AWAKENING ]',
+            'Autentikasi Hunter diperlukan sebelum masuk ke Sistem': 'Hunter authentication required before entering the System',
+            'MEMINDAI BIOMETRIK HUNTER...': 'SCANNING HUNTER BIOMETRICS...',
+            '✓ AKSES DITERIMA • WELCOME, HUNTER': '✓ ACCESS GRANTED • WELCOME, HUNTER',
+            'Sinkronisasi Status & Quest Board...': 'Synchronizing Status & Quest Board...',
+            'Hunter Interface': 'Hunter Interface',
 
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (t[key]) el.textContent = t[key];
-    });
+            // Navigation
+            'Status': 'Status',
+            'Quests': 'Quests',
+            'Dungeon': 'Dungeon',
+            'Shop': 'Shop',
+            'Treasury': 'Treasury',
 
-    // Update day chip labels (Mon..Sun / Sen..Min / 月..日)
-    const chipOrder = [1, 2, 3, 4, 5, 6, 0];
-    ['add-q-days', 'edit-q-days'].forEach(boxId => {
-        const box = document.getElementById(boxId);
-        if (!box) return;
-        chipOrder.forEach((dayNum, idx) => {
-            const btn = box.querySelector(`[data-day="${dayNum}"]`);
-            if (btn && t.dayChips[idx]) btn.textContent = t.dayChips[idx];
+            // System Oracle
+            '+ Kutipan': '+ Quote',
+            '✨ Terima Petuah (+5 XP / +5 G)': '✨ Receive Wisdom (+5 XP / +5 G)',
+            '✓ Petuah Diterima Hari Ini': '✓ Wisdom Claimed Today',
+            '"Kamu tidak naik ke level tujuanmu. Kamu jatuh ke level sistemmu."': '"You do not rise to the level of your goals. You fall to the level of your systems."',
+
+            // Player Identity Card
+            'Ganti Title': 'Switch Title',
+            'Lihat Semua': 'View All',
+            'Filter Tanggal Ini': 'Filter This Date',
+
+            // Core RPG Stats & Radar Chart
+            'Status Atribut': 'Attribute Status',
+            'Distribusi Atribut Hunter': 'Hunter Attribute Distribution',
+            'Distribusi Level Atribut': 'Attribute Level Distribution',
+            'Distribusi Level Atribut (All-Time)': 'Attribute Level Distribution (All-Time)',
+            'Skala Tier: 100': 'Tier Scale: 100',
+            'Pasif: +0 Max HP (Fisik & Vitality)': 'Passive: +0 Max HP (Physical & Vitality)',
+            'Pasif: +0% XP (Belajar & Fokus)': 'Passive: +0% XP (Study & Focus)',
+            'Pasif: -0% Damage Penalti (Mindfulness)': 'Passive: -0% Penalty Damage (Mindfulness)',
+            'Pasif: Diskon Shop 0% (Relasi & Sosial)': 'Passive: 0% Shop Discount (Relations & Social)',
+
+            // Habit Tracker & History
+            'Habit Tracker & Riwayat': 'Habit Tracker & History',
+            'Tanggal Aktif Sistem': 'System Active Date',
+            'Hari Ini': 'Today',
+            'Klik kotak tanggal untuk cek riwayat': 'Click a date box to check history',
+            'Log Aktivitas Tanggal Ini': 'Activity Log for This Date',
+
+            // System Control & Daily Evaluation
+            'Kontrol Sistem & Evaluasi Harian': 'System Control & Daily Evaluation',
+            '🎯 Target Minimal Streak Harian': '🎯 Minimum Daily Streak Target',
+            'Atur persentase minimal Daily Quest selesai': 'Set minimum percentage of completed Daily Quests',
+            'Evaluasi & Lanjut Hari': 'Evaluate & Advance Day',
+            'Evaluasi dan Lanjut Hari': 'Evaluate and Advance Day',
+
+            // Mobile Notification Reminder
+            'Reminder Notifikasi Layar HP': 'Mobile Lockscreen Notification Reminder',
+            'NONAKTIF': 'INACTIVE',
+            'AKTIF': 'ACTIVE',
+            'Munculkan notifikasi pop-up di layar atas HP jika masih ada Daily Quest yang belum dikerjakan atau lupa buka SYSTEM RPG.': 'Show pop-up notifications on your phone screen if Daily Quests are still unfinished or you forgot to open SYSTEM RPG.',
+            '🌅 Pagi': '🌅 Morning',
+            '🌇 Sore': '🌇 Evening',
+            '🌙 Malam': '🌙 Night',
+            '🔔 Aktifkan Notifikasi': '🔔 Enable Notifications',
+            '🔕 Matikan Notifikasi': '🔕 Disable Notifications',
+            'Aktifkan Notifikasi': 'Enable Notifications',
+            'Matikan Notifikasi': 'Disable Notifications',
+            'Tes Pop-up': 'Test Pop-up',
+
+            // Quests Tab
+            'Centang misi selesai (klik ulang untuk batalkan/undo)': 'Check completed quests (click again to undo)',
+            'Preset Habit': 'Habit Preset',
+            'Quest Baru': 'New Quest',
+            'Buat Misi Baru': 'Create New Quest',
+            'Nama Misi / Tugas': 'Quest / Task Name',
+            'Kategori': 'Category',
+            'Waktu': 'Time',
+            'Atribut': 'Attribute',
+            '☀️ Siang': '☀️ Afternoon',
+            '⚡ Fleksibel': '⚡ Flexible',
+            'Jadwal Hari Aktif': 'Active Days Schedule',
+            'Semua': 'All',
+            'Sen': 'Mon',
+            'Sel': 'Tue',
+            'Rab': 'Wed',
+            'Kam': 'Thu',
+            'Jum': 'Fri',
+            'Sab': 'Sat',
+            'Min': 'Sun',
+            'Tipe Progres Misi': 'Quest Progress Type',
+            '☑️ Ceklis Biasa (Sekali Selesai)': '☑️ Standard Checkbox (One-time)',
+            '🔢 Count / Hitungan (Contoh: 20 Hal, 8 Gelas)': '🔢 Counter (e.g., 20 Pages, 8 Glasses)',
+            'Target Angka': 'Target Count',
+            'Satuan': 'Unit',
+            'Hadiah XP': 'XP Reward',
+            'Hadiah Gold': 'Gold Reward',
+            'TAMBAHKAN KE QUEST BOARD': 'ADD TO QUEST BOARD',
+            '🕒 Semua Waktu': '🕒 All Times',
+            'Aktif (Belum)': 'Active (Incomplete)',
+            'Selesai': 'Completed',
+            '📅 Jadwal Hari Ini': "📅 Today's Schedule",
+            '🗓️ Semua Jadwal': '🗓️ All Schedules',
+            '🔢 Hitungan': '🔢 Counter',
+            'Muat Paket Default Daily Habit': 'Load Default Daily Habit Pack',
+            'Tidak ada misi yang cocok dengan filter / pencarian saat ini.': 'No quests match the current filter / search.',
+
+            // Dungeon & Deep Focus Raid
+            'MASUKI DUNGEON': 'ENTER DUNGEON',
+            'MENYERAH (-10 HP)': 'SURRENDER (-10 HP)',
+            'Set Waktu': 'Set Time',
+            '🎯 Tautkan Quest Fokus (Opsional — Auto-Selesai saat Clear)': '🎯 Link Focus Quest (Optional — Auto-Complete on Clear)',
+            '-- Fokus Umum (+INT saja) --': '-- General Focus (+INT only) --',
+            'Ambient Fokus': 'Focus Ambient',
+            'Mode: Hening': 'Mode: Silent',
+            'Mode: Dark Synth': 'Mode: Dark Synth',
+            'Mode: Suara Hujan': 'Mode: Rain Sound',
+            '🔇 Hening': '🔇 Silent',
+            '🌌 Dark Synth': '🌌 Dark Synth',
+            '🌧️ Suara Hujan': '🌧️ Rain Sound',
+            'Baca PDF materi belajar/buku sambil Dungeon Raid berjalan': 'Read study material/book PDFs while Dungeon Raid is active',
+            '📂 Buka PDF': '📂 Open PDF',
+            'ANIME LOFI RADIO (1 JAM)': 'ANIME LOFI RADIO (1 HOUR)',
+            'Siap menemani fokus Dungeon • Offline Synth': 'Ready to accompany Dungeon focus • Offline Synth',
+            'Dijeda • Siap dilanjutkan kapan saja': 'Paused • Ready to resume anytime',
+            'Sedang Memutar: Midnight Tokyo Lofi (Offline)': 'Now Playing: Midnight Tokyo Lofi (Offline)',
+            '▶ Putar Anime Lofi (1 Jam)': '▶ Play Anime Lofi (1 Hour)',
+            '⏸ Jeda Anime Lofi': '⏸ Pause Anime Lofi',
+            '🎵 MP3 HP': '🎵 Phone MP3',
+            '🔖 Bookmark Tersimpan (Per Judul File)': '🔖 Saved Bookmarks (By File Title)',
+            'Belum ada bookmark tersimpan.': 'No bookmarks saved yet.',
+            '🔖 Tandai Hal Ini': '🔖 Bookmark Page',
+
+            // Shop & Armory & Mystery Chest
+            'Tukarkan Gold dengan Potion atau Reward Dunia Nyata': 'Exchange Gold for Potions or Real-World Rewards',
+            'Item Baru': 'New Item',
+            'Tambah Item / Reward': 'Add Item / Reward',
+            'Nama Item / Reward': 'Item / Reward Name',
+            'Harga (Gold)': 'Price (Gold)',
+            'Efek Item': 'Item Effect',
+            'SIMPAN KE SHOP': 'SAVE TO SHOP',
+            '🎁 Potion & Real-World Rewards': '🎁 Potions & Real-World Rewards',
+            'Konsumsi & Hadiah Nyata': 'Consumables & Real Rewards',
+            'Relic bersifat sementara (aktif 24 jam sejak dibeli) • Maks 3 slot aktif': 'Relics are temporary (active 24h upon purchase) • Max 3 active slots',
+            'Belum ada Relic terpasang. Pasang Relic di bawah untuk mengaktifkan efek pasif!': 'No Relic equipped yet. Equip a Relic below to activate passive effects!',
+            'Belum ada Relic aktif. Beli Relic (durasi 24 jam) di bawah untuk mengaktifkan efek sementara!': 'No active Relic. Buy a Relic (24h duration) below to activate temporary buffs!',
+            'Slot Kosong': 'Empty Slot',
+            'MYSTERY SYSTEM CHEST': 'MYSTERY SYSTEM CHEST',
+            'Mystery System Chest': 'Mystery System Chest',
+            'Uji keberuntungan: XP, HP, Streak Shield, atau Jackpot Gold!': 'Test your luck: XP, HP, Streak Shield, or Gold Jackpot!',
+            '🎲 BUKA PETI MISTERI (100 GOLD)': '🎲 OPEN MYSTERY CHEST (100 GOLD)',
+            'Riwayat Redeem': 'Redeem History',
+            'Belum ada reward yang di-redeem.': 'No rewards redeemed yet.',
+            'Hapus Semua': 'Clear All',
+            'Beli': 'Buy',
+            'MAKS': 'MAX',
+
+            // Treasury / Cashflow Dashboard
+            'Catat arus kas & kalkulator jajan (+10 XP & +10 WIS XP, maks 3x/hari)': 'Record cashflow & snack calculator (+10 XP & +10 WIS XP, max 3x/day)',
+            '🧮 Kalkulator Jajan & Belanja': '🧮 Snack & Shopping Calculator',
+            '✓ PAKAI NOMINAL': '✓ USE AMOUNT',
+            '💸 Catat Transaksi Keuangan': '💸 Record Financial Transaction',
+            'Jenis Arus Kas': 'Cashflow Type',
+            '📤 Pengeluaran (-)': '📤 Expense (-)',
+            '📥 Pemasukan (+)': '📥 Income (+)',
+            'Tanggal': 'Date',
+            'Nominal (Rp)': 'Amount (Rp)',
+            'Nominal': 'Amount',
+            'Kategori Pengeluaran': 'Expense Category',
+            'Kategori Pemasukan': 'Income Category',
+            'Catatan / Keterangan': 'Notes / Description',
+            'SIMPAN TRANSAKSI (+10 XP & +10 WIS)': 'SAVE TRANSACTION (+10 XP & +10 WIS)',
+            '📊 Dashboard Arus Kas': '📊 Cashflow Dashboard',
+            'Dashboard Arus Kas': 'Cashflow Dashboard',
+            'Harian': 'Daily',
+            'Bulanan': 'Monthly',
+            'Tahunan': 'Yearly',
+            'Filter Tanggal:': 'Filter Date:',
+            'Filter Bulan:': 'Filter Month:',
+            'Filter Tahun:': 'Filter Year:',
+            'Pemasukan': 'Income',
+            'Pengeluaran': 'Expense',
+            'Selisih Bersih': 'Net Difference',
+            'Rincian Pengeluaran per Kategori': 'Expense Breakdown by Category',
+            'Belum ada pengeluaran pada periode ini.': 'No expenses in this period.',
+            'Daftar Transaksi Periode Ini': 'Transactions in This Period',
+            'Tidak ada transaksi pada periode ini.': 'No transactions in this period.',
+
+            // Modals & Font Settings
+            'Membuka Peti...': 'Opening Chest...',
+            'Membuka Peti Misteri...': 'Opening Mystery Chest...',
+            'Sistem sedang mengacak hadiah keberuntunganmu...': 'The System is randomizing your lucky reward...',
+            'KLAIM HADIAH': 'CLAIM REWARD',
+            'TERIMA KEKUATAN': 'ACCEPT POWER',
+            'LAPORAN HARIAN': 'DAILY REPORT',
+            'MENGERTI': 'UNDERSTOOD',
+            'Pilih 6 Avatar Cyber-Fantasy atau unggah foto dari galeri HP': 'Choose from 6 Cyber-Fantasy Avatars or upload a photo from your gallery',
+            '📷 Foto Pribadi / Galeri HP': '📷 Personal Photo / Phone Gallery',
+            'Otomatis dikompres (160×160px) agar ringan di localStorage': 'Automatically compressed (160×160px) for lightweight localStorage',
+            '📁 Pilih Foto dari Galeri': '📁 Choose Photo from Gallery',
+            'SELESAI': 'DONE',
+            'PROFIL HUNTER': 'HUNTER PROFILE',
+            'Nama Hunter': 'Hunter Name',
+            'Batal': 'Cancel',
+            'Simpan': 'Save',
+            'RESET DATA SISTEM?': 'RESET SYSTEM DATA?',
+            'Semua progres akan di-reset bersih ke awal (Level 1, 0 XP, 0 Gold, 0 Streak).': 'All progress will be reset cleanly to the beginning (Level 1, 0 XP, 0 Gold, 0 Streak).',
+            'Nama Misi': 'Quest Name',
+            'Tipe Progres': 'Progress Type',
+            '☑️ Ceklis Biasa': '☑️ Standard Checkbox',
+            '🔢 Count / Hitungan': '🔢 Counter',
+            'Tipe Item': 'Item Type',
+            'Deskripsi Singkat': 'Short Description',
+            'TAMBAH KUTIPAN ORACLE': 'ADD ORACLE QUOTE',
+            'Isi Kata Motivasi / Prinsip': 'Motivational Quote / Principle',
+            'Nama Tokoh / Sumber': 'Author / Source Name',
+            'GELAR & ACHIEVEMENT': 'TITLES & ACHIEVEMENTS',
+            'Pilih gelar aktif untuk mendapatkan bonus pasif permanen:': 'Select an active title to gain permanent passive bonuses:',
+            'TUTUP ROADMAP': 'CLOSE ROADMAP',
+            'Lewati & Lanjut': 'Skip & Advance',
+            'Simpan (+15 WIS)': 'Save (+15 WIS)',
+            'PENGATURAN FONT': 'FONT SETTINGS',
+            '✕ Tutup': '✕ Close',
+            'Ukuran Teks Aplikasi': 'App Text Size',
+            'Kecil (85%)': 'Small (85%)',
+            'Normal (100%)': 'Normal (100%)',
+            'Besar (115%)': 'Large (115%)',
+            'Gaya Huruf Judul (RPG Style)': 'Heading Font Style (RPG Style)',
+            'Tegas': 'Bold Tactical',
+            '🌐 Bahasa Antarmuka (Language)': '🌐 Interface Language',
+            'Aktif': 'Active',
+            'Pakai': 'Equip',
+            'Terkunci': 'Locked'
+        },
+        ja: {
+            // Splash Screen & Header
+            '[ TAP FINGERPRINT UNTUK AWAKENING ]': '[ 指紋をタップして覚醒する ]',
+            'Autentikasi Hunter diperlukan sebelum masuk ke Sistem': 'システムに入る前にハンター認証が必要です',
+            'MEMINDAI BIOMETRIK HUNTER...': 'ハンター生体認証をスキャン中...',
+            '✓ AKSES DITERIMA • WELCOME, HUNTER': '✓ アクセス承認 • ようこそ、ハンター',
+            'Sinkronisasi Status & Quest Board...': 'ステータスとクエストボードを同期中...',
+            'Hunter Interface': 'ハンターインターフェース',
+
+            // Navigation
+            'Status': 'ステータス',
+            'Quests': 'クエスト',
+            'Dungeon': 'ダンジョン',
+            'Shop': 'ショップ',
+            'Treasury': '財務庫',
+
+            // System Oracle
+            '+ Kutipan': '+ 名言追加',
+            '✨ Terima Petuah (+5 XP / +5 G)': '✨ 託宣を受け取る (+5 XP / +5 G)',
+            '✓ Petuah Diterima Hari Ini': '✓ 本日の託宣は受取済み',
+            '"Kamu tidak naik ke level tujuanmu. Kamu jatuh ke level sistemmu."': '「人は目標のレベルまで上がるのではなく、システムのレベルまで落ちる。」',
+
+            // Player Identity Card
+            'Ganti Title': '称号変更',
+            'Lihat Semua': 'すべて見る',
+            'Filter Tanggal Ini': 'この日付のみ表示',
+
+            // Core RPG Stats & Radar Chart
+            'Status Atribut': 'ステータス能力値',
+            'Distribusi Atribut Hunter': 'ハンター能力値分布',
+            'Distribusi Level Atribut': '能力値レベル分布',
+            'Distribusi Level Atribut (All-Time)': '能力値レベル分布 (全期間)',
+            'Skala Tier: 100': 'ティア基準: 100',
+            'Pasif: +0 Max HP (Fisik & Vitality)': 'パッシブ: 最大HP +0 (体力・生命力)',
+            'Pasif: +0% XP (Belajar & Fokus)': 'パッシブ: 獲得XP +0% (学習・集中)',
+            'Pasif: -0% Damage Penalti (Mindfulness)': 'パッシブ: ペナルティ軽減 -0% (精神・規律)',
+            'Pasif: Diskon Shop 0% (Relasi & Sosial)': 'パッシブ: ショップ割引 0% (社交・魅力)',
+
+            // Habit Tracker & History
+            'Habit Tracker & Riwayat': '習慣トラッカー＆履歴',
+            'Tanggal Aktif Sistem': 'システム現在日付',
+            'Hari Ini': '今日',
+            'Klik kotak tanggal untuk cek riwayat': '日付マスをタップして履歴を確認',
+            'Log Aktivitas Tanggal Ini': '本日のアクティビティログ',
+
+            // System Control & Daily Evaluation
+            'Kontrol Sistem & Evaluasi Harian': 'システム制御＆日次評価',
+            '🎯 Target Minimal Streak Harian': '🎯 毎日の最小ストリーク目標',
+            'Atur persentase minimal Daily Quest selesai': 'デイリークエストの最小達成率を設定',
+            'Evaluasi & Lanjut Hari': '評価して次の日へ',
+            'Evaluasi dan Lanjut Hari': '評価して次の日へ',
+
+            // Mobile Notification Reminder
+            'Reminder Notifikasi Layar HP': 'スマホロック画面通知リマインダー',
+            'NONAKTIF': '無効',
+            'AKTIF': '有効',
+            'Munculkan notifikasi pop-up di layar atas HP jika masih ada Daily Quest yang belum dikerjakan atau lupa buka SYSTEM RPG.': '未完了のデイリークエストがある場合やアプリを開き忘れた際に、スマホ画面上部にポップアップ通知を表示します。',
+            '🌅 Pagi': '🌅 朝',
+            '🌇 Sore': '🌇 夕方',
+            '🌙 Malam': '🌙 夜',
+            '🔔 Aktifkan Notifikasi': '🔔 通知を有効化',
+            '🔕 Matikan Notifikasi': '🔕 通知をオフにする',
+            'Aktifkan Notifikasi': '通知を有効化',
+            'Matikan Notifikasi': '通知をオフにする',
+            'Tes Pop-up': 'ポップアップテスト',
+
+            // Quests Tab
+            'Centang misi selesai (klik ulang untuk batalkan/undo)': '完了したクエストにチェック（再タップで取り消し）',
+            'Preset Habit': '習慣プリセット',
+            'Quest Baru': '新規クエスト',
+            'Buat Misi Baru': '新規クエスト作成',
+            'Nama Misi / Tugas': 'クエスト・タスク名',
+            'Kategori': 'カテゴリー',
+            'Waktu': '時間帯',
+            'Atribut': '能力値',
+            '☀️ Siang': '☀️ 昼',
+            '⚡ Fleksibel': '⚡ いつでも',
+            'Jadwal Hari Aktif': '実行曜日スケジュール',
+            'Semua': 'すべて',
+            'Sen': '月',
+            'Sel': '火',
+            'Rab': '水',
+            'Kam': '木',
+            'Jum': '金',
+            'Sab': '土',
+            'Min': '日',
+            'Tipe Progres Misi': '進捗タイプ',
+            '☑️ Ceklis Biasa (Sekali Selesai)': '☑️ 通常チェック（1回で完了）',
+            '🔢 Count / Hitungan (Contoh: 20 Hal, 8 Gelas)': '🔢 カウント形式（例: 20ページ、水8杯）',
+            'Target Angka': '目標回数',
+            'Satuan': '単位',
+            'Hadiah XP': '報酬XP',
+            'Hadiah Gold': '報酬ゴールド',
+            'TAMBAHKAN KE QUEST BOARD': 'クエストボードに追加',
+            '🕒 Semua Waktu': '🕒 全時間帯',
+            'Aktif (Belum)': '進行中（未完了）',
+            'Selesai': '完了',
+            '📅 Jadwal Hari Ini': '📅 今日の予定',
+            '🗓️ Semua Jadwal': '🗓️ 全スケジュール',
+            '🔢 Hitungan': '🔢 カウント',
+            'Muat Paket Default Daily Habit': 'デフォルト習慣パックを読み込む',
+            'Tidak ada misi yang cocok dengan filter / pencarian saat ini.': '現在のフィルター・検索に一致するクエストがありません。',
+
+            // Dungeon & Deep Focus Raid
+            'MASUKI DUNGEON': 'ダンジョンに入る',
+            'MENYERAH (-10 HP)': '諦める (-10 HP)',
+            'Set Waktu': '時間設定',
+            '🎯 Tautkan Quest Fokus (Opsional — Auto-Selesai saat Clear)': '🎯 集中クエスト連携（任意 — クリア時に自動完了）',
+            '-- Fokus Umum (+INT saja) --': '-- 通常集中 (+INTのみ) --',
+            'Ambient Fokus': '集中環境音',
+            'Mode: Hening': 'モード: 無音',
+            'Mode: Dark Synth': 'モード: ダークシンセ',
+            'Mode: Suara Hujan': 'モード: 雨音',
+            '🔇 Hening': '🔇 無音',
+            '🌌 Dark Synth': '🌌 ダークシンセ',
+            '🌧️ Suara Hujan': '🌧️ 雨音',
+            'Baca PDF materi belajar/buku sambil Dungeon Raid berjalan': 'ダンジョン攻略中に学習教材や書籍のPDFを閲覧',
+            '📂 Buka PDF': '📂 PDFを開く',
+            'ANIME LOFI RADIO (1 JAM)': 'アニメ Lo-Fi ラジオ (1時間)',
+            'Siap menemani fokus Dungeon • Offline Synth': 'ダンジョン集中をサポート • オフライン音源',
+            'Dijeda • Siap dilanjutkan kapan saja': '一時停止中 • いつでも再開可能',
+            'Sedang Memutar: Midnight Tokyo Lofi (Offline)': '再生中: Midnight Tokyo Lofi (オフライン)',
+            '▶ Putar Anime Lofi (1 Jam)': '▶ アニメLo-Fi再生 (1時間)',
+            '⏸ Jeda Anime Lofi': '⏸ アニメLo-Fi一時停止',
+            '🎵 MP3 HP': '🎵 端末MP3',
+            '🔖 Bookmark Tersimpan (Per Judul File)': '🔖 保存済みブックマーク（ファイル別）',
+            'Belum ada bookmark tersimpan.': '保存されたブックマークはありません。',
+            '🔖 Tandai Hal Ini': '🔖 このページを保存',
+
+            // Shop & Armory & Mystery Chest
+            'Tukarkan Gold dengan Potion atau Reward Dunia Nyata': 'ゴールドをポーションや現実のご褒美と交換',
+            'Item Baru': '新規アイテム',
+            'Tambah Item / Reward': 'アイテム・報酬追加',
+            'Nama Item / Reward': 'アイテム・報酬名',
+            'Harga (Gold)': '価格 (ゴールド)',
+            'Efek Item': 'アイテム効果',
+            'SIMPAN KE SHOP': 'ショップに保存',
+            '🎁 Potion & Real-World Rewards': '🎁 ポーション＆現実の報酬',
+            'Konsumsi & Hadiah Nyata': '消費アイテム＆現実のご褒美',
+            'Relic bersifat sementara (aktif 24 jam sejak dibeli) • Maks 3 slot aktif': 'レリックは一時効果（購入から24時間有効）• 最大3スロット装備可能',
+            'Belum ada Relic terpasang. Pasang Relic di bawah untuk mengaktifkan efek pasif!': 'レリック未装備。下のレリックを装備してパッシブ効果を発動しよう！',
+            'Belum ada Relic aktif. Beli Relic (durasi 24 jam) di bawah untuk mengaktifkan efek sementara!': '有効なレリックはありません。下でレリック（24時間有効）を購入してバフを発動！',
+            'Slot Kosong': '空きスロット',
+            'MYSTERY SYSTEM CHEST': 'ミステリー・システムチェスト',
+            'Mystery System Chest': 'ミステリー・システムチェスト',
+            'Uji keberuntungan: XP, HP, Streak Shield, atau Jackpot Gold!': '運試し：XP、HP、ストリークシールド、またはゴールド大当たり！',
+            '🎲 BUKA PETI MISTERI (100 GOLD)': '🎲 ミステリーチェストを開ける (100 GOLD)',
+            'Riwayat Redeem': '交換履歴',
+            'Belum ada reward yang di-redeem.': 'まだ交換された報酬はありません。',
+            'Hapus Semua': 'すべて削除',
+            'Beli': '購入',
+            'MAKS': '上限',
+
+            // Treasury / Cashflow Dashboard
+            'Catat arus kas & kalkulator jajan (+10 XP & +10 WIS XP, maks 3x/hari)': '収支記録＆お小遣い電卓（+10 XP & +10 WIS XP、1日3回まで）',
+            '🧮 Kalkulator Jajan & Belanja': '🧮 買い物・出費電卓',
+            '✓ PAKAI NOMINAL': '✓ 金額を反映',
+            '💸 Catat Transaksi Keuangan': '💸 収支取引を記録',
+            'Jenis Arus Kas': '収支タイプ',
+            '📤 Pengeluaran (-)': '📤 支出 (-)',
+            '📥 Pemasukan (+)': '📥 収入 (+)',
+            'Tanggal': '日付',
+            'Nominal (Rp)': '金額 (Rp)',
+            'Nominal': '金額',
+            'Kategori Pengeluaran': '支出カテゴリー',
+            'Kategori Pemasukan': '収入カテゴリー',
+            'Catatan / Keterangan': 'メモ・詳細',
+            'SIMPAN TRANSAKSI (+10 XP & +10 WIS)': '取引を保存 (+10 XP & +10 WIS)',
+            '📊 Dashboard Arus Kas': '📊 キャッシュフローダッシュボード',
+            'Dashboard Arus Kas': 'キャッシュフローダッシュボード',
+            'Harian': '日次',
+            'Bulanan': '月次',
+            'Tahunan': '年次',
+            'Filter Tanggal:': '日付フィルター:',
+            'Filter Bulan:': '月フィルター:',
+            'Filter Tahun:': '年フィルター:',
+            'Pemasukan': '収入',
+            'Pengeluaran': '支出',
+            'Selisih Bersih': '純収支差額',
+            'Rincian Pengeluaran per Kategori': 'カテゴリー別支出内訳',
+            'Belum ada pengeluaran pada periode ini.': 'この期間の支出はありません。',
+            'Daftar Transaksi Periode Ini': 'この期間の取引一覧',
+            'Tidak ada transaksi pada periode ini.': 'この期間の取引はありません。',
+
+            // Modals & Font Settings
+            'Membuka Peti...': 'チェスト開封中...',
+            'Membuka Peti Misteri...': 'ミステリーチェスト開封中...',
+            'Sistem sedang mengacak hadiah keberuntunganmu...': 'システムが幸運の報酬を抽選中...',
+            'KLAIM HADIAH': '報酬を受け取る',
+            'TERIMA KEKUATAN': '力を受け入れる',
+            'LAPORAN HARIAN': '日次レポート',
+            'MENGERTI': '了解',
+            'Pilih 6 Avatar Cyber-Fantasy atau unggah foto dari galeri HP': '6種類のサイバーファンタジーアバターから選択、または端末から写真をアップロード',
+            '📷 Foto Pribadi / Galeri HP': '📷 個人写真 / スマホギャラリー',
+            'Otomatis dikompres (160×160px) agar ringan di localStorage': '保存容量を節約するため自動圧縮 (160×160px)',
+            '📁 Pilih Foto dari Galeri': '📁 ギャラリーから写真を選択',
+            'SELESAI': '完了',
+            'PROFIL HUNTER': 'ハンタープロフィール',
+            'Nama Hunter': 'ハンター名',
+            'Batal': 'キャンセル',
+            'Simpan': '保存',
+            'RESET DATA SISTEM?': 'システムデータを初期化しますか？',
+            'Semua progres akan di-reset bersih ke awal (Level 1, 0 XP, 0 Gold, 0 Streak).': 'すべての進行状況が初期状態（レベル1、0 XP、0 Gold、0 ストリーク）にリセットされます。',
+            'Nama Misi': 'クエスト名',
+            'Tipe Progres': '進捗タイプ',
+            '☑️ Ceklis Biasa': '☑️ 通常チェック',
+            '🔢 Count / Hitungan': '🔢 カウント形式',
+            'Tipe Item': 'アイテムタイプ',
+            'Deskripsi Singkat': '簡単な説明',
+            'TAMBAH KUTIPAN ORACLE': '託宣の名言を追加',
+            'Isi Kata Motivasi / Prinsip': 'モチベーション・格言の内容',
+            'Nama Tokoh / Sumber': '著者・出典名',
+            'GELAR & ACHIEVEMENT': '称号＆実績',
+            'Pilih gelar aktif untuk mendapatkan bonus pasif permanen:': '有効な称号を選択して永続パッシブボーナスを獲得：',
+            'TUTUP ROADMAP': 'ロードマップを閉じる',
+            'Lewati & Lanjut': 'スキップして次へ',
+            'Simpan (+15 WIS)': '保存 (+15 WIS)',
+            'PENGATURAN FONT': 'フォント設定',
+            '✕ Tutup': '✕ 閉じる',
+            'Ukuran Teks Aplikasi': 'アプリ文字サイズ',
+            'Kecil (85%)': '小 (85%)',
+            'Normal (100%)': '標準 (100%)',
+            'Besar (115%)': '大 (115%)',
+            'Gaya Huruf Judul (RPG Style)': '見出しフォントスタイル',
+            'Tegas': 'ボールド',
+            '🌐 Bahasa Antarmuka (Language)': '🌐 表示言語 (Language)',
+            'Aktif': '装備中',
+            'Pakai': '装備する',
+            'Terkunci': '未開放'
+        }
+    };
+
+    const HTML_BLOCK_RULES = {
+        en: [
+            {
+                match: 'Evaluasi misi pada tanggal terpilih lalu lanjut ke hari berikutnya.',
+                html: 'Evaluate quests on the selected date and advance to the next day. Safe target is at least <span id="eval-threshold-label" style="color: #67e8f9; font-weight: 700;">80% Daily Quests</span> completed. If below target, HP decreases &amp; Streak resets (unless protected by a Shield)!'
+            },
+            {
+                match: 'Masuki gerbang fokus. Layar otomatis tetap menyala',
+                html: 'Enter the focus gate. Screen automatically stays awake &amp; do not surrender before time runs out to claim <span style="color: #67e8f9;">+INT</span>, <span style="color: #67e8f9;">XP</span>, and <span style="color: #fcd34d;">Gold</span>!'
+            },
+            {
+                match: 'Pilih file',
+                subMatch: 'dari HP untuk membaca sambil timer fokus berjalan',
+                html: 'Select a <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> file from your phone to read while the focus timer runs. The last page is saved automatically when you tap <span style="color: #fcd34d; font-weight: 700;">🔖 Bookmark Page</span>.'
+            },
+            {
+                match: 'Common (50%):',
+                subMatch: 'Legendary (5%):',
+                html: '<span style="color: #94a3b8; font-weight: 700;">Common (50%):</span> +35 XP / +20% HP • <span style="color: #38bdf8; font-weight: 700;">Rare (30%):</span> +80 XP / +120 G • <span style="color: #c084fc; font-weight: 700;">Epic (15%):</span> +1 Streak Shield • <span style="color: #fbbf24; font-weight: 700;">Legendary (5%):</span> Jackpot 300 G + Full HP!'
+            },
+            {
+                match: 'Isi refleksi singkat sebelum menutup hari',
+                html: 'Write a short reflection before closing the day to earn a bonus <span style="color: #c084fc; font-weight: 700;">+15 WIS XP</span> (optional):'
+            },
+            {
+                match: 'Naikkan Level Hunter untuk membuka tingkatan Rank baru',
+                html: 'Increase your Hunter Level to unlock new Rank tiers and automatically gain <span style="color: #fcd34d; font-weight: 600;">Passive Multiplier Bonuses</span>:'
+            }
+        ],
+        ja: [
+            {
+                match: 'Evaluasi misi pada tanggal terpilih lalu lanjut ke hari berikutnya.',
+                html: '選択した日付のクエストを評価し、次の日へ進みます。安全ラインは <span id="eval-threshold-label" style="color: #67e8f9; font-weight: 700;">デイリークエスト 80%</span> 以上の完了です。目標未満の場合、シールドがない限りHPが減少しストリークがリセットされます！'
+            },
+            {
+                match: 'Masuki gerbang fokus. Layar otomatis tetap menyala',
+                html: '集中のゲートへ入ろう。画面は自動的に点灯し続けます。時間切れ前に諦めずにクリアして <span style="color: #67e8f9;">+INT</span>、<span style="color: #67e8f9;">XP</span>、<span style="color: #fcd34d;">ゴールド</span> を獲得しよう！'
+            },
+            {
+                match: 'Pilih file',
+                subMatch: 'dari HP untuk membaca sambil timer fokus berjalan',
+                html: '端末から <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> ファイルを選択して集中タイマー中に閲覧できます。<span style="color: #fcd34d; font-weight: 700;">🔖 このページを保存</span> を押すと最後のページが自動保存されます。'
+            },
+            {
+                match: 'Common (50%):',
+                subMatch: 'Legendary (5%):',
+                html: '<span style="color: #94a3b8; font-weight: 700;">コモン (50%):</span> +35 XP / +20% HP • <span style="color: #38bdf8; font-weight: 700;">レア (30%):</span> +80 XP / +120 G • <span style="color: #c084fc; font-weight: 700;">エピック (15%):</span> +1 シールド • <span style="color: #fbbf24; font-weight: 700;">レジェンド (5%):</span> 大当たり 300 G + HP全快！'
+            },
+            {
+                match: 'Isi refleksi singkat sebelum menutup hari',
+                html: '1日を締めくくる前に短い振り返りを記入すると、ボーナス <span style="color: #c084fc; font-weight: 700;">+15 WIS XP</span> を獲得できます（任意）：'
+            },
+            {
+                match: 'Naikkan Level Hunter untuk membuka tingkatan Rank baru',
+                html: 'ハンターレベルを上げて新しいランクを開放し、<span style="color: #fcd34d; font-weight: 600;">パッシブ倍率ボーナス</span> を自動獲得しよう：'
+            }
+        ]
+    };
+
+    const PATTERN_RULES = {
+        en: [
+            { regex: /Distribusi Level Atribut \(All-Time\)/gi, replace: 'Attribute Level Distribution (All-Time)' },
+            { regex: /Distribusi Level Atribut/gi, replace: 'Attribute Level Distribution' },
+            { regex: /Distribusi Atribut Hunter/gi, replace: 'Hunter Attribute Distribution' },
+            { regex: /Evaluasi\s*(&|dan)\s*Lanjut Hari/gi, replace: 'Evaluate $1 Advance Day' },
+            { regex: /Matikan Notifikasi/gi, replace: 'Disable Notifications' },
+            { regex: /Aktifkan Notifikasi/gi, replace: 'Enable Notifications' },
+            { regex: /Mystery System Chest/gi, replace: 'Mystery System Chest' },
+            { regex: /Dashboard Arus Kas/gi, replace: 'Cashflow Dashboard' },
+            { regex: /Kategori Pengeluaran/gi, replace: 'Expense Category' },
+            { regex: /Kategori Pemasukan/gi, replace: 'Income Category' },
+            { regex: /Selisih Bersih/gi, replace: 'Net Difference' },
+            { regex: /Rasio Masuk:/gi, replace: 'Income Ratio:' },
+            { regex: /Keluar:/gi, replace: 'Expense:' },
+            { regex: /Bonus RPG:\s*(\d+\/\d+)\s*Hari Ini/gi, replace: 'RPG Bonus: $1 Today' },
+            { regex: /(\d+)\s*Level lagi menuju/gi, replace: '$1 Levels left until' },
+            { regex: /Daily Habit \(Target Streak\s*([≥>=]+)\s*(\d+%)\)/gi, replace: 'Daily Habit (Streak Target $1 $2)' },
+            { regex: /Riwayat\s*\((\d+)\)/gi, replace: 'History ($1)' },
+            { regex: /(\d+)x\s*Klaim/gi, replace: '$1x Claimed' },
+            { regex: /(\d+)\s*Selesai/gi, replace: '$1 Completed' },
+            { regex: /(\d+)\s*Hari/gi, replace: '$1 Days' },
+            { regex: /(\d+(?:\.\d+)?)\s*Jam/gi, replace: '$1 Hours' },
+            { regex: /Rate Minggu Ini/gi, replace: 'This Week Rate' },
+            { regex: /Pasif:\s*\+(\d+)\s*Max HP\s*\(Fisik & Vitality\)/gi, replace: 'Passive: +$1 Max HP (Physical & Vitality)' },
+            { regex: /Pasif:\s*\+(\d+(?:\.\d+)?%)\s*XP\s*\(Belajar & Fokus\)/gi, replace: 'Passive: +$1 XP (Study & Focus)' },
+            { regex: /Pasif:\s*-(\d+(?:\.\d+)?%)\s*Damage Penalti\s*\(Mindfulness\)/gi, replace: 'Passive: -$1 Penalty Damage (Mindfulness)' },
+            { regex: /Pasif:\s*Diskon Shop\s*(\d+%)\s*\(Relasi & Sosial\)/gi, replace: 'Passive: $1 Shop Discount (Relations & Social)' },
+            { regex: /Ganti Title\s*\((\d+\/\d+)\)/gi, replace: 'Switch Title ($1)' },
+            { regex: /📊 Progres:/gi, replace: '📊 Progress:' },
+            { regex: /Semua/g, replace: 'All' },
+            { regex: /Pemasukan/g, replace: 'Income' },
+            { regex: /Pengeluaran/g, replace: 'Expense' },
+            { regex: /Nominal/g, replace: 'Amount' }
+        ],
+        ja: [
+            { regex: /Distribusi Level Atribut \(All-Time\)/gi, replace: '能力値レベル分布 (全期間)' },
+            { regex: /Distribusi Level Atribut/gi, replace: '能力値レベル分布' },
+            { regex: /Distribusi Atribut Hunter/gi, replace: 'ハンター能力値分布' },
+            { regex: /Evaluasi\s*(&|dan)\s*Lanjut Hari/gi, replace: '評価して次の日へ' },
+            { regex: /Matikan Notifikasi/gi, replace: '通知をオフにする' },
+            { regex: /Aktifkan Notifikasi/gi, replace: '通知を有効化' },
+            { regex: /Mystery System Chest/gi, replace: 'ミステリー・システムチェスト' },
+            { regex: /Dashboard Arus Kas/gi, replace: 'キャッシュフローダッシュボード' },
+            { regex: /Kategori Pengeluaran/gi, replace: '支出カテゴリー' },
+            { regex: /Kategori Pemasukan/gi, replace: '収入カテゴリー' },
+            { regex: /Selisih Bersih/gi, replace: '純収支差額' },
+            { regex: /Rasio Masuk:/gi, replace: '収入比率:' },
+            { regex: /Keluar:/gi, replace: '支出:' },
+            { regex: /Bonus RPG:\s*(\d+\/\d+)\s*Hari Ini/gi, replace: 'RPGボーナス: 本日 $1' },
+            { regex: /(\d+)\s*Level lagi menuju/gi, replace: '次のランクまであと $1 レベル' },
+            { regex: /Daily Habit \(Target Streak\s*([≥>=]+)\s*(\d+%)\)/gi, replace: 'デイリー習慣 (ストリーク目標 $1 $2)' },
+            { regex: /Riwayat\s*\((\d+)\)/gi, replace: '履歴 ($1)' },
+            { regex: /(\d+)x\s*Klaim/gi, replace: '$1回 交換済み' },
+            { regex: /(\d+)\s*Selesai/gi, replace: '$1件 完了' },
+            { regex: /(\d+)\s*Hari/gi, replace: '$1日' },
+            { regex: /(\d+(?:\.\d+)?)\s*Jam/gi, replace: '$1時間' },
+            { regex: /Rate Minggu Ini/gi, replace: '今週の達成率' },
+            { regex: /Pasif:\s*\+(\d+)\s*Max HP\s*\(Fisik & Vitality\)/gi, replace: 'パッシブ: 最大HP +$1 (体力・生命力)' },
+            { regex: /Pasif:\s*\+(\d+(?:\.\d+)?%)\s*XP\s*\(Belajar & Fokus\)/gi, replace: 'パッシブ: 獲得XP +$1 (学習・集中)' },
+            { regex: /Pasif:\s*-(\d+(?:\.\d+)?%)\s*Damage Penalti\s*\(Mindfulness\)/gi, replace: 'パッシブ: ペナルティ軽減 -$1 (精神・規律)' },
+            { regex: /Pasif:\s*Diskon Shop\s*(\d+%)\s*\(Relasi & Sosial\)/gi, replace: 'パッシブ: ショップ割引 $1 (社交・魅力)' },
+            { regex: /Ganti Title\s*\((\d+\/\d+)\)/gi, replace: '称号変更 ($1)' },
+            { regex: /📊 Progres:/gi, replace: '📊 進捗:' },
+            { regex: /Semua/g, replace: 'すべて' },
+            { regex: /Pemasukan/g, replace: '収入' },
+            { regex: /Pengeluaran/g, replace: '支出' },
+            { regex: /Nominal/g, replace: '金額' }
+        ]
+    };
+
+    const REVERSE_MAP = {};
+    Object.entries(DICTIONARY).forEach(([lang, entries]) => {
+        Object.entries(entries).forEach(([idText, translatedText]) => {
+            REVERSE_MAP[translatedText] = idText;
+            REVERSE_MAP[idText] = idText;
         });
     });
 
-    const navMap = {
-        'nav-status': t.navStatus,
-        'nav-quests': t.navQuests,
-        'nav-dungeon': t.navDungeon,
-        'nav-shop': t.navShop,
-        'nav-treasury': t.navTreasury
+    const SORTED_DICT_KEYS = {
+        en: Object.keys(DICTIONARY.en).sort((a, b) => b.length - a.length),
+        ja: Object.keys(DICTIONARY.ja).sort((a, b) => b.length - a.length)
     };
-    Object.entries(navMap).forEach(([id, label]) => {
-        const span = document.querySelector(`#${id} span.font-display`);
-        if (span) span.textContent = label;
+
+    const ORIGINAL_TEXT_MAP = new WeakMap();
+
+    function getCurrentLang() {
+        const stored = localStorage.getItem(LANG_KEY_PRIMARY) || localStorage.getItem(LANG_KEY_LEGACY) || (typeof gameState !== 'undefined' && gameState.language) || 'id';
+        return ['id', 'en', 'ja'].includes(stored) ? stored : 'id';
+    }
+
+    function translateString(rawText, targetLang) {
+        if (!rawText || typeof rawText !== 'string') return rawText;
+        const trimmed = rawText.trim();
+        if (!trimmed) return rawText;
+
+        const baseIdKey = REVERSE_MAP[trimmed];
+        if (baseIdKey) {
+            const translated = targetLang === 'id'
+                ? baseIdKey
+                : (DICTIONARY[targetLang] && DICTIONARY[targetLang][baseIdKey]) || baseIdKey;
+            return rawText.replace(trimmed, translated);
+        }
+
+        if (targetLang === 'id') return rawText;
+
+        let result = rawText;
+        const rules = PATTERN_RULES[targetLang] || [];
+        for (const rule of rules) {
+            if (rule.regex.test(result)) {
+                rule.regex.lastIndex = 0;
+                result = result.replace(rule.regex, rule.replace);
+            }
+        }
+
+        if (DICTIONARY[targetLang] && SORTED_DICT_KEYS[targetLang]) {
+            for (const idPhrase of SORTED_DICT_KEYS[targetLang]) {
+                if (idPhrase.length >= 4 && result.includes(idPhrase)) {
+                    result = result.split(idPhrase).join(DICTIONARY[targetLang][idPhrase]);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    function translateMixedHtmlBlocks(rootElement, targetLang) {
+        if (!rootElement || !rootElement.querySelectorAll) return;
+        const blocks = rootElement.querySelectorAll('p, div');
+        blocks.forEach((el) => {
+            if (el.children.length === 0) return;
+            if (!el.dataset.origInnerHtml) {
+                const text = el.textContent || '';
+                const isMatch = (HTML_BLOCK_RULES.en || []).some(
+                    (r) => text.includes(r.match) && (!r.subMatch || text.includes(r.subMatch))
+                );
+                if (isMatch) {
+                    el.dataset.origInnerHtml = el.innerHTML;
+                }
+            }
+            if (el.dataset.origInnerHtml) {
+                if (targetLang === 'id') {
+                    if (el.innerHTML !== el.dataset.origInnerHtml) {
+                        el.innerHTML = el.dataset.origInnerHtml;
+                    }
+                } else {
+                    const rules = HTML_BLOCK_RULES[targetLang] || [];
+                    const found = rules.find(
+                        (r) => el.dataset.origInnerHtml.includes(r.match) && (!r.subMatch || el.dataset.origInnerHtml.includes(r.subMatch))
+                    );
+                    if (found && el.innerHTML !== found.html) {
+                        el.innerHTML = found.html;
+                    }
+                }
+            }
+        });
+    }
+
+    function translateNode(node, targetLang) {
+        if (!node) return;
+
+        if (node.nodeType === Node.TEXT_NODE) {
+            if (!ORIGINAL_TEXT_MAP.has(node)) {
+                ORIGINAL_TEXT_MAP.set(node, node.nodeValue);
+            }
+            const sourceText = ORIGINAL_TEXT_MAP.get(node);
+            const nextVal = targetLang === 'id' ? sourceText : translateString(sourceText, targetLang);
+            if (node.nodeValue !== nextVal) {
+                node.nodeValue = nextVal;
+            }
+            return;
+        }
+
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            if (['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(node.tagName)) return;
+
+            if (['TEXTAREA', 'INPUT'].includes(node.tagName)) {
+                if (node.hasAttribute('placeholder')) {
+                    if (!node.dataset.origPlaceholder) {
+                        node.dataset.origPlaceholder = node.getAttribute('placeholder');
+                    }
+                    const origPh = node.dataset.origPlaceholder;
+                    const nextPh = targetLang === 'id' ? origPh : translateString(origPh, targetLang);
+                    if (node.getAttribute('placeholder') !== nextPh) {
+                        node.setAttribute('placeholder', nextPh);
+                    }
+                }
+                return;
+            }
+
+            if (node.hasAttribute('title')) {
+                if (!node.dataset.origTitle) {
+                    node.dataset.origTitle = node.getAttribute('title');
+                }
+                const origTi = node.dataset.origTitle;
+                const nextTi = targetLang === 'id' ? origTi : translateString(origTi, targetLang);
+                if (node.getAttribute('title') !== nextTi) {
+                    node.setAttribute('title', nextTi);
+                }
+            }
+
+            node.childNodes.forEach((child) => translateNode(child, targetLang));
+        }
+    }
+
+    function updateLangButtonsHighlight(lang) {
+        const btnInactive = 'padding: 0.55rem 0.25rem; border-radius: 0.5rem; border: 1px solid #334155; background: #020617; font-size: 11px; font-weight: 700; color: #cbd5e1;';
+        const btnActive = 'padding: 0.55rem 0.25rem; border-radius: 0.5rem; border: 1px solid #06b6d4; background: #083344; font-size: 11px; font-weight: 700; color: #67e8f9;';
+        document.querySelectorAll('.app-lang-btn').forEach(b => b.style.cssText = btnInactive);
+        const activeLangBtn = document.getElementById(`lang-btn-${lang}`);
+        if (activeLangBtn) activeLangBtn.style.cssText = btnActive;
+    }
+
+    let isApplying = false;
+
+    function applyAppLanguage(forcedLang) {
+        if (isApplying) return;
+        const lang = ['id', 'en', 'ja'].includes(forcedLang) ? forcedLang : getCurrentLang();
+        isApplying = true;
+        try {
+            localStorage.setItem(LANG_KEY_PRIMARY, lang);
+            localStorage.setItem(LANG_KEY_LEGACY, lang);
+            document.documentElement.lang = lang;
+            updateLangButtonsHighlight(lang);
+
+            if (document.body) {
+                translateMixedHtmlBlocks(document.body, lang);
+                translateNode(document.body, lang);
+            }
+        } finally {
+            isApplying = false;
+        }
+    }
+
+    function setAppLanguage(lang) {
+        const validLang = ['id', 'en', 'ja'].includes(lang) ? lang : 'id';
+        localStorage.setItem(LANG_KEY_PRIMARY, validLang);
+        localStorage.setItem(LANG_KEY_LEGACY, validLang);
+        if (typeof gameState !== 'undefined') {
+            gameState.language = validLang;
+            if (typeof saveState === 'function') saveState();
+        }
+        applyAppLanguage(validLang);
+        if (typeof renderAll === 'function') renderAll();
+        applyAppLanguage(validLang);
+
+        if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+        if (typeof spawnFloatingReward === 'function') {
+            const names = { id: 'Bahasa Indonesia', en: 'English', ja: '日本語 (Japanese)' };
+            spawnFloatingReward(`🌐 ${names[validLang] || validLang}`);
+        }
+        window.dispatchEvent(new CustomEvent('system-language-changed', { detail: { lang: validLang } }));
+    }
+
+    window.applyAppLanguage = applyAppLanguage;
+    window.setAppLanguage = setAppLanguage;
+    window.setSystemLanguage = setAppLanguage;
+    window.t = function (key) {
+        return translateString(key, getCurrentLang());
+    };
+
+    // Hook renderAll so dynamic re-renders always preserve the active language
+    if (typeof window.renderAll === 'function') {
+        const _origRenderAll = window.renderAll;
+        window.renderAll = function () {
+            _origRenderAll.apply(this, arguments);
+            applyAppLanguage(getCurrentLang());
+        };
+    }
+
+    // MutationObserver for dynamic modals, floating alerts, and async UI updates
+    const observer = new MutationObserver((mutations) => {
+        if (isApplying) return;
+        const lang = getCurrentLang();
+        isApplying = true;
+        try {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'childList') {
+                    mutation.addedNodes.forEach((added) => {
+                        if (added.nodeType === Node.ELEMENT_NODE) {
+                            translateMixedHtmlBlocks(added, lang);
+                        }
+                        if (lang !== 'id') translateNode(added, lang);
+                    });
+                } else if (mutation.type === 'characterData') {
+                    const target = mutation.target;
+                    const currentVal = target.nodeValue;
+                    const expectedTranslated = translateString(currentVal, lang);
+                    if (currentVal !== expectedTranslated) {
+                        ORIGINAL_TEXT_MAP.set(target, currentVal);
+                        if (lang !== 'id') {
+                            target.nodeValue = expectedTranslated;
+                        }
+                    }
+                }
+            });
+        } finally {
+            isApplying = false;
+        }
     });
 
-    const qH2 = document.querySelector('#tab-quests h2');
-    const qSub = document.querySelector('#tab-quests p');
-    if (qH2) qH2.textContent = t.questBoardTitle;
-    if (qSub) qSub.textContent = t.questBoardSub;
-
-    const sH2 = document.querySelector('#tab-shop h2');
-    const sSub = document.querySelector('#tab-shop p');
-    if (sH2) sH2.textContent = t.shopTitle;
-    if (sSub) sSub.textContent = t.shopSub;
-
-    const trH2 = document.querySelector('#tab-treasury h2');
-    if (trH2) trH2.textContent = t.treasuryTitle;
-
-    const dH2 = document.querySelector('#tab-dungeon h2');
-    if (dH2) dH2.textContent = t.dungeonTitle;
-
-    const btnStartD = document.getElementById('btn-start-dungeon');
-    const btnAbortD = document.getElementById('btn-abort-dungeon');
-    if (btnStartD) btnStartD.textContent = t.btnStartDungeon;
-    if (btnAbortD) btnAbortD.textContent = t.btnAbortDungeon;
-
-    const statusH3s = document.querySelectorAll('#tab-status h3');
-    if (statusH3s[0] && statusH3s[0].lastChild) statusH3s[0].lastChild.textContent = ' ' + t.statAttrTitle;
-    if (statusH3s[1] && statusH3s[1].lastChild) statusH3s[1].lastChild.textContent = ' ' + t.habitTrackerTitle;
-    if (statusH3s[2] && statusH3s[2].lastChild) statusH3s[2].lastChild.textContent = ' ' + t.sysControlTitle;
-    if (statusH3s[3] && statusH3s[3].lastChild) statusH3s[3].lastChild.textContent = ' ' + t.notifTitle;
-
-    const shopH3s = document.querySelectorAll('#tab-shop h3');
-    if (shopH3s[1] && shopH3s[1].lastChild) shopH3s[1].lastChild.textContent = ' ' + t.redeemHistoryTitle;
-}
-
-function setAppLanguage(lang) {
-    localStorage.setItem('sysrpg_lang', lang);
-    if (typeof gameState !== 'undefined') {
-        gameState.language = lang;
-        if (typeof saveState === 'function') saveState();
+    function initI18nObserver() {
+        applyAppLanguage(getCurrentLang());
+        if (document.body) {
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                characterData: true
+            });
+        }
     }
-    applyAppLanguage();
-    if (typeof renderQuests === 'function') renderQuests();
-    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
-    if (typeof spawnFloatingReward === 'function') {
-        const names = { id: 'Bahasa Indonesia', en: 'English', ja: '日本語 (Japanese)' };
-        spawnFloatingReward(`🌐 ${names[lang] || lang}`);
-    }
-}
 
-applyAppLanguage();
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initI18nObserver);
+    } else {
+        initI18nObserver();
+    }
+})();
 
 // ==========================================
 // INITIAL BOOT (ALL MODULES READY)
 // ==========================================
-// Initial Boot
 checkRealDayRollover();
 initTreasuryDefaults();
 currentOracleIndex = pickContextualOracleIndex();
 if (typeof applySavedFontSettings === 'function') applySavedFontSettings();
 renderAll();
+if (typeof applyAppLanguage === 'function') applyAppLanguage();
 syncSystemReminders();
 setInterval(checkScheduledReminderTick, 20000);
