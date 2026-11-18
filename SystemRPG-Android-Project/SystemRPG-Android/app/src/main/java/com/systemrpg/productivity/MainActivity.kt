@@ -121,8 +121,9 @@ class MainActivity : ComponentActivity() {
                 val doneCount = obj.optInt("doneCount", 0)
                 val totalCount = obj.optInt("totalCount", 0)
                 val pct = obj.optInt("pct", 0)
-                val thresholdPct = obj.optInt("thresholdPct", 70)
+               val thresholdPct = obj.optInt("thresholdPct", 70)
                 val playerName = obj.optString("playerName", "Hunter")
+                val language = obj.optString("language", "id")
                 
                 // Ambil streak yang dikirimkan dari JavaScript (jika tidak ada, fallback ke SharedPreferences)
                 val widgetPrefs = getSharedPreferences("SystemRpgWidgetPrefs", Context.MODE_PRIVATE)
@@ -140,6 +141,7 @@ class MainActivity : ComponentActivity() {
                     .putInt("dailyPct", pct)
                     .putInt("thresholdPct", thresholdPct)
                     .putString("playerName", playerName)
+                    .putString("language", language)
 
                 if (timesObj != null) {
                     editor.putString("timesJson", timesObj.toString())
