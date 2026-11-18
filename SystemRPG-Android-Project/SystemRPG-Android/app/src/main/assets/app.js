@@ -5002,7 +5002,7 @@ function completeFingerprintUnlock() {
             if (splash) splash.classList.add('fade-out');
             setTimeout(() => {
                 if (splash) splash.style.display = 'none';
-                if (!localStorage.getItem('sysrpg_tutorial_seen')) {
+                if (!localStorage.getItem(TUTORIAL_STORAGE_KEY)) {
                     openTutorialModal(0);
                 }
             }, 680);
@@ -6115,11 +6115,24 @@ function renderTutorialStep() {
     nextBtn.textContent = currentTutorialStep === total - 1 ? ui.finish : ui.next;
 }
 
-window.openTutorialModal = function (startIndex = 0) {
+window.openTutorialModal = function (startIndex = 0, e) {
+    if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+    if (startIndex && typeof startIndex === 'object') {
+        if (typeof startIndex.stopPropagation === 'function') startIndex.stopPropagation();
+        startIndex = 0;
+    }
     // Tutup modal pengaturan/lainnya terlebih dahulu
     document.querySelectorAll('.fixed.inset-0').forEach(el => {
         if (el.id !== 'system-splash-screen') el.classList.add('hidden');
     });
+    document.querySelectorAll('#tutorial-modal').forEach(el => el.remove());
+    if (typeof createTutorialModalElement === 'function') {
+        createTutorialModalElement();
+        currentTutorialStep = Math.max(0, Math.min(Number(startIndex) || 0, getTutorialStepsData().length - 1));
+        renderTutorialStep();
+        if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+    }
+    return;
 
     const dialog = createTutorialDialog();
     currentTutorialStep = Math.max(0, Math.min(startIndex, getTutorialStepsData().length - 1));
