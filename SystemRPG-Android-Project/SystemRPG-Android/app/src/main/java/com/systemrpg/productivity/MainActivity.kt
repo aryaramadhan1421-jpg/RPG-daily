@@ -203,12 +203,39 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-       @JavascriptInterface
+      @JavascriptInterface
         fun setAppLanguage(lang: String) {
             getSharedPreferences("SystemRpgReminderPrefs", Context.MODE_PRIVATE).edit()
                 .putString("language", lang)
                 .apply()
             refreshAllAppWidgets(this@MainActivity)
+        }
+
+        @JavascriptInterface
+        fun saveAutoBackup(jsonStr: String) {
+            if (jsonStr.isBlank()) return
+            try {
+                getSharedPreferences("SystemRpgAutoBackupPrefs", Context.MODE_PRIVATE).edit()
+                    .putString("backupJson", jsonStr)
+                    .putLong("updatedAt", System.currentTimeMillis())
+                    .apply()
+                java.io.File(filesDir, "system_rpg_autobackup.json").writeText(jsonStr)
+            } catch (_: Exception) {}
+        }
+
+        @JavascriptInterface
+        fun loadAutoBackup(): String {
+            return try {
+                val file = java.io.File(filesDir, "system_rpg_autobackup.json")
+                if (file.exists()) {
+                    val content = file.readText()
+                    if (content.isNotBlank()) return content
+                }
+                getSharedPreferences("SystemRpgAutoBackupPrefs", Context.MODE_PRIVATE)
+                    .getString("backupJson", "") ?: ""
+            } catch (_: Exception) {
+                ""
+            }
         }
 
         @JavascriptInterface
