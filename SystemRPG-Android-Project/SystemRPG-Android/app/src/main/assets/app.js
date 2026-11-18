@@ -5979,7 +5979,7 @@ const TUTORIAL_STEPS = [
 
 let currentTutorialStep = 0;
 
-function openTutorialModal(startIndex = 0) {
+window.openTutorialModal = function(startIndex = 0) {
     const modal = document.getElementById('tutorial-modal');
     if (!modal) return;
     currentTutorialStep = startIndex;
