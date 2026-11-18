@@ -5965,18 +5965,17 @@ const TUTORIAL_STEPS_DICT = {
     ]
 };
 
+let currentTutorialStep = 0;
+
 function getTutorialStepsData() {
     const lang = (typeof gameState !== 'undefined' && gameState.language) || localStorage.getItem('sysrpg_lang') || 'id';
     return TUTORIAL_STEPS_DICT[lang] || TUTORIAL_STEPS_DICT.id;
 }
-];
-
-let currentTutorialStep = 0;
 
 function ensureTutorialModalExists() {
     let existing = document.getElementById('tutorial-modal');
     if (existing) {
-        existing.remove(); // Hapus yang lama kalau posisinya nyasar di bawah
+        existing.remove();
     }
 
     const wrapper = document.createElement('div');
@@ -6041,13 +6040,13 @@ window.closeTutorialModal = function(markSeen = true) {
         localStorage.setItem('sysrpg_tutorial_seen', '1');
     }
     if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
-}
+};
 
 function renderTutorialStep() {
     const stepsList = getTutorialStepsData();
     const step = stepsList[currentTutorialStep];
     if (!step) return;
-    
+
     const total = stepsList.length;
     const titleEl = document.getElementById('tut-step-title');
     const counterEl = document.getElementById('tut-step-counter');
@@ -6065,7 +6064,7 @@ function renderTutorialStep() {
     if (tipEl) tipEl.textContent = `💡 ${step.tip}`;
 
     if (dotsEl) {
-        dotsEl.innerHTML = TUTORIAL_STEPS.map((_, idx) => {
+        dotsEl.innerHTML = stepsList.map((_, idx) => {
             const active = idx === currentTutorialStep;
             return `<span style="width:${active ? '18px' : '6px'};height:6px;border-radius:999px;background:${active ? '#22d3ee' : '#334155'};transition:all 0.2s;"></span>`;
         }).join('');
@@ -6100,10 +6099,6 @@ function prevTutorialStep() {
 
 // ==========================================
 // 17. INITIAL SYSTEM BOOT
-// ==========================================
-
-// ==========================================
-// INITIAL BOOT (ALL MODULES READY)
 // ==========================================
 checkRealDayRollover();
 initTreasuryDefaults();
