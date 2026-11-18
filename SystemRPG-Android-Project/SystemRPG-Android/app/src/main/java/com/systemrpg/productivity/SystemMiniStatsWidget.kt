@@ -8,6 +8,9 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.widget.RemoteViews
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class SystemMiniStatsWidget : AppWidgetProvider() {
 
@@ -38,12 +41,21 @@ class SystemMiniStatsWidget : AppWidgetProvider() {
             appWidgetId: Int
         ) {
             val prefs = context.getSharedPreferences("SystemRpgWidgetPrefs", Context.MODE_PRIVATE)
+            val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+            val lastUpdated = prefs.getString("lastUpdatedDate", "") ?: ""
+
             val streak = prefs.getInt("streak", 0)
             val rank = prefs.getString("rank", "E-RANK") ?: "E-RANK"
             val level = prefs.getInt("level", 1)
             val hp = prefs.getInt("hp", 100)
             val maxHp = prefs.getInt("maxHp", 100).coerceAtLeast(1)
-            val dailyPct = prefs.getInt("dailyPct", 0).coerceIn(0, 100)
+
+            // Pastikan persentase yang tampil memang data hari ini
+            val dailyPct = if (lastUpdated == todayStr) {
+                prefs.getInt("dailyPct", 0).coerceIn(0, 100)
+            } else {
+                0
+            }
 
             val views = RemoteViews(context.packageName, R.layout.system_mini_stats_widget)
 
