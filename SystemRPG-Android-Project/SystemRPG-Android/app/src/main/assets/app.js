@@ -5045,6 +5045,8 @@ function triggerFingerprintScan() {
             'Harga (Gold)': 'Price (Gold)',
             'Efek Item': 'Item Effect',
             'SIMPAN KE SHOP': 'SAVE TO SHOP',
+            'ARMORY / TEMPORARY RELICS': 'ARMORY / TEMPORARY RELICS',
+            'Slot Kosong': 'Empty Slot',
             '🎁 Potion & Real-World Rewards': '🎁 Potions & Real-World Rewards',
             'Konsumsi & Hadiah Nyata': 'Consumables & Real Rewards',
             'Relic bersifat sementara (aktif 24 jam sejak dibeli) • Maks 3 slot aktif': 'Relics are temporary (active 24h upon purchase) • Max 3 active slots',
@@ -5078,6 +5080,10 @@ function triggerFingerprintScan() {
             'Jenis Arus Kas': 'Cashflow Type',
             '📤 Pengeluaran (-)': '📤 Expense (-)',
             '📥 Pemasukan (+)': '📥 Income (+)',
+            '💼 Gaji / Honor': '💼 Salary / Wages',
+            '🎁 Bonus / Hadiah': '🎁 Bonus / Gift',
+            '📈 Usaha / Freelance': '📈 Business / Freelance',
+            '💰 Pemasukan Lain': '💰 Other Income',
             'Tanggal': 'Date',
             'Nominal (Rp)': 'Amount (Rp)',
             'Catatan / Keterangan': 'Notes / Description',
@@ -5236,11 +5242,17 @@ function triggerFingerprintScan() {
             'Harga (Gold)': '価格 (ゴールド)',
             'Efek Item': 'アイテム効果',
             'SIMPAN KE SHOP': 'ショップに保存',
+            'ARMORY / TEMPORARY RELICS': 'アーモリー / 一時レリック',
+            'Slot Kosong': '空きスロット',
             '🎁 Potion & Real-World Rewards': '🎁 ポーション＆現実の報酬',
             'Konsumsi & Hadiah Nyata': '消費アイテム＆現実のご褒美',
             'Relic bersifat sementara (aktif 24 jam sejak dibeli) • Maks 3 slot aktif': 'レリックは一時効果（購入から24時間有効）• 最大3スロット装備可能',
             'Belum ada Relic terpasang. Pasang Relic di bawah untuk mengaktifkan efek pasif!': 'レリック未装備。下のレリックを装備してパッシブ効果を発動しよう！',
             'Belum ada Relic aktif. Beli Relic (durasi 24 jam) di bawah untuk mengaktifkan efek sementara!': '有効なレリックはありません。下でレリック（24時間有効）を購入してバフを発動！',
+            '[24 Jam] +15% EXP & +10% INT Stat XP dari semua aktivitas': '[24時間] 全アクティビティの獲得EXP +15% & INT経験値 +10%',
+            '[24 Jam] +12% EXP & +15% INT/WIS Stat XP saat belajar & fokus': '[24時間] 学習・集中時の獲得EXP +12% & INT/WIS経験値 +15%',
+            '[24 Jam] +25% STR Stat XP & +10 Max HP Sementara': '[24時間] STR経験値 +25% & 一時的な最大HP +10',
+            '[24 Jam] +20% Gold dari semua Quest & Dungeon +15% CHR Stat XP': '[24時間] 全クエスト＆ダンジョンの獲得ゴールド +20% & CHR経験値 +15%',
             'Uji keberuntungan: XP, HP, Streak Shield, atau Jackpot Gold!': '運試し：XP、HP、ストリークシールド、またはゴールド大当たり！',
             '🎲 BUKA PETI MISTERI (100 GOLD)': '🎲 ミステリーチェストを開ける (100 GOLD)',
             'Riwayat Redeem': '交換履歴',
@@ -5258,6 +5270,10 @@ function triggerFingerprintScan() {
             'Jenis Arus Kas': '収支タイプ',
             '📤 Pengeluaran (-)': '📤 支出 (-)',
             '📥 Pemasukan (+)': '📥 収入 (+)',
+            '💼 Gaji / Honor': '💼 給与・報酬',
+            '🎁 Bonus / Hadiah': '🎁 ボーナス・賞与',
+            '📈 Usaha / Freelance': '📈 事業・フリーランス',
+            '💰 Pemasukan Lain': '💰 その他の収入',
             'Tanggal': '日付',
             'Nominal (Rp)': '金額 (Rp)',
             'Catatan / Keterangan': 'メモ・詳細',
@@ -5324,6 +5340,20 @@ function triggerFingerprintScan() {
     const HTML_BLOCK_RULES = {
         en: [
             {
+                match: 'Riwayat (',
+                getHtml: (el) => {
+                    const count = el.querySelector('#header-redeem-count')?.textContent || '0';
+                    return `History (<span id="header-redeem-count">${count}</span>)`;
+                }
+            },
+            {
+                match: '✦ Buff Sementara Aktif:',
+                getHtml: (el) => {
+                    const rest = el.innerHTML.replace(/^[\s\S]*?<\/span>/i, '');
+                    return `<span style="color: #34d399; font-weight: 700;">✦ Active Temporary Buffs:</span>${rest}`;
+                }
+            },
+            {
                 match: 'Ganti Title (',
                 getHtml: (el) => {
                     const count = el.querySelector('#unlocked-titles-count')?.textContent || '1';
@@ -5361,6 +5391,20 @@ function triggerFingerprintScan() {
             }
         ],
         ja: [
+            {
+                match: 'Riwayat (',
+                getHtml: (el) => {
+                    const count = el.querySelector('#header-redeem-count')?.textContent || '0';
+                    return `履歴 (<span id="header-redeem-count">${count}</span>)`;
+                }
+            },
+            {
+                match: '✦ Buff Sementara Aktif:',
+                getHtml: (el) => {
+                    const rest = el.innerHTML.replace(/^[\s\S]*?<\/span>/i, '');
+                    return `<span style="color: #34d399; font-weight: 700;">✦ 有効な一時バフ:</span>${rest}`;
+                }
+            },
             {
                 match: 'Ganti Title (',
                 getHtml: (el) => {
@@ -5402,6 +5446,15 @@ function triggerFingerprintScan() {
 
     const PATTERN_RULES = {
         en: [
+            { regex: /\((\d+)\s*Jam\)/gi, replace: '($1h)' },
+            { regex: /(\d+)\s*G\s*\/\s*24j/gi, replace: '$1 G / 24h' },
+            { regex: /⏳\s*Sisa\s*(\d+)j\s*(\d+)m/gi, replace: '⏳ $1h $2m left' },
+            { regex: /⏳\s*Sisa\s*(\d+)m/gi, replace: '⏳ $1m left' },
+            { regex: /Aktif\s*\((\d+)j\s*(\d+)m\)/gi, replace: 'Active ($1h $2m)' },
+            { regex: /Aktif\s*\((\d+)m\)/gi, replace: 'Active ($1m)' },
+            { regex: /Pasang\s*\((\d+)j\s*(\d+)m\)/gi, replace: 'Equip ($1h $2m)' },
+            { regex: /Pasang\s*\((\d+)m\)/gi, replace: 'Equip ($1m)' },
+            { regex: /(\d+)\s*\/\s*3\s*Slot/gi, replace: '$1 / 3 Slots' },
             { regex: /Distribusi Level Atribut \(All-Time\)/gi, replace: 'Attribute Level Distribution (All-Time)' },
             { regex: /Distribusi Level Atribut/gi, replace: 'Attribute Level Distribution' },
             { regex: /Distribusi Atribut Hunter/gi, replace: 'Hunter Attribute Distribution' },
@@ -5437,6 +5490,15 @@ function triggerFingerprintScan() {
             { regex: /\bNominal\b/g, replace: 'Amount' }
         ],
         ja: [
+            { regex: /\((\d+)\s*Jam\)/gi, replace: '($1時間)' },
+            { regex: /(\d+)\s*G\s*\/\s*24j/gi, replace: '$1 G / 24時間' },
+            { regex: /⏳\s*Sisa\s*(\d+)j\s*(\d+)m/gi, replace: '⏳ 残り $1時間$2分' },
+            { regex: /⏳\s*Sisa\s*(\d+)m/gi, replace: '⏳ 残り $1分' },
+            { regex: /Aktif\s*\((\d+)j\s*(\d+)m\)/gi, replace: '装備中 ($1時間$2分)' },
+            { regex: /Aktif\s*\((\d+)m\)/gi, replace: '装備中 ($1分)' },
+            { regex: /Pasang\s*\((\d+)j\s*(\d+)m\)/gi, replace: '装備する ($1時間$2分)' },
+            { regex: /Pasang\s*\((\d+)m\)/gi, replace: '装備する ($1分)' },
+            { regex: /(\d+)\s*\/\s*3\s*Slot/gi, replace: '$1 / 3 スロット' },
             { regex: /Distribusi Level Atribut \(All-Time\)/gi, replace: '能力値レベル分布 (全期間)' },
             { regex: /Distribusi Level Atribut/gi, replace: '能力値レベル分布' },
             { regex: /Distribusi Atribut Hunter/gi, replace: 'ハンター能力値分布' },
@@ -5534,8 +5596,10 @@ function triggerFingerprintScan() {
         blocks.forEach((el) => {
             if (el.children.length === 0) return;
             if (el.querySelector('button, input, select, textarea, section, form, nav')) return;
-            if (!el.dataset.origInnerHtml) {
-                const text = el.textContent || '';
+            const text = el.textContent || '';
+            if (text.includes('Riwayat (') || text.includes('✦ Buff Sementara Aktif:')) {
+                el.dataset.origInnerHtml = el.innerHTML;
+            } else if (!el.dataset.origInnerHtml) {
                 const isMatch = (HTML_BLOCK_RULES.en || []).some(
                     (r) => text.includes(r.match) && (!r.subMatch || text.includes(r.subMatch))
                 );
