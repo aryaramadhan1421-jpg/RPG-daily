@@ -1029,23 +1029,31 @@ function checkRealDayRollover() {
         gameState.lastStreakDate = null; // Wajib reset agar streak hari baru bisa naik
 
         // Jika melewati lebih dari 1 hari penuh tanpa buka aplikasi
+        syncPlayerMaxHp();
+        const tier = evaluateDailyTier(ratio, gameState.player.maxHp);
+
+        let extraDamage = 0;
+        let shieldAlreadyHandled = false;
         if (diffDays > 1) {
             const missedFullDays = diffDays - 1;
-            const extraDamage = Math.round(gameState.player.maxHp * 0.40 * missedFullDays);
+            extraDamage = Math.round(gameState.player.maxHp * 0.40 * missedFullDays);
             if ((gameState.player.shields || 0) > 0 && gameState.player.streak > 0) {
                 gameState.player.shields -= 1;
             } else {
                 gameState.player.streak = 0;
             }
-            takeDamage(extraDamage);
+            shieldAlreadyHandled = true;
         }
 
-        syncPlayerMaxHp();
-        const tier = evaluateDailyTier(ratio, gameState.player.maxHp);
+        const totalRawDamage = extraDamage + tier.rawDamage;
 
-        if (tier.rawDamage > 0) {
+        if (totalRawDamage > 0) {
             let shieldMsg = '';
-            if (tier.resetStreak) {
+            if (diffDays > 1) {
+                shieldMsg = gameState.player.streak > 0
+                    ? ` 🛡️ Bolos ${diffDays} hari, Streak Shield aktif! Streak ${gameState.player.streak} hari tetap aman (sisa Shield: ${gameState.player.shields}).`
+                    : ` 💀 Bolos ${diffDays} hari! Penalti ekstra +40% Max HP/hari & streak di-reset ke 0.`;
+            } else if (tier.resetStreak && !shieldAlreadyHandled) {
                 if ((gameState.player.shields || 0) > 0 && gameState.player.streak > 0) {
                     gameState.player.shields -= 1;
                     shieldMsg = ` 🛡️ Streak Shield aktif! Streak ${gameState.player.streak} hari tetap aman (sisa Shield: ${gameState.player.shields}).`;
@@ -1056,13 +1064,14 @@ function checkRealDayRollover() {
             } else {
                 shieldMsg = ` Streak ${gameState.player.streak} hari tetap terjaga (≥${getStreakThresholdPct()}%), namun tidak ada regen HP.`;
             }
-            takeDamage(tier.rawDamage);
+
+            takeDamage(totalRawDamage);
             const { wisDmgReduce } = getAttributePassives();
-            const actualDmg = Math.max(1, Math.round(tier.rawDamage * (1 - wisDmgReduce)));
+            const actualDmg = Math.max(1, Math.round(totalRawDamage * (1 - wisDmgReduce)));
             setTimeout(() => {
                 showSystemModal(
                     `PERGANTIAN HARI // ${tier.rank.toUpperCase()}`,
-                    `Selamat datang kembali! Kemarin progres Daily Habit ${pct}% (${doneCount}/${totalDaily}) • Penalti ${Math.round(tier.penaltyRate * 100)}% Max HP (-${actualDmg} HP).${shieldMsg} Semua Daily Habit telah di-reset untuk hari ini!`
+                    `Selamat datang kembali! Kemarin progres Daily Habit ${pct}% (${doneCount}/${totalDaily}) • Total Penalti -${actualDmg} HP.${shieldMsg} Semua Daily Habit telah di-reset untuk hari ini!`
                 );
             }, 500);
         } else {
@@ -2809,7 +2818,7 @@ function toggleQuest(id, preserveCount = false) {
         delete q.lastReward;
 
         if (gameState.history && Array.isArray(gameState.history.logs)) {
-            const logIdx = gameState.history.logs.findIndex(l => (l.questId === q.id || l.title === q.title) && l.dateStr === todayKey);
+            const logIdx = gameState.history.logs.findIndex(l => l.questId === q.id && l.dateStr === todayKey);
             if (logIdx !== -1) {
                 gameState.history.logs.splice(logIdx, 1);
             }
@@ -4057,11 +4066,16 @@ function evaluateCalcExpression(expr) {
     sanitized = sanitized.replace(/(^|[+\-*/])0+(?=\d)/g, '$1');
     try {
         const res = Function('"use strict";return (' + sanitized + ')')();
+        if (typeof res === 'number' && !isFinite(res)) {
+            if (typeof spawnFloatingReward === 'function') {
+                spawnFloatingReward('⚠️ Error: Tidak bisa membagi dengan nol!');
+            }
+            return 0;
+        }
         return (typeof res === 'number' && isFinite(res)) ? Math.round(res) : 0;
     } catch (e) {
         return 0;
     }
-}
 
 function updateCalcDisplay() {
     const exprEl = document.getElementById('calc-expression');
@@ -4733,6 +4747,9 @@ function loadLocalLofiMp3(e) {
     if (!localAudio) return;
 
     stopAnimeLofi1Hour();
+    if (localAudio.src && localAudio.src.startsWith('blob:')) {
+        URL.revokeObjectURL(localAudio.src);
+    }
     lofiUseLocalFile = true;
     lofiRemainingSec = 3600;
     localAudio.src = URL.createObjectURL(file);
@@ -4830,9 +4847,13 @@ window.addEventListener('focus', () => {
     syncAndroidHomeWidget();
 });
 
-// Cek pergantian hari tiap 30 detik kalau aplikasi dibiarkan terbuka lewat jam 00:00
+// Cek pergantian hari & update sisa waktu Relic tiap 30 detik
 setInterval(() => {
     checkRealDayRollover();
+    const shopTab = document.getElementById('tab-shop');
+    if (shopTab && !shopTab.classList.contains('hidden') && typeof renderArmory === 'function') {
+        renderArmory();
+    }
 }, 30000);
 
 applySavedFontSettings();
@@ -5937,271 +5958,7 @@ function completeFingerprintUnlock() {
     }
 })();
 
-// ==========================================
-// 16B. HUNTER TUTORIAL / GUIDE SYSTEM (TOP-LAYER FIX)
-// ==========================================
 const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
-
-const TUTORIAL_UI_LABELS = {
-    id: {
-        guideTag: 'PANDUAN SISTEM',
-        skip: 'Lewati',
-        prev: '← Kembali',
-        next: 'Lanjut →',
-        finish: 'Mulai Petualangan ✓'
-    },
-    en: {
-        guideTag: 'SYSTEM GUIDE',
-        skip: 'Skip',
-        prev: '← Back',
-        next: 'Next →',
-        finish: 'Start Adventure ✓'
-    },
-    ja: {
-        guideTag: 'システムガイド',
-        skip: 'スキップ',
-        prev: '← 戻る',
-        next: '次へ →',
-        finish: '冒険を始める ✓'
-    }
-};
-
-const TUTORIAL_STEPS_DICT = {
-    id: [
-        { icon: '⚡', title: '1. Selamat Datang di SYSTEM RPG', desc: 'Aplikasi ini mengubah aktivitas harian, kebiasaan baik, dan target hidupmu menjadi misi layaknya game RPG.', tip: 'Setiap misi yang selesai akan memberikan EXP untuk naik Level dan Gold untuk belanja hadiah!' },
-        { icon: '📋', title: '2. Quest & Pelacakan Angka', desc: 'Buat misi harian atau target terjadwal di tab Quest. Kamu bisa memakai misi centang biasa atau pelacakan angka (misal: minum 8 gelas air / baca 20 halaman).', tip: 'Atur jadwal hari aktif (Weekday / Weekend) dan pengingat waktu agar tidak terlewat.' },
-        { icon: '⚔️', title: '3. Dungeon Fokus (Timer)', desc: 'Masuk ke tab Dungeon saat ingin belajar, bekerja, atau olahraga tanpa gangguan dalam durasi waktu tertentu.', tip: 'Menyelesaikan Dungeon tepat waktu memberikan bonus EXP besar dan meningkatkan Rank Hunter-mu!' },
-        { icon: '💰', title: '4. Treasury (Keuangan Nyata)', desc: 'Catat pemasukan dan pengeluaran uang aslimu di tab Treasury lengkap dengan kategori dan riwayat transaksi.', tip: 'Disiplin mencatat keuangan menjaga stabilitas status Hunter-mu di dunia nyata.' },
-        { icon: '🛡️', title: '5. Shop & Armory (Self-Reward)', desc: 'Gunakan Gold hasil menyelesaikan misi untuk membeli hadiah hiburan (Shop) atau item/relic penyemangat (Armory).', tip: 'Beri dirimu hadiah tanpa rasa bersalah karena sudah dibayar dengan kerja kerasmu!' },
-        { icon: '⚙️', title: '6. Pengaturan, Bahasa & Backup', desc: 'Buka ikon Pengaturan (⚙️) di pojok atas untuk mengganti bahasa (ID / EN / JA), mengatur suara, ekspor data cadangan, atau membuka panduan ini lagi.', tip: 'Sistem siap digunakan. Selamat berjuang meningkatkan levelmu, Hunter!' }
-    ],
-    en: [
-        { icon: '⚡', title: '1. Welcome to SYSTEM RPG', desc: 'This app turns your daily activities, good habits, and life goals into missions just like an RPG game.', tip: 'Every completed quest gives you EXP to Level Up and Gold to buy rewards!' },
-        { icon: '📋', title: '2. Quests & Numeric Tracking', desc: 'Create daily quests or scheduled targets in the Quest tab. You can use standard checkboxes or numeric tracking (e.g., drink 8 cups of water / read 20 pages).', tip: 'Set active day schedules and reminders so you never miss a task.' },
-        { icon: '⚔️', title: '3. Focus Dungeons (Timer)', desc: 'Enter the Dungeon tab when you want to study, work, or work out without distractions for a set duration.', tip: 'Completing dungeons on time grants massive EXP bonuses and raises your Hunter Rank!' },
-        { icon: '💰', title: '4. Treasury (Real Finances)', desc: 'Record your actual income and expenses in the Treasury tab with categories and full transaction history.', tip: 'Financial discipline keeps your real-world Hunter status stable and secure.' },
-        { icon: '🛡️', title: '5. Shop & Armory (Self-Reward)', desc: 'Use the Gold earned from quests to buy entertainment rewards (Shop) or supportive items/relics (Armory).', tip: 'Treat yourself guilt-free, paid for by your own hard work!' },
-        { icon: '⚙️', title: '6. Settings, Language & Backup', desc: 'Open the Settings icon (⚙️) on top to change language (ID / EN / JA), audio, export backups, or view this guide again.', tip: 'The system is ready. Good luck leveling up, Hunter!' }
-    ],
-    ja: [
-        { icon: '⚡', title: '1. SYSTEM RPGへようこそ', desc: 'このアプリは、毎日の活動、良い習慣、人生の目標をRPGのようにクエスト化します。', tip: 'クエストをクリアするとEXP（経験値）が貯まり、レベルアップやゴールドが手に入ります！' },
-        { icon: '📋', title: '2. クエストと数値トラッキング', desc: 'クエストタブで日課やスケジュール目標を作成。通常のチェックボックスや数値目標（例：水8杯、読書20ページ）が使えます。', tip: '実施曜日やリマインダーを設定して、タスクの忘れを防ぎましょう。' },
-        { icon: '⚔️', title: '3. 集中ダンジョン（タイマー）', desc: '勉強、仕事、運動に集中したいときはダンジョンタブへ。タイマーで時間を区切って挑みます。', tip: '時間内にクリアすると大ボーナスEXPを獲得し、ハンターランクが上がります！' },
-        { icon: '💰', title: '4. トレジャリー（現実の家計簿）', desc: 'トレジャリータブで実際の収入と支出をカテゴリ別にしっかり記録できます。', tip: '家計管理の徹底が、現実世界のハンターとしての安定を保ちます。' },
-        { icon: '🛡️', title: '5. ショップ＆アーモリー', desc: 'クエストで稼いだゴールドを使って、ご褒美（ショップ）やモチベーションアイテム（アーモリー）を購入。', tip: '自分の頑張った成果で、罪悪感なく自分にご褒美をあげましょう！' },
-        { icon: '⚙️', title: '6. 設定・言語・バックアップ', desc: '右上の歯車アイコン（⚙️）から、言語切替（ID/EN/JA）、音声設定、データのエクスポート、このガイドの再確認が行えます。', tip: 'システムの準備は万全です。ハンター、レベルアップを目指して頑張りましょう！' }
-    ]
-};
-
-let currentTutorialStep = 0;
-
-function getTutorialLang() {
-    const lang = localStorage.getItem('system_rpg_lang') ||
-        localStorage.getItem('sysrpg_lang') ||
-        (typeof gameState !== 'undefined' && gameState.language) ||
-        'id';
-    return ['id', 'en', 'ja'].includes(lang) ? lang : 'id';
-}
-
-function getTutorialStepsData() {
-    return TUTORIAL_STEPS_DICT[getTutorialLang()] || TUTORIAL_STEPS_DICT.id;
-}
-
-function createTutorialDialog() {
-    // Hapus elemen lama jika ada (baik versi lama maupun baru)
-    const oldDiv = document.getElementById('tutorial-modal');
-    if (oldDiv) oldDiv.remove();
-    const oldDialog = document.getElementById('sysrpg-guide-dialog');
-    if (oldDialog) oldDialog.remove();
-
-    const lang = getTutorialLang();
-    const ui = TUTORIAL_UI_LABELS[lang] || TUTORIAL_UI_LABELS.id;
-
-    const dialog = document.createElement('dialog');
-    dialog.id = 'sysrpg-guide-dialog';
-    dialog.style.cssText = 'border: none; padding: 16px; margin: auto; background: transparent; max-width: 100vw; max-height: 100vh; width: 100%; overflow: visible; z-index: 2147483647;';
-
-    dialog.innerHTML = `
-        <div style="width: 100%; max-width: 420px; margin: 0 auto; border-radius: 16px; border: 1px solid rgba(34, 211, 238, 0.65); background: #0f172a; padding: 20px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.85), 0 0 28px rgba(6, 182, 212, 0.35); color: #f8fafc; box-sizing: border-box;">
-            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e293b; padding-bottom: 12px; margin-bottom: 16px; gap: 8px;">
-                <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
-                    <span style="color: #22d3ee; font-size: 18px; flex-shrink: 0;">💠</span>
-                    <div style="min-width: 0; text-align: left;">
-                        <div id="tut-guide-tag" style="font-size: 10px; font-family: monospace; letter-spacing: 0.12em; color: #22d3ee; text-transform: uppercase;">${ui.guideTag}</div>
-                        <h3 id="tut-step-title" style="font-size: 15px; font-weight: 700; color: #ffffff; margin: 2px 0 0 0; line-height: 1.3;">1. Selamat Datang di SYSTEM RPG</h3>
-                    </div>
-                </div>
-                <span id="tut-step-counter" style="font-size: 11px; font-family: monospace; padding: 4px 10px; border-radius: 999px; background: #083344; color: #67e8f9; border: 1px solid rgba(14, 116, 144, 0.6); flex-shrink: 0;">1 / 6</span>
-            </div>
-
-            <div style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 10px 6px; min-height: 165px; justify-content: center;">
-                <div id="tut-step-icon" style="font-size: 40px; margin-bottom: 12px;">⚡</div>
-                <p id="tut-step-desc" style="font-size: 13px; color: #cbd5e1; line-height: 1.55; margin: 0;"></p>
-                <div id="tut-step-tip" style="margin-top: 14px; font-size: 12px; color: #67e8f9; background: rgba(8, 51, 68, 0.65); border: 1px solid rgba(21, 94, 117, 0.7); border-radius: 8px; padding: 10px 12px; width: 100%; box-sizing: border-box; line-height: 1.45;"></div>
-            </div>
-
-            <div id="tut-dots" style="display: flex; justify-content: center; gap: 6px; margin: 12px 0;"></div>
-
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 12px; border-top: 1px solid #1e293b; margin-top: 8px;">
-                <button type="button" id="tut-skip-btn" style="padding: 8px 12px; border-radius: 8px; border: none; background: transparent; font-size: 12px; font-weight: 600; color: #94a3b8; cursor: pointer;">
-                    ${ui.skip}
-                </button>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <button type="button" id="tut-prev-btn" style="padding: 8px 14px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; font-size: 12px; font-weight: 700; color: #e2e8f0; cursor: pointer;">
-                        ${ui.prev}
-                    </button>
-                    <button type="button" id="tut-next-btn" style="padding: 8px 16px; border-radius: 8px; border: none; background: #06b6d4; font-size: 12px; font-weight: 700; color: #020617; cursor: pointer;">
-                        ${ui.next}
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.body.appendChild(dialog);
-
-    // Styling backdrop dialog native
-    if (!document.getElementById('sysrpg-guide-style')) {
-        const st = document.createElement('style');
-        st.id = 'sysrpg-guide-style';
-        st.textContent = '#sysrpg-guide-dialog::backdrop { background: rgba(2, 6, 23, 0.88); backdrop-filter: blur(6px); }';
-        document.head.appendChild(st);
-    }
-
-    document.getElementById('tut-skip-btn').onclick = () => closeTutorialModal(true);
-    document.getElementById('tut-prev-btn').onclick = () => prevTutorialStep();
-    document.getElementById('tut-next-btn').onclick = () => nextTutorialStep();
-    dialog.addEventListener('cancel', (e) => {
-        e.preventDefault();
-        closeTutorialModal(true);
-    });
-
-    return dialog;
-}
-
-function renderTutorialStep() {
-    const lang = getTutorialLang();
-    const ui = TUTORIAL_UI_LABELS[lang] || TUTORIAL_UI_LABELS.id;
-    const stepsList = getTutorialStepsData();
-    const step = stepsList[currentTutorialStep];
-    if (!step) return;
-
-    const total = stepsList.length;
-    document.getElementById('tut-guide-tag').textContent = ui.guideTag;
-    document.getElementById('tut-step-title').textContent = step.title;
-    document.getElementById('tut-step-counter').textContent = `${currentTutorialStep + 1} / ${total}`;
-    document.getElementById('tut-step-icon').textContent = step.icon;
-    document.getElementById('tut-step-desc').textContent = step.desc;
-    document.getElementById('tut-step-tip').textContent = `💡 ${step.tip}`;
-    document.getElementById('tut-skip-btn').textContent = ui.skip;
-
-    const dotsEl = document.getElementById('tut-dots');
-    dotsEl.innerHTML = stepsList.map((_, idx) => {
-        const active = idx === currentTutorialStep;
-        return `<span data-step="${idx}" style="cursor:pointer;width:${active ? '18px' : '6px'};height:6px;border-radius:999px;background:${active ? '#22d3ee' : '#334155'};transition:all 0.2s;"></span>`;
-    }).join('');
-
-    dotsEl.querySelectorAll('span[data-step]').forEach(dot => {
-        dot.onclick = () => {
-            currentTutorialStep = parseInt(dot.getAttribute('data-step'), 10) || 0;
-            renderTutorialStep();
-        };
-    });
-
-    const prevBtn = document.getElementById('tut-prev-btn');
-    const nextBtn = document.getElementById('tut-next-btn');
-    prevBtn.textContent = ui.prev;
-    prevBtn.style.visibility = currentTutorialStep === 0 ? 'hidden' : 'visible';
-    nextBtn.textContent = currentTutorialStep === total - 1 ? ui.finish : ui.next;
-}
-
-window.openTutorialModal = function (startIndex = 0, e) {
-    if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-    if (startIndex && typeof startIndex === 'object') {
-        if (typeof startIndex.stopPropagation === 'function') startIndex.stopPropagation();
-        startIndex = 0;
-    }
-    // Tutup modal pengaturan/lainnya terlebih dahulu
-    document.querySelectorAll('.fixed.inset-0').forEach(el => {
-        if (el.id !== 'system-splash-screen') el.classList.add('hidden');
-    });
-    document.querySelectorAll('#tutorial-modal').forEach(el => el.remove());
-    if (typeof createTutorialModalElement === 'function') {
-        createTutorialModalElement();
-        currentTutorialStep = Math.max(0, Math.min(Number(startIndex) || 0, getTutorialStepsData().length - 1));
-        renderTutorialStep();
-        if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
-    }
-    return;
-
-    const dialog = createTutorialDialog();
-    currentTutorialStep = Math.max(0, Math.min(startIndex, getTutorialStepsData().length - 1));
-    renderTutorialStep();
-
-    if (typeof dialog.showModal === 'function') {
-        dialog.showModal();
-    } else {
-        dialog.setAttribute('open', 'true');
-        dialog.style.position = 'fixed';
-        dialog.style.inset = '0';
-        dialog.style.display = 'flex';
-        dialog.style.alignItems = 'center';
-        dialog.style.justifyContent = 'center';
-        dialog.style.background = 'rgba(2, 6, 23, 0.92)';
-    }
-
-    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
-};
-
-window.closeTutorialModal = function (markSeen = true) {
-    const dialog = document.getElementById('sysrpg-guide-dialog');
-    if (dialog) {
-        if (typeof dialog.close === 'function' && dialog.open) dialog.close();
-        dialog.remove();
-    }
-    if (markSeen) {
-        localStorage.setItem(TUTORIAL_STORAGE_KEY, '1');
-    }
-    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
-};
-
-window.nextTutorialStep = function () {
-    const stepsList = getTutorialStepsData();
-    if (currentTutorialStep < stepsList.length - 1) {
-        currentTutorialStep++;
-        renderTutorialStep();
-        if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
-    } else {
-        closeTutorialModal(true);
-    }
-};
-
-window.prevTutorialStep = function () {
-    if (currentTutorialStep > 0) {
-        currentTutorialStep--;
-        renderTutorialStep();
-        if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
-    }
-};
-// ==========================================
-// 17. INITIAL SYSTEM BOOT
-// ==========================================
-function bootSystemRPG() {
-    checkRealDayRollover();
-    initTreasuryDefaults();
-    currentOracleIndex = pickContextualOracleIndex();
-    if (typeof applySavedFontSettings === 'function') applySavedFontSettings();
-    renderAll();
-    if (typeof applyAppLanguage === 'function') applyAppLanguage();
-    syncSystemReminders();
-    setInterval(checkScheduledReminderTick, 20000);
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bootSystemRPG);
-} else {
-    bootSystemRPG();
-}
 
 // =========================================================
 // SISTEM TUTORIAL MANDIRI (ANTI-GAGAL & MULTI-BAHASA)
