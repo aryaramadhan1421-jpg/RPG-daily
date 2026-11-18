@@ -4895,6 +4895,7 @@ function triggerFingerprintScan() {
 }
 
 // ==========================================
+// ==========================================
 // 16. UNIFIED MULTILINGUAL ENGINE (ID / EN / JA)
 // ==========================================
 (function () {
@@ -4903,75 +4904,56 @@ function triggerFingerprintScan() {
     const LANG_KEY_PRIMARY = 'system_rpg_lang';
     const LANG_KEY_LEGACY = 'sysrpg_lang';
 
-    // Exact phrase dictionary covering static HTML + dynamic app.js outputs
     const DICTIONARY = {
         en: {
-            // Splash Screen & Header
+            // Splash, Header & Nav
             '[ TAP FINGERPRINT UNTUK AWAKENING ]': '[ TAP FINGERPRINT FOR AWAKENING ]',
             'Autentikasi Hunter diperlukan sebelum masuk ke Sistem': 'Hunter authentication required before entering the System',
             'MEMINDAI BIOMETRIK HUNTER...': 'SCANNING HUNTER BIOMETRICS...',
             '✓ AKSES DITERIMA • WELCOME, HUNTER': '✓ ACCESS GRANTED • WELCOME, HUNTER',
             'Sinkronisasi Status & Quest Board...': 'Synchronizing Status & Quest Board...',
             'Hunter Interface': 'Hunter Interface',
-
-            // Navigation
             'Status': 'Status',
             'Quests': 'Quests',
             'Dungeon': 'Dungeon',
             'Shop': 'Shop',
             'Treasury': 'Treasury',
 
-            // System Oracle
+            // Oracle & Status
             '+ Kutipan': '+ Quote',
             '✨ Terima Petuah (+5 XP / +5 G)': '✨ Receive Wisdom (+5 XP / +5 G)',
             '✓ Petuah Diterima Hari Ini': '✓ Wisdom Claimed Today',
-            '"Kamu tidak naik ke level tujuanmu. Kamu jatuh ke level sistemmu."': '"You do not rise to the level of your goals. You fall to the level of your systems."',
-
-            // Player Identity Card
             'Ganti Title': 'Switch Title',
             'Lihat Semua': 'View All',
             'Filter Tanggal Ini': 'Filter This Date',
-
-            // Core RPG Stats & Radar Chart
             'Status Atribut': 'Attribute Status',
             'Distribusi Atribut Hunter': 'Hunter Attribute Distribution',
             'Distribusi Level Atribut': 'Attribute Level Distribution',
             'Distribusi Level Atribut (All-Time)': 'Attribute Level Distribution (All-Time)',
             'Skala Tier: 100': 'Tier Scale: 100',
-            'Pasif: +0 Max HP (Fisik & Vitality)': 'Passive: +0 Max HP (Physical & Vitality)',
-            'Pasif: +0% XP (Belajar & Fokus)': 'Passive: +0% XP (Study & Focus)',
-            'Pasif: -0% Damage Penalti (Mindfulness)': 'Passive: -0% Penalty Damage (Mindfulness)',
-            'Pasif: Diskon Shop 0% (Relasi & Sosial)': 'Passive: 0% Shop Discount (Relations & Social)',
-
-            // Habit Tracker & History
             'Habit Tracker & Riwayat': 'Habit Tracker & History',
             'Tanggal Aktif Sistem': 'System Active Date',
             'Hari Ini': 'Today',
             'Klik kotak tanggal untuk cek riwayat': 'Click a date box to check history',
             'Log Aktivitas Tanggal Ini': 'Activity Log for This Date',
-
-            // System Control & Daily Evaluation
             'Kontrol Sistem & Evaluasi Harian': 'System Control & Daily Evaluation',
             '🎯 Target Minimal Streak Harian': '🎯 Minimum Daily Streak Target',
             'Atur persentase minimal Daily Quest selesai': 'Set minimum percentage of completed Daily Quests',
             'Evaluasi & Lanjut Hari': 'Evaluate & Advance Day',
-            'Evaluasi dan Lanjut Hari': 'Evaluate and Advance Day',
-
-            // Mobile Notification Reminder
             'Reminder Notifikasi Layar HP': 'Mobile Lockscreen Notification Reminder',
             'NONAKTIF': 'INACTIVE',
             'AKTIF': 'ACTIVE',
             'Munculkan notifikasi pop-up di layar atas HP jika masih ada Daily Quest yang belum dikerjakan atau lupa buka SYSTEM RPG.': 'Show pop-up notifications on your phone screen if Daily Quests are still unfinished or you forgot to open SYSTEM RPG.',
             '🌅 Pagi': '🌅 Morning',
+            '☀️ Siang': '☀️ Afternoon',
             '🌇 Sore': '🌇 Evening',
             '🌙 Malam': '🌙 Night',
+            '⚡ Fleksibel': '⚡ Flexible',
             '🔔 Aktifkan Notifikasi': '🔔 Enable Notifications',
             '🔕 Matikan Notifikasi': '🔕 Disable Notifications',
-            'Aktifkan Notifikasi': 'Enable Notifications',
-            'Matikan Notifikasi': 'Disable Notifications',
             'Tes Pop-up': 'Test Pop-up',
 
-            // Quests Tab
+            // Quests & Default Habits
             'Centang misi selesai (klik ulang untuk batalkan/undo)': 'Check completed quests (click again to undo)',
             'Preset Habit': 'Habit Preset',
             'Quest Baru': 'New Quest',
@@ -4980,17 +4962,9 @@ function triggerFingerprintScan() {
             'Kategori': 'Category',
             'Waktu': 'Time',
             'Atribut': 'Attribute',
-            '☀️ Siang': '☀️ Afternoon',
-            '⚡ Fleksibel': '⚡ Flexible',
             'Jadwal Hari Aktif': 'Active Days Schedule',
             'Semua': 'All',
-            'Sen': 'Mon',
-            'Sel': 'Tue',
-            'Rab': 'Wed',
-            'Kam': 'Thu',
-            'Jum': 'Fri',
-            'Sab': 'Sat',
-            'Min': 'Sun',
+            'Sen': 'Mon', 'Sel': 'Tue', 'Rab': 'Wed', 'Kam': 'Thu', 'Jum': 'Fri', 'Sab': 'Sat', 'Min': 'Sun',
             'Tipe Progres Misi': 'Quest Progress Type',
             '☑️ Ceklis Biasa (Sekali Selesai)': '☑️ Standard Checkbox (One-time)',
             '🔢 Count / Hitungan (Contoh: 20 Hal, 8 Gelas)': '🔢 Counter (e.g., 20 Pages, 8 Glasses)',
@@ -5004,11 +4978,41 @@ function triggerFingerprintScan() {
             'Selesai': 'Completed',
             '📅 Jadwal Hari Ini': "📅 Today's Schedule",
             '🗓️ Semua Jadwal': '🗓️ All Schedules',
-            '🔢 Hitungan': '🔢 Counter',
-            'Muat Paket Default Daily Habit': 'Load Default Daily Habit Pack',
-            'Tidak ada misi yang cocok dengan filter / pencarian saat ini.': 'No quests match the current filter / search.',
+            'Shalat Subuh': 'Fajr Prayer',
+            'Dzikir Pagi': 'Morning Dhikr',
+            'Baca Alquran dan Artinya': 'Read Quran & Translation',
+            'Tulis latihan hiragana katakan': 'Practice Writing Hiragana & Katakana',
+            'Baca buku': 'Read a Book',
+            'Minum air putih': 'Drink Water',
+            'Rapih rapih': 'Tidy Up Room',
+            'Plank 1 menit dan Push Up 10x': '1-Min Plank & 10x Push-Ups',
+            'Angkat beban': 'Weightlifting',
+            'Olahraga, senam, jalan atau aktivitas yang mengeluarkan keringat minimal 10 menit': 'Exercise, workout, or brisk walk (min. 10 mins)',
+            'Belajar bahasa jepang 1 bab volingo': 'Study Japanese (1 Chapter Volingo)',
+            'Belajar bahasa inggris 1 bab volingo': 'Study English (1 Chapter Volingo)',
+            'Sarapan': 'Breakfast',
+            'Mandi pagi': 'Morning Shower',
+            'Skincare mosturizer dan sunscreen': 'Morning Skincare (Moisturizer & Sunscreen)',
+            'Podcast self improvement': 'Self-Improvement Podcast',
+            'Shalat Zuhur': 'Dhuhr Prayer',
+            'Makan siang': 'Lunch',
+            'YouTube podcast english': 'English YouTube Podcast',
+            'Brainstorm dengan chatgpt, latihan berbicara bahasa inggris atau jepang': 'Speaking Practice in English/Japanese with ChatGPT',
+            'Belajar persiapan karir': 'Career Preparation Study',
+            'Shalat Ashar': 'Asr Prayer',
+            'Dzikir sore': 'Evening Dhikr',
+            'Angkat beban sore': 'Evening Weightlifting',
+            'Mandi sore': 'Evening Shower',
+            'Shalat Magrib': 'Maghrib Prayer',
+            'Makan malam': 'Dinner',
+            'Shalat Isya': 'Isha Prayer',
+            'No sugar': 'No Sugar',
+            'Plank sit-up': 'Plank & Sit-Ups',
+            'Gosok gigi facial wash moisturizer': 'Brush Teeth, Facial Wash & Moisturizer',
+            'Selesaikan Modul Utama Proyek / Target Mingguan': 'Complete Main Project Module / Weekly Target',
+            'Presentasi Penting / Taklukkan Tantangan Terberat Minggu Ini': 'Key Presentation / Conquer Hardest Weekly Challenge',
 
-            // Dungeon & Deep Focus Raid
+            // Dungeon & Grimoire
             'MASUKI DUNGEON': 'ENTER DUNGEON',
             'MENYERAH (-10 HP)': 'SURRENDER (-10 HP)',
             'Set Waktu': 'Set Time',
@@ -5019,14 +5023,11 @@ function triggerFingerprintScan() {
             'Mode: Dark Synth': 'Mode: Dark Synth',
             'Mode: Suara Hujan': 'Mode: Rain Sound',
             '🔇 Hening': '🔇 Silent',
-            '🌌 Dark Synth': '🌌 Dark Synth',
             '🌧️ Suara Hujan': '🌧️ Rain Sound',
             'Baca PDF materi belajar/buku sambil Dungeon Raid berjalan': 'Read study material/book PDFs while Dungeon Raid is active',
             '📂 Buka PDF': '📂 Open PDF',
             'ANIME LOFI RADIO (1 JAM)': 'ANIME LOFI RADIO (1 HOUR)',
             'Siap menemani fokus Dungeon • Offline Synth': 'Ready to accompany Dungeon focus • Offline Synth',
-            'Dijeda • Siap dilanjutkan kapan saja': 'Paused • Ready to resume anytime',
-            'Sedang Memutar: Midnight Tokyo Lofi (Offline)': 'Now Playing: Midnight Tokyo Lofi (Offline)',
             '▶ Putar Anime Lofi (1 Jam)': '▶ Play Anime Lofi (1 Hour)',
             '⏸ Jeda Anime Lofi': '⏸ Pause Anime Lofi',
             '🎵 MP3 HP': '🎵 Phone MP3',
@@ -5034,7 +5035,7 @@ function triggerFingerprintScan() {
             'Belum ada bookmark tersimpan.': 'No bookmarks saved yet.',
             '🔖 Tandai Hal Ini': '🔖 Bookmark Page',
 
-            // Shop & Armory & Mystery Chest
+            // Shop, Relics & Titles
             'Tukarkan Gold dengan Potion atau Reward Dunia Nyata': 'Exchange Gold for Potions or Real-World Rewards',
             'Item Baru': 'New Item',
             'Tambah Item / Reward': 'Add Item / Reward',
@@ -5047,9 +5048,6 @@ function triggerFingerprintScan() {
             'Relic bersifat sementara (aktif 24 jam sejak dibeli) • Maks 3 slot aktif': 'Relics are temporary (active 24h upon purchase) • Max 3 active slots',
             'Belum ada Relic terpasang. Pasang Relic di bawah untuk mengaktifkan efek pasif!': 'No Relic equipped yet. Equip a Relic below to activate passive effects!',
             'Belum ada Relic aktif. Beli Relic (durasi 24 jam) di bawah untuk mengaktifkan efek sementara!': 'No active Relic. Buy a Relic (24h duration) below to activate temporary buffs!',
-            'Slot Kosong': 'Empty Slot',
-            'MYSTERY SYSTEM CHEST': 'MYSTERY SYSTEM CHEST',
-            'Mystery System Chest': 'Mystery System Chest',
             'Uji keberuntungan: XP, HP, Streak Shield, atau Jackpot Gold!': 'Test your luck: XP, HP, Streak Shield, or Gold Jackpot!',
             '🎲 BUKA PETI MISTERI (100 GOLD)': '🎲 OPEN MYSTERY CHEST (100 GOLD)',
             'Riwayat Redeem': 'Redeem History',
@@ -5057,8 +5055,20 @@ function triggerFingerprintScan() {
             'Hapus Semua': 'Clear All',
             'Beli': 'Buy',
             'MAKS': 'MAX',
+            'Aktif': 'Active',
+            'Pakai': 'Equip',
+            'Terkunci': 'Locked',
+            'Memulihkan 25% Max HP secara instan.': 'Instantly restores 25% of Max HP.',
+            'Memulihkan HP hingga penuh (100% Max HP) dalam kondisi darurat.': 'Restores HP to full (100% Max HP) in emergencies.',
+            'Reward dunia nyata untuk menyegarkan pikiran.': 'Real-world reward to refresh your mind.',
+            'Otomatis menahan Streak saat terlewat (Maksimal stok 2 di inventori).': 'Automatically protects your Streak if missed (Max 2 in inventory).',
+            'Waktu santai bebas penalti setelah bekerja keras.': 'Penalty-free leisure time after hard work.',
+            '[24 Jam] +15% EXP & +10% INT Stat XP dari semua aktivitas': '[24h] +15% EXP & +10% INT Stat XP from all activities',
+            '[24 Jam] +12% EXP & +15% INT/WIS Stat XP saat belajar & fokus': '[24h] +12% EXP & +15% INT/WIS Stat XP while studying & focusing',
+            '[24 Jam] +25% STR Stat XP & +10 Max HP Sementara': '[24h] +25% STR Stat XP & +10 Temporary Max HP',
+            '[24 Jam] +20% Gold dari semua Quest & Dungeon +15% CHR Stat XP': '[24h] +20% Gold from all Quests & Dungeons +15% CHR Stat XP',
 
-            // Treasury / Cashflow Dashboard
+            // Treasury
             'Catat arus kas & kalkulator jajan (+10 XP & +10 WIS XP, maks 3x/hari)': 'Record cashflow & snack calculator (+10 XP & +10 WIS XP, max 3x/day)',
             '🧮 Kalkulator Jajan & Belanja': '🧮 Snack & Shopping Calculator',
             '✓ PAKAI NOMINAL': '✓ USE AMOUNT',
@@ -5068,13 +5078,9 @@ function triggerFingerprintScan() {
             '📥 Pemasukan (+)': '📥 Income (+)',
             'Tanggal': 'Date',
             'Nominal (Rp)': 'Amount (Rp)',
-            'Nominal': 'Amount',
-            'Kategori Pengeluaran': 'Expense Category',
-            'Kategori Pemasukan': 'Income Category',
             'Catatan / Keterangan': 'Notes / Description',
             'SIMPAN TRANSAKSI (+10 XP & +10 WIS)': 'SAVE TRANSACTION (+10 XP & +10 WIS)',
             '📊 Dashboard Arus Kas': '📊 Cashflow Dashboard',
-            'Dashboard Arus Kas': 'Cashflow Dashboard',
             'Harian': 'Daily',
             'Bulanan': 'Monthly',
             'Tahunan': 'Yearly',
@@ -5089,7 +5095,7 @@ function triggerFingerprintScan() {
             'Daftar Transaksi Periode Ini': 'Transactions in This Period',
             'Tidak ada transaksi pada periode ini.': 'No transactions in this period.',
 
-            // Modals & Font Settings
+            // Modals & Settings
             'Membuka Peti...': 'Opening Chest...',
             'Membuka Peti Misteri...': 'Opening Mystery Chest...',
             'Sistem sedang mengacak hadiah keberuntunganmu...': 'The System is randomizing your lucky reward...',
@@ -5130,78 +5136,52 @@ function triggerFingerprintScan() {
             'Besar (115%)': 'Large (115%)',
             'Gaya Huruf Judul (RPG Style)': 'Heading Font Style (RPG Style)',
             'Tegas': 'Bold Tactical',
-            '🌐 Bahasa Antarmuka (Language)': '🌐 Interface Language',
-            'Aktif': 'Active',
-            'Pakai': 'Equip',
-            'Terkunci': 'Locked'
+            '🌐 Bahasa Antarmuka (Language)': '🌐 Interface Language'
         },
         ja: {
-            // Splash Screen & Header
             '[ TAP FINGERPRINT UNTUK AWAKENING ]': '[ 指紋をタップして覚醒する ]',
             'Autentikasi Hunter diperlukan sebelum masuk ke Sistem': 'システムに入る前にハンター認証が必要です',
             'MEMINDAI BIOMETRIK HUNTER...': 'ハンター生体認証をスキャン中...',
             '✓ AKSES DITERIMA • WELCOME, HUNTER': '✓ アクセス承認 • ようこそ、ハンター',
             'Sinkronisasi Status & Quest Board...': 'ステータスとクエストボードを同期中...',
             'Hunter Interface': 'ハンターインターフェース',
-
-            // Navigation
             'Status': 'ステータス',
             'Quests': 'クエスト',
             'Dungeon': 'ダンジョン',
             'Shop': 'ショップ',
             'Treasury': '財務庫',
-
-            // System Oracle
             '+ Kutipan': '+ 名言追加',
             '✨ Terima Petuah (+5 XP / +5 G)': '✨ 託宣を受け取る (+5 XP / +5 G)',
             '✓ Petuah Diterima Hari Ini': '✓ 本日の託宣は受取済み',
-            '"Kamu tidak naik ke level tujuanmu. Kamu jatuh ke level sistemmu."': '「人は目標のレベルまで上がるのではなく、システムのレベルまで落ちる。」',
-
-            // Player Identity Card
             'Ganti Title': '称号変更',
             'Lihat Semua': 'すべて見る',
             'Filter Tanggal Ini': 'この日付のみ表示',
-
-            // Core RPG Stats & Radar Chart
             'Status Atribut': 'ステータス能力値',
             'Distribusi Atribut Hunter': 'ハンター能力値分布',
             'Distribusi Level Atribut': '能力値レベル分布',
             'Distribusi Level Atribut (All-Time)': '能力値レベル分布 (全期間)',
             'Skala Tier: 100': 'ティア基準: 100',
-            'Pasif: +0 Max HP (Fisik & Vitality)': 'パッシブ: 最大HP +0 (体力・生命力)',
-            'Pasif: +0% XP (Belajar & Fokus)': 'パッシブ: 獲得XP +0% (学習・集中)',
-            'Pasif: -0% Damage Penalti (Mindfulness)': 'パッシブ: ペナルティ軽減 -0% (精神・規律)',
-            'Pasif: Diskon Shop 0% (Relasi & Sosial)': 'パッシブ: ショップ割引 0% (社交・魅力)',
-
-            // Habit Tracker & History
             'Habit Tracker & Riwayat': '習慣トラッカー＆履歴',
             'Tanggal Aktif Sistem': 'システム現在日付',
             'Hari Ini': '今日',
             'Klik kotak tanggal untuk cek riwayat': '日付マスをタップして履歴を確認',
             'Log Aktivitas Tanggal Ini': '本日のアクティビティログ',
-
-            // System Control & Daily Evaluation
             'Kontrol Sistem & Evaluasi Harian': 'システム制御＆日次評価',
             '🎯 Target Minimal Streak Harian': '🎯 毎日の最小ストリーク目標',
             'Atur persentase minimal Daily Quest selesai': 'デイリークエストの最小達成率を設定',
             'Evaluasi & Lanjut Hari': '評価して次の日へ',
-            'Evaluasi dan Lanjut Hari': '評価して次の日へ',
-
-            // Mobile Notification Reminder
             'Reminder Notifikasi Layar HP': 'スマホロック画面通知リマインダー',
             'NONAKTIF': '無効',
             'AKTIF': '有効',
             'Munculkan notifikasi pop-up di layar atas HP jika masih ada Daily Quest yang belum dikerjakan atau lupa buka SYSTEM RPG.': '未完了のデイリークエストがある場合やアプリを開き忘れた際に、スマホ画面上部にポップアップ通知を表示します。',
             '🌅 Pagi': '🌅 朝',
+            '☀️ Siang': '☀️ 昼',
             '🌇 Sore': '🌇 夕方',
             '🌙 Malam': '🌙 夜',
+            '⚡ Fleksibel': '⚡ いつでも',
             '🔔 Aktifkan Notifikasi': '🔔 通知を有効化',
             '🔕 Matikan Notifikasi': '🔕 通知をオフにする',
-            'Aktifkan Notifikasi': '通知を有効化',
-            'Matikan Notifikasi': '通知をオフにする',
             'Tes Pop-up': 'ポップアップテスト',
-
-            // Quests Tab
             'Centang misi selesai (klik ulang untuk batalkan/undo)': '完了したクエストにチェック（再タップで取り消し）',
             'Preset Habit': '習慣プリセット',
             'Quest Baru': '新規クエスト',
@@ -5210,17 +5190,9 @@ function triggerFingerprintScan() {
             'Kategori': 'カテゴリー',
             'Waktu': '時間帯',
             'Atribut': '能力値',
-            '☀️ Siang': '☀️ 昼',
-            '⚡ Fleksibel': '⚡ いつでも',
             'Jadwal Hari Aktif': '実行曜日スケジュール',
             'Semua': 'すべて',
-            'Sen': '月',
-            'Sel': '火',
-            'Rab': '水',
-            'Kam': '木',
-            'Jum': '金',
-            'Sab': '土',
-            'Min': '日',
+            'Sen': '月', 'Sel': '火', 'Rab': '水', 'Kam': '木', 'Jum': '金', 'Sab': '土', 'Min': '日',
             'Tipe Progres Misi': '進捗タイプ',
             '☑️ Ceklis Biasa (Sekali Selesai)': '☑️ 通常チェック（1回で完了）',
             '🔢 Count / Hitungan (Contoh: 20 Hal, 8 Gelas)': '🔢 カウント形式（例: 20ページ、水8杯）',
@@ -5234,11 +5206,6 @@ function triggerFingerprintScan() {
             'Selesai': '完了',
             '📅 Jadwal Hari Ini': '📅 今日の予定',
             '🗓️ Semua Jadwal': '🗓️ 全スケジュール',
-            '🔢 Hitungan': '🔢 カウント',
-            'Muat Paket Default Daily Habit': 'デフォルト習慣パックを読み込む',
-            'Tidak ada misi yang cocok dengan filter / pencarian saat ini.': '現在のフィルター・検索に一致するクエストがありません。',
-
-            // Dungeon & Deep Focus Raid
             'MASUKI DUNGEON': 'ダンジョンに入る',
             'MENYERAH (-10 HP)': '諦める (-10 HP)',
             'Set Waktu': '時間設定',
@@ -5249,22 +5216,17 @@ function triggerFingerprintScan() {
             'Mode: Dark Synth': 'モード: ダークシンセ',
             'Mode: Suara Hujan': 'モード: 雨音',
             '🔇 Hening': '🔇 無音',
-            '🌌 Dark Synth': '🌌 ダークシンセ',
             '🌧️ Suara Hujan': '🌧️ 雨音',
             'Baca PDF materi belajar/buku sambil Dungeon Raid berjalan': 'ダンジョン攻略中に学習教材や書籍のPDFを閲覧',
             '📂 Buka PDF': '📂 PDFを開く',
             'ANIME LOFI RADIO (1 JAM)': 'アニメ Lo-Fi ラジオ (1時間)',
             'Siap menemani fokus Dungeon • Offline Synth': 'ダンジョン集中をサポート • オフライン音源',
-            'Dijeda • Siap dilanjutkan kapan saja': '一時停止中 • いつでも再開可能',
-            'Sedang Memutar: Midnight Tokyo Lofi (Offline)': '再生中: Midnight Tokyo Lofi (オフライン)',
             '▶ Putar Anime Lofi (1 Jam)': '▶ アニメLo-Fi再生 (1時間)',
             '⏸ Jeda Anime Lofi': '⏸ アニメLo-Fi一時停止',
             '🎵 MP3 HP': '🎵 端末MP3',
             '🔖 Bookmark Tersimpan (Per Judul File)': '🔖 保存済みブックマーク（ファイル別）',
             'Belum ada bookmark tersimpan.': '保存されたブックマークはありません。',
             '🔖 Tandai Hal Ini': '🔖 このページを保存',
-
-            // Shop & Armory & Mystery Chest
             'Tukarkan Gold dengan Potion atau Reward Dunia Nyata': 'ゴールドをポーションや現実のご褒美と交換',
             'Item Baru': '新規アイテム',
             'Tambah Item / Reward': 'アイテム・報酬追加',
@@ -5277,9 +5239,6 @@ function triggerFingerprintScan() {
             'Relic bersifat sementara (aktif 24 jam sejak dibeli) • Maks 3 slot aktif': 'レリックは一時効果（購入から24時間有効）• 最大3スロット装備可能',
             'Belum ada Relic terpasang. Pasang Relic di bawah untuk mengaktifkan efek pasif!': 'レリック未装備。下のレリックを装備してパッシブ効果を発動しよう！',
             'Belum ada Relic aktif. Beli Relic (durasi 24 jam) di bawah untuk mengaktifkan efek sementara!': '有効なレリックはありません。下でレリック（24時間有効）を購入してバフを発動！',
-            'Slot Kosong': '空きスロット',
-            'MYSTERY SYSTEM CHEST': 'ミステリー・システムチェスト',
-            'Mystery System Chest': 'ミステリー・システムチェスト',
             'Uji keberuntungan: XP, HP, Streak Shield, atau Jackpot Gold!': '運試し：XP、HP、ストリークシールド、またはゴールド大当たり！',
             '🎲 BUKA PETI MISTERI (100 GOLD)': '🎲 ミステリーチェストを開ける (100 GOLD)',
             'Riwayat Redeem': '交換履歴',
@@ -5287,8 +5246,9 @@ function triggerFingerprintScan() {
             'Hapus Semua': 'すべて削除',
             'Beli': '購入',
             'MAKS': '上限',
-
-            // Treasury / Cashflow Dashboard
+            'Aktif': '装備中',
+            'Pakai': '装備する',
+            'Terkunci': '未開放',
             'Catat arus kas & kalkulator jajan (+10 XP & +10 WIS XP, maks 3x/hari)': '収支記録＆お小遣い電卓（+10 XP & +10 WIS XP、1日3回まで）',
             '🧮 Kalkulator Jajan & Belanja': '🧮 買い物・出費電卓',
             '✓ PAKAI NOMINAL': '✓ 金額を反映',
@@ -5298,13 +5258,9 @@ function triggerFingerprintScan() {
             '📥 Pemasukan (+)': '📥 収入 (+)',
             'Tanggal': '日付',
             'Nominal (Rp)': '金額 (Rp)',
-            'Nominal': '金額',
-            'Kategori Pengeluaran': '支出カテゴリー',
-            'Kategori Pemasukan': '収入カテゴリー',
             'Catatan / Keterangan': 'メモ・詳細',
             'SIMPAN TRANSAKSI (+10 XP & +10 WIS)': '取引を保存 (+10 XP & +10 WIS)',
             '📊 Dashboard Arus Kas': '📊 キャッシュフローダッシュボード',
-            'Dashboard Arus Kas': 'キャッシュフローダッシュボード',
             'Harian': '日次',
             'Bulanan': '月次',
             'Tahunan': '年次',
@@ -5318,8 +5274,6 @@ function triggerFingerprintScan() {
             'Belum ada pengeluaran pada periode ini.': 'この期間の支出はありません。',
             'Daftar Transaksi Periode Ini': 'この期間の取引一覧',
             'Tidak ada transaksi pada periode ini.': 'この期間の取引はありません。',
-
-            // Modals & Font Settings
             'Membuka Peti...': 'チェスト開封中...',
             'Membuka Peti Misteri...': 'ミステリーチェスト開封中...',
             'Sistem sedang mengacak hadiah keberuntunganmu...': 'システムが幸運の報酬を抽選中...',
@@ -5360,18 +5314,26 @@ function triggerFingerprintScan() {
             'Besar (115%)': '大 (115%)',
             'Gaya Huruf Judul (RPG Style)': '見出しフォントスタイル',
             'Tegas': 'ボールド',
-            '🌐 Bahasa Antarmuka (Language)': '🌐 表示言語 (Language)',
-            'Aktif': '装備中',
-            'Pakai': '装備する',
-            'Terkunci': '未開放'
+            '🌐 Bahasa Antarmuka (Language)': '🌐 表示言語 (Language)'
         }
     };
 
+    // Menangani elemen campuran (teks + child <span>/<svg>) termasuk tombol Ganti Title & deskripsi panjang
     const HTML_BLOCK_RULES = {
         en: [
             {
+                match: 'Ganti Title (',
+                getHtml: (el) => {
+                    const count = el.querySelector('#unlocked-titles-count')?.textContent || '1';
+                    return `Switch Title (<span id="unlocked-titles-count">${count}</span>/4)`;
+                }
+            },
+            {
                 match: 'Evaluasi misi pada tanggal terpilih lalu lanjut ke hari berikutnya.',
-                html: 'Evaluate quests on the selected date and advance to the next day. Safe target is at least <span id="eval-threshold-label" style="color: #67e8f9; font-weight: 700;">80% Daily Quests</span> completed. If below target, HP decreases &amp; Streak resets (unless protected by a Shield)!'
+                getHtml: (el) => {
+                    const pct = el.querySelector('#eval-threshold-label')?.textContent || '80% Daily Quest';
+                    return `Evaluate quests on the selected date and advance to the next day. Safe target is at least <span id="eval-threshold-label" style="color: #67e8f9; font-weight: 700;">${pct}</span> completed. If below target, HP decreases &amp; Streak resets (unless protected by a Shield)!`;
+                }
             },
             {
                 match: 'Masuki gerbang fokus. Layar otomatis tetap menyala',
@@ -5398,8 +5360,18 @@ function triggerFingerprintScan() {
         ],
         ja: [
             {
+                match: 'Ganti Title (',
+                getHtml: (el) => {
+                    const count = el.querySelector('#unlocked-titles-count')?.textContent || '1';
+                    return `称号変更 (<span id="unlocked-titles-count">${count}</span>/4)`;
+                }
+            },
+            {
                 match: 'Evaluasi misi pada tanggal terpilih lalu lanjut ke hari berikutnya.',
-                html: '選択した日付のクエストを評価し、次の日へ進みます。安全ラインは <span id="eval-threshold-label" style="color: #67e8f9; font-weight: 700;">デイリークエスト 80%</span> 以上の完了です。目標未満の場合、シールドがない限りHPが減少しストリークがリセットされます！'
+                getHtml: (el) => {
+                    const pct = el.querySelector('#eval-threshold-label')?.textContent || '80% Daily Quest';
+                    return `選択した日付のクエストを評価し、次の日へ進みます。安全ラインは <span id="eval-threshold-label" style="color: #67e8f9; font-weight: 700;">${pct}</span> 以上の完了です。目標未満の場合、シールドがない限りHPが減少しストリークがリセットされます！`;
+                }
             },
             {
                 match: 'Masuki gerbang fokus. Layar otomatis tetap menyala',
@@ -5434,7 +5406,6 @@ function triggerFingerprintScan() {
             { regex: /Evaluasi\s*(&|dan)\s*Lanjut Hari/gi, replace: 'Evaluate $1 Advance Day' },
             { regex: /Matikan Notifikasi/gi, replace: 'Disable Notifications' },
             { regex: /Aktifkan Notifikasi/gi, replace: 'Enable Notifications' },
-            { regex: /Mystery System Chest/gi, replace: 'Mystery System Chest' },
             { regex: /Dashboard Arus Kas/gi, replace: 'Cashflow Dashboard' },
             { regex: /Kategori Pengeluaran/gi, replace: 'Expense Category' },
             { regex: /Kategori Pemasukan/gi, replace: 'Income Category' },
@@ -5447,19 +5418,21 @@ function triggerFingerprintScan() {
             { regex: /Riwayat\s*\((\d+)\)/gi, replace: 'History ($1)' },
             { regex: /(\d+)x\s*Klaim/gi, replace: '$1x Claimed' },
             { regex: /(\d+)\s*Selesai/gi, replace: '$1 Completed' },
-            { regex: /(\d+)\s*Hari/gi, replace: '$1 Days' },
-            { regex: /(\d+(?:\.\d+)?)\s*Jam/gi, replace: '$1 Hours' },
+            { regex: /(\d+)\s*Hari\b/gi, replace: '$1 Days' },
+            { regex: /(\d+(?:\.\d+)?)\s*Jam\b/gi, replace: '$1 Hours' },
             { regex: /Rate Minggu Ini/gi, replace: 'This Week Rate' },
             { regex: /Pasif:\s*\+(\d+)\s*Max HP\s*\(Fisik & Vitality\)/gi, replace: 'Passive: +$1 Max HP (Physical & Vitality)' },
             { regex: /Pasif:\s*\+(\d+(?:\.\d+)?%)\s*XP\s*\(Belajar & Fokus\)/gi, replace: 'Passive: +$1 XP (Study & Focus)' },
             { regex: /Pasif:\s*-(\d+(?:\.\d+)?%)\s*Damage Penalti\s*\(Mindfulness\)/gi, replace: 'Passive: -$1 Penalty Damage (Mindfulness)' },
             { regex: /Pasif:\s*Diskon Shop\s*(\d+%)\s*\(Relasi & Sosial\)/gi, replace: 'Passive: $1 Shop Discount (Relations & Social)' },
-            { regex: /Ganti Title\s*\((\d+\/\d+)\)/gi, replace: 'Switch Title ($1)' },
+            { regex: /Ganti Title\s*\(/gi, replace: 'Switch Title (' },
             { regex: /📊 Progres:/gi, replace: '📊 Progress:' },
-            { regex: /Semua/g, replace: 'All' },
-            { regex: /Pemasukan/g, replace: 'Income' },
-            { regex: /Pengeluaran/g, replace: 'Expense' },
-            { regex: /Nominal/g, replace: 'Amount' }
+            { regex: /Syarat:/gi, replace: 'Requirement:' },
+            { regex: /Efek:/gi, replace: 'Effect:' },
+            { regex: /\bSemua\b/g, replace: 'All' },
+            { regex: /\bPemasukan\b/g, replace: 'Income' },
+            { regex: /\bPengeluaran\b/g, replace: 'Expense' },
+            { regex: /\bNominal\b/g, replace: 'Amount' }
         ],
         ja: [
             { regex: /Distribusi Level Atribut \(All-Time\)/gi, replace: '能力値レベル分布 (全期間)' },
@@ -5468,7 +5441,6 @@ function triggerFingerprintScan() {
             { regex: /Evaluasi\s*(&|dan)\s*Lanjut Hari/gi, replace: '評価して次の日へ' },
             { regex: /Matikan Notifikasi/gi, replace: '通知をオフにする' },
             { regex: /Aktifkan Notifikasi/gi, replace: '通知を有効化' },
-            { regex: /Mystery System Chest/gi, replace: 'ミステリー・システムチェスト' },
             { regex: /Dashboard Arus Kas/gi, replace: 'キャッシュフローダッシュボード' },
             { regex: /Kategori Pengeluaran/gi, replace: '支出カテゴリー' },
             { regex: /Kategori Pemasukan/gi, replace: '収入カテゴリー' },
@@ -5481,19 +5453,21 @@ function triggerFingerprintScan() {
             { regex: /Riwayat\s*\((\d+)\)/gi, replace: '履歴 ($1)' },
             { regex: /(\d+)x\s*Klaim/gi, replace: '$1回 交換済み' },
             { regex: /(\d+)\s*Selesai/gi, replace: '$1件 完了' },
-            { regex: /(\d+)\s*Hari/gi, replace: '$1日' },
-            { regex: /(\d+(?:\.\d+)?)\s*Jam/gi, replace: '$1時間' },
+            { regex: /(\d+)\s*Hari\b/gi, replace: '$1日' },
+            { regex: /(\d+(?:\.\d+)?)\s*Jam\b/gi, replace: '$1時間' },
             { regex: /Rate Minggu Ini/gi, replace: '今週の達成率' },
             { regex: /Pasif:\s*\+(\d+)\s*Max HP\s*\(Fisik & Vitality\)/gi, replace: 'パッシブ: 最大HP +$1 (体力・生命力)' },
             { regex: /Pasif:\s*\+(\d+(?:\.\d+)?%)\s*XP\s*\(Belajar & Fokus\)/gi, replace: 'パッシブ: 獲得XP +$1 (学習・集中)' },
             { regex: /Pasif:\s*-(\d+(?:\.\d+)?%)\s*Damage Penalti\s*\(Mindfulness\)/gi, replace: 'パッシブ: ペナルティ軽減 -$1 (精神・規律)' },
             { regex: /Pasif:\s*Diskon Shop\s*(\d+%)\s*\(Relasi & Sosial\)/gi, replace: 'パッシブ: ショップ割引 $1 (社交・魅力)' },
-            { regex: /Ganti Title\s*\((\d+\/\d+)\)/gi, replace: '称号変更 ($1)' },
+            { regex: /Ganti Title\s*\(/gi, replace: '称号変更 (' },
             { regex: /📊 Progres:/gi, replace: '📊 進捗:' },
-            { regex: /Semua/g, replace: 'すべて' },
-            { regex: /Pemasukan/g, replace: '収入' },
-            { regex: /Pengeluaran/g, replace: '支出' },
-            { regex: /Nominal/g, replace: '金額' }
+            { regex: /Syarat:/gi, replace: '条件:' },
+            { regex: /Efek:/gi, replace: '効果:' },
+            { regex: /\bSemua\b/g, replace: 'すべて' },
+            { regex: /\bPemasukan\b/g, replace: '収入' },
+            { regex: /\bPengeluaran\b/g, replace: '支出' },
+            { regex: /\bNominal\b/g, replace: '金額' }
         ]
     };
 
@@ -5554,7 +5528,7 @@ function triggerFingerprintScan() {
 
     function translateMixedHtmlBlocks(rootElement, targetLang) {
         if (!rootElement || !rootElement.querySelectorAll) return;
-        const blocks = rootElement.querySelectorAll('p, div');
+        const blocks = rootElement.querySelectorAll('p, div, button');
         blocks.forEach((el) => {
             if (el.children.length === 0) return;
             if (!el.dataset.origInnerHtml) {
@@ -5576,8 +5550,11 @@ function triggerFingerprintScan() {
                     const found = rules.find(
                         (r) => el.dataset.origInnerHtml.includes(r.match) && (!r.subMatch || el.dataset.origInnerHtml.includes(r.subMatch))
                     );
-                    if (found && el.innerHTML !== found.html) {
-                        el.innerHTML = found.html;
+                    if (found) {
+                        const nextHtml = found.getHtml ? found.getHtml(el) : found.html;
+                        if (nextHtml && el.innerHTML !== nextHtml) {
+                            el.innerHTML = nextHtml;
+                        }
                     }
                 }
             }
@@ -5687,7 +5664,6 @@ function triggerFingerprintScan() {
         return translateString(key, getCurrentLang());
     };
 
-    // Hook renderAll so dynamic re-renders always preserve the active language
     if (typeof window.renderAll === 'function') {
         const _origRenderAll = window.renderAll;
         window.renderAll = function () {
@@ -5696,7 +5672,6 @@ function triggerFingerprintScan() {
         };
     }
 
-    // MutationObserver for dynamic modals, floating alerts, and async UI updates
     const observer = new MutationObserver((mutations) => {
         if (isApplying) return;
         const lang = getCurrentLang();
