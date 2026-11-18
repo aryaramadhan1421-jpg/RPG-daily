@@ -1213,6 +1213,7 @@ function openRankRoadmapModal() {
         `;
     }).join('');
 
+    if (typeof applyAppLanguage === 'function') applyAppLanguage();
     openModal('modal-rank-roadmap');
 }
 
@@ -3553,6 +3554,7 @@ function openTitlesModal() {
         listEl.appendChild(card);
     });
 
+    if (typeof applyAppLanguage === 'function') applyAppLanguage();
     openModal('modal-titles');
 }
 
