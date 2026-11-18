@@ -40,7 +40,7 @@ class SystemStreakWidget : AppWidgetProvider() {
             }
         }
 
-        private fun updateAppWidget(
+        internal fun updateAppWidget(
             context: Context,
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int
