@@ -5938,7 +5938,7 @@ function completeFingerprintUnlock() {
 })();
 
 // ==========================================
-// 16B. HUNTER TUTORIAL / GUIDE SYSTEM
+// 16B. HUNTER TUTORIAL / GUIDE SYSTEM (TOP-LAYER FIX)
 // ==========================================
 const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
 
@@ -6007,39 +6007,26 @@ function getTutorialStepsData() {
     return TUTORIAL_STEPS_DICT[getTutorialLang()] || TUTORIAL_STEPS_DICT.id;
 }
 
-function createTutorialModalElement() {
-    const old = document.getElementById('tutorial-modal');
-    if (old) old.remove();
+function createTutorialDialog() {
+    // Hapus elemen lama jika ada (baik versi lama maupun baru)
+    const oldDiv = document.getElementById('tutorial-modal');
+    if (oldDiv) oldDiv.remove();
+    const oldDialog = document.getElementById('sysrpg-guide-dialog');
+    if (oldDialog) oldDialog.remove();
 
     const lang = getTutorialLang();
     const ui = TUTORIAL_UI_LABELS[lang] || TUTORIAL_UI_LABELS.id;
 
-    const wrapper = document.createElement('div');
-    wrapper.id = 'tutorial-modal';
-    wrapper.setAttribute('style', [
-        'position: fixed',
-        'top: 0',
-        'left: 0',
-        'right: 0',
-        'bottom: 0',
-        'width: 100vw',
-        'height: 100vh',
-        'background: rgba(2, 6, 23, 0.94)',
-        'z-index: 2147483647',
-        'display: flex',
-        'align-items: center',
-        'justify-content: center',
-        'padding: 16px',
-        'box-sizing: border-box',
-        'margin: 0'
-    ].join(' !important; ') + ' !important;');
+    const dialog = document.createElement('dialog');
+    dialog.id = 'sysrpg-guide-dialog';
+    dialog.style.cssText = 'border: none; padding: 16px; margin: auto; background: transparent; max-width: 100vw; max-height: 100vh; width: 100%; overflow: visible; z-index: 2147483647;';
 
-    wrapper.innerHTML = `
-        <div style="width: 100%; max-width: 420px; border-radius: 16px; border: 1px solid rgba(34, 211, 238, 0.6); background: #0f172a; padding: 20px; box-shadow: 0 0 32px rgba(6, 182, 212, 0.35); color: #f8fafc; box-sizing: border-box;">
+    dialog.innerHTML = `
+        <div style="width: 100%; max-width: 420px; margin: 0 auto; border-radius: 16px; border: 1px solid rgba(34, 211, 238, 0.65); background: #0f172a; padding: 20px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.85), 0 0 28px rgba(6, 182, 212, 0.35); color: #f8fafc; box-sizing: border-box;">
             <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e293b; padding-bottom: 12px; margin-bottom: 16px; gap: 8px;">
                 <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
                     <span style="color: #22d3ee; font-size: 18px; flex-shrink: 0;">💠</span>
-                    <div style="min-width: 0;">
+                    <div style="min-width: 0; text-align: left;">
                         <div id="tut-guide-tag" style="font-size: 10px; font-family: monospace; letter-spacing: 0.12em; color: #22d3ee; text-transform: uppercase;">${ui.guideTag}</div>
                         <h3 id="tut-step-title" style="font-size: 15px; font-weight: 700; color: #ffffff; margin: 2px 0 0 0; line-height: 1.3;">1. Selamat Datang di SYSTEM RPG</h3>
                     </div>
@@ -6071,13 +6058,25 @@ function createTutorialModalElement() {
         </div>
     `;
 
-    document.body.appendChild(wrapper);
+    document.body.appendChild(dialog);
+
+    // Styling backdrop dialog native
+    if (!document.getElementById('sysrpg-guide-style')) {
+        const st = document.createElement('style');
+        st.id = 'sysrpg-guide-style';
+        st.textContent = '#sysrpg-guide-dialog::backdrop { background: rgba(2, 6, 23, 0.88); backdrop-filter: blur(6px); }';
+        document.head.appendChild(st);
+    }
 
     document.getElementById('tut-skip-btn').onclick = () => closeTutorialModal(true);
     document.getElementById('tut-prev-btn').onclick = () => prevTutorialStep();
     document.getElementById('tut-next-btn').onclick = () => nextTutorialStep();
+    dialog.addEventListener('cancel', (e) => {
+        e.preventDefault();
+        closeTutorialModal(true);
+    });
 
-    return wrapper;
+    return dialog;
 }
 
 function renderTutorialStep() {
@@ -6117,22 +6116,36 @@ function renderTutorialStep() {
 }
 
 window.openTutorialModal = function (startIndex = 0) {
-    try {
-        const fontModal = document.getElementById('font-settings-modal');
-        if (fontModal) fontModal.classList.add('hidden');
+    // Tutup modal pengaturan/lainnya terlebih dahulu
+    document.querySelectorAll('.fixed.inset-0').forEach(el => {
+        if (el.id !== 'system-splash-screen') el.classList.add('hidden');
+    });
 
-        createTutorialModalElement();
-        currentTutorialStep = Math.max(0, Math.min(startIndex, getTutorialStepsData().length - 1));
-        renderTutorialStep();
-        if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
-    } catch (err) {
-        alert('Error Tutorial: ' + err.message);
+    const dialog = createTutorialDialog();
+    currentTutorialStep = Math.max(0, Math.min(startIndex, getTutorialStepsData().length - 1));
+    renderTutorialStep();
+
+    if (typeof dialog.showModal === 'function') {
+        dialog.showModal();
+    } else {
+        dialog.setAttribute('open', 'true');
+        dialog.style.position = 'fixed';
+        dialog.style.inset = '0';
+        dialog.style.display = 'flex';
+        dialog.style.alignItems = 'center';
+        dialog.style.justifyContent = 'center';
+        dialog.style.background = 'rgba(2, 6, 23, 0.92)';
     }
+
+    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
 };
 
 window.closeTutorialModal = function (markSeen = true) {
-    const modal = document.getElementById('tutorial-modal');
-    if (modal) modal.remove();
+    const dialog = document.getElementById('sysrpg-guide-dialog');
+    if (dialog) {
+        if (typeof dialog.close === 'function' && dialog.open) dialog.close();
+        dialog.remove();
+    }
     if (markSeen) {
         localStorage.setItem(TUTORIAL_STORAGE_KEY, '1');
     }
