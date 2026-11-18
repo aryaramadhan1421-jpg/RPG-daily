@@ -4881,11 +4881,19 @@ let lofiRemainingSec = 3600;
 let lofiStep = 0;
 let lofiUseLocalFile = false;
 
-const ANIME_LOFI_CHORDS = [
-    [174.61, 220.00, 261.63, 329.63], // Fmaj7
-    [164.81, 196.00, 246.94, 293.66], // Em7
-    [146.83, 174.61, 220.00, 261.63, 329.63], // Dm9
-    [130.81, 164.81, 196.00, 246.94]  // Cmaj7
+let lofiVinylSource = null;
+let lofiVinylGain = null;
+
+// 8-Bar Progresi Akor Anime Chillhop + Nada Bass + Skala Melodi
+const ANIME_LOFI_PROGRESSION = [
+    { bass: 87.31,  chords: [174.61, 220.00, 261.63, 329.63, 392.00], melody: [523.25, 0, 659.25, 587.33, 523.25, 440.00, 0, 392.00] }, // Fmaj9
+    { bass: 82.41,  chords: [164.81, 196.00, 246.94, 293.66, 392.00], melody: [493.88, 587.33, 0, 493.88, 440.00, 392.00, 329.63, 0] }, // Em7
+    { bass: 110.00, chords: [220.00, 261.63, 329.63, 392.00, 493.88], melody: [659.25, 0, 587.33, 523.25, 493.88, 523.25, 0, 440.00] }, // Am9
+    { bass: 73.42,  chords: [146.83, 174.61, 220.00, 261.63, 329.63], melody: [392.00, 440.00, 523.25, 0, 440.00, 392.00, 349.23, 0] }, // Dm9
+    { bass: 98.00,  chords: [196.00, 246.94, 293.66, 349.23, 440.00], melody: [587.33, 0, 523.25, 493.88, 440.00, 392.00, 440.00, 0] }, // G13
+    { bass: 65.41,  chords: [130.81, 164.81, 196.00, 246.94, 293.66], melody: [523.25, 493.88, 392.00, 0, 329.63, 392.00, 440.00, 0] }, // Cmaj9
+    { bass: 123.47, chords: [246.94, 293.66, 349.23, 440.00],         melody: [587.33, 0, 523.25, 493.88, 440.00, 0, 392.00, 440.00] }, // Bm7b5
+    { bass: 82.41,  chords: [164.81, 207.65, 246.94, 293.66, 392.00], melody: [493.88, 523.25, 587.33, 659.25, 587.33, 493.88, 0, 0] }  // E7#9
 ];
 
 function formatLofiTime(sec) {
@@ -4901,7 +4909,7 @@ function updateLofiVolume(val) {
 
     const vol = num / 100;
     if (lofiMasterGain && lofiCtx) {
-        lofiMasterGain.gain.setTargetAtTime(vol * 0.35, lofiCtx.currentTime, 0.05);
+        lofiMasterGain.gain.setTargetAtTime(vol * 0.48, lofiCtx.currentTime, 0.05);
     }
     const localAudio = document.getElementById('lofi-local-audio-player');
     if (localAudio) {
@@ -4909,56 +4917,199 @@ function updateLofiVolume(val) {
     }
 }
 
+function startLofiVinylTexture() {
+    if (!lofiCtx || !lofiMasterGain || lofiVinylSource) return;
+    try {
+        const bufferLen = lofiCtx.sampleRate * 3;
+        const buffer = lofiCtx.createBuffer(1, bufferLen, lofiCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferLen; i++) {
+            // Gabungan noise hujan halus + letupan vinyl tipis acak
+            const rain = (Math.random() * 2 - 1) * 0.018;
+            const pop = Math.random() > 0.9985 ? (Math.random() * 2 - 1) * 0.22 : 0;
+            data[i] = rain + pop;
+        }
+        const src = lofiCtx.createBufferSource();
+        src.buffer = buffer;
+        src.loop = true;
+
+        const filter = lofiCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1800, lofiCtx.currentTime);
+        filter.Q.setValueAtTime(0.7, lofiCtx.currentTime);
+
+        const gain = lofiCtx.createGain();
+        gain.gain.setValueAtTime(0.16, lofiCtx.currentTime);
+
+        src.connect(filter);
+        filter.connect(gain);
+        gain.connect(lofiMasterGain);
+        src.start();
+
+        lofiVinylSource = src;
+        lofiVinylGain = gain;
+    } catch (e) {}
+}
+
+function stopLofiVinylTexture() {
+    if (lofiVinylSource) {
+        try { lofiVinylSource.stop(); } catch (e) {}
+        lofiVinylSource = null;
+        lofiVinylGain = null;
+    }
+}
+
 function playLofiChordAndBeat() {
     if (!lofiCtx || !lofiMasterGain || !lofiIsPlaying) return;
-    const now = lofiCtx.currentTime;
+    const stepInBar = lofiStep % 8;
+    const barIdx = Math.floor(lofiStep / 8) % ANIME_LOFI_PROGRESSION.length;
+    const currentBar = ANIME_LOFI_PROGRESSION[barIdx];
 
-    if (lofiStep % 8 === 0) {
-        const chordIdx = Math.floor(lofiStep / 8) % ANIME_LOFI_CHORDS.length;
-        const freqs = ANIME_LOFI_CHORDS[chordIdx];
+    // Tambahkan sedikit micro-swing pada ketukan ganjil agar terasa manusiawi
+    const swingDelay = (stepInBar % 2 === 1) ? 0.025 : 0;
+    const now = lofiCtx.currentTime + swingDelay;
 
-        freqs.forEach((f, idx) => {
+    // 1. RHODES ELECTRIC PIANO CHORDS (Awal bar + strum lembut di tengah bar)
+    if (stepInBar === 0 || stepInBar === 4) {
+        const chordGainScale = stepInBar === 0 ? 1.0 : 0.55;
+        currentBar.chords.forEach((f, idx) => {
+            const strum = idx * 0.022; // Efek jari menekan tuts piano berurutan
             const osc = lofiCtx.createOscillator();
+            const subOsc = lofiCtx.createOscillator();
             const filter = lofiCtx.createBiquadFilter();
             const gain = lofiCtx.createGain();
 
-            osc.type = idx === 0 ? 'sine' : 'triangle';
-            osc.frequency.setValueAtTime(f * (1 + (Math.random() - 0.5) * 0.004), now);
+            osc.type = 'triangle';
+            subOsc.type = 'sine';
+            // Sedikit detune analog biar hangat
+            const detune = 1 + (Math.random() - 0.5) * 0.005;
+            osc.frequency.setValueAtTime(f * detune, now + strum);
+            subOsc.frequency.setValueAtTime(f * 2, now + strum);
 
             filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(950, now);
+            filter.frequency.setValueAtTime(1150, now + strum);
+            filter.frequency.exponentialRampToValueAtTime(520, now + strum + 2.4);
 
-            gain.gain.setValueAtTime(0.001, now);
-            gain.gain.linearRampToValueAtTime(0.14 / freqs.length, now + 0.15);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 2.6);
+            const peak = (0.16 / currentBar.chords.length) * chordGainScale;
+            gain.gain.setValueAtTime(0.001, now + strum);
+            gain.gain.linearRampToValueAtTime(peak, now + strum + 0.09);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + strum + 2.5);
+
+            const overtoneGain = lofiCtx.createGain();
+            overtoneGain.gain.setValueAtTime(0.18, now + strum);
 
             osc.connect(filter);
+            subOsc.connect(overtoneGain);
+            overtoneGain.connect(filter);
             filter.connect(gain);
             gain.connect(lofiMasterGain);
 
-            osc.start(now);
-            osc.stop(now + 2.7);
+            osc.start(now + strum);
+            subOsc.start(now + strum);
+            osc.stop(now + strum + 2.6);
+            subOsc.stop(now + strum + 2.6);
         });
     }
 
-    if (lofiStep % 4 === 0) {
+    // 2. WARM SUB-BASS (Ketukan 1 dan sinkopasi ketukan 5)
+    if (stepInBar === 0 || stepInBar === 5) {
+        const bassOsc = lofiCtx.createOscillator();
+        const bassFilter = lofiCtx.createBiquadFilter();
+        const bassGain = lofiCtx.createGain();
+
+        bassOsc.type = 'sine';
+        const bassFreq = stepInBar === 5 ? currentBar.bass * 1.5 : currentBar.bass;
+        bassOsc.frequency.setValueAtTime(bassFreq, now);
+
+        bassFilter.type = 'lowpass';
+        bassFilter.frequency.setValueAtTime(260, now);
+
+        const dur = stepInBar === 0 ? 1.5 : 0.7;
+        bassGain.gain.setValueAtTime(0.001, now);
+        bassGain.gain.linearRampToValueAtTime(stepInBar === 0 ? 0.24 : 0.14, now + 0.06);
+        bassGain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+        bassOsc.connect(bassFilter);
+        bassFilter.connect(bassGain);
+        bassGain.connect(lofiMasterGain);
+        bassOsc.start(now);
+        bassOsc.stop(now + dur + 0.05);
+    }
+
+    // 3. ANIME BELL / PIANO LEAD MELODY (Variasi tiap putaran agar tidak monoton)
+    const loopCycle = Math.floor(lofiStep / 64);
+    const melNote = currentBar.melody[stepInBar];
+    const shouldPlayMelody = melNote > 0 && ((loopCycle % 2 === 0) || (stepInBar % 2 === 0));
+    if (shouldPlayMelody) {
+        const melOsc = lofiCtx.createOscillator();
+        const melFilter = lofiCtx.createBiquadFilter();
+        const melGain = lofiCtx.createGain();
+
+        melOsc.type = 'sine';
+        // Variasi oktaf lembut di putaran tertentu
+        const octaveShift = (loopCycle % 3 === 2 && stepInBar === 0) ? 2 : 1;
+        melOsc.frequency.setValueAtTime(melNote * octaveShift, now);
+
+        melFilter.type = 'lowpass';
+        melFilter.frequency.setValueAtTime(1600, now);
+
+        melGain.gain.setValueAtTime(0.001, now);
+        melGain.gain.linearRampToValueAtTime(0.065, now + 0.04);
+        melGain.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+
+        melOsc.connect(melFilter);
+        melFilter.connect(melGain);
+        melGain.connect(lofiMasterGain);
+        melOsc.start(now);
+        melOsc.stop(now + 0.9);
+    }
+
+    // 4. BOOM-BAP KICK (Ketukan 0, 3, dan 4 untuk groove chillhop)
+    if (stepInBar === 0 || stepInBar === 3 || stepInBar === 4) {
         const kickOsc = lofiCtx.createOscillator();
         const kickGain = lofiCtx.createGain();
         kickOsc.type = 'sine';
-        kickOsc.frequency.setValueAtTime(110, now);
-        kickOsc.frequency.exponentialRampToValueAtTime(42, now + 0.14);
+        kickOsc.frequency.setValueAtTime(118, now);
+        kickOsc.frequency.exponentialRampToValueAtTime(40, now + 0.13);
 
-        kickGain.gain.setValueAtTime(0.28, now);
-        kickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        const kickVol = stepInBar === 3 ? 0.16 : 0.28; // Ghost kick lebih pelan
+        kickGain.gain.setValueAtTime(kickVol, now);
+        kickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.17);
 
         kickOsc.connect(kickGain);
         kickGain.connect(lofiMasterGain);
         kickOsc.start(now);
-        kickOsc.stop(now + 0.2);
+        kickOsc.stop(now + 0.19);
     }
 
-    if (lofiStep % 2 === 1) {
-        const bufferSize = lofiCtx.sampleRate * 0.04;
+    // 5. LOFI RIMSHOT SNARE (Ketukan 2 & 6)
+    if (stepInBar === 2 || stepInBar === 6) {
+        const bufSize = Math.floor(lofiCtx.sampleRate * 0.09);
+        const snareBuf = lofiCtx.createBuffer(1, bufSize, lofiCtx.sampleRate);
+        const sData = snareBuf.getChannelData(0);
+        for (let i = 0; i < bufSize; i++) sData[i] = Math.random() * 2 - 1;
+
+        const snareSrc = lofiCtx.createBufferSource();
+        snareSrc.buffer = snareBuf;
+
+        const bp = lofiCtx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.setValueAtTime(1450, now);
+        bp.Q.setValueAtTime(1.2, now);
+
+        const sGain = lofiCtx.createGain();
+        sGain.gain.setValueAtTime(0.11, now);
+        sGain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+        snareSrc.connect(bp);
+        bp.connect(sGain);
+        sGain.connect(lofiMasterGain);
+        snareSrc.start(now);
+    }
+
+    // 6. SHAKER / HI-HAT SWING (Setiap step dengan dinamika keras-pelan)
+    {
+        const bufferSize = Math.floor(lofiCtx.sampleRate * 0.035);
         const noiseBuffer = lofiCtx.createBuffer(1, bufferSize, lofiCtx.sampleRate);
         const data = noiseBuffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
@@ -4968,11 +5119,12 @@ function playLofiChordAndBeat() {
 
         const hp = lofiCtx.createBiquadFilter();
         hp.type = 'bandpass';
-        hp.frequency.setValueAtTime(4500, now);
+        hp.frequency.setValueAtTime(5200, now);
 
         const hatGain = lofiCtx.createGain();
-        hatGain.gain.setValueAtTime(0.04, now);
-        hatGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+        const hatVol = (stepInBar % 2 === 1) ? 0.045 : 0.02;
+        hatGain.gain.setValueAtTime(hatVol, now);
+        hatGain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
 
         noise.connect(hp);
         hp.connect(hatGain);
@@ -5004,6 +5156,7 @@ function stopAnimeLofi1Hour() {
     lofiIsPlaying = false;
     clearInterval(lofiBeatInterval);
     clearInterval(lofiCountdownInterval);
+    stopLofiVinylTexture();
 
     const localAudio = document.getElementById('lofi-local-audio-player');
     if (localAudio) localAudio.pause();
@@ -5042,12 +5195,13 @@ function toggleAnimeLofi1Hour() {
             lofiCtx = new AudioCtx();
             lofiMasterGain = lofiCtx.createGain();
             const slider = document.getElementById('lofi-volume-slider');
-            const vol = slider ? Number(slider.value) / 100 : 0.45;
-            lofiMasterGain.gain.setValueAtTime(vol * 0.35, lofiCtx.currentTime);
+            const vol = slider ? Number(slider.value) / 100 : 0.55;
+            lofiMasterGain.gain.setValueAtTime(vol * 0.48, lofiCtx.currentTime);
             lofiMasterGain.connect(lofiCtx.destination);
         }
         if (lofiCtx.state === 'suspended') lofiCtx.resume();
 
+        startLofiVinylTexture();
         lofiStep = 0;
         playLofiChordAndBeat();
         clearInterval(lofiBeatInterval);
