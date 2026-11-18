@@ -324,7 +324,7 @@ const SoundFX = {
             this.ambientGain = null;
         }
     }
-
+};
 function updateAudioIcon() {
     const wrap = document.getElementById('icon-audio-wrap');
     const btn = document.getElementById('btn-audio-toggle');
@@ -4286,7 +4286,8 @@ function syncHomeScreenWidget() {
                 p.maxHp || 100,
                 dailyPct
             );
-        } catch (e) {}
+        }
+    } catch (e) {}
 }
 
 function checkScheduledReminderTick() {
@@ -4867,7 +4868,7 @@ function renderTreasury() {
             }).join('');
         }
     }
-
+}
 // ==========================================
 // 12. ANCIENT GRIMOIRE READER (PDF IN DUNGEON)
 // ==========================================
