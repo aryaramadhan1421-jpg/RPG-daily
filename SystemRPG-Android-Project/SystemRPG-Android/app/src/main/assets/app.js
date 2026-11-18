@@ -5938,8 +5938,10 @@ function completeFingerprintUnlock() {
 })();
 
 // ==========================================
-// 16B. HUNTER TUTORIAL / GUIDE SYSTEM (FIXED)
+// 16B. HUNTER TUTORIAL / GUIDE SYSTEM
 // ==========================================
+const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
+
 const TUTORIAL_UI_LABELS = {
     id: {
         guideTag: 'PANDUAN SISTEM',
@@ -6005,46 +6007,63 @@ function getTutorialStepsData() {
     return TUTORIAL_STEPS_DICT[getTutorialLang()] || TUTORIAL_STEPS_DICT.id;
 }
 
-function ensureTutorialModalExists() {
-    let existing = document.getElementById('tutorial-modal');
-    if (existing) existing.remove();
+function createTutorialModalElement() {
+    const old = document.getElementById('tutorial-modal');
+    if (old) old.remove();
 
     const lang = getTutorialLang();
     const ui = TUTORIAL_UI_LABELS[lang] || TUTORIAL_UI_LABELS.id;
 
     const wrapper = document.createElement('div');
     wrapper.id = 'tutorial-modal';
-    wrapper.style.cssText = 'display: none; position: fixed; inset: 0; width: 100%; height: 100dvh; background: rgba(2, 6, 23, 0.94); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 9999999; align-items: center; justify-content: center; padding: 1rem; box-sizing: border-box; margin: 0; overflow-y: auto;';
+    wrapper.setAttribute('style', [
+        'position: fixed',
+        'top: 0',
+        'left: 0',
+        'right: 0',
+        'bottom: 0',
+        'width: 100vw',
+        'height: 100vh',
+        'background: rgba(2, 6, 23, 0.94)',
+        'z-index: 2147483647',
+        'display: flex',
+        'align-items: center',
+        'justify-content: center',
+        'padding: 16px',
+        'box-sizing: border-box',
+        'margin: 0'
+    ].join(' !important; ') + ' !important;');
+
     wrapper.innerHTML = `
-        <div style="width: 100%; max-width: 420px; border-radius: 1rem; border: 1px solid rgba(34, 211, 238, 0.55); background: #0f172a; padding: 1.25rem; box-shadow: 0 0 32px rgba(6, 182, 212, 0.28); color: #f8fafc; box-sizing: border-box; position: relative; z-index: 10000000;">
-            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e293b; padding-bottom: 0.75rem; margin-bottom: 1rem; gap: 0.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem; min-width: 0;">
-                    <span style="color: #22d3ee; font-size: 1.15rem; flex-shrink: 0;">💠</span>
+        <div style="width: 100%; max-width: 420px; border-radius: 16px; border: 1px solid rgba(34, 211, 238, 0.6); background: #0f172a; padding: 20px; box-shadow: 0 0 32px rgba(6, 182, 212, 0.35); color: #f8fafc; box-sizing: border-box;">
+            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e293b; padding-bottom: 12px; margin-bottom: 16px; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+                    <span style="color: #22d3ee; font-size: 18px; flex-shrink: 0;">💠</span>
                     <div style="min-width: 0;">
                         <div id="tut-guide-tag" style="font-size: 10px; font-family: monospace; letter-spacing: 0.12em; color: #22d3ee; text-transform: uppercase;">${ui.guideTag}</div>
-                        <h3 id="tut-step-title" style="font-size: 14.5px; font-weight: 700; color: #ffffff; margin: 2px 0 0 0; line-height: 1.3;">1. Selamat Datang di SYSTEM RPG</h3>
+                        <h3 id="tut-step-title" style="font-size: 15px; font-weight: 700; color: #ffffff; margin: 2px 0 0 0; line-height: 1.3;">1. Selamat Datang di SYSTEM RPG</h3>
                     </div>
                 </div>
-                <span id="tut-step-counter" style="font-size: 11px; font-family: monospace; padding: 0.25rem 0.6rem; border-radius: 999px; background: #083344; color: #67e8f9; border: 1px solid rgba(14, 116, 144, 0.6); flex-shrink: 0;">1 / 6</span>
+                <span id="tut-step-counter" style="font-size: 11px; font-family: monospace; padding: 4px 10px; border-radius: 999px; background: #083344; color: #67e8f9; border: 1px solid rgba(14, 116, 144, 0.6); flex-shrink: 0;">1 / 6</span>
             </div>
 
-            <div style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0.65rem 0.35rem; min-height: 165px; justify-content: center;">
-                <div id="tut-step-icon" style="font-size: 2.5rem; margin-bottom: 0.75rem;">⚡</div>
+            <div style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 10px 6px; min-height: 165px; justify-content: center;">
+                <div id="tut-step-icon" style="font-size: 40px; margin-bottom: 12px;">⚡</div>
                 <p id="tut-step-desc" style="font-size: 13px; color: #cbd5e1; line-height: 1.55; margin: 0;"></p>
-                <div id="tut-step-tip" style="margin-top: 0.85rem; font-size: 12px; color: #67e8f9; background: rgba(8, 51, 68, 0.55); border: 1px solid rgba(21, 94, 117, 0.65); border-radius: 0.55rem; padding: 0.6rem 0.75rem; width: 100%; box-sizing: border-box; line-height: 1.45;"></div>
+                <div id="tut-step-tip" style="margin-top: 14px; font-size: 12px; color: #67e8f9; background: rgba(8, 51, 68, 0.65); border: 1px solid rgba(21, 94, 117, 0.7); border-radius: 8px; padding: 10px 12px; width: 100%; box-sizing: border-box; line-height: 1.45;"></div>
             </div>
 
-            <div id="tut-dots" style="display: flex; justify-content: center; gap: 6px; margin: 0.75rem 0;"></div>
+            <div id="tut-dots" style="display: flex; justify-content: center; gap: 6px; margin: 12px 0;"></div>
 
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding-top: 0.75rem; border-top: 1px solid #1e293b; margin-top: 0.5rem;">
-                <button type="button" id="tut-skip-btn" style="padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: none; background: transparent; font-size: 12px; font-weight: 600; color: #94a3b8; cursor: pointer;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 12px; border-top: 1px solid #1e293b; margin-top: 8px;">
+                <button type="button" id="tut-skip-btn" style="padding: 8px 12px; border-radius: 8px; border: none; background: transparent; font-size: 12px; font-weight: 600; color: #94a3b8; cursor: pointer;">
                     ${ui.skip}
                 </button>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <button type="button" id="tut-prev-btn" style="padding: 0.5rem 0.85rem; border-radius: 0.5rem; border: 1px solid #334155; background: #1e293b; font-size: 12px; font-weight: 700; color: #e2e8f0; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" id="tut-prev-btn" style="padding: 8px 14px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; font-size: 12px; font-weight: 700; color: #e2e8f0; cursor: pointer;">
                         ${ui.prev}
                     </button>
-                    <button type="button" id="tut-next-btn" style="padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; background: #06b6d4; font-size: 12px; font-weight: 700; color: #020617; cursor: pointer;">
+                    <button type="button" id="tut-next-btn" style="padding: 8px 16px; border-radius: 8px; border: none; background: #06b6d4; font-size: 12px; font-weight: 700; color: #020617; cursor: pointer;">
                         ${ui.next}
                     </button>
                 </div>
@@ -6054,38 +6073,12 @@ function ensureTutorialModalExists() {
 
     document.body.appendChild(wrapper);
 
-    // Pasang event listener langsung agar tidak pernah gagal di WebView Android
-    document.getElementById('tut-skip-btn').addEventListener('click', () => closeTutorialModal(true));
-    document.getElementById('tut-prev-btn').addEventListener('click', () => prevTutorialStep());
-    document.getElementById('tut-next-btn').addEventListener('click', () => nextTutorialStep());
+    document.getElementById('tut-skip-btn').onclick = () => closeTutorialModal(true);
+    document.getElementById('tut-prev-btn').onclick = () => prevTutorialStep();
+    document.getElementById('tut-next-btn').onclick = () => nextTutorialStep();
 
     return wrapper;
 }
-
-window.openTutorialModal = function (startIndex = 0) {
-    if (!document.body) return;
-    // Tutup modal pengaturan jika terbuka supaya tidak tumpang tindih
-    const fontModal = document.getElementById('font-settings-modal');
-    if (fontModal) fontModal.classList.add('hidden');
-
-    const modal = ensureTutorialModalExists();
-    currentTutorialStep = Math.max(0, Math.min(startIndex, getTutorialStepsData().length - 1));
-    renderTutorialStep();
-    modal.classList.remove('hidden');
-    modal.style.setProperty('display', 'flex', 'important');
-    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
-};
-
-window.closeTutorialModal = function (markSeen = true) {
-    const modal = document.getElementById('tutorial-modal');
-    if (modal) {
-        modal.remove();
-    }
-    if (markSeen) {
-        localStorage.setItem('sysrpg_tutorial_seen', '1');
-    }
-    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
-};
 
 function renderTutorialStep() {
     const lang = getTutorialLang();
@@ -6095,47 +6088,56 @@ function renderTutorialStep() {
     if (!step) return;
 
     const total = stepsList.length;
-    const tagEl = document.getElementById('tut-guide-tag');
-    const titleEl = document.getElementById('tut-step-title');
-    const counterEl = document.getElementById('tut-step-counter');
-    const iconEl = document.getElementById('tut-step-icon');
-    const descEl = document.getElementById('tut-step-desc');
-    const tipEl = document.getElementById('tut-step-tip');
+    document.getElementById('tut-guide-tag').textContent = ui.guideTag;
+    document.getElementById('tut-step-title').textContent = step.title;
+    document.getElementById('tut-step-counter').textContent = `${currentTutorialStep + 1} / ${total}`;
+    document.getElementById('tut-step-icon').textContent = step.icon;
+    document.getElementById('tut-step-desc').textContent = step.desc;
+    document.getElementById('tut-step-tip').textContent = `💡 ${step.tip}`;
+    document.getElementById('tut-skip-btn').textContent = ui.skip;
+
     const dotsEl = document.getElementById('tut-dots');
-    const skipBtn = document.getElementById('tut-skip-btn');
+    dotsEl.innerHTML = stepsList.map((_, idx) => {
+        const active = idx === currentTutorialStep;
+        return `<span data-step="${idx}" style="cursor:pointer;width:${active ? '18px' : '6px'};height:6px;border-radius:999px;background:${active ? '#22d3ee' : '#334155'};transition:all 0.2s;"></span>`;
+    }).join('');
+
+    dotsEl.querySelectorAll('span[data-step]').forEach(dot => {
+        dot.onclick = () => {
+            currentTutorialStep = parseInt(dot.getAttribute('data-step'), 10) || 0;
+            renderTutorialStep();
+        };
+    });
+
     const prevBtn = document.getElementById('tut-prev-btn');
     const nextBtn = document.getElementById('tut-next-btn');
-
-    if (tagEl) tagEl.textContent = ui.guideTag;
-    if (titleEl) titleEl.textContent = step.title;
-    if (counterEl) counterEl.textContent = `${currentTutorialStep + 1} / ${total}`;
-    if (iconEl) iconEl.textContent = step.icon;
-    if (descEl) descEl.textContent = step.desc;
-    if (tipEl) tipEl.textContent = `💡 ${step.tip}`;
-    if (skipBtn) skipBtn.textContent = ui.skip;
-
-    if (dotsEl) {
-        dotsEl.innerHTML = stepsList.map((_, idx) => {
-            const active = idx === currentTutorialStep;
-            return `<span data-step="${idx}" style="cursor:pointer;width:${active ? '18px' : '6px'};height:6px;border-radius:999px;background:${active ? '#22d3ee' : '#334155'};transition:all 0.2s;"></span>`;
-        }).join('');
-
-        dotsEl.querySelectorAll('span[data-step]').forEach(dot => {
-            dot.addEventListener('click', () => {
-                currentTutorialStep = parseInt(dot.getAttribute('data-step'), 10) || 0;
-                renderTutorialStep();
-            });
-        });
-    }
-
-    if (prevBtn) {
-        prevBtn.textContent = ui.prev;
-        prevBtn.style.visibility = currentTutorialStep === 0 ? 'hidden' : 'visible';
-    }
-    if (nextBtn) {
-        nextBtn.textContent = currentTutorialStep === total - 1 ? ui.finish : ui.next;
-    }
+    prevBtn.textContent = ui.prev;
+    prevBtn.style.visibility = currentTutorialStep === 0 ? 'hidden' : 'visible';
+    nextBtn.textContent = currentTutorialStep === total - 1 ? ui.finish : ui.next;
 }
+
+window.openTutorialModal = function (startIndex = 0) {
+    try {
+        const fontModal = document.getElementById('font-settings-modal');
+        if (fontModal) fontModal.classList.add('hidden');
+
+        createTutorialModalElement();
+        currentTutorialStep = Math.max(0, Math.min(startIndex, getTutorialStepsData().length - 1));
+        renderTutorialStep();
+        if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+    } catch (err) {
+        alert('Error Tutorial: ' + err.message);
+    }
+};
+
+window.closeTutorialModal = function (markSeen = true) {
+    const modal = document.getElementById('tutorial-modal');
+    if (modal) modal.remove();
+    if (markSeen) {
+        localStorage.setItem(TUTORIAL_STORAGE_KEY, '1');
+    }
+    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+};
 
 window.nextTutorialStep = function () {
     const stepsList = getTutorialStepsData();
