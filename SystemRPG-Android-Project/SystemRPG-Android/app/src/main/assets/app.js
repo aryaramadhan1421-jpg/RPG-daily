@@ -5982,16 +5982,12 @@ let currentTutorialStep = 0;
 function ensureTutorialModalExists() {
     let existing = document.getElementById('tutorial-modal');
     if (existing) {
-        // Pindahkan paksa ke level paling luar (document.body) agar tidak terkurung modal lain
-        if (existing.parentElement !== document.body) {
-            document.body.appendChild(existing);
-        }
-        return existing;
+        existing.remove(); // Hapus yang lama kalau posisinya nyasar di bawah
     }
 
     const wrapper = document.createElement('div');
     wrapper.id = 'tutorial-modal';
-    wrapper.style.cssText = 'display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; background: rgba(2, 6, 23, 0.92); backdrop-filter: blur(8px); z-index: 999999; align-items: center; justify-content: center; padding: 1rem; box-sizing: border-box;';
+    wrapper.style.cssText = 'display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(2, 6, 23, 0.95); backdrop-filter: blur(8px); z-index: 9999999; align-items: center; justify-content: center; padding: 1rem; box-sizing: border-box; margin: 0;';
     wrapper.innerHTML = `
         <div style="width: 100%; max-width: 420px; border-radius: 1rem; border: 1px solid rgba(34, 211, 238, 0.55); background: #0f172a; padding: 1.25rem; box-shadow: 0 0 32px rgba(6, 182, 212, 0.28); color: #f8fafc; box-sizing: border-box;">
             <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e293b; padding-bottom: 0.75rem; margin-bottom: 1rem;">
