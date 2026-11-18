@@ -51,6 +51,9 @@ class SystemStreakWidget : AppWidgetProvider() {
             val level = prefs.getInt("level", 1)
             val dailyPct = prefs.getInt("dailyPct", 0)
             val weekHistory = prefs.getString("weekHistory", "0000000") ?: "0000000"
+            
+            // Mengambil target dinamis dari SharedPreferences (default 70 jika belum ada)
+            val targetPct = prefs.getInt("dailyTargetPct", 70)
 
             val views = RemoteViews(context.packageName, R.layout.system_streak_widget)
 
@@ -58,20 +61,23 @@ class SystemStreakWidget : AppWidgetProvider() {
             views.setTextViewText(R.id.widget_streak, "🔥 $streak $dayWord")
             views.setTextColor(
                 R.id.widget_streak,
-                if (dailyPct >= 70) Color.parseColor("#FB923C") else Color.parseColor("#38BDF8")
+                if (dailyPct >= targetPct) Color.parseColor("#FB923C") else Color.parseColor("#38BDF8")
             )
 
             views.setTextViewText(R.id.widget_rank_lv, "$rank • Lv.$level")
 
-            val statusText = if (dailyPct >= 70) {
+            // Status teks bersih tanpa memunculkan tulisan target, 
+            // namun evaluasi aman/tidaknya tetap menggunakan variabel targetPct dinamis
+            val statusText = if (dailyPct >= targetPct) {
                 "Daily Quest: $dailyPct% Clear! • Streak Aman"
             } else {
-                "Daily Quest: $dailyPct% Clear! (Target ≥70%)"
+                "Daily Quest: $dailyPct% Clear!"
             }
+            
             views.setTextViewText(R.id.widget_daily_status, statusText)
             views.setTextColor(
                 R.id.widget_daily_status,
-                if (dailyPct >= 70) Color.parseColor("#4ADE80") else Color.parseColor("#CBD5E1")
+                if (dailyPct >= targetPct) Color.parseColor("#4ADE80") else Color.parseColor("#CBD5E1")
             )
 
             val dayIconIds = intArrayOf(
