@@ -6470,33 +6470,114 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
 (function () {
     let tutStep = 0;
 
+   let highlightedEl = null;
+
+    function playTutorialSound(type) {
+        try {
+            if (typeof SoundFX !== 'undefined' && SoundFX.muted) return;
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+            const now = ctx.currentTime;
+
+            const tones = type === 'finish'
+                ? [523.25, 659.25, 783.99, 1046.50]
+                : type === 'open'
+                ? [440, 587.33]
+                : type === 'back'
+                ? [420, 340]
+                : [520, 660];
+
+            tones.forEach((freq, i) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                const start = now + i * 0.055;
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, start);
+                gain.gain.setValueAtTime(0.08, start);
+                gain.gain.exponentialRampToValueAtTime(0.001, start + 0.13);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(start);
+                osc.stop(start + 0.14);
+            });
+        } catch (e) {}
+    }
+
+    function clearTutorialSpotlight() {
+        if (highlightedEl) {
+            highlightedEl.style.outline = '';
+            highlightedEl.style.outlineOffset = '';
+            highlightedEl.style.boxShadow = highlightedEl.dataset.prevShadow || '';
+            highlightedEl.style.position = highlightedEl.dataset.prevPos || '';
+            highlightedEl.style.zIndex = highlightedEl.dataset.prevZ || '';
+            highlightedEl = null;
+        }
+    }
+
+    function switchAndHighlightFeature(tabName, targetSelectors) {
+        clearTutorialSpotlight();
+
+        // Pindah ke tab asli agar pengguna melihat langsung fiturnya
+        if (tabName) {
+            if (typeof switchTab === 'function') {
+                try { switchTab(tabName); } catch (e) {}
+            } else {
+                const tabBtn = document.querySelector(`[data-tab="${tabName}"], #tab-${tabName}, button[onclick*="'${tabName}'"]`);
+                if (tabBtn) tabBtn.click();
+            }
+        }
+
+        // Cari elemen fitur yang ingin disorot dan beri bingkai cahaya cyan
+        setTimeout(() => {
+            if (!Array.isArray(targetSelectors)) return;
+            for (const sel of targetSelectors) {
+                const el = document.querySelector(sel);
+                if (el && el.offsetParent !== null) {
+                    el.dataset.prevShadow = el.style.boxShadow || '';
+                    el.dataset.prevPos = el.style.position || '';
+                    el.dataset.prevZ = el.style.zIndex || '';
+                    el.style.outline = '2px solid #22d3ee';
+                    el.style.outlineOffset = '3px';
+                    el.style.boxShadow = '0 0 24px rgba(34, 211, 238, 0.55)';
+                    if (getComputedStyle(el).position === 'static') {
+                        el.style.position = 'relative';
+                    }
+                    el.style.zIndex = '999991';
+                    highlightedEl = el;
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    break;
+                }
+            }
+        }, 80);
+    }
+
     const TUT_DATA = {
         id: [
-            { icon: '⚔️', title: '1. Selamat Datang, Hunter!', desc: 'SYSTEM RPG mengubah kebiasaan harian dan target hidupmu menjadi misi layaknya game RPG.', tip: 'Tips: Pantau Level, HP (Nyawa), dan Rank kamu di tab STATUS.' },
-            { icon: '📋', title: '2. Quest Board & Daily Habit', desc: 'Buka tab QUESTS untuk mencentang misi harian. Selesaikan minimal 80% Daily Quest agar Streak aman dan HP tidak berkurang.', tip: 'Tips: Kamu bisa menambah misi baru atau mengatur jadwal hari aktifnya.' },
-            { icon: '⏳', title: '3. Dungeon Deep Focus', desc: 'Masuk ke tab DUNGEON saat ingin belajar atau bekerja tanpa gangguan. Kamu juga bisa membaca PDF & memutar Anime Lofi Radio di dalamnya.', tip: 'Tips: Jangan menyerah sebelum timer habis agar tidak terkena penalti -10 HP!' },
-            { icon: '🛒', title: '4. System Shop & Armory', desc: 'Tukarkan Gold hasil kerja kerasmu di tab SHOP dengan Potion pemulih HP, Relic pasif, Peti Misteri, atau hadiah dunia nyata.', tip: 'Tips: Tingkatkan atribut CHR untuk mendapatkan diskon otomatis di Shop.' },
-            { icon: '💰', title: '5. Treasury Vault', desc: 'Catat pemasukan dan pengeluaranmu di tab TREASURY menggunakan kalkulator bawaan untuk melatih kedisiplinan finansial.', tip: 'Tips: Mencatat transaksi memberi bonus XP & atribut WIS (maks 3x/hari).' },
-            { icon: '🌙', title: '6. Evaluasi Harian', desc: 'Di akhir hari, tekan tombol "Evaluasi & Lanjut Hari" di tab STATUS untuk merekap progresmu dan melanjutkannya ke hari berikutnya.', tip: 'Sistem siap. Selamat berjuang naik ke Rank tertinggi, Hunter!' }
+            { tab: 'status', targets: ['#hp-bar', '#player-name-display'], icon: '⚔️', title: '1. Selamat Datang, Hunter!', desc: 'Lihat bagian atas layar: ini adalah profil Hunter, HP (Nyawa), XP, dan atribut STR/INT/WIS/CHR milikmu.', tip: 'Tips: Pantau Level, HP, dan Hunter Rank kamu di tab STATUS ini.' },
+            { tab: 'quests', targets: ['#quest-list', '#tab-content-quests'], icon: '📋', title: '2. Quest Board & Daily Habit', desc: 'Tab QUESTS terbuka di atas! Centang misi harianmu di sini. Selesaikan minimal 80% Daily Quest agar Streak aman.', tip: 'Tips: Kamu bisa menambah misi baru atau mengatur jadwal hari aktifnya.' },
+            { tab: 'dungeon', targets: ['#dungeon-timer-text', '#tab-content-dungeon'], icon: '⏳', title: '3. Dungeon Deep Focus', desc: 'Ini ruang DUNGEON untuk fokus belajar/kerja, lengkap dengan Grimoire PDF Reader & Anime Lofi Radio di bawahnya.', tip: 'Tips: Jangan menyerah sebelum timer habis agar tidak terkena penalti -10 HP!' },
+            { tab: 'shop', targets: ['#shop-items-container', '#tab-content-shop'], icon: '🛒', title: '4. System Shop & Armory', desc: 'Di tab SHOP ini kamu bisa menukar Gold dengan Potion pemulih HP, Relic pasif, Peti Misteri, atau hadiah dunia nyata.', tip: 'Tips: Tingkatkan atribut CHR untuk mendapatkan diskon otomatis di Shop.' },
+            { tab: 'treasury', targets: ['#tr-net-balance', '#tab-content-treasury'], icon: '💰', title: '5. Treasury Vault & Grafik', desc: 'Ini brankas keuanganmu! Catat pemasukan/pengeluaran, lihat Pie Chart kategori, dan gunakan kalkulator bawaan.', tip: 'Tips: Mencatat transaksi memberi bonus XP & atribut WIS (maks 3x/hari).' },
+            { tab: 'status', targets: ['#btn-evaluate-day', '#player-rank-badge'], icon: '🌙', title: '6. Evaluasi Harian', desc: 'Kembali ke tab STATUS: di akhir hari, tekan tombol "Evaluasi & Lanjut Hari" untuk merekap progresmu ke hari berikutnya.', tip: 'Sistem siap. Selamat berjuang naik ke Rank tertinggi, Hunter!' }
         ],
         en: [
-            { icon: '⚔️', title: '1. Welcome, Hunter!', desc: 'SYSTEM RPG turns your daily habits and life goals into real-life RPG quests.', tip: 'Tip: Track your Level, HP, and Hunter Rank in the STATUS tab.' },
-            { icon: '📋', title: '2. Quest Board & Daily Habits', desc: 'Open the QUESTS tab to check off your missions. Complete at least 80% of Daily Quests to keep your Streak safe.', tip: 'Tip: You can create custom quests and set specific active days.' },
-            { icon: '⏳', title: '3. Dungeon Deep Focus', desc: 'Enter the DUNGEON tab for distraction-free study or work sessions, complete with a PDF Reader and Anime Lofi Radio.', tip: 'Tip: Do not abort early or you will suffer a -10 HP penalty!' },
-            { icon: '🛒', title: '4. System Shop & Armory', desc: 'Spend your earned Gold in the SHOP on HP Potions, passive Relics, Mystery Chests, or real-world rewards.', tip: 'Tip: Level up CHR to unlock automatic Shop discounts.' },
-            { icon: '💰', title: '5. Treasury Vault', desc: 'Log your income and expenses in TREASURY using the built-in calculator to build financial discipline.', tip: 'Tip: Logging transactions grants bonus XP & WIS (up to 3x/day).' },
-            { icon: '🌙', title: '6. Daily Evaluation', desc: 'At the end of the day, tap "Evaluasi & Lanjut Hari" in STATUS to review your progress and advance to the next day.', tip: 'System ready. Rise to the highest Rank, Hunter!' }
+            { tab: 'status', targets: ['#hp-bar', '#player-name-display'], icon: '⚔️', title: '1. Welcome, Hunter!', desc: 'Look above: this is your Hunter profile, HP, XP, and STR/INT/WIS/CHR attributes.', tip: 'Tip: Track your Level, HP, and Hunter Rank in the STATUS tab.' },
+            { tab: 'quests', targets: ['#quest-list', '#tab-content-quests'], icon: '📋', title: '2. Quest Board & Daily Habits', desc: 'The QUESTS tab is now open above! Check off your missions and complete at least 80% to keep your Streak safe.', tip: 'Tip: You can create custom quests and set specific active days.' },
+            { tab: 'dungeon', targets: ['#dungeon-timer-text', '#tab-content-dungeon'], icon: '⏳', title: '3. Dungeon Deep Focus', desc: 'This is the DUNGEON room for distraction-free focus sessions, complete with a PDF Reader and Anime Lofi Radio.', tip: 'Tip: Do not abort early or you will suffer a -10 HP penalty!' },
+            { tab: 'shop', targets: ['#shop-items-container', '#tab-content-shop'], icon: '🛒', title: '4. System Shop & Armory', desc: 'In the SHOP tab above, spend earned Gold on HP Potions, passive Relics, Mystery Chests, or real-world rewards.', tip: 'Tip: Level up CHR to unlock automatic Shop discounts.' },
+            { tab: 'treasury', targets: ['#tr-net-balance', '#tab-content-treasury'], icon: '💰', title: '5. Treasury Vault & Charts', desc: 'Your financial vault! Log income/expenses, inspect the category Pie Chart, and use the built-in calculator.', tip: 'Tip: Logging transactions grants bonus XP & WIS (up to 3x/day).' },
+            { tab: 'status', targets: ['#btn-evaluate-day', '#player-rank-badge'], icon: '🌙', title: '6. Daily Evaluation', desc: 'Back on STATUS: at the end of the day, tap "Evaluasi & Lanjut Hari" to review your progress and advance the day.', tip: 'System ready. Rise to the highest Rank, Hunter!' }
         ],
         ja: [
-            { icon: '⚔️', title: '1. ようこそ、ハンター！', desc: 'SYSTEM RPGは毎日の習慣や目標をRPGクエストに変えるシステムです。', tip: 'ヒント：STATUSタブでレベル、HP、ランクを確認できます。' },
-            { icon: '📋', title: '2. クエストボード', desc: 'QUESTSタブで毎日のミッションを完了しましょう。80%以上達成するとストリークが維持されます。', tip: 'ヒント：新しいクエストや曜日スケジュールも自由に作成できます。' },
-            { icon: '⏳', title: '3. ダンジョン集中モード', desc: 'DUNGEONタブで集中タイマーを開始。PDFリーダーやアニメLo-Fiラジオも利用できます。', tip: 'ヒント：途中で諦めるとHPが10減少するので注意！' },
-            { icon: '🛒', title: '4. システムショップ', desc: '獲得したゴールドでHPポーション、レリック、ミステリーボックス、現実のご褒美と交換できます。', tip: 'ヒント：CHRを上げるとショップが割引されます。' },
-            { icon: '💰', title: '5. トレジャリー（家計簿）', desc: 'TREASURYタブの電卓を使って収入と支出を記録し、資産管理を習慣化しましょう。', tip: 'ヒント：取引を記録するとボーナスXPとWISを獲得できます（1日3回まで）。' },
-            { icon: '🌙', title: '6. 1日の評価', desc: '1日の終わりにSTATUSタブの「Evaluasi & Lanjut Hari」を押して次の日へ進みましょう。', tip: 'システム準備完了。最高ランクを目指せ、ハンター！' }
+            { tab: 'status', targets: ['#hp-bar', '#player-name-display'], icon: '⚔️', title: '1. ようこそ、ハンター！', desc: '上の画面があなたのステータスです。レベル、HP、XP、各能力値を確認できます。', tip: 'ヒント：STATUSタブでレベル、HP、ランクを確認できます。' },
+            { tab: 'quests', targets: ['#quest-list', '#tab-content-quests'], icon: '📋', title: '2. クエストボード', desc: 'QUESTSタブが表示されています！毎日のミッションを80%以上達成するとストリークが維持されます。', tip: 'ヒント：新しいクエストや曜日スケジュールも自由に作成できます。' },
+            { tab: 'dungeon', targets: ['#dungeon-timer-text', '#tab-content-dungeon'], icon: '⏳', title: '3. ダンジョン集中モード', desc: 'ここは集中タイマーのDUNGEONタブです。PDFリーダーやアニメLo-Fiラジオも利用できます。', tip: 'ヒント：途中で諦めるとHPが10減少するので注意！' },
+            { tab: 'shop', targets: ['#shop-items-container', '#tab-content-shop'], icon: '🛒', title: '4. システムショップ', desc: '上のSHOPタブで、獲得したゴールドをHPポーションやレリック、現実のご褒美と交換できます。', tip: 'ヒント：CHRを上げるとショップが割引されます。' },
+            { tab: 'treasury', targets: ['#tr-net-balance', '#tab-content-treasury'], icon: '💰', title: '5. トレジャリー（家計簿）', desc: '家計簿タブです！電卓やカテゴリ別円グラフで収入と支出をスマートに管理できます。', tip: 'ヒント：取引を記録するとボーナスXPとWISを獲得できます（1日3回まで）。' },
+            { tab: 'status', targets: ['#btn-evaluate-day', '#player-rank-badge'], icon: '🌙', title: '6. 1日の評価', desc: 'STATUSタブに戻りました。1日の終わりに「Evaluasi & Lanjut Hari」を押して次の日へ進みましょう。', tip: 'システム準備完了。最高ランクを目指せ、ハンター！' }
         ]
     };
-
     function detectActiveLang() {
         // Cek tombol bahasa yang sedang aktif di modal pengaturan (paling akurat)
         if (document.getElementById('lang-btn-ja')?.style.borderColor.includes('6, 182, 212') ||
@@ -6567,10 +6648,25 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
         dots.innerHTML = steps.map((_, idx) =>
             '<span style="width:' + (idx === tutStep ? '18px' : '7px') + ';height:7px;border-radius:99px;background:' + (idx === tutStep ? '#22d3ee' : '#334155') + ';transition:all .2s;"></span>'
         ).join('');
+
+        // Buka tab & beri sorotan pada fitur yang sedang dijelaskan
+        switchAndHighlightFeature(item.tab, item.targets);
+    }
+
+    function closeTutorialTour(playDoneSound) {
+        playTutorialSound(playDoneSound ? 'finish' : 'back');
+        clearTutorialSpotlight();
+        localStorage.setItem('sysrpg_tutorial_v2', 'true');
+        const box = document.getElementById('sysrpg-force-tutorial');
+        if (box) box.remove();
+        if (typeof switchTab === 'function') {
+            try { switchTab('status'); } catch (e) {}
+        }
     }
 
     window.openTutorialModal = function (startIndex = 0) {
         if (typeof startIndex !== 'number') startIndex = 0;
+        playTutorialSound('open');
 
         // Tutup modal pengaturan font jika sedang terbuka
         const fontModal = document.getElementById('font-settings-modal');
@@ -6580,27 +6676,30 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
         if (!box) {
             box = document.createElement('div');
             box.id = 'sysrpg-force-tutorial';
-            box.setAttribute('style', 'position:fixed;inset:0;width:100vw;height:100vh;background:rgba(2,6,23,0.92);backdrop-filter:blur(8px);z-index:999999;display:flex;align-items:center;justify-content:center;padding:1rem;box-sizing:border-box;');
+            // Posisikan di bawah layar dengan backdrop semi-transparan agar fitur tab di atas terlihat jelas
+            box.setAttribute('style', 'position:fixed;inset:0;width:100vw;height:100vh;background:rgba(2,6,23,0.42);z-index:999999;display:flex;align-items:flex-end;justify-content:center;padding:0.85rem;box-sizing:border-box;');
             box.innerHTML = `
-                <div style="width:100%;max-width:400px;background:#0f172a;border:1.5px solid #22d3ee;border-radius:1rem;padding:1.25rem;box-shadow:0 0 30px rgba(6,182,212,0.35);color:#f8fafc;box-sizing:border-box;font-family:inherit;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1e293b;padding-bottom:0.75rem;margin-bottom:1rem;">
-                        <div>
-                            <div style="font-size:10px;letter-spacing:0.15em;color:#22d3ee;font-weight:700;">💠 SYSTEM GUIDE</div>
-                            <h3 id="sft-title" style="font-size:15px;font-weight:800;color:#fff;margin:2px 0 0 0;"></h3>
+                <div style="width:100%;max-width:420px;background:rgba(15,23,42,0.97);backdrop-filter:blur(10px);border:1.5px solid #22d3ee;border-radius:1rem;padding:1rem 1.15rem;box-shadow:0 -4px 32px rgba(6,182,212,0.4);color:#f8fafc;box-sizing:border-box;font-family:inherit;margin-bottom:0.35rem;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1e293b;padding-bottom:0.55rem;margin-bottom:0.65rem;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span id="sft-icon" style="font-size:1.45rem;"></span>
+                            <div>
+                                <div style="font-size:9px;letter-spacing:0.15em;color:#22d3ee;font-weight:700;">💠 SYSTEM INTERACTIVE TOUR</div>
+                                <h3 id="sft-title" style="font-size:14px;font-weight:800;color:#fff;margin:1px 0 0 0;"></h3>
+                            </div>
                         </div>
                         <span id="sft-counter" style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:#083344;color:#67e8f9;border:1px solid #0e7490;"></span>
                     </div>
-                    <div style="text-align:center;padding:0.5rem 0.25rem;">
-                        <div id="sft-icon" style="font-size:2.75rem;margin-bottom:0.65rem;"></div>
-                        <p id="sft-desc" style="font-size:13px;color:#cbd5e1;line-height:1.55;margin:0;"></p>
-                        <div id="sft-tip" style="margin-top:0.85rem;font-size:11.5px;color:#67e8f9;background:rgba(8,51,68,0.65);border:1px solid rgba(34,211,238,0.35);border-radius:0.65rem;padding:0.6rem 0.75rem;line-height:1.45;"></div>
+                    <div style="text-align:left;padding:0.15rem 0;">
+                        <p id="sft-desc" style="font-size:12.5px;color:#e2e8f0;line-height:1.5;margin:0;"></p>
+                        <div id="sft-tip" style="margin-top:0.6rem;font-size:11px;color:#67e8f9;background:rgba(8,51,68,0.65);border:1px solid rgba(34,211,238,0.35);border-radius:0.55rem;padding:0.45rem 0.65rem;line-height:1.4;"></div>
                     </div>
-                    <div id="sft-dots" style="display:flex;justify-content:center;gap:6px;margin:1rem 0;"></div>
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #1e293b;padding-top:0.75rem;">
-                        <button type="button" id="sft-skip" style="background:transparent;border:none;color:#94a3b8;font-size:12px;font-weight:700;cursor:pointer;padding:6px 8px;">Lewati</button>
+                    <div id="sft-dots" style="display:flex;justify-content:center;gap:6px;margin:0.7rem 0;"></div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #1e293b;padding-top:0.6rem;">
+                        <button type="button" id="sft-skip" style="background:transparent;border:none;color:#94a3b8;font-size:12px;font-weight:700;cursor:pointer;padding:5px 6px;">Lewati</button>
                         <div style="display:flex;gap:8px;">
-                            <button type="button" id="sft-prev" style="background:#1e293b;border:1px solid #334155;color:#e2e8f0;font-size:12px;font-weight:700;border-radius:0.6rem;padding:7px 12px;cursor:pointer;">← Kembali</button>
-                            <button type="button" id="sft-next" style="background:#06b6d4;border:none;color:#020617;font-size:12px;font-weight:800;border-radius:0.6rem;padding:7px 14px;cursor:pointer;">Lanjut →</button>
+                            <button type="button" id="sft-prev" style="background:#1e293b;border:1px solid #334155;color:#e2e8f0;font-size:12px;font-weight:700;border-radius:0.6rem;padding:6px 11px;cursor:pointer;">← Kembali</button>
+                            <button type="button" id="sft-next" style="background:#06b6d4;border:none;color:#020617;font-size:12px;font-weight:800;border-radius:0.6rem;padding:6px 14px;cursor:pointer;">Lanjut →</button>
                         </div>
                     </div>
                 </div>
@@ -6608,20 +6707,23 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
             document.body.appendChild(box);
 
             box.querySelector('#sft-skip').onclick = function () {
-                localStorage.setItem('sysrpg_tutorial_v2', 'true');
-                box.remove();
+                closeTutorialTour(false);
             };
             box.querySelector('#sft-prev').onclick = function () {
-                if (tutStep > 0) { tutStep--; renderBox(); }
+                if (tutStep > 0) {
+                    playTutorialSound('back');
+                    tutStep--;
+                    renderBox();
+                }
             };
             box.querySelector('#sft-next').onclick = function () {
                 const total = getSteps().length;
                 if (tutStep < total - 1) {
+                    playTutorialSound('next');
                     tutStep++;
                     renderBox();
                 } else {
-                    localStorage.setItem('sysrpg_tutorial_v2', 'true');
-                    box.remove();
+                    closeTutorialTour(true);
                 }
             };
         }
@@ -6629,7 +6731,6 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
         tutStep = Math.max(0, Math.min(startIndex, getSteps().length - 1));
         renderBox();
     };
-
   // Perbarui bahasa tombol panduan saat bahasa diganti & tangkap klik tombol panduan
     document.addEventListener('click', function (e) {
         const btn = e.target.closest('button');
