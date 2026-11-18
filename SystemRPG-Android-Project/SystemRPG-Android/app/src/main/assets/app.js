@@ -1604,6 +1604,7 @@ function renderAll() {
     if (typeof renderReminderUI === 'function') renderReminderUI();
     if (typeof renderTreasury === 'function') renderTreasury();
     if (typeof renderGrimoireBookmarks === 'function') renderGrimoireBookmarks();
+    if (typeof syncHomeScreenWidget === 'function') syncHomeScreenWidget();
 }
 
 function renderStatus() {
@@ -3997,6 +3998,10 @@ function renderReminderUI() {
             btn.style.cssText = 'flex: 1; font-weight: 700; font-size: 0.75rem; padding: 0.55rem 0.65rem; border-radius: 0.75rem; background: rgba(6,182,212,0.18); color: #67e8f9; border: 1px solid rgba(6,182,212,0.45);';
         }
     }
+
+    if (rem.enabled && typeof syncSystemReminders === 'function') {
+        syncSystemReminders();
+    }
 }
 
 function saveReminders() {
@@ -4142,6 +4147,27 @@ function cancelNativeSystemReminders() {
     try {
         if (window.AndroidBridge && typeof window.AndroidBridge.cancelDailyReminders === 'function') {
             window.AndroidBridge.cancelDailyReminders();
+        }
+    } catch (e) {}
+}
+
+function syncHomeScreenWidget() {
+    try {
+        if (!window.AndroidBridge || typeof gameState === 'undefined' || !gameState.player) return;
+        const p = gameState.player;
+        const rankObj = (typeof getPlayerRank === 'function') ? getPlayerRank(p.level) : { title: 'E-Rank' };
+        const summary = (typeof getPendingDailySummary === 'function') ? getPendingDailySummary() : { done: 0, total: 0 };
+        const dailyPct = summary.total > 0 ? Math.round((summary.done / summary.total) * 100) : 0;
+
+        if (typeof window.AndroidBridge.updateWidgetData === 'function') {
+            window.AndroidBridge.updateWidgetData(
+                p.streak || 0,
+                rankObj.title || 'E-Rank',
+                p.level || 1,
+                p.hp || 100,
+                p.maxHp || 100,
+                dailyPct
+            );
         }
     } catch (e) {}
 }
