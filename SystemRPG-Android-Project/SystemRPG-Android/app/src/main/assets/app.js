@@ -5549,6 +5549,12 @@ function triggerFingerprintScan() {
     };
 
     const ORIGINAL_TEXT_MAP = new WeakMap();
+    const TRANSLATED_CACHE = {
+        id: new Map(),
+        en: new Map(),
+        ja: new Map()
+    };
+    const NO_LETTER_RE = /^[^A-Za-z\u3040-\u30ff\u4e00-\u9faf]+$/;
 
     function getCurrentLang() {
         const stored = localStorage.getItem(LANG_KEY_PRIMARY) || localStorage.getItem(LANG_KEY_LEGACY) || (typeof gameState !== 'undefined' && gameState.language) || 'id';
@@ -5557,22 +5563,34 @@ function triggerFingerprintScan() {
 
     function translateString(rawText, targetLang) {
         if (!rawText || typeof rawText !== 'string') return rawText;
+        if (rawText.length > 600) return rawText;
         const trimmed = rawText.trim();
-        if (!trimmed) return rawText;
+        if (!trimmed || NO_LETTER_RE.test(trimmed)) return rawText;
+
+        const cache = TRANSLATED_CACHE[targetLang];
+        if (cache && cache.has(rawText)) {
+            return cache.get(rawText);
+        }
 
         const baseIdKey = REVERSE_MAP[trimmed];
         if (baseIdKey) {
             const translated = targetLang === 'id'
                 ? baseIdKey
                 : (DICTIONARY[targetLang] && DICTIONARY[targetLang][baseIdKey]) || baseIdKey;
-            return rawText.replace(trimmed, translated);
+            const out = rawText.replace(trimmed, translated);
+            if (cache) cache.set(rawText, out);
+            return out;
         }
 
-        if (targetLang === 'id') return rawText;
+        if (targetLang === 'id') {
+            if (cache) cache.set(rawText, rawText);
+            return rawText;
+        }
 
         let result = rawText;
         const rules = PATTERN_RULES[targetLang] || [];
-        for (const rule of rules) {
+        for (let i = 0; i < rules.length; i++) {
+            const rule = rules[i];
             if (rule.regex.test(result)) {
                 rule.regex.lastIndex = 0;
                 result = result.replace(rule.regex, rule.replace);
@@ -5580,13 +5598,16 @@ function triggerFingerprintScan() {
         }
 
         if (DICTIONARY[targetLang] && SORTED_DICT_KEYS[targetLang]) {
-            for (const idPhrase of SORTED_DICT_KEYS[targetLang]) {
-                if (idPhrase.length >= 4 && result.includes(idPhrase)) {
+            const keys = SORTED_DICT_KEYS[targetLang];
+            for (let i = 0; i < keys.length; i++) {
+                const idPhrase = keys[i];
+                if (idPhrase.length >= 4 && result.indexOf(idPhrase) !== -1) {
                     result = result.split(idPhrase).join(DICTIONARY[targetLang][idPhrase]);
                 }
             }
         }
 
+        if (cache) cache.set(rawText, result);
         return result;
     }
 
@@ -5644,7 +5665,7 @@ function triggerFingerprintScan() {
         }
 
         if (node.nodeType === Node.ELEMENT_NODE) {
-            if (['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(node.tagName)) return;
+            if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'SVG'].includes(node.tagName)) return;
 
             if (['TEXTAREA', 'INPUT'].includes(node.tagName)) {
                 if (node.hasAttribute('placeholder')) {
@@ -5671,7 +5692,10 @@ function triggerFingerprintScan() {
                 }
             }
 
-            node.childNodes.forEach((child) => translateNode(child, targetLang));
+            const children = node.childNodes;
+            for (let i = 0; i < children.length; i++) {
+                translateNode(children[i], targetLang);
+            }
         }
     }
 
@@ -5684,12 +5708,41 @@ function triggerFingerprintScan() {
     }
 
     let isApplying = false;
+    let observerStarted = false;
+
+    const observer = new MutationObserver((mutations) => {
+        if (isApplying) return;
+        const lang = getCurrentLang();
+        if (lang === 'id') return;
+        isApplying = true;
+        try {
+            observer.disconnect();
+            for (let i = 0; i < mutations.length; i++) {
+                const mutation = mutations[i];
+                if (mutation.type === 'childList') {
+                    for (let j = 0; j < mutation.addedNodes.length; j++) {
+                        const added = mutation.addedNodes[j];
+                        if (added.nodeType === Node.ELEMENT_NODE) {
+                            translateMixedHtmlBlocks(added, lang);
+                        }
+                        translateNode(added, lang);
+                    }
+                }
+            }
+        } finally {
+            isApplying = false;
+            if (observerStarted && document.body) {
+                observer.observe(document.body, { childList: true, subtree: true });
+            }
+        }
+    });
 
     function applyAppLanguage(forcedLang) {
         if (isApplying) return;
         const lang = ['id', 'en', 'ja'].includes(forcedLang) ? forcedLang : getCurrentLang();
         isApplying = true;
         try {
+            if (observerStarted) observer.disconnect();
             localStorage.setItem(LANG_KEY_PRIMARY, lang);
             localStorage.setItem(LANG_KEY_LEGACY, lang);
             document.documentElement.lang = lang;
@@ -5701,18 +5754,30 @@ function triggerFingerprintScan() {
             }
         } finally {
             isApplying = false;
+            if (observerStarted && document.body) {
+                observer.observe(document.body, { childList: true, subtree: true });
+            }
         }
     }
 
+    let lastLangSwitchTs = 0;
+    let lastLangSwitchVal = '';
+
     function setAppLanguage(lang) {
         const validLang = ['id', 'en', 'ja'].includes(lang) ? lang : 'id';
+        const now = Date.now();
+        if (validLang === lastLangSwitchVal && (now - lastLangSwitchTs) < 250) {
+            return;
+        }
+        lastLangSwitchVal = validLang;
+        lastLangSwitchTs = now;
+
         localStorage.setItem(LANG_KEY_PRIMARY, validLang);
         localStorage.setItem(LANG_KEY_LEGACY, validLang);
         if (typeof gameState !== 'undefined') {
             gameState.language = validLang;
             if (typeof saveState === 'function') saveState();
         }
-        applyAppLanguage(validLang);
         if (typeof renderAll === 'function') renderAll();
         applyAppLanguage(validLang);
 
@@ -5739,43 +5804,13 @@ function triggerFingerprintScan() {
         };
     }
 
-    const observer = new MutationObserver((mutations) => {
-        if (isApplying) return;
-        const lang = getCurrentLang();
-        isApplying = true;
-        try {
-            mutations.forEach((mutation) => {
-                if (mutation.type === 'childList') {
-                    mutation.addedNodes.forEach((added) => {
-                        if (added.nodeType === Node.ELEMENT_NODE) {
-                            translateMixedHtmlBlocks(added, lang);
-                        }
-                        if (lang !== 'id') translateNode(added, lang);
-                    });
-                } else if (mutation.type === 'characterData') {
-                    const target = mutation.target;
-                    const currentVal = target.nodeValue;
-                    const expectedTranslated = translateString(currentVal, lang);
-                    if (currentVal !== expectedTranslated) {
-                        ORIGINAL_TEXT_MAP.set(target, currentVal);
-                        if (lang !== 'id') {
-                            target.nodeValue = expectedTranslated;
-                        }
-                    }
-                }
-            });
-        } finally {
-            isApplying = false;
-        }
-    });
-
     function initI18nObserver() {
         applyAppLanguage(getCurrentLang());
-        if (document.body) {
+        if (document.body && !observerStarted) {
+            observerStarted = true;
             observer.observe(document.body, {
                 childList: true,
-                subtree: true,
-                characterData: true
+                subtree: true
             });
         }
     }
@@ -5786,6 +5821,7 @@ function triggerFingerprintScan() {
         initI18nObserver();
     }
 })();
+
 
 // ==========================================
 // INITIAL BOOT (ALL MODULES READY)
