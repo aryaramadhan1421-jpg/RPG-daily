@@ -43,7 +43,7 @@ class ReminderReceiver : BroadcastReceiver() {
             ?: intent.getStringExtra("playerName")
             ?: "Hunter"
 
-        // Ambil dailyPct terbaru dari SystemRpgWidgetPrefs (yang di-update oleh updateWidgetData di MainActivity)
+        // Ambil dailyPct dan targetPct terbaru dari SystemRpgWidgetPrefs
         val widgetPrefs = context.getSharedPreferences("SystemRpgWidgetPrefs", Context.MODE_PRIVATE)
         val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
         val lastUpdated = widgetPrefs.getString("lastUpdatedDate", "") ?: ""
@@ -55,8 +55,11 @@ class ReminderReceiver : BroadcastReceiver() {
             0
         }
 
-        // Jika target hari ini sudah >= 70% dan bukan slot Malam, lewati notifikasi
-        if (dailyPct >= 70 && slot != "Malam") {
+        // Ambil target dinamis yang dipilih pengguna (default 70 jika belum diatur)
+        val targetPct = widgetPrefs.getInt("dailyTargetPct", 70)
+
+        // Jika target hari ini sudah >= targetPct dan bukan slot Malam, lewati notifikasi
+        if (dailyPct >= targetPct && slot != "Malam") {
             MainActivity.scheduleExactAlarmsFromPrefs(context)
             return
         }
@@ -68,10 +71,10 @@ class ReminderReceiver : BroadcastReceiver() {
             else -> "[SYSTEM] Pengingat Daily Quest"
         }
 
-        val body = if (dailyPct >= 70) {
+        val body = if (dailyPct >= targetPct) {
             "Target harian sudah aman ($dailyPct%). Pertahankan momentum dan streak kamu!"
         } else {
-            "Progress hari ini baru $dailyPct% (masih ada $pendingCount quest tersisa). Capai minimal 70% agar terhindar dari penalti HP!"
+            "Progress hari ini baru $dailyPct% (masih ada $pendingCount quest tersisa). Capai minimal $targetPct% agar terhindar dari penalti HP!"
         }
 
         showReminderNotification(context, title, body)
