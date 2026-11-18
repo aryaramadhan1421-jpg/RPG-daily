@@ -111,6 +111,52 @@ class MainActivity : ComponentActivity() {
             scheduleExactAlarmsFromPrefs(this@MainActivity)
         }
 
+        // Jembatan baru yang dipanggil oleh index_5.html setiap kali progres quest berubah
+        @JavascriptInterface
+        fun scheduleDailyRemindersFull(payloadJson: String) {
+            try {
+                val obj = JSONObject(payloadJson)
+                val timesObj = obj.optJSONObject("times")
+                val pendingCount = obj.optInt("pendingCount", 0)
+                val doneCount = obj.optInt("doneCount", 0)
+                val totalCount = obj.optInt("totalCount", 0)
+                val pct = obj.optInt("pct", 0)
+                val thresholdPct = obj.optInt("thresholdPct", 70)
+                val playerName = obj.optString("playerName", "Hunter")
+                val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+
+                val remPrefs = getSharedPreferences("SystemRpgReminderPrefs", Context.MODE_PRIVATE)
+                val editor = remPrefs.edit()
+                    .putBoolean("enabled", true)
+                    .putInt("pendingCount", pendingCount)
+                    .putInt("doneCount", doneCount)
+                    .putInt("totalCount", totalCount)
+                    .putInt("pct", pct)
+                    .putInt("dailyPct", pct)
+                    .putInt("thresholdPct", thresholdPct)
+                    .putString("playerName", playerName)
+
+                if (timesObj != null) {
+                    editor.putString("timesJson", timesObj.toString())
+                }
+                editor.apply()
+
+                // Ikut sinkronkan dailyPct ke WidgetPrefs agar widget & notifikasi selalu sama
+                val widgetPrefs = getSharedPreferences("SystemRpgWidgetPrefs", Context.MODE_PRIVATE)
+                val streak = widgetPrefs.getInt("streak", 0)
+                val weekHistory = computeWeekHistory(streak, pct)
+                widgetPrefs.edit()
+                    .putInt("dailyPct", pct)
+                    .putString("weekHistory", weekHistory)
+                    .putString("lastUpdatedDate", todayStr)
+                    .apply()
+
+                refreshAllAppWidgets(this@MainActivity)
+                scheduleExactAlarmsFromPrefs(this@MainActivity)
+            } catch (_: Exception) {
+            }
+        }
+
         @JavascriptInterface
         fun cancelDailyReminders() {
             getSharedPreferences("SystemRpgReminderPrefs", Context.MODE_PRIVATE).edit()
@@ -191,6 +237,12 @@ class MainActivity : ComponentActivity() {
                 .putInt("dailyPct", dailyPct)
                 .putString("weekHistory", weekHistory)
                 .putString("lastUpdatedDate", todayStr)
+                .apply()
+
+            // Sinkronkan juga dailyPct ke ReminderPrefs
+            getSharedPreferences("SystemRpgReminderPrefs", Context.MODE_PRIVATE).edit()
+                .putInt("pct", dailyPct)
+                .putInt("dailyPct", dailyPct)
                 .apply()
 
             refreshAllAppWidgets(this@MainActivity)
@@ -345,6 +397,7 @@ class MainActivity : ComponentActivity() {
                 cacheMode = WebSettings.LOAD_DEFAULT
             }
             addJavascriptInterface(AndroidBridge(), "AndroidBridge")
+            addJavascriptInterface(WidgetBridge(this@MainActivity), "SystemWidget")
             webViewClient = WebViewClient()
 
             webChromeClient = object : WebChromeClient() {
@@ -413,7 +466,7 @@ class MainActivity : ComponentActivity() {
         const val REQ_CODE_MIDNIGHT_RESET = 1099
 
         fun refreshAllAppWidgets(context: Context) {
-            SystemWidgetProvider.updateAllWidgets(context)
+            SystemStreakWidget.updateAllWidgets(context)
             SystemMiniStatsWidget.updateAllWidgets(context)
         }
 
@@ -487,6 +540,13 @@ class MainActivity : ComponentActivity() {
                         .putInt("dailyPct", 0)
                         .putString("weekHistory", newHistory)
                         .putString("lastUpdatedDate", todayStr)
+                        .apply()
+
+                    // Reset juga angka harian di ReminderPrefs
+                    context.getSharedPreferences("SystemRpgReminderPrefs", Context.MODE_PRIVATE).edit()
+                        .putInt("pct", 0)
+                        .putInt("dailyPct", 0)
+                        .putInt("doneCount", 0)
                         .apply()
 
                     refreshAllAppWidgets(context)
