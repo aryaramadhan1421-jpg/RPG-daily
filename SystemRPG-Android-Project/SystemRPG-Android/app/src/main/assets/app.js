@@ -4375,14 +4375,7 @@ function saveCurrentGrimoireBookmark() {
     spawnFloatingReward(`🔖 Bookmark Tersimpan: Hal ${grimoireCurrentPage} (${grimoireCurrentFileName})`);
 }
 
-// Initial Boot
-checkRealDayRollover();
-initTreasuryDefaults();
-currentOracleIndex = pickContextualOracleIndex();
-if (typeof applySavedFontSettings === 'function') applySavedFontSettings();
-renderAll();
-syncSystemReminders();
-setInterval(checkScheduledReminderTick, 20000);
+// Initial Boot moved to bottom after all module declarations
 
 
 // ==========================================
@@ -4922,3 +4915,15 @@ function setAppLanguage(lang) {
 }
 
 applyAppLanguage();
+
+// ==========================================
+// INITIAL BOOT (ALL MODULES READY)
+// ==========================================
+// Initial Boot
+checkRealDayRollover();
+initTreasuryDefaults();
+currentOracleIndex = pickContextualOracleIndex();
+if (typeof applySavedFontSettings === 'function') applySavedFontSettings();
+renderAll();
+syncSystemReminders();
+setInterval(checkScheduledReminderTick, 20000);
