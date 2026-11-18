@@ -11,6 +11,9 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class ReminderReceiver : BroadcastReceiver() {
 
@@ -24,7 +27,7 @@ class ReminderReceiver : BroadcastReceiver() {
             return
         }
 
-        // 2. Fitur #4: Jika alarm tengah malam (00:01) berbunyi -> reset widget otomatis
+        // 2. Jika alarm tengah malam (00:01) berbunyi -> reset widget otomatis
         if (action == MainActivity.ACTION_MIDNIGHT_WIDGET_RESET) {
             MainActivity.handleMidnightWidgetReset(context)
             return
@@ -35,12 +38,24 @@ class ReminderReceiver : BroadcastReceiver() {
         if (!prefs.getBoolean("enabled", false)) return
 
         val slot = intent.getStringExtra("slot") ?: "Harian"
-        val pendingCount = intent.getIntExtra("pendingCount", prefs.getInt("pendingCount", 1))
-        val playerName = intent.getStringExtra("playerName") ?: (prefs.getString("playerName", "Hunter") ?: "Hunter")
+        val pendingCount = prefs.getInt("pendingCount", intent.getIntExtra("pendingCount", 1))
+        val playerName = prefs.getString("playerName", null)
+            ?: intent.getStringExtra("playerName")
+            ?: "Hunter"
 
-        // Cek apakah target hari ini sudah >= 70%
+        // Ambil dailyPct terbaru dari SystemRpgWidgetPrefs (yang di-update oleh updateWidgetData di MainActivity)
         val widgetPrefs = context.getSharedPreferences("SystemRpgWidgetPrefs", Context.MODE_PRIVATE)
-        val dailyPct = widgetPrefs.getInt("dailyPct", 0)
+        val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        val lastUpdated = widgetPrefs.getString("lastUpdatedDate", "") ?: ""
+
+        // Pastikan angka yang dibaca memang data hari ini (jika belum ada update hari ini, nilainya 0)
+        val dailyPct = if (lastUpdated == todayStr) {
+            widgetPrefs.getInt("dailyPct", 0)
+        } else {
+            0
+        }
+
+        // Jika target hari ini sudah >= 70% dan bukan slot Malam, lewati notifikasi
         if (dailyPct >= 70 && slot != "Malam") {
             MainActivity.scheduleExactAlarmsFromPrefs(context)
             return
