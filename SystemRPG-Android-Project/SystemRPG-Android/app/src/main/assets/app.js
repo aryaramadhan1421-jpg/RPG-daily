@@ -5985,15 +5985,15 @@ window.openTutorialModal = function(startIndex = 0) {
     currentTutorialStep = startIndex;
     renderTutorialStep();
     modal.classList.remove('hidden');
-    modal.style.display = 'flex';
+    modal.style.setProperty('display', 'flex', 'important');
     if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
-}
+};
 
-function closeTutorialModal(markSeen = true) {
+window.closeTutorialModal = function(markSeen = true) {
     const modal = document.getElementById('tutorial-modal');
     if (modal) {
         modal.classList.add('hidden');
-        modal.style.display = 'none';
+        modal.style.setProperty('display', 'none', 'important');
     }
     if (markSeen) {
         localStorage.setItem('sysrpg_tutorial_seen', '1');
