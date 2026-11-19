@@ -7266,6 +7266,533 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
     })();
 
 // ==========================================
+
+// ==========================================
+// 18. DUNGEON FLASHCARD STUDY MODULE (EN & JP)
+// ==========================================
+const FLASHCARD_STORAGE_KEY = 'system_rpg_flashcards_v1';
+
+const DEFAULT_EN_VOCAB_RAW = [["abandon", "meninggalkan / mengabaikan"], ["ability", "kemampuan"], ["able", "mampu / bisa"], ["about", "tentang / sekitar"], ["above", "di atas"], ["accept", "menerima"], ["according", "menurut"], ["account", "akun / rekening / laporan"], ["across", "melintasi / di seberang"], ["act", "bertindak / tindakan"], ["action", "aksi / tindakan"], ["activity", "aktivitas / kegiatan"], ["actually", "sebenarnya / faktanya"], ["add", "menambah"], ["address", "alamat"], ["administration", "administrasi / pengelolaan"], ["admit", "mengakui / mengizinkan masuk"], ["adult", "dewasa"], ["affect", "memengaruhi"], ["after", "setelah"], ["afternoon", "siang / sore hari"], ["again", "lagi / kembali"], ["against", "melawan / menentang"], ["age", "usia / umur / zaman"], ["agency", "agensi / lembaga"], ["agent", "agen / perwakilan"], ["ago", "yang lalu"], ["agree", "setuju"], ["agreement", "kesepakatan / perjanjian"], ["ahead", "di depan / ke depan"], ["air", "udara"], ["all", "semua / seluruh"], ["allow", "mengizinkan / membolehkan"], ["almost", "hampir"], ["alone", "sendirian / sendiri"], ["along", "sepanjang / bersama-sama"], ["already", "sudah / telah"], ["also", "juga"], ["although", "meskipun / walaupun"], ["always", "selalu"], ["among", "di antara (banyak)"], ["amount", "jumlah"], ["analysis", "analisis"], ["and", "dan"], ["animal", "hewan / binatang"], ["another", "yang lain / satu lagi"], ["answer", "jawaban / menjawab"], ["any", "apa saja / beberapa"], ["anyone", "siapa pun"], ["anything", "apa pun"], ["appear", "muncul / tampak"], ["apply", "menerapkan / melamar"], ["approach", "pendekatan / mendekati"], ["area", "area / wilayah / bidang"], ["argue", "berdebat / berargumen"], ["arm", "lengan / senjata"], ["around", "di sekitar / kira-kira"], ["arrive", "tiba / sampai"], ["art", "seni"], ["article", "artikel / pasal / barang"], ["artist", "seniman"], ["as", "sebagai / saat / karena"], ["ask", "bertanya / meminta"], ["assume", "mengasumsikan / menduga"], ["at", "di / pada"], ["attack", "menyerang / serangan"], ["attention", "perhatian"], ["attorney", "pengacara / kuasa hukum"], ["audience", "audiens / penonton"], ["author", "penulis"], ["authority", "otoritas / wewenang"], ["available", "tersedia"], ["avoid", "menghindari"], ["away", "jauh / pergi"], ["baby", "bayi"], ["back", "punggung / belakang / kembali"], ["bad", "buruk / jelek"], ["bag", "tas / kantong"], ["ball", "bola"], ["bank", "bank / tepi sungai"], ["bar", "batang / palang / kedai"], ["base", "dasar / pangkalan"], ["be", "menjadi / ada / adalah"], ["beat", "mengalahkan / memukul"], ["beautiful", "indah / cantik"], ["because", "karena"], ["become", "menjadi"], ["bed", "tempat tidur / kasur"], ["before", "sebelum / di depan"], ["begin", "mulai / memulai"], ["behavior", "perilaku / tingkah laku"], ["behind", "di belakang"], ["believe", "percaya / yakin"], ["benefit", "manfaat / keuntungan"], ["best", "terbaik"], ["better", "lebih baik"], ["between", "di antara (dua)"], ["beyond", "di luar / melampaui"], ["big", "besar"], ["bill", "tagihan / uang kertas"], ["billion", "miliar"], ["bit", "sedikit / keping"], ["black", "hitam"], ["blood", "darah"], ["blue", "biru"], ["board", "papan / dewan"], ["body", "tubuh / badan"], ["book", "buku / memesan"], ["born", "lahir"], ["both", "keduanya"], ["box", "kotak"], ["boy", "anak laki-laki"], ["break", "istirahat / memecahkan"], ["bring", "membawa"], ["brother", "saudara laki-laki"], ["budget", "anggaran"], ["build", "membangun"], ["building", "bangunan / gedung"], ["business", "bisnis / usaha"], ["but", "tetapi / namun"], ["buy", "membeli"], ["by", "oleh / dekat / dengan"], ["call", "menelepon / memanggil"], ["camera", "kamera"], ["campaign", "kampanye"], ["can", "bisa / dapat / kaleng"], ["candidate", "kandidat / calon"], ["capital", "ibu kota / modal"], ["car", "mobil"], ["card", "kartu"], ["care", "peduli / perawatan"], ["career", "karier"], ["carry", "membawa / mengangkut"], ["case", "kasus / kotak"], ["catch", "menangkap"], ["cause", "penyebab / menyebabkan"], ["cell", "sel / ponsel"], ["center", "pusat / tengah"], ["central", "pusat / utama"], ["century", "abad"], ["certain", "pasti / tertentu"], ["certainly", "tentu saja / pasti"], ["chair", "kursi"], ["challenge", "tantangan / menantang"], ["chance", "kesempatan / peluang"], ["change", "perubahan / mengubah"], ["character", "karakter / tokoh / sifat"], ["charge", "biaya / mengisi daya / menuduh"], ["check", "memeriksa / tagihan / cek"], ["child", "anak"], ["choice", "pilihan"], ["choose", "memilih"], ["church", "gereja"], ["citizen", "warga negara"], ["city", "kota"], ["civil", "sipil"], ["claim", "klaim / mengklaim / menyatakan"], ["class", "kelas"], ["clear", "jelas / jernih / membersihkan"], ["clearly", "dengan jelas"], ["close", "dekat / menutup"], ["coach", "pelatih / melatih"], ["cold", "dingin / pilek"], ["collection", "koleksi / kumpulan"], ["college", "perguruan tinggi / kampus"], ["color", "warna"], ["come", "datang"], ["commercial", "komersial / iklan"], ["common", "umum / biasa"], ["community", "komunitas / masyarakat"], ["company", "perusahaan"], ["compare", "membandingkan"], ["computer", "komputer"], ["concern", "kekhawatiran / menyangkut"], ["condition", "kondisi / syarat"], ["conference", "konferensi"], ["consider", "mempertimbangkan / menganggap"], ["consumer", "konsumen"], ["contain", "berisi / mengandung"], ["continue", "melanjutkan / berlanjut"], ["control", "kendali / mengendalikan"], ["cost", "biaya / berharga"], ["could", "bisa / dapat (lampau/sopan)"], ["country", "negara / pedesaan"], ["couple", "pasangan / beberapa"], ["course", "kursus / jalur / tentu"], ["court", "pengadilan / lapangan"], ["cover", "menutupi / sampul"], ["create", "menciptakan / membuat"], ["crime", "kejahatan / tindak pidana"], ["cultural", "budaya (kata sifat)"], ["culture", "budaya"], ["cup", "cangkir / piala"], ["current", "saat ini / arus"], ["customer", "pelanggan"], ["cut", "memotong / potongan"], ["dark", "gelap"], ["data", "data"], ["daughter", "anak perempuan"], ["day", "hari / siang"], ["dead", "mati"], ["deal", "kesepakatan / menangani"], ["death", "kematian"], ["debate", "debat / perdebatan"], ["decade", "dekade (10 tahun)"], ["decide", "memutuskan"], ["decision", "keputusan"], ["deep", "dalam"], ["defense", "pertahanan / pembelaan"], ["degree", "derajat / gelar"], ["democratic", "demokratis"], ["describe", "menggambarkan / menjelaskan"], ["design", "desain / merancang"], ["despite", "meskipun"], ["detail", "detail / rincian"], ["determine", "menentukan"], ["develop", "mengembangkan / berkembang"], ["development", "perkembangan / pembangunan"], ["die", "meninggal / mati"], ["difference", "perbedaan"], ["different", "berbeda"], ["difficult", "sulit / susah"], ["dinner", "makan malam"], ["direction", "arah / petunjuk"], ["director", "direktur / sutradara"], ["discover", "menemukan"], ["discuss", "mendiskusikan / membahas"], ["discussion", "diskusi / pembahasan"], ["disease", "penyakit"], ["do", "melakukan / mengerjakan"], ["doctor", "dokter"], ["dog", "anjing"], ["door", "pintu"], ["down", "bawah / turun"], ["draw", "menggambar / menarik"], ["dream", "mimpi / bermimpi"], ["drive", "mengemudi / menyetir"], ["drop", "menjatuhkan / tetes"], ["drug", "obat / narkotika"], ["during", "selama"], ["each", "setiap / masing-masing"], ["early", "awal / dini"], ["east", "timur"], ["easy", "mudah / gampang"], ["eat", "makan"], ["economic", "ekonomi (kata sifat)"], ["economy", "perekonomian / ekonomi"], ["edge", "tepi / pinggir / ujung"], ["education", "pendidikan"], ["effect", "efek / dampak"], ["effort", "usaha / upaya"], ["eight", "delapan"], ["either", "salah satu / juga tidak"], ["election", "pemilihan umum"], ["else", "lain / lagi"], ["employee", "karyawan / pegawai"], ["end", "akhir / berakhir"], ["energy", "energi"], ["enjoy", "menikmati"], ["enough", "cukup"], ["enter", "masuk / memasukkan"], ["entire", "seluruh / keseluruhan"], ["environment", "lingkungan"], ["environmental", "lingkungan (kata sifat)"], ["especially", "terutama / khususnya"], ["establish", "mendirikan / menetapkan"], ["even", "bahkan / genap / rata"], ["evening", "malam / petang"], ["event", "acara / peristiwa"], ["ever", "pernah"], ["every", "setiap"], ["everybody", "setiap orang / semua orang"], ["everyone", "setiap orang"], ["everything", "segalanya / semuanya"], ["evidence", "bukti"], ["exactly", "tepatnya / persis"], ["example", "contoh"], ["executive", "eksekutif"], ["exist", "ada / eksis"], ["expect", "mengharapkan / menduga"], ["experience", "pengalaman / mengalami"], ["expert", "ahli / pakar"], ["explain", "menjelaskan"], ["eye", "mata"], ["face", "wajah / menghadapi"], ["fact", "fakta"], ["factor", "faktor"], ["fail", "gagal"], ["fall", "jatuh / musim gugur"], ["family", "keluarga"], ["far", "jauh"], ["fast", "cepat / puasa"], ["father", "ayah"], ["fear", "ketakutan / takut"], ["federal", "federal"], ["feel", "merasa / merasakan"], ["feeling", "perasaan"], ["few", "sedikit / beberapa"], ["field", "lapangan / bidang"], ["fight", "bertarung / berkelahi"], ["figure", "sosok / angka / figur"], ["fill", "mengisi"], ["film", "film"], ["final", "akhir / terakhir"], ["finally", "akhirnya"], ["financial", "keuangan / finansial"], ["find", "menemukan"], ["fine", "baik-baik saja / denda / halus"], ["finger", "jari"], ["finish", "selesai / menyelesaikan"], ["fire", "api / kebakaran / memecat"], ["firm", "perusahaan / tegas / kokoh"], ["first", "pertama"], ["fish", "ikan / memancing"], ["five", "lima"], ["floor", "lantai"], ["fly", "terbang / lalat"], ["focus", "fokus"], ["follow", "mengikuti"], ["food", "makanan"], ["foot", "kaki"], ["for", "untuk / selama"], ["force", "kekuatan / memaksa"], ["foreign", "asing / luar negeri"], ["forget", "lupa / melupakan"], ["form", "bentuk / formulir / membentuk"], ["former", "mantan / sebelumnya"], ["forward", "maju / ke depan"], ["four", "empat"], ["free", "gratis / bebas"], ["friend", "teman"], ["from", "dari"], ["front", "depan"], ["full", "penuh / kenyang"], ["fund", "dana / mendanai"], ["future", "masa depan"], ["game", "permainan / pertandingan"], ["garden", "taman / kebun"], ["gas", "gas / bensin"], ["general", "umum / jenderal"], ["generation", "generasi"], ["get", "mendapatkan / menjadi"], ["girl", "anak perempuan / gadis"], ["give", "memberi"], ["glass", "gelas / kaca"], ["go", "pergi"], ["goal", "tujuan / gol"], ["good", "baik / bagus"], ["government", "pemerintah"], ["great", "hebat / besar / luar biasa"], ["green", "hijau"], ["ground", "tanah / dasar"], ["group", "kelompok / grup"], ["grow", "tumbuh / menanam"], ["growth", "pertumbuhan"], ["guess", "menebak / tebakan"], ["gun", "senjata api / pistol"], ["guy", "pria / orang"], ["hair", "rambut"], ["half", "setengah"], ["hand", "tangan / menyerahkan"], ["hang", "menggantung"], ["happen", "terjadi"], ["happy", "senang / bahagia"], ["hard", "keras / sulit"], ["have", "memiliki / mempunyai"], ["he", "dia (laki-laki)"], ["head", "kepala / memimpin"], ["health", "kesehatan"], ["hear", "mendengar"], ["heart", "hati / jantung"], ["heat", "panas / memanaskan"], ["heavy", "berat"], ["help", "membantu / bantuan"], ["her", "dia (perempuan - objek/milik)"], ["here", "di sini"], ["herself", "dirinya sendiri (perempuan)"], ["high", "tinggi"], ["him", "dia (laki-laki - objek)"], ["himself", "dirinya sendiri (laki-laki)"], ["his", "miliknya (laki-laki)"], ["history", "sejarah"], ["hit", "memukul / mengenai"], ["hold", "memegang / menahan"], ["home", "rumah / kampung halaman"], ["hope", "harapan / berharap"], ["hospital", "rumah sakit"], ["hot", "panas / pedas"], ["hotel", "hotel"], ["hour", "jam"], ["house", "rumah"], ["how", "bagaimana / berapa"], ["however", "namun / bagaimanapun"], ["huge", "sangat besar / raksasa"], ["human", "manusia"], ["hundred", "ratus"], ["husband", "suami"], ["I", "saya / aku"], ["idea", "ide / gagasan"], ["identify", "mengidentifikasi"], ["if", "jika / apabila"], ["image", "gambar / citra"], ["imagine", "membayangkan"], ["impact", "dampak"], ["important", "penting"], ["improve", "meningkatkan / memperbaiki"], ["in", "di dalam / pada"], ["include", "termasuk / mencakup"], ["including", "termasuk"], ["increase", "meningkat / peningkatan"], ["indeed", "memang / sungguh"], ["indicate", "menunjukkan / mengindikasikan"], ["individual", "individu / perorangan"], ["industry", "industri"], ["information", "informasi"], ["inside", "di dalam"], ["instead", "sebagai gantinya / melainkan"], ["institution", "institusi / lembaga"], ["interest", "minat / bunga bank / kepentingan"], ["interesting", "menarik"], ["international", "internasional"], ["interview", "wawancara"], ["into", "ke dalam"], ["investment", "investasi"], ["involve", "melibatkan"], ["issue", "masalah / isu / terbitan"], ["it", "itu / ia (benda/hewan)"], ["item", "barang / butir"], ["its", "miliknya (benda/hewan)"], ["itself", "dirinya sendiri (benda)"], ["job", "pekerjaan"], ["join", "bergabung"], ["just", "hanya / baru saja / adil"], ["keep", "menjaga / menyimpan / tetap"], ["key", "kunci / utama"], ["kid", "anak / bocah"], ["kill", "membunuh"], ["kind", "baik hati / jenis"], ["kitchen", "dapur"], ["know", "tahu / mengetahui / kenal"], ["knowledge", "pengetahuan"], ["land", "tanah / daratan / mendarat"], ["language", "bahasa"], ["large", "besar / luas"], ["last", "terakhir / lalu / bertahan"], ["late", "terlambat / larut"], ["later", "nanti / kemudian"], ["laugh", "tertawa"], ["law", "hukum / undang-undang"], ["lawyer", "pengacara"], ["lay", "meletakkan / berbaring"], ["lead", "memimpin / petunjuk"], ["leader", "pemimpin"], ["learn", "belajar"], ["least", "paling sedikit"], ["leave", "meninggalkan / pergi / cuti"], ["left", "kiri / tersisa"], ["leg", "kaki / tungkai"], ["legal", "sah / hukum"], ["less", "lebih sedikit / kurang"], ["let", "membiarkan / mengizinkan"], ["letter", "surat / huruf"], ["level", "tingkat / level"], ["lie", "berbohong / berbaring"], ["life", "kehidupan / hidup"], ["light", "cahaya / ringan / terang"], ["like", "suka / seperti"], ["likely", "kemungkinan besar"], ["line", "garis / antrean / jalur"], ["list", "daftar"], ["listen", "mendengarkan"], ["little", "kecil / sedikit"], ["live", "tinggal / hidup / langsung"], ["local", "lokal / setempat"], ["long", "panjang / lama"], ["look", "melihat / tampak"], ["lose", "kalah / kehilangan"], ["loss", "kerugian / kehilangan"], ["lot", "banyak"], ["love", "cinta / mencintai"], ["low", "rendah"], ["machine", "mesin"], ["magazine", "majalah"], ["main", "utama"], ["maintain", "memelihara / mempertahankan"], ["major", "utama / besar / jurusan"], ["majority", "mayoritas"], ["make", "membuat"], ["man", "pria / laki-laki / manusia"], ["manage", "mengelola / berhasil"], ["management", "manajemen / pengelolaan"], ["manager", "manajer"], ["many", "banyak (bisa dihitung)"], ["market", "pasar"], ["marriage", "pernikahan"], ["material", "bahan / materi"], ["matter", "masalah / materi / penting"], ["may", "boleh / mungkin / bulan Mei"], ["maybe", "mungkin"], ["me", "saya / aku (objek)"]];
+
+const DEFAULT_JP_VOCAB_RAW = [["私", "watashi", "saya / aku"], ["あなた", "anata", "kamu / anda"], ["彼", "kare", "dia (laki-laki)"], ["彼女", "kanojo", "dia (perempuan) / pacar perempuan"], ["私たち", "watashitachi", "kami / kita"], ["人", "hito", "orang / manusia"], ["男", "otoko", "laki-laki / pria"], ["女", "onna", "perempuan / wanita"], ["子供", "kodomo", "anak-anak"], ["赤ちゃん", "akachan", "bayi"], ["家族", "kazoku", "keluarga"], ["父", "chichi", "ayah (saya)"], ["お父さん", "otousan", "ayah / bapak"], ["母", "haha", "ibu (saya)"], ["お母さん", "okaasan", "ibu / mama"], ["兄", "ani", "kakak laki-laki (saya)"], ["お兄さん", "oniisan", "kakak laki-laki"], ["姉", "ane", "kakak perempuan (saya)"], ["お姉さん", "oneesan", "kakak perempuan"], ["弟", "otouto", "adik laki-laki"], ["妹", "imouto", "adik perempuan"], ["祖父", "sofu", "kakek (saya)"], ["おじいさん", "ojiisan", "kakek"], ["祖母", "sobo", "nenek (saya)"], ["おばあさん", "obaasan", "nenek"], ["夫", "otto", "suami"], ["妻", "tsuma", "istri"], ["友達", "tomodachi", "teman"], ["先生", "sensei", "guru / dosen / dokter"], ["学生", "gakusei", "pelajar / mahasiswa"], ["生徒", "seito", "murid / siswa"], ["会社員", "kaishain", "karyawan perusahaan"], ["医者", "isha", "dokter"], ["看護師", "kangoshi", "perawat"], ["警察官", "keisatsukan", "polisi"], ["店員", "ten'in", "pelayan toko / kasir"], ["名前", "namae", "nama"], ["国", "kuni", "negara"], ["日本", "nihon", "Jepang"], ["インドネシア", "indoneshia", "Indonesia"], ["英語", "eigo", "bahasa Inggris"], ["日本語", "nihongo", "bahasa Jepang"], ["言葉", "kotoba", "kata / bahasa"], ["一", "ichi", "satu"], ["二", "ni", "dua"], ["三", "san", "tiga"], ["四", "yon / shi", "empat"], ["五", "go", "lima"], ["六", "roku", "enam"], ["七", "nana / shichi", "tujuh"], ["八", "hachi", "delapan"], ["九", "kyuu / ku", "sembilan"], ["十", "juu", "sepuluh"], ["百", "hyaku", "seratus"], ["千", "sen", "seribu"], ["万", "man", "sepuluh ribu"], ["零 / ゼロ", "rei / zero", "nol"], ["半分", "hanbun", "setengah"], ["全部", "zenbu", "semua / seluruhnya"], ["たくさん", "takusan", "banyak"], ["少し", "sukoshi", "sedikit"], ["時間", "jikan", "waktu / jam"], ["今", "ima", "sekarang"], ["今日", "kyou", "hari ini"], ["昨日", "kinou", "kemarin"], ["一昨日", "ototoi", "kemarin lusa"], ["明日", "ashita", "besok"], ["明後日", "asatte", "lusa"], ["毎日", "mainichi", "setiap hari"], ["朝", "asa", "pagi"], ["今朝", "kesa", "tadi pagi"], ["昼", "hiru", "siang"], ["夕方", "yuugata", "sore"], ["夜", "yoru", "malam"], ["今晩", "konban", "malam ini"], ["週", "shuu", "minggu (pekan)"], ["今週", "konshuu", "minggu ini"], ["先週", "senshuu", "minggu lalu"], ["来週", "raishuu", "minggu depan"], ["毎週", "maishuu", "setiap minggu"], ["月", "tsuki / gatsu", "bulan"], ["今月", "kongetsu", "bulan ini"], ["先月", "sengetsu", "bulan lalu"], ["来月", "raigetsu", "bulan depan"], ["毎年", "maitoshi / mainen", "setiap tahun"], ["今年", "kotoshi", "tahun ini"], ["去年", "kyonen", "tahun lalu"], ["来年", "rainen", "tahun depan"], ["月曜日", "getsuyoubi", "hari Senin"], ["火曜日", "kayoubi", "hari Selasa"], ["水曜日", "suiyoubi", "hari Rabu"], ["木曜日", "mokuyoubi", "hari Kamis"], ["金曜日", "kinyoubi", "hari Jumat"], ["土曜日", "doyoubi", "hari Sabtu"], ["日曜日", "nichiyoubi", "hari Minggu"], ["週末", "shuumatsu", "akhir pekan"], ["休日", "kyuujitsu", "hari libur"], ["誕生日", "tanjoubi", "hari ulang tahun"], ["時", "ji", "pukul / jam"], ["分", "fun / pun", "menit"], ["秒", "byou", "detik"], ["午前", "gozen", "pagi (AM)"], ["午後", "gogo", "siang/sore/malam (PM)"], ["春", "haru", "musim semi"], ["夏", "natsu", "musim panas"], ["秋", "aki", "musim gugur"], ["冬", "fuyu", "musim dingin"], ["天気", "tenki", "cuaca"], ["晴れ", "hare", "cerah"], ["雨", "ame", "hujan"], ["雪", "yuki", "salju"], ["風", "kaze", "angin"], ["雲", "kumo", "awan"], ["空", "sora", "langit"], ["太陽", "taiyou", "matahari"], ["星", "hoshi", "bintang"], ["海", "umi", "laut"], ["山", "yama", "gunung"], ["川", "kawa", "sungai"], ["森", "mori", "hutan"], ["木", "ki", "pohon / kayu"], ["花", "hana", "bunga"], ["草", "kusa", "rumput"], ["石", "ishi", "batu"], ["火", "hi", "api"], ["水", "mizu", "air"], ["土", "tsuchi", "tanah"], ["空気", "kuuki", "udara"], ["動物", "doubutsu", "hewan / binatang"], ["犬", "inu", "anjing"], ["猫", "neko", "kucing"], ["鳥", "tori", "burung"], ["魚", "sakana", "ikan"], ["馬", "uma", "kuda"], ["牛", "ushi", "sapi"], ["豚", "buta", "babi"], ["虫", "mushi", "serangga"], ["体", "karada", "tubuh / badan"], ["頭", "atama", "kepala"], ["顔", "kao", "wajah"], ["髪", "kami", "rambut"], ["目", "me", "mata"], ["耳", "mimi", "telinga"], ["鼻", "hana", "hidung"], ["口", "kuchi", "mulut"], ["歯", "ha", "gigi"], ["首", "kubi", "leher"], ["肩", "kata", "bahu"], ["腕", "ude", "lengan"], ["手", "te", "tangan"], ["指", "yubi", "jari"], ["胸", "mune", "dada"], ["お腹", "onaka", "perut"], ["背中", "senaka", "punggung"], ["足", "ashi", "kaki"], ["心", "kokoro", "hati / pikiran / jiwa"], ["声", "koe", "suara (orang/hewan)"], ["音", "oto", "bunyi / suara (benda)"], ["食べ物", "tabemono", "makanan"], ["飲み物", "nomimono", "minuman"], ["ご飯", "gohan", "nasi / makanan"], ["パン", "pan", "roti"], ["肉", "niku", "daging"], ["鶏肉", "toriniku", "daging ayam"], ["牛肉", "gyuuniku", "daging sapi"], ["卵", "tamago", "telur"], ["野菜", "yasai", "sayuran"], ["果物", "kudamono", "buah-buahan"], ["りんご", "ringo", "apel"], ["バナナ", "banana", "pisang"], ["みかん", "mikan", "jeruk mandarin"], ["お茶", "ocha", "teh (hijau)"], ["紅茶", "koucha", "teh hitam"], ["コーヒー", "koohii", "kopi"], ["牛乳", "gyuunyuu", "susu sapi"], ["お酒", "osake", "minuman beralkohol / sake"], ["砂糖", "satou", "gula"], ["塩", "shio", "garam"], ["醤油", "shouyu", "kecap asin"], ["朝ご飯", "asagohan", "sarapan"], ["昼ご飯", "hirugohan", "makan siang"], ["晩ご飯", "bangohan", "makan malam"], ["料理", "ryouri", "masakan / memasak"], ["味", "aji", "rasa"], ["家", "ie / uchi", "rumah"], ["部屋", "heya", "kamar / ruangan"], ["台所", "daidokoro", "dapur"], ["トイレ", "toire", "toilet / kamar kecil"], ["お風呂", "ofuro", "kamar mandi / bak mandi"], ["玄関", "genkan", "pintu masuk rumah (teras)"], ["庭", "niwa", "halaman / taman rumah"], ["窓", "mado", "jendela"], ["ドア", "doa", "pintu"], ["壁", "kabe", "dinding / tembok"], ["床", "yuka", "lantai"], ["机", "tsukue", "meja tulis / meja belajar"], ["テーブル", "teeburu", "meja makan / meja"], ["椅子", "isu", "kursi"], ["ベッド", "beddo", "tempat tidur"], ["布団", "futon", "kasur lipat Jepang"], ["冷蔵庫", "reizouko", "kulkas"], ["洗濯機", "sentakuki", "mesin cuci"], ["エアコン", "eakon", "AC (pendingin ruangan)"], ["テレビ", "terebi", "televisi"], ["電話", "denwa", "telepon"], ["スマホ", "sumaho", "ponsel pintar (smartphone)"], ["パソコン", "pasokon", "komputer / laptop"], ["カメラ", "kamera", "kamera"], ["時計", "tokei", "jam dinding / jam tangan"], ["鏡", "kagami", "cermin"], ["鍵", "kagi", "kunci"], ["傘", "kasa", "payung"], ["鞄", "kaban", "tas"], ["財布", "saifu", "dompet"], ["お金", "okane", "uang"], ["本", "hon", "buku"], ["辞書", "jisho", "kamus"], ["新聞", "shinbun", "koran / surat kabar"], ["雑誌", "zasshi", "majalah"], ["ノート", "nooto", "buku catatan"], ["紙", "kami", "kertas"], ["手紙", "tegami", "surat"], ["鉛筆", "enpitsu", "pensil"], ["ペン", "pen", "pulpen"], ["消しゴム", "keshigomu", "penghapus"], ["はさみ", "hasami", "gunting"], ["箱", "hako", "kotak"], ["皿", "sara", "piring"], ["コップ", "koppu", "gelas"], ["茶碗", "chawan", "mangkuk nasi"], ["箸", "hashi", "sumpit"], ["スプーン", "supuun", "sendok"], ["フォーク", "fooku", "garpu"], ["服", "fuku", "pakaian / baju"], ["シャツ", "shatsu", "kemeja / kaos"], ["ズボン", "zubon", "celana panjang"], ["スカート", "sukaato", "rok"], ["靴", "kutsu", "sepatu"], ["靴下", "kutsushita", "kaus kaki"], ["帽子", "boushi", "topi"], ["眼鏡", "megane", "kacamata"], ["学校", "gakkou", "sekolah"], ["大学", "daigaku", "universitas"], ["教室", "kyoushitsu", "ruang kelas"], ["図書館", "toshokan", "perpustakaan"], ["病院", "byouin", "rumah sakit"], ["薬局", "yakkyoku", "apotek"], ["銀行", "ginkou", "bank"], ["郵便局", "yuubinkyoku", "kantor pos"], ["駅", "eki", "stasiun"], ["空港", "kuukou", "bandara"], ["バス停", "basutei", "halte bus"], ["店", "mise", "toko"], ["スーパー", "suupaa", "supermarket"], ["コンビニ", "konbini", "minimarket"], ["レストラン", "resutoran", "restoran"], ["喫茶店", "kissaten", "kedai kopi / kafe"], ["ホテル", "hoteru", "hotel"], ["公園", "kouen", "taman kota"], ["映画館", "eigakan", "bioskop"], ["会社", "kaisha", "perusahaan / kantor"], ["工場", "koujou", "pabrik"], ["町", "machi", "kota kecil / distrik"], ["市", "shi", "kota"], ["道", "michi", "jalan"], ["橋", "hashi", "jembatan"], ["角", "kado", "sudut / belokan"], ["場所", "basho", "tempat / lokasi"], ["入り口", "iriguchi", "pintu masuk"], ["出口", "deguchi", "pintu keluar"], ["車", "kuruma", "mobil"], ["電車", "densha", "kereta listrik"], ["地下鉄", "chikatetsu", "kereta bawah tanah"], ["新幹線", "shinkansen", "kereta peluru Jepang"], ["バス", "basu", "bus"], ["タクシー", "takushii", "taksi"], ["自転車", "jitensha", "sepeda"], ["バイク", "baiku", "sepeda motor"], ["飛行機", "hikouki", "pesawat terbang"], ["船", "fune", "kapal / perahu"], ["切符", "kippu", "tiket / karcis"], ["地図", "chizu", "peta"], ["旅行", "ryokou", "perjalanan / wisata"], ["仕事", "shigoto", "pekerjaan"], ["勉強", "benkyou", "belajar"], ["宿題", "shukudai", "pekerjaan rumah (PR)"], ["試験", "shiken", "ujian"], ["質問", "shitsumon", "pertanyaan"], ["答え", "kotae", "jawaban"], ["意味", "imi", "arti / makna"], ["問題", "mondai", "masalah / soal"], ["練習", "renshuu", "latihan"], ["音楽", "ongaku", "musik"], ["歌", "uta", "lagu"], ["映画", "eiga", "film"], ["写真", "shashin", "foto"], ["絵", "e", "gambar / lukisan"], ["スポーツ", "supootsu", "olahraga"], ["サッカー", "sakkaa", "sepak bola"], ["野球", "yakyuu", "bisbol"], ["趣味", "shumi", "hobi"], ["夢", "yume", "mimpi / cita-cita"], ["病気", "byouki", "sakit / penyakit"], ["薬", "kusuri", "obat"], ["怪我", "kega", "luka / cedera"], ["熱", "netsu", "demam / panas"], ["上", "ue", "atas"], ["下", "shita", "bawah"], ["前", "mae", "depan / sebelum"], ["後ろ", "ushiro", "belakang"], ["右", "migi", "kanan"], ["左", "hidari", "kiri"], ["中", "naka", "dalam"], ["外", "soto", "luar"], ["隣", "tonari", "sebelah / tetangga"], ["近く", "chikaku", "dekat / sekitar"], ["間", "aida", "antara"], ["向こう", "mukou", "seberang / sana"], ["北", "kita", "utara"], ["南", "minami", "selatan"], ["東", "higashi", "timur"], ["西", "nishi", "barat"], ["ここ", "koko", "di sini"], ["そこ", "soko", "di situ"], ["あそこ", "asoko", "di sana"], ["どこ", "doko", "di mana"], ["これ", "kore", "ini"], ["それ", "sore", "itu"], ["あれ", "are", "itu (jauh)"], ["どれ", "dore", "yang mana"], ["誰", "dare", "siapa"], ["何", "nani / nan", "apa"], ["いつ", "itsu", "kapan"], ["なぜ / どうして", "naze / doushite", "mengapa / kenapa"], ["どう", "dou", "bagaimana"], ["いくら", "ikura", "berapa (harga)"], ["いくつ", "ikutsu", "berapa banyak / berapa umur"], ["行く", "iku", "pergi"], ["来る", "kuru", "datang"], ["帰る", "kaeru", "pulang / kembali"], ["食べる", "taberu", "makan"], ["飲む", "nomu", "minum"], ["見る", "miru", "melihat / menonton"], ["聞く", "kiku", "mendengar / bertanya"], ["話す", "hanasu", "berbicara"], ["言う", "iu", "berkata / mengatakan"], ["読む", "yomu", "membaca"], ["書く", "kaku", "menulis"], ["買う", "kau", "membeli"], ["売る", "uru", "menjual"], ["作る", "tsukuru", "membuat"], ["使う", "tsukau", "menggunakan"], ["持つ", "motsu", "memegang / memiliki"], ["取る", "toru", "mengambil"], ["あげる", "ageru", "memberi"], ["もらう", "morau", "menerima"], ["貸す", "kasu", "meminjamkan"], ["借りる", "kariru", "meminjam"], ["教える", "oshieru", "mengajar / memberi tahu"], ["習う", "narau", "belajar (dari seseorang)"], ["勉強する", "benkyou suru", "belajar"], ["働く", "hataraku", "bekerja"], ["休む", "yasumu", "beristirahat / libur"], ["寝る", "neru", "tidur"], ["起きる", "okiru", "bangun"], ["座る", "suwaru", "duduk"], ["立つ", "tatsu", "berdiri"], ["歩く", "aruku", "berjalan kaki"], ["走る", "hashiru", "berlari"], ["泳ぐ", "oyogu", "berenang"], ["遊ぶ", "asobu", "bermain"], ["入る", "hairu", "masuk"], ["出る", "deru", "keluar"], ["開ける", "akeru", "membuka"], ["閉める", "shimeru", "menutup"], ["つける", "tsukeru", "menyalakan / memakai"], ["消す", "kesu", "mematikan / menghapus"], ["乗る", "noru", "naik (kendaraan)"], ["降りる", "oriru", "turun (kendaraan)"], ["曲がる", "magaru", "berbelok"], ["渡る", "wataru", "menyeberang"], ["止まる", "tomaru", "berhenti"], ["待つ", "matsu", "menunggu"], ["会う", "au", "bertemu"], ["知る", "shiru", "tahu / mengenal"], ["分かる", "wakaru", "mengerti / paham"], ["忘れる", "wasureru", "lupa"], ["覚える", "oboeru", "mengingat / menghafal"], ["考える", "kangaeru", "berpikir / memikirkan"], ["思う", "omou", "berpikir / merasa / mengira"], ["始める", "hajimeru", "memulai"], ["終わる", "owaru", "selesai / berakhir"], ["洗う", "arau", "mencuci"], ["掃除する", "souji suru", "membersihkan"], ["洗濯する", "sentaku suru", "mencuci pakaian"], ["料理する", "ryouri suru", "memasak"], ["切る", "kiru", "memotong"], ["着る", "kiru", "memakai (baju atasan)"], ["履く", "haku", "memakai (celana/sepatu)"], ["脱ぐ", "nugu", "melepas (pakaian/sepatu)"], ["浴びる", "abiru", "mandi (shower)"], ["磨く", "migaku", "menggosok (gigi/sepatu)"], ["呼ぶ", "yobu", "memanggil / mengundang"], ["頼む", "tanomu", "meminta / memesan"], ["手伝う", "tetsudau", "membantu"], ["送る", "okuru", "mengirim / mengantar"], ["届く", "todoku", "sampai / terkirim"], ["探す", "sagasu", "mencari"], ["見つける", "mitsukeru", "menemukan"], ["なくす", "nakusu", "menghilangkan / kehilangan"], ["置く", "oku", "meletakkan"], ["入れる", "ireru", "memasukkan"], ["出す", "dasu", "mengeluarkan / menyerahkan"], ["押す", "osu", "mendorong / menekan"], ["引く", "hiku", "menarik"], ["飛ぶ", "tobu", "terbang / melompat"], ["登る", "noboru", "mendaki / memanjat"], ["降る", "furu", "turun (hujan/salju)"], ["吹く", "fuku", "bertiup (angin)"], ["咲く", "saku", "mekar (bunga)"], ["死ぬ", "shinu", "mati / meninggal"], ["生まれる", "umareru", "lahir"], ["生きる", "ikiru", "hidup"], ["結婚する", "kekkon suru", "menikah"], ["住む", "sumu", "tinggal / menetap"], ["笑う", "warau", "tertawa / tersenyum"], ["泣く", "naku", "menangis"], ["怒る", "okoru", "marah"], ["喜ぶ", "yorokobu", "bergembira / senang"], ["驚く", "odoroku", "terkejut / kaget"], ["疲れる", "tsukareru", "lelah / capek"], ["急ぐ", "isogu", "terburu-buru"], ["気をつける", "ki o tsukeru", "berhati-hati"], ["頑張る", "ganbaru", "berjuang / semangat"], ["大きい", "ookii", "besar"], ["小さい", "chiisai", "kecil"], ["新しい", "atarashii", "baru"], ["古い", "furui", "lama / tua (benda)"], ["良い / いい", "yoi / ii", "baik / bagus"], ["悪い", "warui", "buruk / jahat"], ["高い", "takai", "tinggi / mahal"], ["安い", "yasui", "murah"], ["低い", "hikui", "rendah"], ["長い", "nagai", "panjang / lama"], ["短い", "mijikai", "pendek / singkat"], ["広い", "hiroi", "luas / lebar"], ["狭い", "semai", "sempit"], ["遠い", "tooi", "jauh"], ["近い", "chikai", "dekat"], ["速い / 早い", "hayai", "cepat / awal"], ["遅い", "osoi", "lambat / terlambat"], ["多い", "ooi", "banyak"], ["少ない", "sukunai", "sedikit"], ["暑い", "atsui", "panas (cuaca)"], ["熱い", "atsui", "panas (benda/air)"], ["寒い", "samui", "dingin (cuaca)"], ["冷たい", "tsumetai", "dingin (benda/minuman)"], ["暖かい", "atatakai", "hangat"], ["涼しい", "suzushii", "sejuk"], ["重い", "omoi", "berat"], ["軽い", "karui", "ringan"], ["強い", "tsuyoi", "kuat"], ["弱い", "yowai", "lemah"], ["難しい", "muzukashii", "sulit / susah"], ["易しい", "yasashii", "mudah / gampang"], ["優しい", "yasashii", "baik hati / ramah"], ["楽しい", "tanoshii", "menyenangkan"], ["嬉しい", "ureshii", "senang / gembira"], ["悲しい", "kanashii", "sedih"], ["怖い", "kowai", "takut / menyeramkan"], ["面白い", "omoshiroi", "menarik / lucu"], ["つまらない", "tsumaranai", "membosankan"], ["忙しい", "isogashii", "sibuk"], ["美味しい", "oishii", "enak / lezat"], ["まずい", "mazui", "tidak enak"], ["甘い", "amai", "manis"], ["辛い", "karai", "pedas"], ["苦い", "nigai", "pahit"], ["酸っぱい", "suppai", "asam / kecut"], ["しょっぱい", "shoppai", "asin"], ["明るい", "akarui", "terang / ceria"], ["暗い", "kurai", "gelap / suram"], ["静か", "shizuka", "tenang / sepi"], ["賑やか", "nigiyaka", "ramai / meriah"], ["綺麗", "kirei", "cantik / bersih / indah"], ["汚い", "kitanai", "kotor"], ["元気", "genki", "sehat / bersemangat"], ["便利", "benri", "praktis / nyaman"], ["不便", "fuben", "tidak praktis"], ["有名", "yuumei", "terkenal"], ["親切", "shinsetsu", "ramah / baik hati"], ["大切", "taisetsu", "penting / berharga"], ["大丈夫", "daijoubu", "tidak apa-apa / baik-baik saja"], ["好き", "suki", "suka"], ["嫌い", "kirai", "benci / tidak suka"], ["上手", "jouzu", "pandai / mahir"], ["下手", "heta", "tidak pandai / payah"], ["白い", "shiroi", "putih"], ["黒い", "kuroi", "hitam"], ["赤い", "akai", "merah"]];
+
+const FC_I18N_MAP = {
+    id: {
+        subtab_focus: 'Focus Raid & Grimoire',
+        subtab_flashcard: 'Flashcard Study (EN / JP)',
+        fc_title: 'FLASHCARD ARENA',
+        fc_btn_add: 'Kartu Baru',
+        fc_filter_all: 'Semua Kartu',
+        fc_filter_queue: 'Antrean Sesi',
+        fc_filter_mastered: 'Sudah Ingat',
+        fc_filter_review: 'Perlu Diulang',
+        fc_filter_custom: 'Kartu Custom',
+        fc_stat_queue: 'Sisa Antrean',
+        fc_stat_mastered: 'Dikuasai',
+        fc_stat_repeats: 'Pengulangan',
+        fc_btn_edit: 'Edit',
+        fc_tap_hint: 'Ketuk kartu untuk melihat arti',
+        fc_meaning_lbl: 'ARTI (BAHASA INDONESIA)',
+        fc_rate_hint: 'Pilih tingkat ingatan di bawah',
+        fc_rate_forgot: 'Lupa',
+        fc_rate_forgot_sub: 'Ulang Cepat',
+        fc_rate_dont: 'Tidak Ingat',
+        fc_rate_dont_sub: 'Masuk Antrean',
+        fc_rate_remember: 'Ingat',
+        fc_rate_remember_sub: 'Selesai (+INT)',
+        fc_btn_restart_session: 'Mulai Ulang Sesi Latihan',
+        fc_form_lang: 'Deck Bahasa',
+        fc_form_word: 'Kata / Frasa',
+        fc_form_romaji: 'Romaji (Wajib untuk Bahasa Jepang)',
+        fc_form_meaning: 'Arti (Bahasa Indonesia)',
+        fc_btn_cancel: 'Batal',
+        fc_btn_save: 'Simpan Kartu',
+        fc_search_ph: 'Cari kata, romaji, atau arti...'
+    },
+    en: {
+        subtab_focus: 'Focus Raid & Grimoire',
+        subtab_flashcard: 'Flashcard Study (EN / JP)',
+        fc_title: 'FLASHCARD ARENA',
+        fc_btn_add: 'New Card',
+        fc_filter_all: 'All Cards',
+        fc_filter_queue: 'Session Queue',
+        fc_filter_mastered: 'Remembered',
+        fc_filter_review: 'Needs Review',
+        fc_filter_custom: 'Custom Cards',
+        fc_stat_queue: 'Queue Left',
+        fc_stat_mastered: 'Mastered',
+        fc_stat_repeats: 'Repeats',
+        fc_btn_edit: 'Edit',
+        fc_tap_hint: 'Tap card to reveal meaning',
+        fc_meaning_lbl: 'MEANING (INDONESIAN)',
+        fc_rate_hint: 'Select your recall level below',
+        fc_rate_forgot: 'Forgot',
+        fc_rate_forgot_sub: 'Fast Repeat',
+        fc_rate_dont: 'Don\'t Recall',
+        fc_rate_dont_sub: 'Re-queue Card',
+        fc_rate_remember: 'Remember',
+        fc_rate_remember_sub: 'Done (+INT)',
+        fc_btn_restart_session: 'Restart Practice Session',
+        fc_form_lang: 'Language Deck',
+        fc_form_word: 'Word / Phrase',
+        fc_form_romaji: 'Romaji (Required for Japanese)',
+        fc_form_meaning: 'Meaning (Indonesian)',
+        fc_btn_cancel: 'Cancel',
+        fc_btn_save: 'Save Card',
+        fc_search_ph: 'Search word, romaji, or meaning...'
+    },
+    ja: {
+        subtab_focus: '集中レイド & 魔導書',
+        subtab_flashcard: '単語カード学習 (EN / JP)',
+        fc_title: 'フラッシュカードアリーナ',
+        fc_btn_add: '新規カード',
+        fc_filter_all: 'すべてのカード',
+        fc_filter_queue: '学習キュー',
+        fc_filter_mastered: '習得済み',
+        fc_filter_review: '復習が必要',
+        fc_filter_custom: 'カスタムカード',
+        fc_stat_queue: '残りキュー',
+        fc_stat_mastered: '習得数',
+        fc_stat_repeats: '反復回数',
+        fc_btn_edit: '編集',
+        fc_tap_hint: 'タップして意味を表示',
+        fc_meaning_lbl: '意味（インドネシア語）',
+        fc_rate_hint: '記憶度を選択してください',
+        fc_rate_forgot: '忘れた',
+        fc_rate_forgot_sub: 'すぐ復習',
+        fc_rate_dont: '覚えていない',
+        fc_rate_dont_sub: 'キューへ戻す',
+        fc_rate_remember: '覚えた',
+        fc_rate_remember_sub: '完了 (+INT)',
+        fc_btn_restart_session: '練習セッションを再開',
+        fc_form_lang: '言語デッキ',
+        fc_form_word: '単語・フレーズ',
+        fc_form_romaji: 'ローマ字（日本語は必須）',
+        fc_form_meaning: '意味（インドネシア語）',
+        fc_btn_cancel: 'キャンセル',
+        fc_btn_save: '保存する',
+        fc_search_ph: '単語・ローマ字・意味を検索...'
+    }
+};
+
+let flashcardState = {
+    activeDeck: 'en',
+    decks: { en: [], jp: [] },
+    queues: { en: [], jp: [] },
+    sessionRepeats: { en: 0, jp: 0 },
+    isFlipped: false
+};
+
+function buildDefaultFlashcardDeck(lang) {
+    if (lang === 'en') {
+        return DEFAULT_EN_VOCAB_RAW.map((row, idx) => ({
+            id: `en_${idx + 1}`,
+            no: idx + 1,
+            word: row[0],
+            romaji: '',
+            meaning: row[1],
+            status: 'new',
+            repeatCount: 0,
+            rewardClaimed: false,
+            isCustom: false
+        }));
+    }
+    return DEFAULT_JP_VOCAB_RAW.map((row, idx) => ({
+        id: `jp_${idx + 1}`,
+        no: idx + 1,
+        word: row[0],
+        romaji: row[1],
+        meaning: row[2],
+        status: 'new',
+        repeatCount: 0,
+        rewardClaimed: false,
+        isCustom: false
+    }));
+}
+
+function loadFlashcardState() {
+    try {
+        const raw = localStorage.getItem(FLASHCARD_STORAGE_KEY);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && parsed.decks && Array.isArray(parsed.decks.en) && Array.isArray(parsed.decks.jp) && parsed.decks.en.length > 0 && parsed.decks.jp.length > 0) {
+                flashcardState = parsed;
+                if (!flashcardState.queues) flashcardState.queues = { en: [], jp: [] };
+                if (!flashcardState.sessionRepeats) flashcardState.sessionRepeats = { en: 0, jp: 0 };
+                flashcardState.isFlipped = false;
+                return;
+            }
+        }
+    } catch (e) {
+        console.error('Gagal memuat state flashcard:', e);
+    }
+
+    flashcardState.decks.en = buildDefaultFlashcardDeck('en');
+    flashcardState.decks.jp = buildDefaultFlashcardDeck('jp');
+    flashcardState.queues.en = flashcardState.decks.en.map(c => c.id);
+    flashcardState.queues.jp = flashcardState.decks.jp.map(c => c.id);
+    saveFlashcardState();
+}
+
+function saveFlashcardState() {
+    try {
+        localStorage.setItem(FLASHCARD_STORAGE_KEY, JSON.stringify(flashcardState));
+    } catch (e) {
+        console.error('Gagal menyimpan state flashcard:', e);
+    }
+}
+
+function applyFlashcardLanguage() {
+    const uiLang = localStorage.getItem('system_rpg_lang') || localStorage.getItem('sysrpg_lang') || 'id';
+    const dict = FC_I18N_MAP[uiLang] || FC_I18N_MAP.id;
+    document.querySelectorAll('[data-fc-i18n]').forEach(el => {
+        const key = el.getAttribute('data-fc-i18n');
+        if (dict[key]) el.textContent = dict[key];
+    });
+    const searchInput = document.getElementById('fc-search-input');
+    if (searchInput && dict.fc_search_ph) {
+        searchInput.placeholder = dict.fc_search_ph;
+    }
+}
+
+function switchDungeonSubMode(mode) {
+    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+    const focusPane = document.getElementById('dungeon-mode-focus');
+    const fcPane = document.getElementById('dungeon-mode-flashcard');
+    const btnFocus = document.getElementById('dungeon-subtab-focus');
+    const btnFc = document.getElementById('dungeon-subtab-flashcard');
+    if (!focusPane || !fcPane) return;
+
+    if (mode === 'flashcard') {
+        focusPane.classList.add('hidden');
+        fcPane.classList.remove('hidden');
+        if (btnFc) btnFc.style.cssText = 'padding: 0.55rem 0.5rem; border-radius: 0.65rem; font-size: 11px; font-weight: 800; background: rgba(6,182,212,0.24); color: #67e8f9; border: 1px solid rgba(34,211,238,0.55);';
+        if (btnFocus) btnFocus.style.cssText = 'padding: 0.55rem 0.5rem; border-radius: 0.65rem; font-size: 11px; font-weight: 800; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);';
+        renderFlashcardUI();
+    } else {
+        fcPane.classList.add('hidden');
+        focusPane.classList.remove('hidden');
+        if (btnFocus) btnFocus.style.cssText = 'padding: 0.55rem 0.5rem; border-radius: 0.65rem; font-size: 11px; font-weight: 800; background: rgba(168,85,247,0.24); color: #e9d5ff; border: 1px solid rgba(168,85,247,0.55);';
+        if (btnFc) btnFc.style.cssText = 'padding: 0.55rem 0.5rem; border-radius: 0.65rem; font-size: 11px; font-weight: 800; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);';
+    }
+}
+
+function setFlashcardDeck(lang) {
+    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+    flashcardState.activeDeck = lang === 'jp' ? 'jp' : 'en';
+    flashcardState.isFlipped = false;
+    saveFlashcardState();
+    renderFlashcardUI();
+}
+
+function getFilteredActiveQueueIds() {
+    const lang = flashcardState.activeDeck;
+    const deck = flashcardState.decks[lang] || [];
+    const queue = flashcardState.queues[lang] || [];
+    const query = (document.getElementById('fc-search-input')?.value || '').trim().toLowerCase();
+    const filter = document.getElementById('fc-status-filter')?.value || 'ALL';
+
+    const cardMap = new Map(deck.map(c => [c.id, c]));
+    const sourceIds = (filter === 'MASTERED' || query.length > 0)
+        ? deck.map(c => c.id)
+        : queue;
+
+    return sourceIds.filter(id => {
+        const c = cardMap.get(id);
+        if (!c) return false;
+        if (filter === 'QUEUE' && !queue.includes(c.id)) return false;
+        if (filter === 'MASTERED' && c.status !== 'mastered') return false;
+        if (filter === 'REVIEW' && c.status !== 'review') return false;
+        if (filter === 'CUSTOM' && !c.isCustom) return false;
+
+        if (query) {
+            const hay = `${c.word} ${c.romaji || ''} ${c.meaning}`.toLowerCase();
+            if (!hay.includes(query)) return false;
+        }
+        return true;
+    });
+}
+
+function getCurrentActiveFlashcard() {
+    const lang = flashcardState.activeDeck;
+    const deck = flashcardState.decks[lang] || [];
+    const visibleIds = getFilteredActiveQueueIds();
+    if (visibleIds.length === 0) return null;
+    return deck.find(c => c.id === visibleIds[0]) || null;
+}
+
+function flipFlashcard() {
+    const card = getCurrentActiveFlashcard();
+    if (!card) return;
+    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+    flashcardState.isFlipped = !flashcardState.isFlipped;
+    const cardInner = document.getElementById('fc-card-inner');
+    if (cardInner) {
+        cardInner.classList.toggle('is-flipped', flashcardState.isFlipped);
+    }
+}
+
+function rateCurrentFlashcard(rating) {
+    const lang = flashcardState.activeDeck;
+    const card = getCurrentActiveFlashcard();
+    if (!card) return;
+
+    const queue = flashcardState.queues[lang];
+    const qIdx = queue.indexOf(card.id);
+    if (qIdx !== -1) {
+        queue.splice(qIdx, 1);
+    }
+
+    if (rating === 'remember') {
+        card.status = 'mastered';
+        if (typeof SoundFX !== 'undefined' && SoundFX.playQuestComplete) SoundFX.playQuestComplete();
+
+        if (!card.rewardClaimed) {
+            card.rewardClaimed = true;
+            if (typeof addRewards === 'function') {
+                addRewards(5, 3, 'INT', 5, true);
+            }
+            if (typeof spawnFloatingReward === 'function') {
+                spawnFloatingReward('⚡ Ingat! +5 XP | +3 Gold | +5 INT XP');
+            }
+        }
+    } else if (rating === 'dont_remember') {
+        card.status = 'review';
+        card.repeatCount = (card.repeatCount || 0) + 1;
+        flashcardState.sessionRepeats[lang] = (flashcardState.sessionRepeats[lang] || 0) + 1;
+        if (typeof SoundFX !== 'undefined' && SoundFX.playUndo) SoundFX.playUndo();
+
+        const insertPos = Math.min(queue.length, 6);
+        queue.splice(insertPos, 0, card.id);
+    } else if (rating === 'forgot') {
+        card.status = 'review';
+        card.repeatCount = (card.repeatCount || 0) + 1;
+        flashcardState.sessionRepeats[lang] = (flashcardState.sessionRepeats[lang] || 0) + 1;
+        if (typeof SoundFX !== 'undefined' && SoundFX.playDamage) SoundFX.playDamage();
+
+        const insertPos = Math.min(queue.length, 2);
+        queue.splice(insertPos, 0, card.id);
+    }
+
+    flashcardState.isFlipped = false;
+    saveFlashcardState();
+    renderFlashcardUI();
+}
+
+function restartFlashcardSessionQueue() {
+    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+    const lang = flashcardState.activeDeck;
+    const deck = flashcardState.decks[lang] || [];
+    const reviewFirst = deck.filter(c => c.status !== 'mastered').map(c => c.id);
+    flashcardState.queues[lang] = reviewFirst.length > 0 ? reviewFirst : deck.map(c => c.id);
+    flashcardState.sessionRepeats[lang] = 0;
+    flashcardState.isFlipped = false;
+    saveFlashcardState();
+    renderFlashcardUI();
+}
+
+function handleFlashcardFilterChange() {
+    flashcardState.isFlipped = false;
+    renderFlashcardUI();
+}
+
+function renderFlashcardUI() {
+    applyFlashcardLanguage();
+    const lang = flashcardState.activeDeck;
+    const deck = flashcardState.decks[lang] || [];
+
+    const btnEn = document.getElementById('fc-deck-en');
+    const btnJp = document.getElementById('fc-deck-jp');
+    const cEn = document.getElementById('fc-count-en');
+    const cJp = document.getElementById('fc-count-jp');
+    if (cEn) cEn.textContent = (flashcardState.decks.en || []).length;
+    if (cJp) cJp.textContent = (flashcardState.decks.jp || []).length;
+
+    if (btnEn && btnJp) {
+        const activeStyle = 'padding: 0.55rem; border-radius: 0.65rem; font-size: 11px; font-weight: 800; background: rgba(6,182,212,0.22); color: #67e8f9; border: 1px solid rgba(34,211,238,0.55);';
+        const idleStyle = 'padding: 0.55rem; border-radius: 0.65rem; font-size: 11px; font-weight: 800; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;';
+        btnEn.style.cssText = lang === 'en' ? activeStyle : idleStyle;
+        btnJp.style.cssText = lang === 'jp' ? activeStyle : idleStyle;
+    }
+
+    const masteredCount = deck.filter(c => c.status === 'mastered').length;
+    const visibleIds = getFilteredActiveQueueIds();
+    const remEl = document.getElementById('fc-queue-remaining');
+    const masEl = document.getElementById('fc-mastered-total');
+    const repEl = document.getElementById('fc-repeat-counter');
+    if (remEl) remEl.textContent = visibleIds.length;
+    if (masEl) masEl.textContent = `${masteredCount} / ${deck.length}`;
+    if (repEl) repEl.textContent = `${flashcardState.sessionRepeats[lang] || 0}x`;
+
+    const stage = document.getElementById('fc-stage-container');
+    const empty = document.getElementById('fc-empty-state');
+    const card = getCurrentActiveFlashcard();
+
+    if (!card) {
+        if (stage) stage.classList.add('hidden');
+        if (empty) empty.classList.remove('hidden');
+        return;
+    }
+
+    if (stage) stage.classList.remove('hidden');
+    if (empty) empty.classList.add('hidden');
+
+    const cardInner = document.getElementById('fc-card-inner');
+    if (cardInner) cardInner.classList.toggle('is-flipped', flashcardState.isFlipped);
+
+    document.getElementById('fc-card-number').textContent = `#${card.no}`;
+    document.getElementById('fc-front-word').textContent = card.word;
+    document.getElementById('fc-back-word-mini').textContent = card.word;
+    document.getElementById('fc-back-meaning').textContent = card.meaning;
+
+    const frontRomaji = document.getElementById('fc-front-romaji');
+    const backRomaji = document.getElementById('fc-back-romaji');
+    if (lang === 'jp' && card.romaji) {
+        frontRomaji.textContent = card.romaji;
+        frontRomaji.classList.remove('hidden');
+        backRomaji.textContent = card.romaji;
+        backRomaji.classList.remove('hidden');
+    } else {
+        frontRomaji.classList.add('hidden');
+        backRomaji.classList.add('hidden');
+    }
+
+    const statusBadge = document.getElementById('fc-card-status-badge');
+    if (card.status === 'mastered') {
+        statusBadge.textContent = 'INGAT';
+        statusBadge.style.cssText = 'background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.45);';
+    } else if (card.status === 'review') {
+        statusBadge.textContent = 'DIULANG';
+        statusBadge.style.cssText = 'background: rgba(244,63,94,0.2); color: #fda4af; border: 1px solid rgba(244,63,94,0.45);';
+    } else {
+        statusBadge.textContent = card.isCustom ? 'CUSTOM' : 'BARU';
+        statusBadge.style.cssText = 'background: rgba(6,182,212,0.18); color: #67e8f9; border: 1px solid rgba(34,211,238,0.4);';
+    }
+
+    const repBadge = document.getElementById('fc-card-repeat-badge');
+    if ((card.repeatCount || 0) > 0) {
+        repBadge.textContent = `Ulang ${card.repeatCount}x`;
+        repBadge.classList.remove('hidden');
+    } else {
+        repBadge.classList.add('hidden');
+    }
+}
+
+function toggleFlashcardRomajiField() {
+    const langSel = document.getElementById('fc-form-lang')?.value || 'en';
+    const romajiGroup = document.getElementById('fc-form-romaji-group');
+    const romajiInput = document.getElementById('fc-form-romaji');
+    if (!romajiGroup || !romajiInput) return;
+
+    if (langSel === 'jp') {
+        romajiGroup.classList.remove('hidden');
+        romajiInput.required = true;
+    } else {
+        romajiGroup.classList.add('hidden');
+        romajiInput.required = false;
+    }
+}
+
+function openFlashcardModal(mode) {
+    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+    const lang = flashcardState.activeDeck;
+    document.getElementById('fc-edit-mode').value = mode;
+    document.getElementById('fc-form-lang').value = lang;
+
+    if (mode === 'edit') {
+        const card = getCurrentActiveFlashcard();
+        if (!card) return;
+        document.getElementById('fc-modal-title').textContent = '✏️ EDIT FLASHCARD';
+        document.getElementById('fc-edit-id').value = card.id;
+        document.getElementById('fc-form-lang').disabled = true;
+        document.getElementById('fc-form-word').value = card.word;
+        document.getElementById('fc-form-romaji').value = card.romaji || '';
+        document.getElementById('fc-form-meaning').value = card.meaning;
+    } else {
+        document.getElementById('fc-modal-title').textContent = '🃏 TAMBAH FLASHCARD';
+        document.getElementById('fc-edit-id').value = '';
+        document.getElementById('fc-form-lang').disabled = false;
+        document.getElementById('fc-form-word').value = '';
+        document.getElementById('fc-form-romaji').value = '';
+        document.getElementById('fc-form-meaning').value = '';
+    }
+
+    toggleFlashcardRomajiField();
+    if (typeof openModal === 'function') openModal('modal-flashcard-editor');
+}
+
+function saveFlashcardForm(e) {
+    e.preventDefault();
+    const mode = document.getElementById('fc-edit-mode').value;
+    const lang = document.getElementById('fc-form-lang').value;
+    const word = document.getElementById('fc-form-word').value.trim();
+    const romaji = document.getElementById('fc-form-romaji').value.trim();
+    const meaning = document.getElementById('fc-form-meaning').value.trim();
+
+    if (!word || !meaning) return;
+    if (lang === 'jp' && !romaji) return;
+
+    const deck = flashcardState.decks[lang];
+    if (mode === 'edit') {
+        const id = document.getElementById('fc-edit-id').value;
+        const target = deck.find(c => c.id === id);
+        if (target) {
+            target.word = word;
+            target.romaji = lang === 'jp' ? romaji : '';
+            target.meaning = meaning;
+        }
+    } else {
+        const newId = `${lang}_custom_${Date.now()}`;
+        const newCard = {
+            id: newId,
+            no: deck.length + 1,
+            word,
+            romaji: lang === 'jp' ? romaji : '',
+            meaning,
+            status: 'new',
+            repeatCount: 0,
+            rewardClaimed: false,
+            isCustom: true
+        };
+        deck.unshift(newCard);
+        flashcardState.queues[lang].unshift(newId);
+        flashcardState.activeDeck = lang;
+    }
+
+    if (typeof SoundFX !== 'undefined' && SoundFX.playQuestComplete) SoundFX.playQuestComplete();
+    if (typeof closeModal === 'function') closeModal('modal-flashcard-editor');
+    flashcardState.isFlipped = false;
+    saveFlashcardState();
+    renderFlashcardUI();
+    if (typeof spawnFloatingReward === 'function') {
+        spawnFloatingReward(mode === 'edit' ? '✏️ Kartu diperbarui!' : '🃏 Flashcard baru ditambahkan!');
+    }
+}
+
+function confirmResetFlashcards() {
+    const lang = flashcardState.activeDeck;
+    const deckLabel = lang === 'jp' ? 'Japanese' : 'English';
+    const ok = window.confirm(`Reset seluruh progres hafalan & kembalikan deck ${deckLabel} ke bawaan awal?`);
+    if (!ok) return;
+
+    flashcardState.decks[lang] = buildDefaultFlashcardDeck(lang);
+    flashcardState.queues[lang] = flashcardState.decks[lang].map(c => c.id);
+    flashcardState.sessionRepeats[lang] = 0;
+    flashcardState.isFlipped = false;
+    saveFlashcardState();
+    renderFlashcardUI();
+    if (typeof spawnFloatingReward === 'function') {
+        spawnFloatingReward(`↺ Deck ${deckLabel} di-reset ke awal`);
+    }
+}
+
+window.addEventListener('system-language-changed', () => {
+    applyFlashcardLanguage();
+});
+
+loadFlashcardState();
+
+
 // 17. INITIAL BOOT SEQUENCE
 // ==========================================
 (function bootSystemRPG() {

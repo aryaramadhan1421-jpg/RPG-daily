@@ -724,6 +724,25 @@
 
         <!-- ==================== TAB 3: DUNGEON (FOCUS TIMER) ==================== -->
         <section id="tab-dungeon" class="tab-content hidden space-y-4">
+            <!-- SUB-TAB MODE SWITCHER DI DALAM TAB DUNGEON -->
+            <div class="system-card" style="padding: 0.45rem; border-color: rgba(34,211,238,0.35);">
+                <div class="grid grid-cols-2 gap-1-5">
+                    <button type="button" id="dungeon-subtab-focus" onclick="switchDungeonSubMode('focus')"
+                        class="font-display"
+                        style="padding: 0.55rem 0.5rem; border-radius: 0.65rem; font-size: 11px; font-weight: 800; background: rgba(168,85,247,0.24); color: #e9d5ff; border: 1px solid rgba(168,85,247,0.55);">
+                        ⚔️ <span data-fc-i18n="subtab_focus">Focus Raid & Grimoire</span>
+                    </button>
+                    <button type="button" id="dungeon-subtab-flashcard" onclick="switchDungeonSubMode('flashcard')"
+                        class="font-display"
+                        style="padding: 0.55rem 0.5rem; border-radius: 0.65rem; font-size: 11px; font-weight: 800; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);">
+                        🃏 <span data-fc-i18n="subtab_flashcard">Flashcard Study (EN / JP)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- WRAPPER KONTEN LAMA DUNGEON -->
+            <div id="dungeon-mode-focus" class="space-y-4">
+
             <div class="system-card text-center" style="padding: 1.25rem; border-color: rgba(168,85,247,0.35);">
                 <div class="flex items-center justify-center gap-2" style="margin-bottom: 0.75rem;">
                     <span class="font-display" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.35); color: #d8b4fe; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">
@@ -939,6 +958,154 @@
 
                 <div id="grimoire-empty-hint" style="background: rgba(2,6,23,0.65); border: 1px dashed #334155; border-radius: 0.75rem; padding: 0.85rem; text-align: center; font-size: 11px; color: var(--text-muted);">
                     Pilih file <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> dari HP untuk membaca sambil timer fokus berjalan. Halaman terakhir otomatis tersimpan saat kamu menekan <span style="color: #fcd34d; font-weight: 700;">🔖 Tandai Hal Ini</span>.
+                </div>
+            </div>
+        
+            </div>
+
+            <!-- KONTEN BARU: FLASHCARD STUDY MODE -->
+            <div id="dungeon-mode-flashcard" class="hidden space-y-3">
+                <!-- Header & Deck Switcher -->
+                <div class="system-card space-y-3" style="border-color: rgba(34,211,238,0.45);">
+                    <div class="flex items-center justify-between gap-2">
+                        <div>
+                            <span class="font-display" style="font-size: 10px; font-weight: 800; color: #22d3ee; letter-spacing: 0.08em;">DUNGEON MEMORY TRIAL</span>
+                            <h2 class="font-display" style="font-size: 1.15rem; font-weight: 800; color: #fff;" data-fc-i18n="fc_title">FLASHCARD ARENA</h2>
+                        </div>
+                        <div class="flex items-center gap-1-5">
+                            <button type="button" onclick="openFlashcardModal('add')" class="font-display shadow-neon-blue"
+                                style="background: var(--cyan-500); color: #020617; font-size: 11px; font-weight: 800; padding: 0.45rem 0.7rem; border-radius: 0.65rem;">
+                                + <span data-fc-i18n="fc_btn_add">Kartu Baru</span>
+                            </button>
+                            <button type="button" onclick="confirmResetFlashcards()" class="font-display"
+                                style="background: rgba(244,63,94,0.14); color: #fda4af; border: 1px solid rgba(244,63,94,0.4); font-size: 11px; font-weight: 700; padding: 0.45rem 0.6rem; border-radius: 0.65rem;"
+                                title="Reset Progres Deck">
+                                ↺
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Deck Language Selector -->
+                    <div class="grid grid-cols-2 gap-1-5">
+                        <button type="button" id="fc-deck-en" onclick="setFlashcardDeck('en')" class="font-display"
+                            style="padding: 0.55rem; border-radius: 0.65rem; font-size: 11px; font-weight: 800; background: rgba(6,182,212,0.22); color: #67e8f9; border: 1px solid rgba(34,211,238,0.55);">
+                            🇬🇧 English (<span id="fc-count-en">500</span>)
+                        </button>
+                        <button type="button" id="fc-deck-jp" onclick="setFlashcardDeck('jp')" class="font-display"
+                            style="padding: 0.55rem; border-radius: 0.65rem; font-size: 11px; font-weight: 800; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;">
+                            🇯🇵 Japanese (<span id="fc-count-jp">500</span>)
+                        </button>
+                    </div>
+
+                    <!-- Search & Filter -->
+                    <div class="flex gap-1-5">
+                        <input type="text" id="fc-search-input" oninput="handleFlashcardFilterChange()"
+                            placeholder="Cari kata, romaji, atau arti..."
+                            class="input-cyber" style="font-size: 12px; padding: 0.45rem 0.65rem;">
+                        <select id="fc-status-filter" onchange="handleFlashcardFilterChange()" class="input-cyber" style="max-width: 8.5rem; font-size: 11px; padding: 0.45rem 0.5rem;">
+                            <option value="ALL" data-fc-i18n="fc_filter_all">Semua Kartu</option>
+                            <option value="QUEUE" data-fc-i18n="fc_filter_queue">Antrean Sesi</option>
+                            <option value="MASTERED" data-fc-i18n="fc_filter_mastered">Sudah Ingat</option>
+                            <option value="REVIEW" data-fc-i18n="fc_filter_review">Perlu Diulang</option>
+                            <option value="CUSTOM" data-fc-i18n="fc_filter_custom">Kartu Custom</option>
+                        </select>
+                    </div>
+
+                    <!-- Session Queue & Mastery Metrics -->
+                    <div class="fc-stats-bar">
+                        <div class="fc-stat-pill">
+                            <span class="fc-stat-lbl" data-fc-i18n="fc_stat_queue">Sisa Antrean</span>
+                            <strong id="fc-queue-remaining" class="font-display" style="color: #22d3ee;">0</strong>
+                        </div>
+                        <div class="fc-stat-pill">
+                            <span class="fc-stat-lbl" data-fc-i18n="fc_stat_mastered">Dikuasai</span>
+                            <strong id="fc-mastered-total" class="font-display" style="color: #34d399;">0 / 500</strong>
+                        </div>
+                        <div class="fc-stat-pill">
+                            <span class="fc-stat-lbl" data-fc-i18n="fc_stat_repeats">Pengulangan</span>
+                            <strong id="fc-repeat-counter" class="font-display" style="color: #fbbf24;">0x</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Flashcard Stage -->
+                <div id="fc-stage-container" class="space-y-3">
+                    <div id="fc-card-wrapper" class="fc-scene" onclick="flipFlashcard()">
+                        <div id="fc-card-inner" class="fc-card">
+                            <!-- FRONT FACE -->
+                            <div class="fc-face fc-front system-card">
+                                <div class="flex items-center justify-between w-full">
+                                    <div class="flex items-center gap-1-5">
+                                        <span id="fc-card-number" class="fc-badge-num font-display">#1</span>
+                                        <span id="fc-card-status-badge" class="fc-badge-status font-display">BARU</span>
+                                        <span id="fc-card-repeat-badge" class="hidden fc-badge-repeat font-display">Ulang 1x</span>
+                                    </div>
+                                    <button type="button" onclick="event.stopPropagation(); openFlashcardModal('edit')"
+                                        class="font-display fc-edit-btn" title="Edit Kartu">
+                                        ✏️ <span data-fc-i18n="fc_btn_edit">Edit</span>
+                                    </button>
+                                </div>
+
+                                <div class="fc-main-word-box">
+                                    <p id="fc-front-word" class="fc-word-text">abandon</p>
+                                    <p id="fc-front-romaji" class="fc-romaji-text hidden">watashi</p>
+                                </div>
+
+                                <p class="fc-tap-hint" data-fc-i18n="fc_tap_hint">Ketuk kartu untuk melihat arti</p>
+                            </div>
+
+                            <!-- BACK FACE -->
+                            <div class="fc-face fc-back system-card">
+                                <div class="flex items-center justify-between w-full">
+                                    <span id="fc-back-word-mini" class="font-display" style="font-size: 11px; font-weight: 700; color: #67e8f9;">abandon</span>
+                                    <button type="button" onclick="event.stopPropagation(); openFlashcardModal('edit')"
+                                        class="font-display fc-edit-btn">
+                                        ✏️ <span data-fc-i18n="fc_btn_edit">Edit</span>
+                                    </button>
+                                </div>
+
+                                <div class="fc-main-word-box">
+                                    <span class="font-display" style="font-size: 10px; color: #c084fc; letter-spacing: 0.08em;" data-fc-i18n="fc_meaning_lbl">ARTI (BAHASA INDONESIA)</span>
+                                    <p id="fc-back-meaning" class="fc-meaning-text">meninggalkan / mengabaikan</p>
+                                    <p id="fc-back-romaji" class="fc-romaji-text hidden"></p>
+                                </div>
+
+                                <p class="fc-tap-hint" data-fc-i18n="fc_rate_hint">Pilih tingkat ingatan di bawah</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3 Rating Buttons: Lupa, Tidak Ingat, Ingat -->
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="rateCurrentFlashcard('forgot')" class="fc-rate-btn fc-btn-forgot font-display">
+                            <span>💀</span>
+                            <span data-fc-i18n="fc_rate_forgot">Lupa</span>
+                            <small data-fc-i18n="fc_rate_forgot_sub">Ulang Cepat</small>
+                        </button>
+                        <button type="button" onclick="rateCurrentFlashcard('dont_remember')" class="fc-rate-btn fc-btn-dont font-display">
+                            <span>🔄</span>
+                            <span data-fc-i18n="fc_rate_dont">Tidak Ingat</span>
+                            <small data-fc-i18n="fc_rate_dont_sub">Masuk Antrean</small>
+                        </button>
+                        <button type="button" onclick="rateCurrentFlashcard('remember')" class="fc-rate-btn fc-btn-remember font-display">
+                            <span>⚡</span>
+                            <span data-fc-i18n="fc_rate_remember">Ingat</span>
+                            <small data-fc-i18n="fc_rate_remember_sub">Selesai (+INT)</small>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Empty / Session Complete State -->
+                <div id="fc-empty-state" class="hidden system-card text-center space-y-3" style="padding: 1.5rem 1rem; border-color: rgba(16,185,129,0.45);">
+                    <div style="font-size: 2.25rem;">🏆</div>
+                    <h3 id="fc-empty-title" class="font-display" style="font-size: 1rem; font-weight: 800; color: #34d399;">SEMUA KARTU DI ANTREAN SELESAI!</h3>
+                    <p id="fc-empty-desc" style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+                        Kamu telah menguasai seluruh kartu pada filter/antrean sesi ini.
+                    </p>
+                    <button type="button" onclick="restartFlashcardSessionQueue()" class="font-display shadow-neon-blue"
+                        style="background: var(--cyan-500); color: #020617; font-size: 12px; font-weight: 800; padding: 0.6rem 1.1rem; border-radius: 0.75rem;">
+                        🔁 <span data-fc-i18n="fc_btn_restart_session">Mulai Ulang Sesi Latihan</span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -1723,6 +1890,54 @@
             </div>
         </div>
     </div>
+    
+    <!-- Modal Tambah / Edit Flashcard -->
+    <div id="modal-flashcard-editor" class="hidden modal-backdrop" style="z-index: 75;">
+        <form onsubmit="saveFlashcardForm(event)" class="system-card max-w-xs w-full modal-enter space-y-3" style="border-color: rgba(34,211,238,0.6); padding: 1.25rem;">
+            <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--bg-slate-800); padding-bottom: 0.5rem;">
+                <h3 id="fc-modal-title" class="font-display" style="font-weight: 700; font-size: 0.95rem; color: #22d3ee;">🃏 TAMBAH FLASHCARD</h3>
+                <button type="button" onclick="closeModal('modal-flashcard-editor')" style="color: var(--text-muted);">✕</button>
+            </div>
+
+            <input type="hidden" id="fc-edit-id">
+            <input type="hidden" id="fc-edit-mode" value="add">
+
+            <div>
+                <label style="display: block; font-size: 11px; color: #94a3b8; margin-bottom: 4px;" data-fc-i18n="fc_form_lang">Deck Bahasa</label>
+                <select id="fc-form-lang" onchange="toggleFlashcardRomajiField()" class="input-cyber" style="font-size: 12px;">
+                    <option value="en">🇬🇧 English (Bahasa Inggris)</option>
+                    <option value="jp">🇯🇵 Japanese (Bahasa Jepang)</option>
+                </select>
+            </div>
+
+            <div>
+                <label id="fc-form-word-label" style="display: block; font-size: 11px; color: #67e8f9; margin-bottom: 4px;" data-fc-i18n="fc_form_word">Kata / Frasa</label>
+                <input type="text" id="fc-form-word" required placeholder="Contoh: accomplish / 食べる" class="input-cyber" style="font-size: 13px;">
+            </div>
+
+            <div id="fc-form-romaji-group" class="hidden">
+                <label style="display: block; font-size: 11px; color: #c084fc; margin-bottom: 4px;" data-fc-i18n="fc_form_romaji">Romaji (Wajib untuk Bahasa Jepang)</label>
+                <input type="text" id="fc-form-romaji" placeholder="Contoh: taberu" class="input-cyber" style="font-size: 13px;">
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 11px; color: #fcd34d; margin-bottom: 4px;" data-fc-i18n="fc_form_meaning">Arti (Bahasa Indonesia)</label>
+                <input type="text" id="fc-form-meaning" required placeholder="Contoh: menyelesaikan / makan" class="input-cyber" style="font-size: 13px;">
+            </div>
+
+            <div class="flex gap-2 pt-1">
+                <button type="button" onclick="closeModal('modal-flashcard-editor')" class="flex-1 font-display"
+                    style="background: var(--bg-slate-800); color: #cbd5e1; font-weight: 700; padding: 0.55rem; border-radius: 0.75rem; font-size: 12px;">
+                    <span data-fc-i18n="fc_btn_cancel">Batal</span>
+                </button>
+                <button type="submit" class="flex-1 font-display shadow-neon-blue"
+                    style="background: var(--cyan-500); color: #020617; font-weight: 800; padding: 0.55rem; border-radius: 0.75rem; font-size: 12px;">
+                    <span data-fc-i18n="fc_btn_save">Simpan Kartu</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
     <script src="app.js"></script>
 
     <script>
