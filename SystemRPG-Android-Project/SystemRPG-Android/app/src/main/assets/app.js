@@ -6242,8 +6242,8 @@ function completeFingerprintUnlock() {
             },
             {
                 match: 'Pilih file',
-                subMatch: 'dari HP untuk membaca sambil timer fokus berjalan',
-                html: 'Select a <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> file from your phone to read while the focus timer runs. The last page is saved automatically when you tap <span style="color: #fcd34d; font-weight: 700;">🔖 Bookmark Page</span>.'
+                subMatch: 'membaca sambil timer fokus berjalan',
+                html: 'Select a <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> file from your device to read while the focus timer runs. The last page is saved automatically when you tap <span style="color: #fcd34d; font-weight: 700;">🔖 Bookmark Page</span>.'
             },
             {
                 match: 'Common (50%):',
@@ -6294,7 +6294,7 @@ function completeFingerprintUnlock() {
             },
             {
                 match: 'Pilih file',
-                subMatch: 'dari HP untuk membaca sambil timer fokus berjalan',
+                subMatch: 'membaca sambil timer fokus berjalan',
                 html: '端末から <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> ファイルを選択して集中タイマー中に閲覧できます。<span style="color: #fcd34d; font-weight: 700;">🔖 このページを保存</span> を押すと最後のページが自動保存されます。'
             },
             {
