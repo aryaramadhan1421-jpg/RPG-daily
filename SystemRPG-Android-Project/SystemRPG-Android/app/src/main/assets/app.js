@@ -6305,6 +6305,162 @@ function stopAutoSplashFantasyBGM() {
     }
 }
 
+function setFingerprintFeedback(statusText, subText, color = '#67e8f9', scanning = false) {
+    const statusEl = document.getElementById('fp-status-text');
+    const subEl = document.getElementById('fp-sub-text');
+    const padEl = document.getElementById('btn-fingerprint-auth');
+    const scanLine = document.getElementById('fp-scan-line');
+    const svgIcon = document.getElementById('fp-svg-icon');
+
+    if (statusEl && statusText) {
+        statusEl.textContent = statusText;
+        statusEl.style.color = color;
+    }
+    if (subEl && subText) {
+        subEl.textContent = subText;
+    }
+    if (padEl) {
+        padEl.classList.toggle('is-scanning', scanning);
+        padEl.classList.toggle('scanning', scanning);
+    }
+    if (scanLine) {
+        scanLine.style.opacity = scanning ? '1' : '0';
+    }
+    if (svgIcon) {
+        svgIcon.style.stroke = color;
+    }
+}
+
+function clearFingerprintHoldTimers() {
+    if (fpHoldTimer) {
+        clearTimeout(fpHoldTimer);
+        fpHoldTimer = null;
+    }
+    if (fpVibrateInterval) {
+        clearInterval(fpVibrateInterval);
+        fpVibrateInterval = null;
+    }
+}
+
+function playFingerprintUnlockSound() {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        if (!fpAudioCtx) fpAudioCtx = new AudioCtx();
+        if (fpAudioCtx.state === 'suspended') {
+            fpAudioCtx.resume().catch(() => {});
+        }
+
+        const now = fpAudioCtx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach((freq, idx) => {
+            const osc = fpAudioCtx.createOscillator();
+            const gain = fpAudioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+
+            gain.gain.setValueAtTime(0.001, now + idx * 0.07);
+            gain.gain.linearRampToValueAtTime(0.22, now + idx * 0.07 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.07 + 0.32);
+
+            osc.connect(gain);
+            gain.connect(fpAudioCtx.destination);
+            osc.start(now + idx * 0.07);
+            osc.stop(now + idx * 0.07 + 0.35);
+        });
+    } catch (_e) {}
+}
+
+function unlockSystemSplashScreen() {
+    if (isSplashUnlocking) return;
+    isSplashUnlocking = true;
+    clearFingerprintHoldTimers();
+    stopAutoSplashFantasyBGM();
+
+    setFingerprintFeedback(
+        '[ AWAKENING CONFIRMED ]',
+        'Memuat antarmuka Hunter...',
+        '#34d399',
+        false
+    );
+
+    playFingerprintUnlockSound();
+
+    if (navigator.vibrate) {
+        try {
+            navigator.vibrate([45, 30, 80]);
+        } catch (_e) {}
+    }
+
+    const splashEl = document.getElementById('system-splash-screen');
+    if (splashEl) {
+        splashEl.classList.add('unlocked', 'is-hidden', 'hidden', 'fade-out');
+        splashEl.style.pointerEvents = 'none';
+        splashEl.style.transition = 'opacity 0.35s ease, visibility 0.35s ease';
+        splashEl.style.opacity = '0';
+        splashEl.style.visibility = 'hidden';
+
+        setTimeout(() => {
+            splashEl.style.display = 'none';
+        }, 360);
+    }
+
+    if (typeof window.onSystemUnlocked === 'function') {
+        try { window.onSystemUnlocked(); } catch (_e) {}
+    } else if (typeof renderAll === 'function') {
+        try { renderAll(); } catch (_e) {}
+    }
+}
+
+function startFingerprintHold(event) {
+    if (event && typeof event.preventDefault === 'function') {
+        event.preventDefault();
+    }
+    if (isSplashUnlocking) return;
+
+    clearFingerprintHoldTimers();
+    stopAutoSplashFantasyBGM();
+
+    setFingerprintFeedback(
+        '[ MEMINDAI BIOMETRIK... TAHAN ]',
+        'Jangan lepaskan sidik jari hingga verifikasi selesai',
+        '#fbbf24',
+        true
+    );
+
+    if (navigator.vibrate) {
+        try { navigator.vibrate(25); } catch (_e) {}
+        fpVibrateInterval = setInterval(() => {
+            if (isSplashUnlocking) {
+                clearFingerprintHoldTimers();
+                return;
+            }
+            try { navigator.vibrate(20); } catch (_e) {}
+        }, 260);
+    }
+
+    fpHoldTimer = setTimeout(() => {
+        unlockSystemSplashScreen();
+    }, 650);
+}
+
+function cancelFingerprintHold() {
+    if (isSplashUnlocking) return;
+    if (!fpHoldTimer && !fpVibrateInterval) return;
+
+    clearFingerprintHoldTimers();
+    setFingerprintFeedback(
+        '[ TAP & TAHAN FINGERPRINT UNTUK AWAKENING ]',
+        'Pemindaian dibatalkan — tahan lagi untuk masuk',
+        '#67e8f9',
+        false
+    );
+
+    if (!isSplashBgmPlaying) {
+        startAutoSplashFantasyBGM();
+    }
+}
+
 function initSplashBgmAutoplay() {
     startAutoSplashFantasyBGM();
 
