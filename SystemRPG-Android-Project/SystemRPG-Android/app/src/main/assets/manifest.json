@@ -1,6 +1,6 @@
 {
   "name": "SYSTEM // Awakening Productivity RPG",
-  "short_name": "SYSTEM RPG",
+  "short_name": "System RPG",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#07090e",
