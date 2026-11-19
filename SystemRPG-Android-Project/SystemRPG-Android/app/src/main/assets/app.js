@@ -1680,6 +1680,31 @@ function revokeRewards(xpAmount, goldAmount, statType = null, statXpGain = 15) {
     }
 }
 
+function getPenaltyQuestBannerHtml() {
+    ensureRpgExtendedState();
+    const pq = gameState.penaltyQuest;
+    if (!pq || !pq.active) return '';
+    const cur = pq.progress || 0;
+    const target = pq.targetCount || 2;
+    return `
+        <div style="margin-bottom: 0.75rem; padding: 0.65rem 0.8rem; border-radius: 0.75rem; background: rgba(225,29,72,0.16); border: 1px solid rgba(244,63,94,0.65); box-shadow: 0 0 12px rgba(244,63,94,0.2);">
+            <div class="flex items-center justify-between gap-2">
+                <span class="font-display" style="font-size: 0.78rem; font-weight: 800; color: #fda4af; letter-spacing: 0.04em;">⚠️ PENALTY ZONE AKTIF</span>
+                <span class="font-display" style="font-size: 0.75rem; font-weight: 800; color: #fecdd3;">${cur}/${target} QUEST</span>
+            </div>
+            <p style="font-size: 11px; color: #ffe4e6; margin-top: 3px;">
+                Selesaikan ${target} quest untuk mencabut status SEKARAT + pulih ${pq.rewardHp} HP & +${pq.rewardGold} Gold.
+            </p>
+        </div>
+    `;
+}
+
+function renderPenaltyQuestBanner() {
+    const el = document.getElementById('penalty-quest-banner');
+    if (!el) return;
+    el.innerHTML = getPenaltyQuestBannerHtml();
+}
+
 function takeDamage(amount, suppressDeathModal = false) {
     SoundFX.playDamage();
     syncPlayerMaxHp();
@@ -1709,9 +1734,11 @@ function takeDamage(amount, suppressDeathModal = false) {
         gameState.player.streak = 0;
         gameState.lastStreakDate = null;
 
-        // Bangkit dalam kondisi SEKARAT (25% Max HP) agar harus berjuang memulihkan HP
+       // Bangkit dalam kondisi SEKARAT (25% Max HP) agar harus berjuang memulihkan HP
         gameState.player.hp = Math.max(1, Math.round(gameState.player.maxHp * 0.25));
+        assignPenaltyQuestOnDeath();
 
+        const penaltyHealAmt = Math.max(20, Math.round((gameState.player.maxHp || 100) * 0.25));
         const lvlMsg = levelLost > 0
             ? `Level turun (${prevLevel} ➔ ${gameState.player.level}) & EXP hangus`
             : `EXP hangus ke 0 (Lv.${gameState.player.level})`;
@@ -1728,7 +1755,7 @@ function takeDamage(amount, suppressDeathModal = false) {
             prevStreak,
             revivedHp: gameState.player.hp,
             maxHp: gameState.player.maxHp,
-            summaryText: `• ${lvlMsg}\n• ${goldMsg}\n• Streak (${prevStreak} hari) di-reset ke 0\n• Bangkit dalam status SEKARAT: ${gameState.player.hp}/${gameState.player.maxHp} HP (-25% EXP)`
+            summaryText: `• ${lvlMsg}\n• ${goldMsg}\n• Streak (${prevStreak} hari) di-reset ke 0\n• Bangkit dalam status SEKARAT: ${gameState.player.hp}/${gameState.player.maxHp} HP (-25% EXP)\n• Penalty Quest aktif: selesaikan 2 quest untuk pulih +${penaltyHealAmt} HP & +15 Gold`
         };
 
         if (!suppressDeathModal) {
