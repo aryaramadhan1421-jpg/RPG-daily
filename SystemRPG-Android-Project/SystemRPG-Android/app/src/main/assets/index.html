@@ -12,12 +12,70 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icon-512.png">
     <link rel="apple-touch-icon" href="icon-512.png">
-    <link rel="preconnect" href="https://.googleapis.com">
-    <link rel="preconnect" href="https://.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Orbitron:wght@600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .death-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.55rem;
+            margin-top: 0.9rem;
+            text-align: left;
+        }
+        .death-stat-card {
+            min-width: 0;
+            padding: 0.65rem 0.7rem;
+            border-radius: 0.75rem;
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.92), rgba(15, 23, 42, 0.96));
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            display: grid;
+            grid-template-columns: auto 1fr;
+            column-gap: 0.45rem;
+            align-items: center;
+        }
+        .death-stat-icon {
+            grid-row: span 2;
+            font-size: 1.1rem;
+        }
+        .death-stat-label {
+            font-size: 0.58rem;
+            letter-spacing: 0.08em;
+            color: #94a3b8;
+            font-weight: 800;
+        }
+        .death-stat-card strong {
+            font-size: 0.78rem;
+            color: #f8fafc;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+        }
+        .death-hint {
+            margin-top: 0.8rem;
+            padding: 0.65rem 0.75rem;
+            border-radius: 0.7rem;
+            background: rgba(127, 29, 29, 0.2);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            color: #fca5a5;
+            font-size: 0.65rem;
+            line-height: 1.45;
+            font-weight: 700;
+        }
+        @media (max-width: 360px) {
+            .death-stat-grid {
+                gap: 0.35rem;
+            }
+            .death-stat-card {
+                padding: 0.55rem;
+            }
+            .death-stat-card strong {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Splash Screen Intro (Wajib Tap Fingerprint untuk Masuk) -->
@@ -51,7 +109,7 @@
         </p>
 
         <!-- Interactive Fingerprint Scanner Button -->
-            <button type="button" id="btn-fingerprint-auth" class="fingerprint-pad" onpointerdown="startFingerprintHold(event)" onpointerup="cancelFingerprintHold()" onpointerleave="cancelFingerprintHold()" onpointercancel="cancelFingerprintHold()" oncontextmenu="return false;" aria-label="Tahan Sidik Jari untuk Masuk">
+        <button type="button" id="btn-fingerprint-auth" class="fingerprint-pad" onpointerdown="startFingerprintHold(event)" onpointerup="cancelFingerprintHold()" onpointerleave="cancelFingerprintHold()" onpointercancel="cancelFingerprintHold()" oncontextmenu="return false;" aria-label="Tahan Sidik Jari untuk Masuk">
             <div class="fingerprint-scan-line" id="fp-scan-line"></div>
             <svg id="fp-svg-icon" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 4"/>
@@ -88,7 +146,6 @@
         </div>
 
         <div class="flex items-center gap-1-5">
-
             <!-- Gold Pill -->
             <div class="pill-gold">
                 <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></svg>
@@ -105,13 +162,12 @@
             </div>
 
             <!-- Audio Toggle Button -->
-            <button id="btn-audio-toggle" onclick="toggleAudio()" style="padding: 0.4rem; border-radius: 0.5rem; background: var(--bg-slate-900); border: 1px solid #334155; color: var(--cyan-400);" title="Toggle Suara HUD">
+            <button type="button" id="btn-audio-toggle" onclick="toggleAudio()" style="padding: 0.4rem; border-radius: 0.5rem; background: var(--bg-slate-900); border: 1px solid #334155; color: var(--cyan-400);" title="Toggle Suara HUD">
                 <span id="icon-audio-wrap"></span>
             </button>
 
             <!-- Font Settings Button -->
-            <button id="btn-font-settings" type="button" onclick="openFontSettingsModal()" style="padding: 0.4rem; border-radius: 0.5rem; background: var(--bg-slate-900); border: 1px solid #334155; color: var(--cyan-400); font-weight: 700; font-size: 0.8rem;" title="Pengaturan Font">⚙️
-</button>
+            <button type="button" id="btn-font-settings" onclick="openFontSettingsModal()" style="padding: 0.4rem; border-radius: 0.5rem; background: var(--bg-slate-900); border: 1px solid #334155; color: var(--cyan-400); font-weight: 700; font-size: 0.8rem;" title="Pengaturan Font & Panduan">⚙️</button>
         </div>
     </header>
 
@@ -132,10 +188,10 @@
                         </span>
                     </div>
                     <div class="flex items-center gap-1">
-                        <button onclick="openAddQuoteModal()" style="padding: 3px 6px; border-radius: 0.4rem; background: rgba(34,211,238,0.12); color: #67e8f9; border: 1px solid rgba(34,211,238,0.3); font-size: 10px; font-weight: 700;" title="Tambah Kutipan Pribadi">
+                        <button type="button" onclick="openAddQuoteModal()" style="padding: 3px 6px; border-radius: 0.4rem; background: rgba(34,211,238,0.12); color: #67e8f9; border: 1px solid rgba(34,211,238,0.3); font-size: 10px; font-weight: 700;" title="Tambah Kutipan Pribadi">
                             + Kutipan
                         </button>
-                        <button onclick="nextOracleQuote()" style="padding: 4px 6px; border-radius: 0.4rem; background: var(--bg-slate-900); color: #cbd5e1; border: 1px solid #334155;" title="Ganti Kutipan Lain">
+                        <button type="button" onclick="nextOracleQuote()" style="padding: 4px 6px; border-radius: 0.4rem; background: var(--bg-slate-900); color: #cbd5e1; border: 1px solid #334155;" title="Ganti Kutipan Lain">
                             <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
                         </button>
                     </div>
@@ -147,7 +203,7 @@
                     <span id="oracle-quote-author" class="font-display" style="font-size: 11px; font-weight: 700; color: #fcd34d;">
                         — James Clear
                     </span>
-                    <button id="btn-claim-oracle" onclick="claimDailyOracle()" class="font-display" style="font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 9999px; background: linear-gradient(to right, rgba(6,182,212,0.25), rgba(168,85,247,0.25)); color: #67e8f9; border: 1px solid rgba(34,211,238,0.5);">
+                    <button type="button" id="btn-claim-oracle" onclick="claimDailyOracle()" class="font-display" style="font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 9999px; background: linear-gradient(to right, rgba(6,182,212,0.25), rgba(168,85,247,0.25)); color: #67e8f9; border: 1px solid rgba(34,211,238,0.5);">
                         ✨ Terima Petuah (+5 XP / +5 G)
                     </button>
                 </div>
@@ -177,7 +233,7 @@
                             </div>
                             <div class="flex items-center gap-2" style="margin-top: 4px;">
                                 <h2 id="player-name-display" class="font-display" style="font-weight: 700; font-size: 1.25rem; color: #fff;">Sung Jin-Woo</h2>
-                                <button onclick="openEditNameModal()" style="color: var(--text-muted); padding: 4px;" title="Edit Nama">
+                                <button type="button" onclick="openEditNameModal()" style="color: var(--text-muted); padding: 4px;" title="Edit Nama">
                                     <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                                 </button>
                             </div>
@@ -199,10 +255,10 @@
                         <span id="active-title-name" class="font-display truncate" style="font-weight: 700; color: #fcd34d;">Shadow Candidate</span>
                     </div>
                     <div class="flex items-center gap-1 shrink-0">
-                        <button onclick="cycleActiveTitle()" class="font-display" style="font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 4px 8px; border-radius: 0.5rem; background: rgba(245,158,11,0.18); color: #fcd34d; border: 1px solid rgba(245,158,11,0.45);" title="Langsung ganti ke gelar berikutnya yang sudah terbuka">
+                        <button type="button" onclick="cycleActiveTitle()" class="font-display" style="font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 4px 8px; border-radius: 0.5rem; background: rgba(245,158,11,0.18); color: #fcd34d; border: 1px solid rgba(245,158,11,0.45);" title="Langsung ganti ke gelar berikutnya yang sudah terbuka">
                             Ganti Title (<span id="unlocked-titles-count">1</span>/4)
                         </button>
-                        <button onclick="openTitlesModal()" style="padding: 4px 6px; border-radius: 0.5rem; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;" title="Lihat Daftar & Syarat Semua Title">
+                        <button type="button" onclick="openTitlesModal()" style="padding: 4px 6px; border-radius: 0.5rem; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;" title="Lihat Daftar & Syarat Semua Title">
                             <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
                         </button>
                     </div>
@@ -423,7 +479,7 @@
                     </div>
                     <div class="flex items-center gap-1-5 shrink-0">
                         <input type="date" id="custom-date-picker" onchange="handleDateChange(this.value)" style="background: var(--bg-slate-900); border: 1px solid #334155; border-radius: 0.5rem; padding: 4px 6px; font-size: 0.75rem; color: #67e8f9; outline: none;">
-                        <button onclick="resetToTodayDate()" class="font-display" style="background: var(--bg-slate-800); font-size: 10px; font-weight: 700; color: #cbd5e1; padding: 6px 8px; border-radius: 0.5rem; border: 1px solid #334155;" title="Kembali ke Hari Ini">
+                        <button type="button" onclick="resetToTodayDate()" class="font-display" style="background: var(--bg-slate-800); font-size: 10px; font-weight: 700; color: #cbd5e1; padding: 6px 8px; border-radius: 0.5rem; border: 1px solid #334155;" title="Kembali ke Hari Ini">
                             Hari Ini
                         </button>
                     </div>
@@ -449,7 +505,7 @@
                 <div style="padding-top: 0.5rem; border-top: 1px solid rgba(30,41,59,0.85);">
                     <div class="flex items-center justify-between" style="margin-bottom: 0.5rem;">
                         <p id="history-log-title" class="font-display" style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #67e8f9;">Log Aktivitas Tanggal Ini</p>
-                        <button id="btn-toggle-all-logs" onclick="toggleShowAllLogs()" style="font-size: 10px; color: var(--text-muted); text-decoration: underline;">
+                        <button type="button" id="btn-toggle-all-logs" onclick="toggleShowAllLogs()" style="font-size: 10px; color: var(--text-muted); text-decoration: underline;">
                             Lihat Semua
                         </button>
                     </div>
@@ -482,15 +538,14 @@
                     Evaluasi misi pada tanggal terpilih lalu lanjut ke hari berikutnya. Target aman minimal <span id="eval-threshold-label" style="color: #67e8f9; font-weight: 700;">80% Daily Quest</span> selesai. Jika kurang dari target tersebut, HP berkurang &amp; Streak reset (kecuali ada Shield)!
                 </p>
                 <div class="flex gap-2">
-                    <button onclick="simulateNextDay()" class="flex-1 font-display shadow-neon-blue flex items-center justify-center gap-1-5" style="background: linear-gradient(to right, #0891b2, #2563eb); color: #fff; font-weight: 700; font-size: 0.875rem; padding: 0.625rem 0.75rem; border-radius: 0.75rem;">
+                    <button type="button" onclick="simulateNextDay()" class="flex-1 font-display shadow-neon-blue flex items-center justify-center gap-1-5" style="background: linear-gradient(to right, #0891b2, #2563eb); color: #fff; font-weight: 700; font-size: 0.875rem; padding: 0.625rem 0.75rem; border-radius: 0.75rem;">
                         <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v8"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg>
                         Evaluasi & Lanjut Hari
                     </button>
-                    <button onclick="openResetModal()" style="background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155; padding: 0.625rem; border-radius: 0.75rem;" title="Reset Data Demo">
+                    <button type="button" onclick="openResetModal()" style="background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155; padding: 0.625rem; border-radius: 0.75rem;" title="Reset Data Demo">
                         <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                     </button>
                 </div>
-
             </div>
 
             <!-- Reminder Notifikasi HP & Backup Data -->
@@ -531,9 +586,7 @@
                         Tes Pop-up
                     </button>
                 </div>
-
             </div>
-
         </section>
 
         <!-- ==================== TAB 2: QUESTS ==================== -->
@@ -544,18 +597,18 @@
                     <p style="font-size: 0.75rem; color: var(--text-muted);">Centang misi selesai (klik ulang untuk batalkan/undo)</p>
                 </div>
                 <div class="flex items-center gap-1-5 shrink-0">
-                    <button onclick="restoreDefaultHabits()" class="font-display flex items-center gap-1" style="background: var(--bg-slate-900); color: #67e8f9; border: 1px solid rgba(6,182,212,0.4); font-weight: 700; font-size: 0.75rem; padding: 0.5rem 0.625rem; border-radius: 0.75rem;" title="Muat Ulang Paket Default Daily Habit">
+                    <button type="button" onclick="restoreDefaultHabits()" class="font-display flex items-center gap-1" style="background: var(--bg-slate-900); color: #67e8f9; border: 1px solid rgba(6,182,212,0.4); font-weight: 700; font-size: 0.75rem; padding: 0.5rem 0.625rem; border-radius: 0.75rem;" title="Muat Ulang Paket Default Daily Habit">
                         <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
                         Preset Habit
                     </button>
-                    <button onclick="toggleQuestForm()" class="font-display shadow-neon-blue flex items-center gap-1" style="background: var(--cyan-500); color: #020617; font-weight: 700; font-size: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.75rem;">
+                    <button type="button" onclick="toggleQuestForm()" class="font-display shadow-neon-blue flex items-center gap-1" style="background: var(--cyan-500); color: #020617; font-weight: 700; font-size: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.75rem;">
                         <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Quest Baru
                     </button>
                 </div>
             </div>
 
-           <!-- Penalty Zone Banner (Muncul otomatis saat Penalty Quest aktif) -->
+            <!-- Penalty Zone Banner (Muncul otomatis saat Penalty Quest aktif) -->
             <div id="penalty-quest-banner"></div>
 
             <!-- Daily Combo Momentum Badge -->
@@ -567,7 +620,7 @@
             <!-- Daily Quest Progress Summary Bar -->
             <div class="system-card" style="padding: 0.75rem; border-radius: 0.75rem;">
                 <div class="flex justify-between" style="font-size: 0.75rem; margin-bottom: 4px;">
-                   <span id="daily-target-header" class="font-display" style="font-weight: 700; color: #67e8f9; text-transform: uppercase;">Daily Habit (Target Streak)</span>
+                    <span id="daily-target-header" class="font-display" style="font-weight: 700; color: #67e8f9; text-transform: uppercase;">Daily Habit (Target Streak)</span>
                     <span id="daily-progress-text" class="font-display" style="font-weight: 700; color: #fff;">0 / 0 (0%)</span>
                 </div>
                 <div class="progress-track" style="height: 0.5rem;">
@@ -619,7 +672,7 @@
                     </div>
                 </div>
 
-                                <!-- Jadwal Hari Aktif (Active Days) -->
+                <!-- Jadwal Hari Aktif (Active Days) -->
                 <div style="background: rgba(2,6,23,0.65); border: 1px solid #334155; border-radius: 0.75rem; padding: 0.6rem;" class="space-y-2">
                     <div class="flex justify-between items-center">
                         <label data-i18n="lbl_schedule_days" style="font-size: 0.75rem; color: #67e8f9; font-weight: 700;">Jadwal Hari Aktif</label>
@@ -690,32 +743,32 @@
 
             <!-- Category Filter Pills -->
             <div class="grid grid-cols-4 gap-1-5" style="padding-bottom: 2px;">
-                <button onclick="setQuestFilter('ALL')" id="filter-ALL" class="quest-filter-btn font-display" style="padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: rgba(6,182,212,0.2); color: #67e8f9; border: 1px solid rgba(6,182,212,0.4);">Semua</button>
-                <button onclick="setQuestFilter('Daily Quest')" id="filter-Daily Quest" class="quest-filter-btn font-display" style="padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);">Daily</button>
-                <button onclick="setQuestFilter('Main Quest')" id="filter-Main Quest" class="quest-filter-btn font-display" style="padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);">Main</button>
-                <button onclick="setQuestFilter('Boss Fight')" id="filter-Boss Fight" class="quest-filter-btn font-display" style="padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);">Boss</button>
+                <button type="button" onclick="setQuestFilter('ALL')" id="filter-ALL" class="quest-filter-btn font-display" style="padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: rgba(6,182,212,0.2); color: #67e8f9; border: 1px solid rgba(6,182,212,0.4);">Semua</button>
+                <button type="button" onclick="setQuestFilter('Daily Quest')" id="filter-Daily Quest" class="quest-filter-btn font-display" style="padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);">Daily</button>
+                <button type="button" onclick="setQuestFilter('Main Quest')" id="filter-Main Quest" class="quest-filter-btn font-display" style="padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);">Main</button>
+                <button type="button" onclick="setQuestFilter('Boss Fight')" id="filter-Boss Fight" class="quest-filter-btn font-display" style="padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);">Boss</button>
             </div>
 
             <!-- Time-of-Day Sub-tabs (Pagi / Siang / Sore / Malam) -->
             <div class="flex gap-1-5" style="overflow-x: auto; padding-bottom: 2px;">
-                <button onclick="setTimeSlotFilter('ALL')" id="time-filter-ALL" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: rgba(168,85,247,0.22); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.5); white-space: nowrap;" data-i18n="time_all">🕒 Semua Waktu</button>
-                <button onclick="setTimeSlotFilter('Pagi')" id="time-filter-Pagi" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;" data-i18n="time_morning">🌅 Pagi</button>
-                <button onclick="setTimeSlotFilter('Siang')" id="time-filter-Siang" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;" data-i18n="time_afternoon">☀️ Siang</button>
-                <button onclick="setTimeSlotFilter('Sore')" id="time-filter-Sore" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;" data-i18n="time_evening">🌇 Sore</button>
-                <button onclick="setTimeSlotFilter('Malam')" id="time-filter-Malam" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;" data-i18n="time_night">🌙 Malam</button>
+                <button type="button" onclick="setTimeSlotFilter('ALL')" id="time-filter-ALL" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: rgba(168,85,247,0.22); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.5); white-space: nowrap;" data-i18n="time_all">🕒 Semua Waktu</button>
+                <button type="button" onclick="setTimeSlotFilter('Pagi')" id="time-filter-Pagi" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;" data-i18n="time_morning">🌅 Pagi</button>
+                <button type="button" onclick="setTimeSlotFilter('Siang')" id="time-filter-Siang" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;" data-i18n="time_afternoon">☀️ Siang</button>
+                <button type="button" onclick="setTimeSlotFilter('Sore')" id="time-filter-Sore" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;" data-i18n="time_evening">🌇 Sore</button>
+                <button type="button" onclick="setTimeSlotFilter('Malam')" id="time-filter-Malam" class="time-filter-btn font-display" style="padding: 5px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800); white-space: nowrap;" data-i18n="time_night">🌙 Malam</button>
             </div>
 
             <!-- Completion Status Filter Tabs (Semua | Aktif | Selesai) -->
             <div class="grid grid-cols-3 gap-1-5" style="padding-bottom: 2px;">
-                <button onclick="setQuestStatusFilter('ALL')" id="status-filter-ALL" class="status-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.45);">Semua</button>
-                <button onclick="setQuestStatusFilter('ACTIVE')" id="status-filter-ACTIVE" class="status-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);" data-i18n="status_active">Aktif (Belum)</button>
-                <button onclick="setQuestStatusFilter('DONE')" id="status-filter-DONE" class="status-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);" data-i18n="status_done">Selesai</button>
+                <button type="button" onclick="setQuestStatusFilter('ALL')" id="status-filter-ALL" class="status-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid rgba(16,185,129,0.45);">Semua</button>
+                <button type="button" onclick="setQuestStatusFilter('ACTIVE')" id="status-filter-ACTIVE" class="status-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);" data-i18n="status_active">Aktif (Belum)</button>
+                <button type="button" onclick="setQuestStatusFilter('DONE')" id="status-filter-DONE" class="status-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);" data-i18n="status_done">Selesai</button>
             </div>
 
-                        <!-- Schedule Day Mode Toggle (Hari Ini vs Semua Jadwal) -->
+            <!-- Schedule Day Mode Toggle (Hari Ini vs Semua Jadwal) -->
             <div class="grid grid-cols-2 gap-1-5" style="padding-bottom: 2px;">
-                <button onclick="setQuestDayFilter('TODAY')" id="day-filter-TODAY" data-i18n="filter_day_today" class="day-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: rgba(251,191,36,0.2); color: #fcd34d; border: 1px solid rgba(251,191,36,0.45);">📅 Jadwal Hari Ini</button>
-                <button onclick="setQuestDayFilter('ALL')" id="day-filter-ALL" data-i18n="filter_day_all" class="day-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);">🗓️ Semua Jadwal</button>
+                <button type="button" onclick="setQuestDayFilter('TODAY')" id="day-filter-TODAY" data-i18n="filter_day_today" class="day-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: rgba(251,191,36,0.2); color: #fcd34d; border: 1px solid rgba(251,191,36,0.45);">📅 Jadwal Hari Ini</button>
+                <button type="button" onclick="setQuestDayFilter('ALL')" id="day-filter-ALL" data-i18n="filter_day_all" class="day-filter-btn font-display" style="padding: 5px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);">🗓️ Semua Jadwal</button>
             </div>
 
             <!-- Quest List Container -->
@@ -740,230 +793,228 @@
                 </div>
             </div>
 
-            <!-- WRAPPER KONTEN LAMA DUNGEON -->
+            <!-- WRAPPER KONTEN FOCUS RAID & GRIMOIRE -->
             <div id="dungeon-mode-focus" class="space-y-4">
-
-            <div class="system-card text-center" style="padding: 1.25rem; border-color: rgba(168,85,247,0.35);">
-                <div class="flex items-center justify-center gap-2" style="margin-bottom: 0.75rem;">
-                    <span class="font-display" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.35); color: #d8b4fe; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">
-                        <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/></svg>
-                        Instant Dungeon Gate
-                    </span>
-                    <span id="wakelock-status-badge" class="hidden font-display" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 9999px; background: rgba(16,185,129,0.16); border: 1px solid rgba(16,185,129,0.4); color: #34d399; font-size: 10px; font-weight: 700; text-transform: uppercase;">
-                        <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                        SCREEN ON
-                    </span>
-                </div>
-
-                <h2 class="font-display" style="font-weight: 700; font-size: 1.5rem; color: #fff;">DEEP FOCUS RAID</h2>
-                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; max-width: 20rem; margin-left: auto; margin-right: auto; line-height: 1.5;">
-                    Masuki gerbang fokus. Layar otomatis tetap menyala & jangan menyerah sebelum waktu habis untuk klaim <span style="color: #67e8f9;">+INT</span>, <span style="color: #67e8f9;">XP</span>, dan <span style="color: #fcd34d;">Gold</span>!
-                </p>
-
-                <!-- Mode Selector + Custom Minutes -->
-                <div id="dungeon-mode-selector" class="space-y-2" style="margin-top: 1rem;">
-                    <div class="flex flex-wrap justify-center gap-1-5">
-                        <button onclick="selectDungeonDuration(600, 45, 35, '10m')" id="mode-10m" class="font-display" style="padding: 6px 10px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;">
-                            10m (Rank-E)
-                        </button>
-                        <button onclick="selectDungeonDuration(1500, 100, 80, '25m')" id="mode-25m" class="font-display" style="padding: 6px 10px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.5);">
-                            25m (Rank-C)
-                        </button>
-                        <button onclick="selectDungeonDuration(2700, 190, 150, '45m')" id="mode-45m" class="font-display" style="padding: 6px 10px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;">
-                            45m (Rank-B)
-                        </button>
-                        <button onclick="selectDungeonDuration(3600, 260, 210, '60m')" id="mode-60m" class="font-display" style="padding: 6px 10px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;">
-                            60m (Rank-A)
-                        </button>
-                    </div>
-
-                    <!-- Custom Minutes Input -->
-                    <div class="flex items-center justify-center gap-2" style="font-size: 0.75rem;">
-                        <input type="number" id="custom-dungeon-mins" min="1" max="180" placeholder="Custom menit (1-180)" class="input-cyber font-display" style="max-width: 10.5rem; padding: 0.375rem 0.625rem; font-size: 0.75rem; text-align: center;">
-                        <button type="button" onclick="applyCustomDungeonDuration()" class="font-display" style="padding: 0.375rem 0.75rem; border-radius: 0.625rem; background: rgba(6,182,212,0.18); color: #67e8f9; border: 1px solid rgba(6,182,212,0.45); font-weight: 700; font-size: 0.75rem;">
-                            Set Waktu
-                        </button>
-                    </div>
-
-                    <!-- Link Optional Quest -->
-                    <div class="text-left" style="background: rgba(2,6,23,0.65); border: 1px solid var(--bg-slate-800); border-radius: 0.75rem; padding: 0.5rem;">
-                        <label style="display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; color: #67e8f9; margin-bottom: 4px;">
-                            🎯 Tautkan Quest Fokus (Opsional — Auto-Selesai saat Clear)
-                        </label>
-                        <select id="dungeon-linked-quest" class="input-cyber" style="font-size: 0.75rem; padding: 0.4rem 0.5rem;">
-                            <option value="">-- Fokus Umum (+INT saja) --</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Offline Ambient Sound Selector (Web Audio API) -->
-                <div style="margin-top: 0.75rem; background: rgba(2,6,23,0.75); border: 1px solid var(--bg-slate-800); border-radius: 0.75rem; padding: 0.5rem;">
-                    <div class="flex items-center justify-between" style="font-size: 10px; color: var(--text-muted); margin-bottom: 0.375rem; padding: 0 2px;">
-                        <span class="font-display uppercase" style="font-weight: 700; color: #c084fc;">Ambient Fokus</span>
-                        <span id="ambient-active-label" style="color: var(--cyan-400); font-weight: 600;">Mode: Hening</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-1-5">
-                        <button type="button" onclick="setDungeonAmbient('none')" id="amb-none" class="font-display" style="padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: rgba(34,211,238,0.2); color: #67e8f9; border: 1px solid rgba(34,211,238,0.5);">
-                            🔇 Hening
-                        </button>
-                        <button type="button" onclick="setDungeonAmbient('synth')" id="amb-synth" class="font-display" style="padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;">
-                            🌌 Dark Synth
-                        </button>
-                        <button type="button" onclick="setDungeonAmbient('rain')" id="amb-rain" class="font-display" style="padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;">
-                            🌧️ Suara Hujan
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Circular Timer Display -->
-                <div style="margin: 1.25rem auto; position: relative; width: 12rem; height: 12rem; display: flex; align-items: center; justify-content: center;">
-                    <svg style="width: 100%; height: 100%; transform: rotate(-90deg);" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="44" stroke="#1e293b" stroke-width="6" fill="transparent" />
-                        <circle id="dungeon-progress-ring" cx="50" cy="50" r="44" stroke="#9d4edd" stroke-width="6" fill="transparent"
-                            stroke-dasharray="276.46" stroke-dashoffset="0" stroke-linecap="round" style="transition: stroke-dashoffset 0.3s ease;" />
-                    </svg>
-                    <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                        <span id="dungeon-timer-text" class="font-display" style="font-weight: 800; font-size: 2.25rem; color: #fff;">25:00</span>
-                        <span id="dungeon-status-label" class="font-display" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--purple-400); margin-top: 4px;">GATE READY</span>
-                    </div>
-                </div>
-
-                <!-- Potential Rewards Preview -->
-                <div style="background: rgba(2,6,23,0.85); border: 1px solid var(--bg-slate-800); border-radius: 0.75rem; padding: 0.75rem; margin-bottom: 1rem;" class="flex justify-around items-center">
-                    <div class="text-center">
-                        <span style="font-size: 10px; color: var(--text-muted); display: block; text-transform: uppercase;">Reward XP</span>
-                        <span id="dungeon-reward-xp" class="font-display" style="font-weight: 700; font-size: 0.875rem; color: var(--cyan-400);">+100 XP</span>
-                    </div>
-                    <div style="height: 1.5rem; width: 1px; background: var(--bg-slate-800);"></div>
-                    <div class="text-center">
-                        <span style="font-size: 10px; color: var(--text-muted); display: block; text-transform: uppercase;">Reward Gold</span>
-                        <span id="dungeon-reward-gold" class="font-display" style="font-weight: 700; font-size: 0.875rem; color: var(--amber-400);">+80 Gold</span>
-                    </div>
-                    <div style="height: 1.5rem; width: 1px; background: var(--bg-slate-800);"></div>
-                    <div class="text-center">
-                        <span style="font-size: 10px; color: var(--text-muted); display: block; text-transform: uppercase;">Stat Bonus</span>
-                        <span class="font-display" style="font-weight: 700; font-size: 0.875rem; color: var(--purple-400);">+30 INT XP</span>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div id="dungeon-controls" class="flex gap-2">
-                    <button id="btn-start-dungeon" onclick="startDungeon()" class="w-full font-display shadow-neon-purple flex items-center justify-center gap-2" style="background: linear-gradient(to right, #9333ea, #0891b2); color: #fff; font-weight: 700; padding: 0.75rem; border-radius: 0.75rem;">
-                        <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                        MASUKI DUNGEON
-                    </button>
-                    <button id="btn-abort-dungeon" onclick="abortDungeon()" class="hidden w-full font-display flex items-center justify-center gap-2" style="background: rgba(136,19,55,0.75); color: #fda4af; border: 1px solid rgba(244,63,94,0.45); font-weight: 700; padding: 0.75rem; border-radius: 0.75rem;">
-                        <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><path d="M8 20v2h8v-2"/><path d="m12.5 17-.5-1-.5 1h1z"/><path d="M16 20a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20"/></svg>
-                        MENYERAH (-10 HP)
-                    </button>
-                </div>
-            </div>
-
-            <!-- ANCIENT GRIMOIRE READER (PDF READER WHILE RAIDING) -->
-            <div class="system-card space-y-3" style="border-color: rgba(192, 132, 252, 0.45);">
-                <div class="flex items-center justify-between gap-2" style="border-bottom: 1px solid var(--bg-slate-800); padding-bottom: 0.5rem;">
-                    <div class="flex items-center gap-1-5">
-                        <span style="font-size: 1rem;">📖</span>
-                        <div>
-                            <h3 class="font-display" style="font-weight: 700; font-size: 0.875rem; text-transform: uppercase; color: #d8b4fe;">ANCIENT GRIMOIRE READER</h3>
-                            <p style="font-size: 10px; color: var(--text-muted);">Baca PDF materi belajar/buku sambil Dungeon Raid berjalan</p>
-                        </div>
-                    </div>
-                    <label for="grimoire-pdf-input" class="font-display shadow-neon-purple" style="cursor: pointer; background: rgba(168,85,247,0.22); color: #e9d5ff; border: 1px solid rgba(192,132,252,0.5); font-size: 11px; font-weight: 700; padding: 6px 10px; border-radius: 0.65rem; white-space: nowrap;">
-                        📂 Buka PDF
-                    </label>
-                    <input type="file" id="grimoire-pdf-input" accept="*/*" onchange="handleGrimoirePdfUpload(event)" class="hidden">
-                </div>
-
-                <!-- ANIME LOFI 1-HOUR STUDY RADIO (DUNGEON) -->
-                <div style="width: 100%; display: block; margin-top: 0.5rem; margin-bottom: 0.5rem; padding: 0.875rem; border-radius: 0.75rem; border: 1px solid rgba(168, 85, 247, 0.45); background: rgba(15, 23, 42, 0.88); box-shadow: inset 0 0 16px rgba(168, 85, 247, 0.08);">
-                    <div class="flex items-center justify-between gap-2" style="margin-bottom: 0.625rem;">
-                        <div class="flex items-center gap-2 min-w-0">
-                            <span style="font-size: 1.125rem; line-height: 1; flex-shrink: 0;">🎧</span>
-                            <div class="min-w-0">
-                                <div class="font-display" style="font-size: 0.75rem; font-weight: 700; color: #d8b4fe; line-height: 1.25;">ANIME LOFI RADIO (1 JAM)</div>
-                                <div id="lofi-status-text" style="font-size: 11px; color: #94a3b8; margin-top: 2px; line-height: 1.3;">Siap menemani fokus Dungeon • Offline Synth</div>
-                            </div>
-                        </div>
-                        <span id="lofi-timer-display" class="font-display shrink-0" style="font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 0.5rem; background: rgba(59, 7, 100, 0.85); border: 1px solid rgba(168, 85, 247, 0.45); color: #e9d5ff;">
-                            60:00
+                <div class="system-card text-center" style="padding: 1.25rem; border-color: rgba(168,85,247,0.35);">
+                    <div class="flex items-center justify-center gap-2" style="margin-bottom: 0.75rem;">
+                        <span class="font-display" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 9999px; background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.35); color: #d8b4fe; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">
+                            <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/></svg>
+                            Instant Dungeon Gate
+                        </span>
+                        <span id="wakelock-status-badge" class="hidden font-display" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 9999px; background: rgba(16,185,129,0.16); border: 1px solid rgba(16,185,129,0.4); color: #34d399; font-size: 10px; font-weight: 700; text-transform: uppercase;">
+                            <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            SCREEN ON
                         </span>
                     </div>
 
-                    <div class="flex items-center gap-2" style="margin-bottom: 0.625rem;">
-                        <button type="button" id="lofi-toggle-btn" onclick="toggleAnimeLofi1Hour()"
-                            class="flex-1 font-display"
-                            style="padding: 0.5rem 0.75rem; border-radius: 0.5rem; background: linear-gradient(to right, #9333ea, #4f46e5); color: #ffffff; font-size: 0.75rem; font-weight: 700; box-shadow: 0 2px 10px rgba(147, 51, 234, 0.35);">
-                            ▶ Putar Anime Lofi (1 Jam)
-                        </button>
-                        <button type="button" onclick="document.getElementById('lofi-local-mp3').click()"
-                            class="shrink-0"
-                            style="padding: 0.5rem 0.65rem; border-radius: 0.5rem; background: #1e293b; border: 1px solid #475569; color: #e2e8f0; font-size: 0.75rem; font-weight: 600;"
-                            title="Pilih MP3 Lofi dari Penyimpanan HP">
-                            🎵 MP3 HP
-                        </button>
-                        <input type="file" id="lofi-local-mp3" accept="audio/*,*/*" onchange="loadLocalLofiMp3(event)" class="hidden">
-                    </div>
+                    <h2 class="font-display" style="font-weight: 700; font-size: 1.5rem; color: #fff;">DEEP FOCUS RAID</h2>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; max-width: 20rem; margin-left: auto; margin-right: auto; line-height: 1.5;">
+                        Masuki gerbang fokus. Layar otomatis tetap menyala & jangan menyerah sebelum waktu habis untuk klaim <span style="color: #67e8f9;">+INT</span>, <span style="color: #67e8f9;">XP</span>, dan <span style="color: #fcd34d;">Gold</span>!
+                    </p>
 
-                    <div class="flex items-center gap-2">
-                        <span style="font-size: 11px; color: #94a3b8; flex-shrink: 0;">Vol:</span>
-                        <input type="range" id="lofi-volume-slider" min="0" max="100" value="45"
-                            oninput="updateLofiVolume(this.value)"
-                            style="flex: 1; accent-color: #a855f7; height: 6px; background: #334155; border-radius: 9999px; cursor: pointer;">
-                        <span id="lofi-volume-label" class="font-display shrink-0" style="font-size: 11px; color: #d8b4fe; font-weight: 700; width: 2.25rem; text-align: right;">45%</span>
-                    </div>
-                    <audio id="lofi-local-audio-player" loop class="hidden"></audio>
-                </div>
-
-                <!-- Saved Bookmarks Shelf -->
-                <div id="grimoire-bookmarks-bar" class="space-y-1-5">
-                    <div class="flex items-center justify-between" style="font-size: 10px; color: var(--text-muted);">
-                        <span class="font-display uppercase" style="font-weight: 700; color: #fcd34d;">🔖 Bookmark Tersimpan (Per Judul File)</span>
-                        <span id="grimoire-bookmark-count" class="font-display">0 File</span>
-                    </div>
-                    <div id="grimoire-bookmark-list" class="flex gap-1-5" style="overflow-x: auto; padding-bottom: 2px;"></div>
-                </div>
-
-                <!-- Active PDF Controls & Canvas -->
-                <div id="grimoire-reader-workspace" class="hidden space-y-2-5">
-                    <div style="background: rgba(2,6,23,0.8); border: 1px solid #334155; border-radius: 0.75rem; padding: 0.5rem 0.65rem;" class="space-y-2">
-                        <div class="flex items-center justify-between gap-2">
-                            <p id="grimoire-file-title" class="font-display truncate" style="font-size: 0.75rem; font-weight: 700; color: #67e8f9;">-</p>
-                            <button type="button" onclick="saveCurrentGrimoireBookmark()" class="font-display shrink-0" style="background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid rgba(251,191,36,0.5); font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 0.5rem;">
-                                🔖 Tandai Hal Ini
+                    <!-- Mode Selector + Custom Minutes -->
+                    <div id="dungeon-mode-selector" class="space-y-2" style="margin-top: 1rem;">
+                        <div class="flex flex-wrap justify-center gap-1-5">
+                            <button type="button" onclick="selectDungeonDuration(600, 45, 35, '10m')" id="mode-10m" class="font-display" style="padding: 6px 10px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;">
+                                10m (Rank-E)
+                            </button>
+                            <button type="button" onclick="selectDungeonDuration(1500, 100, 80, '25m')" id="mode-25m" class="font-display" style="padding: 6px 10px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.5);">
+                                25m (Rank-C)
+                            </button>
+                            <button type="button" onclick="selectDungeonDuration(2700, 190, 150, '45m')" id="mode-45m" class="font-display" style="padding: 6px 10px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;">
+                                45m (Rank-B)
+                            </button>
+                            <button type="button" onclick="selectDungeonDuration(3600, 260, 210, '60m')" id="mode-60m" class="font-display" style="padding: 6px 10px; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;">
+                                60m (Rank-A)
                             </button>
                         </div>
 
-                        <!-- Page Navigation + Zoom Controls -->
-                        <div class="flex flex-wrap items-center justify-between gap-1-5">
-                            <div class="flex items-center gap-1">
-                                <button type="button" onclick="changeGrimoirePage(-1)" class="font-display" style="background: var(--bg-slate-900); border: 1px solid #334155; color: #e2e8f0; padding: 4px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700;">◀</button>
-                                <span id="grimoire-page-indicator" class="font-display" style="font-size: 11px; font-weight: 700; color: #fff; padding: 0 4px;">Hal 1 / 1</span>
-                                <button type="button" onclick="changeGrimoirePage(1)" class="font-display" style="background: var(--bg-slate-900); border: 1px solid #334155; color: #e2e8f0; padding: 4px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700;">▶</button>
-                            </div>
+                        <!-- Custom Minutes Input -->
+                        <div class="flex items-center justify-center gap-2" style="font-size: 0.75rem;">
+                            <input type="number" id="custom-dungeon-mins" min="1" max="180" placeholder="Custom menit (1-180)" class="input-cyber font-display" style="max-width: 10.5rem; padding: 0.375rem 0.625rem; font-size: 0.75rem; text-align: center;">
+                            <button type="button" onclick="applyCustomDungeonDuration()" class="font-display" style="padding: 0.375rem 0.75rem; border-radius: 0.625rem; background: rgba(6,182,212,0.18); color: #67e8f9; border: 1px solid rgba(6,182,212,0.45); font-weight: 700; font-size: 0.75rem;">
+                                Set Waktu
+                            </button>
+                        </div>
 
-                            <div class="flex items-center gap-1">
-                                <button type="button" onclick="zoomGrimoire(-0.2)" class="font-display" style="background: var(--bg-slate-900); border: 1px solid #334155; color: #67e8f9; padding: 4px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700;" title="Zoom Out">➖</button>
-                                <button type="button" onclick="fitGrimoireWidth()" class="font-display" style="background: rgba(6,182,212,0.18); border: 1px solid rgba(34,211,238,0.45); color: #67e8f9; padding: 4px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700;" title="Fit Lebar Layar HP">Fit</button>
-                                <button type="button" onclick="zoomGrimoire(0.2)" class="font-display" style="background: var(--bg-slate-900); border: 1px solid #334155; color: #67e8f9; padding: 4px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700;" title="Zoom In">➕</button>
-                                <span id="grimoire-zoom-label" class="font-display" style="font-size: 10px; color: var(--text-muted); margin-left: 2px;">100%</span>
-                            </div>
+                        <!-- Link Optional Quest -->
+                        <div class="text-left" style="background: rgba(2,6,23,0.65); border: 1px solid var(--bg-slate-800); border-radius: 0.75rem; padding: 0.5rem;">
+                            <label style="display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; color: #67e8f9; margin-bottom: 4px;">
+                                🎯 Tautkan Quest Fokus (Opsional — Auto-Selesai saat Clear)
+                            </label>
+                            <select id="dungeon-linked-quest" class="input-cyber" style="font-size: 0.75rem; padding: 0.4rem 0.5rem;">
+                                <option value="">-- Fokus Umum (+INT saja) --</option>
+                            </select>
                         </div>
                     </div>
 
-                    <div id="grimoire-viewport" class="pdf-viewport-box">
-                        <canvas id="grimoire-pdf-canvas" style="border-radius: 0.4rem; max-width: none;"></canvas>
+                    <!-- Offline Ambient Sound Selector (Web Audio API) -->
+                    <div style="margin-top: 0.75rem; background: rgba(2,6,23,0.75); border: 1px solid var(--bg-slate-800); border-radius: 0.75rem; padding: 0.5rem;">
+                        <div class="flex items-center justify-between" style="font-size: 10px; color: var(--text-muted); margin-bottom: 0.375rem; padding: 0 2px;">
+                            <span class="font-display uppercase" style="font-weight: 700; color: #c084fc;">Ambient Fokus</span>
+                            <span id="ambient-active-label" style="color: var(--cyan-400); font-weight: 600;">Mode: Hening</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1-5">
+                            <button type="button" onclick="setDungeonAmbient('none')" id="amb-none" class="font-display" style="padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: rgba(34,211,238,0.2); color: #67e8f9; border: 1px solid rgba(34,211,238,0.5);">
+                                🔇 Hening
+                            </button>
+                            <button type="button" onclick="setDungeonAmbient('synth')" id="amb-synth" class="font-display" style="padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;">
+                                🌌 Dark Synth
+                            </button>
+                            <button type="button" onclick="setDungeonAmbient('rain')" id="amb-rain" class="font-display" style="padding: 6px 4px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;">
+                                🌧️ Suara Hujan
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Circular Timer Display -->
+                    <div style="margin: 1.25rem auto; position: relative; width: 12rem; height: 12rem; display: flex; align-items: center; justify-content: center;">
+                        <svg style="width: 100%; height: 100%; transform: rotate(-90deg);" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="44" stroke="#1e293b" stroke-width="6" fill="transparent" />
+                            <circle id="dungeon-progress-ring" cx="50" cy="50" r="44" stroke="#9d4edd" stroke-width="6" fill="transparent"
+                                stroke-dasharray="276.46" stroke-dashoffset="0" stroke-linecap="round" style="transition: stroke-dashoffset 0.3s ease;" />
+                        </svg>
+                        <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                            <span id="dungeon-timer-text" class="font-display" style="font-weight: 800; font-size: 2.25rem; color: #fff;">25:00</span>
+                            <span id="dungeon-status-label" class="font-display" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--purple-400); margin-top: 4px;">GATE READY</span>
+                        </div>
+                    </div>
+
+                    <!-- Potential Rewards Preview -->
+                    <div style="background: rgba(2,6,23,0.85); border: 1px solid var(--bg-slate-800); border-radius: 0.75rem; padding: 0.75rem; margin-bottom: 1rem;" class="flex justify-around items-center">
+                        <div class="text-center">
+                            <span style="font-size: 10px; color: var(--text-muted); display: block; text-transform: uppercase;">Reward XP</span>
+                            <span id="dungeon-reward-xp" class="font-display" style="font-weight: 700; font-size: 0.875rem; color: var(--cyan-400);">+100 XP</span>
+                        </div>
+                        <div style="height: 1.5rem; width: 1px; background: var(--bg-slate-800);"></div>
+                        <div class="text-center">
+                            <span style="font-size: 10px; color: var(--text-muted); display: block; text-transform: uppercase;">Reward Gold</span>
+                            <span id="dungeon-reward-gold" class="font-display" style="font-weight: 700; font-size: 0.875rem; color: var(--amber-400);">+80 Gold</span>
+                        </div>
+                        <div style="height: 1.5rem; width: 1px; background: var(--bg-slate-800);"></div>
+                        <div class="text-center">
+                            <span style="font-size: 10px; color: var(--text-muted); display: block; text-transform: uppercase;">Stat Bonus</span>
+                            <span class="font-display" style="font-weight: 700; font-size: 0.875rem; color: var(--purple-400);">+30 INT XP</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div id="dungeon-controls" class="flex gap-2">
+                        <button type="button" id="btn-start-dungeon" onclick="startDungeon()" class="w-full font-display shadow-neon-purple flex items-center justify-center gap-2" style="background: linear-gradient(to right, #9333ea, #0891b2); color: #fff; font-weight: 700; padding: 0.75rem; border-radius: 0.75rem;">
+                            <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            MASUKI DUNGEON
+                        </button>
+                        <button type="button" id="btn-abort-dungeon" onclick="abortDungeon()" class="hidden w-full font-display flex items-center justify-center gap-2" style="background: rgba(136,19,55,0.75); color: #fda4af; border: 1px solid rgba(244,63,94,0.45); font-weight: 700; padding: 0.75rem; border-radius: 0.75rem;">
+                            <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><path d="M8 20v2h8v-2"/><path d="m12.5 17-.5-1-.5 1h1z"/><path d="M16 20a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20"/></svg>
+                            MENYERAH (-10 HP)
+                        </button>
                     </div>
                 </div>
 
-                <div id="grimoire-empty-hint" style="background: rgba(2,6,23,0.65); border: 1px dashed #334155; border-radius: 0.75rem; padding: 0.85rem; text-align: center; font-size: 11px; color: var(--text-muted);">
-                    Pilih file <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> dari HP untuk membaca sambil timer fokus berjalan. Halaman terakhir otomatis tersimpan saat kamu menekan <span style="color: #fcd34d; font-weight: 700;">🔖 Tandai Hal Ini</span>.
+                <!-- ANCIENT GRIMOIRE READER (PDF READER WHILE RAIDING) -->
+                <div class="system-card space-y-3" style="border-color: rgba(192, 132, 252, 0.45);">
+                    <div class="flex items-center justify-between gap-2" style="border-bottom: 1px solid var(--bg-slate-800); padding-bottom: 0.5rem;">
+                        <div class="flex items-center gap-1-5">
+                            <span style="font-size: 1rem;">📖</span>
+                            <div>
+                                <h3 class="font-display" style="font-weight: 700; font-size: 0.875rem; text-transform: uppercase; color: #d8b4fe;">ANCIENT GRIMOIRE READER</h3>
+                                <p style="font-size: 10px; color: var(--text-muted);">Baca PDF materi belajar/buku sambil Dungeon Raid berjalan</p>
+                            </div>
+                        </div>
+                        <label for="grimoire-pdf-input" class="font-display shadow-neon-purple" style="cursor: pointer; background: rgba(168,85,247,0.22); color: #e9d5ff; border: 1px solid rgba(192,132,252,0.5); font-size: 11px; font-weight: 700; padding: 6px 10px; border-radius: 0.65rem; white-space: nowrap;">
+                            📂 Buka PDF
+                        </label>
+                        <input type="file" id="grimoire-pdf-input" accept="application/pdf,.pdf" onchange="handleGrimoirePdfUpload(event)" class="hidden">
+                    </div>
+
+                    <!-- ANIME LOFI 1-HOUR STUDY RADIO (DUNGEON) -->
+                    <div style="width: 100%; display: block; margin-top: 0.5rem; margin-bottom: 0.5rem; padding: 0.875rem; border-radius: 0.75rem; border: 1px solid rgba(168, 85, 247, 0.45); background: rgba(15, 23, 42, 0.88); box-shadow: inset 0 0 16px rgba(168, 85, 247, 0.08);">
+                        <div class="flex items-center justify-between gap-2" style="margin-bottom: 0.625rem;">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span style="font-size: 1.125rem; line-height: 1; flex-shrink: 0;">🎧</span>
+                                <div class="min-w-0">
+                                    <div class="font-display" style="font-size: 0.75rem; font-weight: 700; color: #d8b4fe; line-height: 1.25;">ANIME LOFI RADIO (1 JAM)</div>
+                                    <div id="lofi-status-text" style="font-size: 11px; color: #94a3b8; margin-top: 2px; line-height: 1.3;">Siap menemani fokus Dungeon • Offline Synth</div>
+                                </div>
+                            </div>
+                            <span id="lofi-timer-display" class="font-display shrink-0" style="font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 0.5rem; background: rgba(59, 7, 100, 0.85); border: 1px solid rgba(168, 85, 247, 0.45); color: #e9d5ff;">
+                                60:00
+                            </span>
+                        </div>
+
+                        <div class="flex items-center gap-2" style="margin-bottom: 0.625rem;">
+                            <button type="button" id="lofi-toggle-btn" onclick="toggleAnimeLofi1Hour()"
+                                class="flex-1 font-display"
+                                style="padding: 0.5rem 0.75rem; border-radius: 0.5rem; background: linear-gradient(to right, #9333ea, #4f46e5); color: #ffffff; font-size: 0.75rem; font-weight: 700; box-shadow: 0 2px 10px rgba(147, 51, 234, 0.35);">
+                                ▶ Putar Anime Lofi (1 Jam)
+                            </button>
+                            <button type="button" onclick="document.getElementById('lofi-local-mp3').click()"
+                                class="shrink-0"
+                                style="padding: 0.5rem 0.65rem; border-radius: 0.5rem; background: #1e293b; border: 1px solid #475569; color: #e2e8f0; font-size: 0.75rem; font-weight: 600;"
+                                title="Pilih MP3 Lofi dari Penyimpanan HP">
+                                🎵 MP3 HP
+                            </button>
+                            <input type="file" id="lofi-local-mp3" accept="audio/*" onchange="loadLocalLofiMp3(event)" class="hidden">
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <span style="font-size: 11px; color: #94a3b8; flex-shrink: 0;">Vol:</span>
+                            <input type="range" id="lofi-volume-slider" min="0" max="100" value="45"
+                                oninput="updateLofiVolume(this.value)"
+                                style="flex: 1; accent-color: #a855f7; height: 6px; background: #334155; border-radius: 9999px; cursor: pointer;">
+                            <span id="lofi-volume-label" class="font-display shrink-0" style="font-size: 11px; color: #d8b4fe; font-weight: 700; width: 2.25rem; text-align: right;">45%</span>
+                        </div>
+                        <audio id="lofi-local-audio-player" loop class="hidden"></audio>
+                    </div>
+
+                    <!-- Saved Bookmarks Shelf -->
+                    <div id="grimoire-bookmarks-bar" class="space-y-1-5">
+                        <div class="flex items-center justify-between" style="font-size: 10px; color: var(--text-muted);">
+                            <span class="font-display uppercase" style="font-weight: 700; color: #fcd34d;">🔖 Bookmark Tersimpan (Per Judul File)</span>
+                            <span id="grimoire-bookmark-count" class="font-display">0 File</span>
+                        </div>
+                        <div id="grimoire-bookmark-list" class="flex gap-1-5" style="overflow-x: auto; padding-bottom: 2px;"></div>
+                    </div>
+
+                    <!-- Active PDF Controls & Canvas -->
+                    <div id="grimoire-reader-workspace" class="hidden space-y-2-5">
+                        <div style="background: rgba(2,6,23,0.8); border: 1px solid #334155; border-radius: 0.75rem; padding: 0.5rem 0.65rem;" class="space-y-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <p id="grimoire-file-title" class="font-display truncate" style="font-size: 0.75rem; font-weight: 700; color: #67e8f9;">-</p>
+                                <button type="button" onclick="saveCurrentGrimoireBookmark()" class="font-display shrink-0" style="background: rgba(245,158,11,0.2); color: #fcd34d; border: 1px solid rgba(251,191,36,0.5); font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 0.5rem;">
+                                    🔖 Tandai Hal Ini
+                                </button>
+                            </div>
+
+                            <!-- Page Navigation + Zoom Controls -->
+                            <div class="flex flex-wrap items-center justify-between gap-1-5">
+                                <div class="flex items-center gap-1">
+                                    <button type="button" onclick="changeGrimoirePage(-1)" class="font-display" style="background: var(--bg-slate-900); border: 1px solid #334155; color: #e2e8f0; padding: 4px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700;">◀</button>
+                                    <span id="grimoire-page-indicator" class="font-display" style="font-size: 11px; font-weight: 700; color: #fff; padding: 0 4px;">Hal 1 / 1</span>
+                                    <button type="button" onclick="changeGrimoirePage(1)" class="font-display" style="background: var(--bg-slate-900); border: 1px solid #334155; color: #e2e8f0; padding: 4px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700;">▶</button>
+                                </div>
+
+                                <div class="flex items-center gap-1">
+                                    <button type="button" onclick="zoomGrimoire(-0.2)" class="font-display" style="background: var(--bg-slate-900); border: 1px solid #334155; color: #67e8f9; padding: 4px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700;" title="Zoom Out">➖</button>
+                                    <button type="button" onclick="fitGrimoireWidth()" class="font-display" style="background: rgba(6,182,212,0.18); border: 1px solid rgba(34,211,238,0.45); color: #67e8f9; padding: 4px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700;" title="Fit Lebar Layar HP">Fit</button>
+                                    <button type="button" onclick="zoomGrimoire(0.2)" class="font-display" style="background: var(--bg-slate-900); border: 1px solid #334155; color: #67e8f9; padding: 4px 8px; border-radius: 0.5rem; font-size: 11px; font-weight: 700;" title="Zoom In">➕</button>
+                                    <span id="grimoire-zoom-label" class="font-display" style="font-size: 10px; color: var(--text-muted); margin-left: 2px;">100%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="grimoire-viewport" class="pdf-viewport-box">
+                            <canvas id="grimoire-pdf-canvas" style="border-radius: 0.4rem; max-width: none;"></canvas>
+                        </div>
+                    </div>
+
+                    <div id="grimoire-empty-hint" style="background: rgba(2,6,23,0.65); border: 1px dashed #334155; border-radius: 0.75rem; padding: 0.85rem; text-align: center; font-size: 11px; color: var(--text-muted);">
+                        Pilih file <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> dari HP untuk membaca sambil timer fokus berjalan. Halaman terakhir otomatis tersimpan saat kamu menekan <span style="color: #fcd34d; font-weight: 700;">🔖 Tandai Hal Ini</span>.
+                    </div>
                 </div>
             </div>
-        
-            </div>
 
-            <!-- KONTEN BARU: FLASHCARD STUDY MODE -->
+            <!-- KONTEN FLASHCARD STUDY MODE -->
             <div id="dungeon-mode-flashcard" class="hidden space-y-3">
                 <!-- Header & Deck Switcher -->
                 <div class="system-card space-y-3" style="border-color: rgba(34,211,238,0.45);">
@@ -1118,11 +1169,11 @@
                     <p style="font-size: 0.75rem; color: var(--text-muted);">Tukarkan Gold dengan Potion atau Reward Dunia Nyata</p>
                 </div>
                 <div class="flex items-center gap-1-5 shrink-0">
-                    <button onclick="scrollToRedeemHistory()" class="font-display flex items-center gap-1" style="background: var(--bg-slate-900); color: #fcd34d; border: 1px solid rgba(245,158,11,0.45); font-weight: 700; font-size: 0.75rem; padding: 0.5rem 0.625rem; border-radius: 0.75rem;" title="Lihat Riwayat Redeem Shop">
+                    <button type="button" onclick="scrollToRedeemHistory()" class="font-display flex items-center gap-1" style="background: var(--bg-slate-900); color: #fcd34d; border: 1px solid rgba(245,158,11,0.45); font-weight: 700; font-size: 0.75rem; padding: 0.5rem 0.625rem; border-radius: 0.75rem;" title="Lihat Riwayat Redeem Shop">
                         <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                         Riwayat (<span id="header-redeem-count">0</span>)
                     </button>
-                    <button onclick="toggleShopForm()" class="font-display shadow-neon-gold flex items-center gap-1" style="background: var(--amber-500); color: #020617; font-weight: 700; font-size: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.75rem;">
+                    <button type="button" onclick="toggleShopForm()" class="font-display shadow-neon-gold flex items-center gap-1" style="background: var(--amber-500); color: #020617; font-weight: 700; font-size: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.75rem;">
                         <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Item Baru
                     </button>
@@ -1242,7 +1293,7 @@
                     </h3>
                     <div class="flex items-center gap-2">
                         <span id="redeem-count-badge" class="font-display" style="font-size: 11px; font-weight: 700; color: #fcd34d; background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); padding: 2px 8px; border-radius: 9999px;">0x Klaim</span>
-                        <button id="btn-clear-redeem" onclick="clearRedeemHistory()" class="hidden" style="font-size: 10px; color: var(--text-muted); text-decoration: underline;" title="Bersihkan semua riwayat redeem">
+                        <button type="button" id="btn-clear-redeem" onclick="clearRedeemHistory()" class="hidden" style="font-size: 10px; color: var(--text-muted); text-decoration: underline;" title="Bersihkan semua riwayat redeem">
                             Hapus Semua
                         </button>
                     </div>
@@ -1418,24 +1469,24 @@
     <!-- Bottom Navigation Bar -->
     <nav>
         <div class="nav-inner">
-            <button onclick="switchTab('status')" id="nav-status" class="nav-btn active">
+            <button type="button" onclick="switchTab('status')" id="nav-status" class="nav-btn active">
                 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                 <span class="font-display" style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Status</span>
             </button>
-            <button onclick="switchTab('quests')" id="nav-quests" class="nav-btn">
+            <button type="button" onclick="switchTab('quests')" id="nav-quests" class="nav-btn">
                 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h12a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v3h4"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/></svg>
                 <span class="font-display" style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Quests</span>
                 <span id="nav-quest-badge" class="hidden shadow-neon-blue" style="position: absolute; top: 8px; right: 24px; width: 8px; height: 8px; border-radius: 9999px; background: var(--cyan-400);"></span>
             </button>
-            <button onclick="switchTab('dungeon')" id="nav-dungeon" class="nav-btn">
+            <button type="button" onclick="switchTab('dungeon')" id="nav-dungeon" class="nav-btn">
                 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c1 3 2.5 3.5 3.5 4.5A5 5 0 0 1 17 10a5 5 0 1 1-10 0c0-.3 0-.6.1-.9a2 2 0 1 0 3.3-2C8 4.5 11 2 12 2Z"/><path d="m5 22 14-4"/><path d="m5 18 14 4"/></svg>
                 <span class="font-display" style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Dungeon</span>
             </button>
-            <button onclick="switchTab('shop')" id="nav-shop" class="nav-btn">
+            <button type="button" onclick="switchTab('shop')" id="nav-shop" class="nav-btn">
                 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                 <span class="font-display" style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Shop</span>
             </button>
-            <button onclick="switchTab('treasury')" id="nav-treasury" class="nav-btn">
+            <button type="button" onclick="switchTab('treasury')" id="nav-treasury" class="nav-btn">
                 <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><circle cx="17" cy="14" r="1.5"/></svg>
                 <span class="font-display" style="font-size: 10px; font-weight: 700; text-transform: uppercase;">Treasury</span>
             </button>
@@ -1459,7 +1510,7 @@
             <p id="gacha-reward-desc" style="font-size: 0.75rem; color: #cbd5e1; margin-top: 0.4rem; line-height: 1.45;">
                 Sistem sedang mengacak hadiah keberuntunganmu...
             </p>
-            <button id="btn-close-gacha" onclick="closeModal('modal-gacha')" class="hidden w-full font-display" style="margin-top: 1.25rem; background: linear-gradient(to right, #9333ea, #06b6d4); color: #fff; font-weight: 700; padding: 0.625rem; border-radius: 0.75rem;">
+            <button type="button" id="btn-close-gacha" onclick="closeModal('modal-gacha')" class="hidden w-full font-display" style="margin-top: 1.25rem; background: linear-gradient(to right, #9333ea, #06b6d4); color: #fff; font-weight: 700; padding: 0.625rem; border-radius: 0.75rem;">
                 KLAIM HADIAH
             </button>
         </div>
@@ -1480,22 +1531,13 @@
                 <p style="color: var(--emerald-400);">✓ HP dipulihkan penuh sesuai Max HP</p>
                 <p style="color: #d8b4fe;">★ Rank: <span id="levelup-new-rank" style="font-weight: 700;">Novice</span></p>
             </div>
-            <button onclick="closeModal('modal-levelup')" class="w-full font-display" style="margin-top: 1.25rem; background: var(--cyan-500); color: #020617; font-weight: 700; padding: 0.625rem; border-radius: 0.75rem;">
+            <button type="button" onclick="closeModal('modal-levelup')" class="w-full font-display" style="margin-top: 1.25rem; background: var(--cyan-500); color: #020617; font-weight: 700; padding: 0.625rem; border-radius: 0.75rem;">
                 TERIMA KEKUATAN
             </button>
         </div>
     </div>
 
     <!-- System Alert / RPG Death Report Modal -->
-    <style>
-        .death-stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem;margin-top:.9rem;text-align:left}
-        .death-stat-card{min-width:0;padding:.65rem .7rem;border-radius:.75rem;background:linear-gradient(145deg,rgba(30,41,59,.92),rgba(15,23,42,.96));border:1px solid rgba(148,163,184,.22);display:grid;grid-template-columns:auto 1fr;column-gap:.45rem;align-items:center}
-        .death-stat-icon{grid-row:span 2;font-size:1.1rem}
-        .death-stat-label{font-size:.58rem;letter-spacing:.08em;color:#94a3b8;font-weight:800}
-        .death-stat-card strong{font-size:.78rem;color:#f8fafc;line-height:1.35;overflow-wrap:anywhere}
-        .death-hint{margin-top:.8rem;padding:.65rem .75rem;border-radius:.7rem;background:rgba(127,29,29,.2);border:1px solid rgba(248,113,113,.3);color:#fca5a5;font-size:.65rem;line-height:1.45;font-weight:700}
-        @media(max-width:360px){.death-stat-grid{gap:.35rem}.death-stat-card{padding:.55rem}.death-stat-card strong{font-size:.7rem}}
-    </style>
     <div id="modal-system-msg" class="hidden modal-backdrop">
         <div id="sys-msg-card" class="system-card max-w-sm w-full text-center modal-enter" style="border-color:#475569;padding:1.25rem;max-height:88vh;overflow-y:auto;">
             <div id="sys-msg-icon" style="width:3.5rem;height:3.5rem;margin:0 auto .75rem;border-radius:1rem;background:rgba(6,182,212,.18);border:1px solid var(--cyan-400);display:flex;align-items:center;justify-content:center;font-size:1.65rem;box-shadow:0 0 22px rgba(239,68,68,.12);">ⓘ</div>
@@ -1504,7 +1546,7 @@
             <p id="sys-msg-body" style="font-size:.73rem;color:#cbd5e1;margin-top:.55rem;line-height:1.55;"></p>
             <div id="sys-msg-details" class="death-stat-grid hidden"></div>
             <div id="sys-msg-hint" class="death-hint"></div>
-            <button onclick="closeModal('modal-system-msg')" class="w-full font-display" style="margin-top:1rem;background:linear-gradient(90deg,#7f1d1d,#b91c1c);color:#fff;font-weight:900;padding:.7rem;border-radius:.75rem;border:1px solid rgba(248,113,113,.55);letter-spacing:.08em;">UNDERSTOOD</button>
+            <button type="button" onclick="closeModal('modal-system-msg')" class="w-full font-display" style="margin-top:1rem;background:linear-gradient(90deg,#7f1d1d,#b91c1c);color:#fff;font-weight:900;padding:.7rem;border-radius:.75rem;border:1px solid rgba(248,113,113,.55);letter-spacing:.08em;">UNDERSTOOD</button>
         </div>
     </div>
 
@@ -1551,8 +1593,8 @@
                 <input type="text" id="input-player-job" maxlength="24" placeholder="Contoh: Shadow Monarch" class="input-cyber">
             </div>
             <div class="flex gap-2" style="padding-top: 4px;">
-                <button onclick="closeModal('modal-edit-name')" class="flex-1 font-display" style="background: var(--bg-slate-800); color: #cbd5e1; font-weight: 700; padding: 0.5rem; border-radius: 0.75rem; font-size: 0.875rem;">Batal</button>
-                <button onclick="savePlayerName()" class="flex-1 font-display" style="background: var(--cyan-500); color: #020617; font-weight: 700; padding: 0.5rem; border-radius: 0.75rem; font-size: 0.875rem;">Simpan</button>
+                <button type="button" onclick="closeModal('modal-edit-name')" class="flex-1 font-display" style="background: var(--bg-slate-800); color: #cbd5e1; font-weight: 700; padding: 0.5rem; border-radius: 0.75rem; font-size: 0.875rem;">Batal</button>
+                <button type="button" onclick="savePlayerName()" class="flex-1 font-display" style="background: var(--cyan-500); color: #020617; font-weight: 700; padding: 0.5rem; border-radius: 0.75rem; font-size: 0.875rem;">Simpan</button>
             </div>
         </div>
     </div>
@@ -1564,8 +1606,8 @@
             <h3 class="font-display" style="font-weight: 700; font-size: 1.125rem; color: #fff;">RESET DATA SISTEM?</h3>
             <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 1rem;">Semua progres akan di-reset bersih ke awal (Level 1, 0 XP, 0 Gold, 0 Streak).</p>
             <div class="flex gap-2">
-                <button onclick="closeModal('modal-reset')" class="flex-1 font-display" style="background: var(--bg-slate-800); color: #cbd5e1; font-weight: 700; padding: 0.5rem; border-radius: 0.75rem; font-size: 0.875rem;">Batal</button>
-                <button onclick="confirmResetData()" class="flex-1 font-display" style="background: #e11d48; color: #fff; font-weight: 700; padding: 0.5rem; border-radius: 0.75rem; font-size: 0.875rem;">Reset</button>
+                <button type="button" onclick="closeModal('modal-reset')" class="flex-1 font-display" style="background: var(--bg-slate-800); color: #cbd5e1; font-weight: 700; padding: 0.5rem; border-radius: 0.75rem; font-size: 0.875rem;">Batal</button>
+                <button type="button" onclick="confirmResetData()" class="flex-1 font-display" style="background: #e11d48; color: #fff; font-weight: 700; padding: 0.5rem; border-radius: 0.75rem; font-size: 0.875rem;">Reset</button>
             </div>
         </div>
     </div>
@@ -1740,7 +1782,7 @@
                     <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
                     GELAR & ACHIEVEMENT
                 </h3>
-                <button onclick="closeModal('modal-titles')" style="color: var(--text-muted);">
+                <button type="button" onclick="closeModal('modal-titles')" style="color: var(--text-muted);">
                     <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
@@ -1757,7 +1799,7 @@
                     <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                     HUNTER RANK ROADMAP
                 </h3>
-                <button onclick="closeModal('modal-rank-roadmap')" style="color: var(--text-muted);">
+                <button type="button" onclick="closeModal('modal-rank-roadmap')" style="color: var(--text-muted);">
                     <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
@@ -1765,7 +1807,7 @@
                 Naikkan Level Hunter & Rata-rata Atribut untuk membuka tingkatan Rank baru dan mendapatkan <span style="color: #fcd34d; font-weight: 600;">Bonus Multiplier Pasif</span> otomatis:
             </p>
             <div id="rank-roadmap-list" class="space-y-2" style="max-height: 18rem; overflow-y: auto; padding-right: 4px;"></div>
-            <button onclick="closeModal('modal-rank-roadmap')" class="w-full font-display" style="background: var(--bg-slate-800); color: #fff; font-weight: 700; padding: 0.55rem; border-radius: 0.75rem; border: 1px solid #475569; font-size: 0.875rem;">
+            <button type="button" onclick="closeModal('modal-rank-roadmap')" class="w-full font-display" style="background: var(--bg-slate-800); color: #fff; font-weight: 700; padding: 0.55rem; border-radius: 0.75rem; border: 1px solid #475569; font-size: 0.875rem;">
                 TUTUP ROADMAP
             </button>
         </div>
@@ -1799,9 +1841,6 @@
             </div>
         </div>
     </div>
-
-    <!-- ==================== JAVASCRIPT LOGIC (100% OFFLINE) ==================== -->
-    
 
     <!-- MODAL PENGATURAN FONT -->
     <div id="font-settings-modal" class="hidden modal-backdrop" style="z-index: 70;">
@@ -1891,15 +1930,16 @@
                     </button>
                 </div>
             </div>
+
             <div style="margin-top: 0.85rem; padding-top: 0.85rem; border-top: 1px solid #1e293b;">
-               <button type="button" onclick="if(typeof closeModal==='function'){closeModal('settings-modal');}else{const sm=document.getElementById('settings-modal');if(sm){sm.classList.add('hidden');sm.style.display='none';}} if(typeof openTutorialModal==='function'){openTutorialModal(0);}else{alert('Fungsi openTutorialModal belum terpasang di app.js!');}"
+                <button type="button" onclick="if (typeof closeFontSettingsModal === 'function') { closeFontSettingsModal(); } else { const fm = document.getElementById('font-settings-modal'); if (fm) fm.classList.add('hidden'); } if (typeof openTutorialModal === 'function') { openTutorialModal(0); }"
                     style="width: 100%; padding: 0.65rem; border-radius: 0.6rem; border: 1px solid rgba(34, 211, 238, 0.5); background: rgba(8, 51, 68, 0.65); color: #67e8f9; font-size: 12px; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; position: relative; z-index: 20;">
                     📖 BANTUAN & PANDUAN HUNTER (TUTORIAL)
                 </button>
             </div>
         </div>
     </div>
-    
+
     <!-- Modal Tambah / Edit Flashcard -->
     <div id="modal-flashcard-editor" class="hidden modal-backdrop" style="z-index: 75;">
         <form onsubmit="saveFlashcardForm(event)" class="system-card max-w-xs w-full modal-enter space-y-3" style="border-color: rgba(34,211,238,0.6); padding: 1.25rem;">
@@ -1947,12 +1987,12 @@
         </form>
     </div>
 
+    <!-- ==================== JAVASCRIPT LOGIC ==================== -->
     <script src="app.js"></script>
-
     <script>
     (function () {
         let tutStep = 0;
-        let tutMode = 'guide'; // 'guide' = Panduan Cepat, 'codex' = Aturan Sistem
+        let tutMode = 'guide';
 
         const TUT_DATA = {
             id: {
@@ -1995,8 +2035,8 @@
                     {
                         icon: '🌙',
                         title: '6. Evaluasi & Lanjut Hari',
-                        desc: 'Menjelang tutup hari, tekan "Evaluasi & Lanjut Hari" di tab STATUS (opsional isi Awakening Journal) agar sistem merekap progres, menerapkan aturan streak/penalti, dan pindah ke hari berikutnya.',
-                        tip: 'Lakukan backup data secara berkala agar progresmu tetap aman.'
+                        desc: 'Di tab STATUS, pada bagian Kontrol Sistem & Evaluasi Harian, tekan "Evaluasi & Lanjut Hari" (opsional isi Awakening Journal) untuk merekap progres, menerapkan aturan streak/penalti, dan pindah ke hari berikutnya.',
+                        tip: 'Tekan "Selesai ✓" untuk menutup panduan ini—bisa dibuka ulang kapan saja dari Pengaturan Font.'
                     }
                 ],
                 codex: [
@@ -2070,8 +2110,8 @@
                     {
                         icon: '🌙',
                         title: '6. Daily Evaluation',
-                        desc: 'At the end of the day, tap "Evaluasi & Lanjut Hari" in STATUS (with optional Awakening Journal) to summarize progress, apply streak/penalty rules, and advance to the next day.',
-                        tip: 'Keep backups of your progress periodically.'
+                        desc: 'In the STATUS tab under System Controls & Daily Evaluation, tap "Evaluasi & Lanjut Hari" (with optional Awakening Journal) to summarize progress, apply streak/penalty rules, and advance to the next day.',
+                        tip: 'Tap "Finish ✓" to close this guide—you can reopen it anytime from Font Settings.'
                     }
                 ],
                 codex: [
@@ -2145,8 +2185,8 @@
                     {
                         icon: '🌙',
                         title: '6. 1日の評価と更新',
-                        desc: '1日の終わりにSTATUSタブの「Evaluasi & Lanjut Hari」を押して振り返り（任意でジャーナル記録）を行い、翌日へ進みます。',
-                        tip: '大切なデータは定期的にバックアップしておきましょう。'
+                        desc: 'STATUSタブのシステム管理・日次評価から「Evaluasi & Lanjut Hari」を押して振り返り（任意でジャーナル記録）を行い、ストリークや日次結果を反映して翌日へ進みます。',
+                        tip: '「完了 ✓」を押すとガイドを閉じます。フォント設定からいつでも再表示できます。'
                     }
                 ],
                 codex: [
@@ -2187,8 +2227,8 @@
                           localStorage.getItem('sysrpg_lang') ||
                           localStorage.getItem('appLanguage') ||
                           document.documentElement.lang || 'id';
-            if (saved.indexOf('ja') === 0) return 'ja';
-            if (saved.indexOf('en') === 0) return 'en';
+            if (String(saved).indexOf('ja') === 0) return 'ja';
+            if (String(saved).indexOf('en') === 0) return 'en';
             return 'id';
         }
 
@@ -2196,6 +2236,11 @@
             const inp = document.getElementById('input-streak-threshold');
             const val = inp ? parseInt(inp.value, 10) : 80;
             return isNaN(val) ? 80 : Math.max(10, Math.min(100, val));
+        }
+
+        function getActiveSteps() {
+            const pack = TUT_DATA[getActiveLang()] || TUT_DATA.id;
+            return pack.steps || TUT_DATA.id.steps;
         }
 
         function renderTutorialBox() {
@@ -2351,7 +2396,7 @@
                         box.remove();
                         return;
                     }
-                    const total = (TUT_DATA[getActiveLang()] || TUT_DATA.id).length;
+                    const total = getActiveSteps().length;
                     if (tutStep < total - 1) {
                         tutStep++;
                         renderTutorialBox();
@@ -2360,9 +2405,10 @@
                         box.remove();
                     }
                 };
+            }
 
             tutMode = 'guide';
-            const total = (TUT_DATA[getActiveLang()] || TUT_DATA.id).length;
+            const total = getActiveSteps().length;
             tutStep = Math.max(0, Math.min(startIndex, total - 1));
             renderTutorialBox();
         };
