@@ -3621,6 +3621,44 @@ function completeDungeon() {
 
 let isDungeonConfirmOpen = false;
 
+function getDungeonWarningDict(minsLeft, secsLeft) {
+    const lang = typeof getReminderLang === 'function'
+        ? getReminderLang()
+        : ((typeof gameState !== 'undefined' && gameState.language) || localStorage.getItem('system_rpg_lang') || 'id');
+
+    const dicts = {
+        id: {
+            title: 'PERINGATAN SISTEM // DUNGEON',
+            desc: `Sisa waktu fokusmu masih <strong style="color: #22d3ee;">${minsLeft}:${secsLeft}</strong>. Apakah kamu yakin ingin berhenti dan keluar dari Dungeon sekarang?`,
+            penalty: `⚡ Konsekuensi: Kamu akan kehilangan <strong style="color: #fb7185;">-10 HP</strong> dan seluruh reward XP & Gold sesi ini hangus.`,
+            btnKeep: '⚔️ TETAP LANJUT FOKUS',
+            btnQuit: '🚪 YA, BERHENTI & KELUAR (-10 HP)',
+            failTitle: 'DUNGEON FAILED',
+            failBody: 'Kamu kabur dari Dungeon sebelum waktunya habis. Sistem memberikan penalti -10 HP!'
+        },
+        en: {
+            title: 'SYSTEM WARNING // DUNGEON',
+            desc: `You still have <strong style="color: #22d3ee;">${minsLeft}:${secsLeft}</strong> of focus time remaining. Are you sure you want to stop and exit the Dungeon now?`,
+            penalty: `⚡ Consequence: You will lose <strong style="color: #fb7185;">-10 HP</strong> and forfeit all XP & Gold rewards for this session.`,
+            btnKeep: '⚔️ KEEP FOCUSING',
+            btnQuit: '🚪 YES, STOP & EXIT (-10 HP)',
+            failTitle: 'DUNGEON FAILED',
+            failBody: 'You fled the Dungeon before time ran out. The System issued a -10 HP penalty!'
+        },
+        ja: {
+            title: 'システム警告 // ダンジョン',
+            desc: `残り集中時間はあと <strong style="color: #22d3ee;">${minsLeft}:${secsLeft}</strong> です。本当に今すぐ中断してダンジョンから退出しますか？`,
+            penalty: `⚡ ペナルティ：<strong style="color: #fb7185;">-10 HP</strong> を失い、今回のセッションのXPおよびゴールド報酬はすべて無効になります。`,
+            btnKeep: '⚔️ 集中を続ける',
+            btnQuit: '🚪 はい、中断して退出する (-10 HP)',
+            failTitle: 'DUNGEON FAILED',
+            failBody: '制限時間終了前にダンジョンから逃走しました。システムにより -10 HP のペナルティが科されました！'
+        }
+    };
+
+    return dicts[lang] || dicts.id;
+}
+
 function abortDungeon() {
     if (!isDungeonRunning || isDungeonConfirmOpen) return;
     if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
@@ -3636,6 +3674,7 @@ function abortDungeon() {
 
     const minsLeft = Math.floor(pausedRemainingSec / 60).toString().padStart(2, '0');
     const secsLeft = (pausedRemainingSec % 60).toString().padStart(2, '0');
+    const txt = getDungeonWarningDict(minsLeft, secsLeft);
 
     const modal = document.createElement('div');
     modal.id = 'sysrpg-dungeon-confirm-modal';
@@ -3651,23 +3690,23 @@ function abortDungeon() {
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.65rem;">
                 <span style="font-size: 1.25rem;">⚠️</span>
                 <h3 class="font-display" style="font-size: 0.9rem; font-weight: 800; color: #fb7185; letter-spacing: 0.05em; margin: 0;">
-                    PERINGATAN SISTEM // DUNGEON
+                    ${txt.title}
                 </h3>
             </div>
             <p style="font-size: 0.8rem; color: #e2e8f0; line-height: 1.5; margin-bottom: 0.6rem;">
-                Sisa waktu fokusmu masih <strong style="color: #22d3ee;">${minsLeft}:${secsLeft}</strong>. Apakah kamu yakin ingin berhenti dan keluar dari Dungeon sekarang?
+                ${txt.desc}
             </p>
             <div style="background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.35); border-radius: 0.6rem; padding: 0.55rem 0.7rem; margin-bottom: 1rem; font-size: 0.72rem; color: #fda4af;">
-                ⚡ Konsekuensi: Kamu akan kehilangan <strong style="color: #fb7185;">-10 HP</strong> dan seluruh reward XP & Gold sesi ini hangus.
+                ${txt.penalty}
             </div>
             <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                 <button type="button" id="btn-dungeon-keep-going" class="font-display"
                     style="width: 100%; padding: 0.65rem; border-radius: 0.65rem; font-size: 0.78rem; font-weight: 800; background: linear-gradient(135deg, #06b6d4, #3b82f6); color: #020617; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.35);">
-                    ⚔️ TETAP LANJUT FOKUS
+                    ${txt.btnKeep}
                 </button>
                 <button type="button" id="btn-dungeon-confirm-quit" class="font-display"
                     style="width: 100%; padding: 0.55rem; border-radius: 0.65rem; font-size: 0.72rem; font-weight: 700; background: rgba(244, 63, 94, 0.14); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.45); cursor: pointer;">
-                    🚪 YA, BERHENTI & KELUAR (-10 HP)
+                    ${txt.btnQuit}
                 </button>
             </div>
         </div>
@@ -3711,12 +3750,10 @@ function executeDungeonAbort() {
 
     takeDamage(10);
     resetDungeonUI();
-    showSystemModal(
-        'DUNGEON FAILED',
-        'Kamu kabur dari Dungeon sebelum waktunya habis. Sistem memberikan penalti -10 HP!'
-    );
-}
 
+    const txt = getDungeonWarningDict('00', '00');
+    showSystemModal(txt.failTitle, txt.failBody);
+}
 // Proteksi tambahan jika pengguna mencoba menutup/refresh browser saat Dungeon berjalan
 window.addEventListener('beforeunload', (e) => {
     if (isDungeonRunning) {
