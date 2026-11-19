@@ -7568,7 +7568,7 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
 // =========================================================
 // SISTEM TUTORIAL MANDIRI (ANTI-GAGAL & MULTI-BAHASA)
 // =========================================================
-const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
+window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
 
 (function () {
     let tutStep = 0;
@@ -7756,7 +7756,7 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
     function closeTutorialTour(playDoneSound) {
         playTutorialSound(playDoneSound ? 'finish' : 'back');
         clearTutorialSpotlight();
-        localStorage.setItem(TUTORIAL_STORAGE_KEY, 'true');
+        localStorage.setItem(window.TUTORIAL_STORAGE_KEY, 'true');
         const box = document.getElementById('sysrpg-force-tutorial');
         if (box) box.remove();
         if (typeof switchTab === 'function') {
@@ -7840,26 +7840,23 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
         renderBox();
     };
 
-    // Pemicu otomatis HANYA sekali saat pertama kali buka aplikasi
     function checkFirstTimeTutorial() {
-        if (localStorage.getItem(TUTORIAL_STORAGE_KEY) === 'true') return;
+        if (localStorage.getItem(window.TUTORIAL_STORAGE_KEY) === 'true') return;
 
         const splash = document.getElementById('system-splash-screen');
         const isSplashVisible = splash && splash.style.display !== 'none' && !splash.classList.contains('hidden');
 
-        // Jika splash screen masih tampil, tunggu sampai splash screen selesai/hilang
         if (isSplashVisible) {
             const observer = new MutationObserver(() => {
                 if (splash.style.display === 'none' || splash.classList.contains('hidden')) {
                     observer.disconnect();
-                    if (localStorage.getItem(TUTORIAL_STORAGE_KEY) !== 'true') {
+                    if (localStorage.getItem(window.TUTORIAL_STORAGE_KEY) !== 'true') {
                         setTimeout(() => window.openTutorialModal(0), 250);
                     }
                 }
             });
             observer.observe(splash, { attributes: true, attributeFilter: ['style', 'class'] });
         } else {
-            // Jika tidak ada splash screen, langsung buka tutorial
             setTimeout(() => window.openTutorialModal(0), 350);
         }
     }
@@ -7884,13 +7881,17 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
         }
     }, true);
 
-    window.addEventListener('DOMContentLoaded', () => {
+    if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', () => {
+            updateTutorialTriggerButtonLabel();
+            checkFirstTimeTutorial();
+        });
+    } else {
         updateTutorialTriggerButtonLabel();
         checkFirstTimeTutorial();
-    });
+    }
     setTimeout(updateTutorialTriggerButtonLabel, 200);
 })();
-
 // ==========================================
 
 // ==========================================
