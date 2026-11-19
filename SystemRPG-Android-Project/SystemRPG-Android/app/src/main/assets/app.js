@@ -1763,7 +1763,7 @@ function getPenaltyQuestBannerHtml() {
                 <span class="font-display" style="font-size: 0.75rem; font-weight: 800; color: #fecdd3;">${cur}/${target} QUEST</span>
             </div>
             <p style="font-size: 11px; color: #ffe4e6; margin-top: 3px;">
-                Selesaikan ${target} quest untuk mencabut status SEKARAT + pulih ${pq.rewardHp} HP & +${pq.rewardGold} Gold.
+                Selesaikan ${target} Daily Quest untuk keluar dari Penalty Zone, pulih hingga +${pq.rewardHp} HP & +${pq.rewardGold} Gold.
             </p>
         </div>
     `;
@@ -1791,62 +1791,88 @@ function renderDailyComboBadge() {
 }
 
 function takeDamage(amount, suppressDeathModal = false) {
+    // Normalisasi input agar damage kosong/negatif/NaN tidak merusak state.
+    const rawDamage = Number(amount);
+    if (!Number.isFinite(rawDamage) || rawDamage <= 0) {
+        return { mitigatedDamage: 0, deathReport: null };
+    }
+
     SoundFX.playDamage();
     syncPlayerMaxHp();
-    const { wisDmgReduce } = getAttributePassives();
-    const mitigatedDamage = Math.max(1, Math.round(amount * (1 - wisDmgReduce)));
+    ensureRpgExtendedState();
 
-    gameState.player.hp = Math.max(0, gameState.player.hp - mitigatedDamage);
-    spawnFloatingReward(`⚠️ -${mitigatedDamage} HP!${mitigatedDamage < amount ? ` (WIS menahan ${amount - mitigatedDamage})` : ''}`);
+    const { wisDmgReduce } = getAttributePassives();
+    const safeReduction = Math.min(0.9, Math.max(0, Number(wisDmgReduce) || 0));
+    const mitigatedDamage = Math.max(1, Math.round(rawDamage * (1 - safeReduction)));
+    const hpBeforeDamage = Math.max(0, Number(gameState.player.hp) || 0);
+
+    gameState.player.hp = Math.max(0, hpBeforeDamage - mitigatedDamage);
+    spawnFloatingReward(`⚠️ -${mitigatedDamage} HP!${mitigatedDamage < rawDamage ? ` (WIS menahan ${Math.round(rawDamage - mitigatedDamage)} HP)` : ''}`);
 
     let deathReport = null;
 
-    if (gameState.player.hp === 0) {
-        const prevLevel = gameState.player.level;
-        const prevGold = gameState.player.gold;
-        const prevStreak = gameState.player.streak || 0;
-        const levelLost = prevLevel > 1 ? 1 : 0;
+    if (gameState.player.hp <= 0) {
+        const penaltyAlreadyActive = Boolean(gameState.penaltyQuest.active);
+        const maxHp = Math.max(1, Number(gameState.player.maxHp) || 100);
 
-        if (levelLost > 0) {
-            gameState.player.level = prevLevel - 1;
+        // Jika Hunter KO lagi saat sedang menjalankan Penalty Quest, jangan
+        // menghukum Level/Gold/Streak berulang kali dan jangan reset progres quest.
+        if (penaltyAlreadyActive) {
+            gameState.player.hp = Math.max(1, Math.round(maxHp * 0.10));
+            deathReport = {
+                repeatKnockout: true,
+                revivedHp: gameState.player.hp,
+                maxHp,
+                summaryText: `Kamu kembali tumbang saat Penalty Zone masih aktif. Tidak ada potongan Level, Gold, atau Streak tambahan. Progres Penalty Quest tetap tersimpan (${gameState.penaltyQuest.progress}/${gameState.penaltyQuest.targetCount}). Kamu dibangkitkan dengan ${gameState.player.hp}/${maxHp} HP.`
+            };
+        } else {
+            const prevLevel = Math.max(1, Number(gameState.player.level) || 1);
+            const prevGold = Math.max(0, Number(gameState.player.gold) || 0);
+            const prevStreak = Math.max(0, Number(gameState.player.streak) || 0);
+            const levelLost = prevLevel > 1 ? 1 : 0;
+
+            if (levelLost > 0) gameState.player.level = prevLevel - 1;
+            gameState.player.xp = 0;
+
+            // Hukuman kematian pertama: sita 50% Gold (dibulatkan ke bawah).
+            const lostGold = prevGold >= 10 ? Math.floor(prevGold * 0.5) : prevGold;
+            gameState.player.gold = Math.max(0, prevGold - lostGold);
+
+            gameState.player.streak = 0;
+            gameState.lastStreakDate = null;
+
+            // Bangkit dalam kondisi sekarat, lalu tuntaskan 2 Daily Quest.
+            gameState.player.hp = Math.max(1, Math.round(maxHp * 0.25));
+            assignPenaltyQuestOnDeath();
+
+            const penaltyHealAmt = Math.max(20, Math.round(maxHp * 0.25));
+            const lvlMsg = levelLost > 0
+                ? `Level turun (${prevLevel} ➔ ${gameState.player.level}) & EXP hangus`
+                : `EXP hangus ke 0 (Lv.${gameState.player.level})`;
+            const goldMsg = lostGold > 0
+                ? `-${lostGold} Gold disita (sisa ${gameState.player.gold} G)`
+                : `0 Gold (saldo kosong)`;
+
+            deathReport = {
+                repeatKnockout: false,
+                mitigatedDamage,
+                prevLevel,
+                newLevel: gameState.player.level,
+                lostGold,
+                remainingGold: gameState.player.gold,
+                prevStreak,
+                revivedHp: gameState.player.hp,
+                maxHp,
+                summaryText: `• ${lvlMsg}\n• ${goldMsg}\n• Streak (${prevStreak} hari) di-reset ke 0\n• Bangkit SEKARAT: ${gameState.player.hp}/${maxHp} HP\n• Penalty Quest aktif: selesaikan 2 Daily Quest untuk pulih +${penaltyHealAmt} HP & +15 Gold`
+            };
         }
-        gameState.player.xp = 0;
-
-        // Jika Gold >= 10 potong 50%, jika < 10 disita habis sebagai denda kebangkitan
-        const lostGold = prevGold >= 10 ? Math.floor(prevGold * 0.5) : prevGold;
-        gameState.player.gold = Math.max(0, prevGold - lostGold);
-
-        gameState.player.streak = 0;
-        gameState.lastStreakDate = null;
-
-       // Bangkit dalam kondisi SEKARAT (25% Max HP) agar harus berjuang memulihkan HP
-        gameState.player.hp = Math.max(1, Math.round(gameState.player.maxHp * 0.25));
-        assignPenaltyQuestOnDeath();
-
-        const penaltyHealAmt = Math.max(20, Math.round((gameState.player.maxHp || 100) * 0.25));
-        const lvlMsg = levelLost > 0
-            ? `Level turun (${prevLevel} ➔ ${gameState.player.level}) & EXP hangus`
-            : `EXP hangus ke 0 (Lv.${gameState.player.level})`;
-        const goldMsg = lostGold > 0
-            ? `-${lostGold} Gold disita (sisa ${gameState.player.gold} G)`
-            : `0 Gold (saldo kosong)`;
-
-        deathReport = {
-            mitigatedDamage,
-            prevLevel,
-            newLevel: gameState.player.level,
-            lostGold,
-            remainingGold: gameState.player.gold,
-            prevStreak,
-            revivedHp: gameState.player.hp,
-            maxHp: gameState.player.maxHp,
-            summaryText: `• ${lvlMsg}\n• ${goldMsg}\n• Streak (${prevStreak} hari) di-reset ke 0\n• Bangkit dalam status SEKARAT: ${gameState.player.hp}/${gameState.player.maxHp} HP (-25% EXP)\n• Penalty Quest aktif: selesaikan 2 quest untuk pulih +${penaltyHealAmt} HP & +15 Gold`
-        };
 
         if (!suppressDeathModal) {
             showSystemModal(
-                '💀 KNOCKED OUT // HP = 0!',
-                `Vitality habis total! Sistem membangkitkanmu dengan hukuman berat:\n\n${deathReport.summaryText}\n\nSegera selesaikan Daily Quest atau beli Potion di Shop untuk memulihkan kondisi!`
+                deathReport.repeatKnockout ? '⚠️ SECOND WIND // PENALTY ZONE' : '💀 KNOCKED OUT // HP = 0!',
+                deathReport.repeatKnockout
+                    ? `${deathReport.summaryText}\n\nSelesaikan Daily Quest atau gunakan Recovery Quest/Potion untuk bertahan.`
+                    : `Vitality habis total! Sistem membangkitkanmu dengan hukuman:\n\n${deathReport.summaryText}\n\nSelesaikan Daily Quest untuk keluar dari Penalty Zone.`
             );
         }
     }
@@ -3037,6 +3063,18 @@ function toggleQuest(id, preserveCount = false) {
 
         recordActivityHistory(q.title, q.category, q.stat, rewardResult.finalXp, rewardResult.finalGold, q.id);
 
+        // Penalty Quest hanya dihitung dari Daily Quest yang benar-benar diselesaikan.
+        // Hook ini sebelumnya belum dipanggil, sehingga progress penalty tidak pernah bertambah.
+        if (q.category === 'Daily Quest') {
+            const penaltyProgress = advancePenaltyQuestProgress();
+            if (penaltyProgress?.completed) {
+                SoundFX.playQuestComplete();
+                spawnFloatingReward(`🛡️ PENALTY CLEARED! +${penaltyProgress.rewardHp} HP & +${penaltyProgress.rewardGold} Gold`);
+            } else if (penaltyProgress) {
+                spawnFloatingReward(`⚠️ PENALTY QUEST: ${penaltyProgress.progress}/${penaltyProgress.targetCount} Daily Quest`);
+            }
+        }
+
         if (q.category === 'Daily Quest') {
             const slot = inferQuestTimeSlot(q);
             if (['Pagi', 'Siang', 'Sore', 'Malam'].includes(slot)) {
@@ -4053,12 +4091,16 @@ function confirmJournalAndAdvance(saveJournal) {
         } else {
             shieldMsg = ` Streak ${gameState.player.streak} hari tetap aman (≥${getStreakThresholdPct()}%), namun tanpa regen HP.`;
         }
-        takeDamage(tier.rawDamage);
-        const { wisDmgReduce } = getAttributePassives();
-        const actualDmg = Math.max(1, Math.round(tier.rawDamage * (1 - wisDmgReduce)));
+        // Satu modal saja: jika damage menyebabkan KO, gabungkan laporan kematian
+        // dengan evaluasi harian agar modal death tidak tertimpa modal evaluasi.
+        const damageResult = takeDamage(tier.rawDamage, true);
+        const actualDmg = damageResult.mitigatedDamage;
+        const deathText = damageResult.deathReport
+            ? `\n\n💀 HUKUMAN KNOCKED OUT:\n${damageResult.deathReport.summaryText}`
+            : '';
         showSystemModal(
-            `EVALUASI HARIAN // ${tier.rank.toUpperCase()}`,
-            `Progres Daily Quest tanggal ${currentKey}: ${pct}% (${doneCount}/${totalDaily}). Penalti ${Math.round(tier.penaltyRate * 100)}% Max HP (-${actualDmg} HP).${shieldMsg} Tanggal sistem maju ke ${formatReadableDate(nextDateKey)}.`
+            damageResult.deathReport ? `💀 YOU DIED // ${tier.rank.toUpperCase()}` : `EVALUASI HARIAN // ${tier.rank.toUpperCase()}`,
+            `Progres Daily Quest tanggal ${currentKey}: ${pct}% (${doneCount}/${totalDaily}). Penalti ${Math.round(tier.penaltyRate * 100)}% Max HP (-${actualDmg} HP).${shieldMsg}${deathText}\n\nTanggal sistem maju ke ${formatReadableDate(nextDateKey)}.`
         );
     } else {
         SoundFX.playQuestComplete();
