@@ -7988,20 +7988,66 @@ function saveFlashcardForm(e) {
 }
 
 function confirmResetFlashcards() {
+    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
     const lang = flashcardState.activeDeck;
     const deckLabel = lang === 'jp' ? 'Japanese' : 'English';
-    const ok = window.confirm(`Reset seluruh progres hafalan & kembalikan deck ${deckLabel} ke bawaan awal?`);
-    if (!ok) return;
 
-    flashcardState.decks[lang] = buildDefaultFlashcardDeck(lang);
-    flashcardState.queues[lang] = flashcardState.decks[lang].map(c => c.id);
-    flashcardState.sessionRepeats[lang] = 0;
-    flashcardState.isFlipped = false;
-    saveFlashcardState();
-    renderFlashcardUI();
-    if (typeof spawnFloatingReward === 'function') {
-        spawnFloatingReward(`↺ Deck ${deckLabel} di-reset ke awal`);
-    }
+    const existingModal = document.getElementById('fc-rpg-reset-modal');
+    if (existingModal) existingModal.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'fc-rpg-reset-modal';
+    overlay.style.cssText = 'position: fixed; inset: 0; z-index: 99999; background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 1.25rem;';
+
+    overlay.innerHTML = `
+        <div style="width: 100%; max-width: 360px; background: linear-gradient(160deg, #0f172a 0%, #090d16 100%); border: 1px solid rgba(244, 63, 94, 0.55); box-shadow: 0 0 28px rgba(244, 63, 94, 0.25), inset 0 0 18px rgba(34, 211, 238, 0.08); border-radius: 0.9rem; padding: 1.25rem; color: #e2e8f0;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.65rem;">
+                <span style="color: #fb7185; font-size: 1rem;">⚠️</span>
+                <span style="font-size: 11px; font-weight: 800; letter-spacing: 1.5px; color: #fb7185; text-transform: uppercase;">
+                    SYSTEM WARNING // RESET DECK
+                </span>
+            </div>
+            <p style="font-size: 13px; line-height: 1.55; color: #cbd5e1; margin: 0 0 1.15rem 0;">
+                Reset seluruh progres hafalan & kembalikan deck <strong style="color: #67e8f9;">${deckLabel}</strong> ke bawaan awal?
+            </p>
+            <div style="display: flex; gap: 0.6rem;">
+                <button type="button" id="fc-reset-cancel-btn" style="flex: 1; padding: 0.6rem 0.75rem; border-radius: 0.6rem; background: rgba(30, 41, 59, 0.85); border: 1px solid #334155; color: #94a3b8; font-size: 11px; font-weight: 800; letter-spacing: 0.8px; cursor: pointer;">
+                    BATAL
+                </button>
+                <button type="button" id="fc-reset-confirm-btn" style="flex: 1; padding: 0.6rem 0.75rem; border-radius: 0.6rem; background: linear-gradient(135deg, #e11d48, #9f1239); border: 1px solid rgba(253, 164, 175, 0.5); color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.8px; cursor: pointer; box-shadow: 0 0 14px rgba(225, 29, 72, 0.35);">
+                    YA, RESET
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const closeResetModal = () => overlay.remove();
+
+    overlay.querySelector('#fc-reset-cancel-btn').onclick = () => {
+        if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+        closeResetModal();
+    };
+
+    overlay.querySelector('#fc-reset-confirm-btn').onclick = () => {
+        closeResetModal();
+        if (typeof SoundFX !== 'undefined' && SoundFX.playDamage) SoundFX.playDamage();
+
+        flashcardState.decks[lang] = buildDefaultFlashcardDeck(lang);
+        flashcardState.queues[lang] = flashcardState.decks[lang].map(c => c.id);
+        flashcardState.sessionRepeats[lang] = 0;
+        flashcardState.isFlipped = false;
+        saveFlashcardState();
+        renderFlashcardUI();
+        if (typeof spawnFloatingReward === 'function') {
+            spawnFloatingReward(`↺ Deck ${deckLabel} di-reset ke awal`);
+        }
+    };
+
+    overlay.onclick = (e) => {
+        if (e.target === overlay) closeResetModal();
+    };
 }
 
 window.addEventListener('system-language-changed', () => {
