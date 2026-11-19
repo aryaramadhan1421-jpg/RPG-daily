@@ -1705,6 +1705,21 @@ function renderPenaltyQuestBanner() {
     el.innerHTML = getPenaltyQuestBannerHtml();
 }
 
+function renderDailyComboBadge() {
+    const box = document.getElementById('daily-combo-badge');
+    const lbl = document.getElementById('daily-combo-label');
+    if (!box || !lbl) return;
+    const combo = typeof getDailyComboBonus === 'function' ? getDailyComboBonus() : { count: 0, label: '' };
+    if (combo.count >= 2 && combo.label) {
+        box.style.display = 'flex';
+        box.classList.remove('hidden');
+        lbl.textContent = combo.label;
+    } else {
+        box.style.display = 'none';
+        box.classList.add('hidden');
+    }
+}
+
 function takeDamage(amount, suppressDeathModal = false) {
     SoundFX.playDamage();
     syncPlayerMaxHp();
@@ -1776,6 +1791,8 @@ function takeDamage(amount, suppressDeathModal = false) {
 function renderAll() {
     renderOracle();
     renderStatus();
+    if (typeof renderPenaltyQuestBanner === 'function') renderPenaltyQuestBanner();
+    if (typeof renderDailyComboBadge === 'function') renderDailyComboBadge();
     populateDungeonLinkedQuests();
     renderHistory();
     renderQuests();
