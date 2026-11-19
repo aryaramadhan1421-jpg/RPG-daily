@@ -612,7 +612,7 @@ const DEFAULT_STATE = {
         {
             id: 's1',
             title: 'Minor Health Potion (+25% Max HP)',
-            cost: 120,
+            cost: 250,
             type: 'potion',
             healPct: 0.25,
             desc: 'Memulihkan 25% Max HP secara instan.'
@@ -620,31 +620,52 @@ const DEFAULT_STATE = {
         {
             id: 's_elixir',
             title: 'Elixir of Vitality (+100% Max HP)',
-            cost: 350,
+            cost: 650,
             type: 'elixir',
             healPct: 1.0,
             desc: 'Memulihkan HP hingga penuh (100% Max HP) dalam kondisi darurat.'
         },
         {
-            id: 's2',
-            title: 'Kopi Favorit / Minuman Spesial',
-            cost: 200,
-            type: 'reward',
-            desc: 'Reward dunia nyata untuk menyegarkan pikiran.'
-        },
-        {
             id: 's3',
             title: 'Streak Freeze (Pelindung Streak • Maks 2)',
-            cost: 400,
+            cost: 850,
             type: 'shield',
             desc: 'Otomatis menahan Streak saat terlewat (Maksimal stok 2 di inventori).'
         },
         {
+            id: 's_snack',
+            title: 'Snack / Camilan Favorit',
+            cost: 350,
+            type: 'reward',
+            desc: 'Reward ringan untuk mengapresiasi konsistensi harian.'
+        },
+        {
+            id: 's2',
+            title: 'Kopi Favorit / Minuman Spesial',
+            cost: 450,
+            type: 'reward',
+            desc: 'Reward dunia nyata untuk menyegarkan pikiran.'
+        },
+        {
             id: 's4',
             title: '1 Jam Main Game Tanpa Rasa Bersalah',
-            cost: 300,
+            cost: 600,
             type: 'reward',
-            desc: 'Waktu santai bebas penalti setelah bekerja keras.'
+            desc: 'Waktu santai bebas penalti setelah menuntaskan quest.'
+        },
+        {
+            id: 's_cheatmeal',
+            title: 'Makan Enak / Cheat Meal Spesial',
+            cost: 1200,
+            type: 'reward',
+            desc: 'Hidangan spesial setelah disiplin menjaga pola makan & latihan.'
+        },
+        {
+            id: 's_restpass',
+            title: 'Half-Day Rest Pass (Santai Setengah Hari)',
+            cost: 1800,
+            type: 'reward',
+            desc: 'Waktu istirahat total untuk memulihkan fokus & energi mental.'
         }
     ],
     history: {
@@ -663,42 +684,129 @@ const DEFAULT_STATE = {
 const TITLES_CATALOG = [
     {
         id: 't_novice',
-        name: 'Shadow Candidate',
-        reqText: 'Gelar awal Hunter yang baru bangkit',
-        buffText: 'Status Standar (1.0x)',
+        name: 'Awakened Vessel',
+        reqText: 'Gelar awal Hunter yang baru membangkitkan Sistem',
+        buffText: 'Status Dasar (1.0x)',
         xpBonus: 0,
         goldBonus: 0,
         checkUnlocked: () => true
     },
     {
+        id: 't_discipline',
+        name: 'Dawnbreaker',
+        reqText: 'Capai Streak Harian 3 Hari berturut-turut',
+        buffText: '+4% Bonus XP dari semua misi',
+        xpBonus: 0.04,
+        goldBonus: 0,
+        checkUnlocked: (state) => Math.max(state.player.streak || 0, state.player.longestStreak || 0) >= 3
+    },
+    {
         id: 't_wolf',
         name: 'Wolf Slayer',
-        reqText: 'Capai Streak Harian minimal 7 Hari berturut-turut',
-        buffText: '+10% Bonus Gold dari semua misi',
+        reqText: 'Capai Streak Harian 7 Hari berturut-turut',
+        buffText: '+8% Bonus Gold dari semua misi',
         xpBonus: 0,
-        goldBonus: 0.10,
-        checkUnlocked: (state) => state.player.streak >= 7
+        goldBonus: 0.08,
+        checkUnlocked: (state) => Math.max(state.player.streak || 0, state.player.longestStreak || 0) >= 7
     },
     {
         id: 't_iron',
-        name: 'Iron Will',
-        reqText: 'Selesaikan minimal 5x Deep Focus Dungeon',
-        buffText: '+10% Bonus XP dari semua misi',
-        xpBonus: 0.10,
+        name: 'Dungeon Raider',
+        reqText: 'Selesaikan minimal 5x sesi Deep Focus Dungeon',
+        buffText: '+8% Bonus XP dari semua misi',
+        xpBonus: 0.08,
         goldBonus: 0,
         checkUnlocked: (state) => (state.player.dungeonClears || 0) >= 5
     },
     {
+        id: 't_vanguard_body',
+        name: 'Iron Vanguard',
+        reqText: 'Capai atribut STR Level 15 (Latihan fisik & kebugaran)',
+        buffText: '+7% XP & +5% Gold',
+        xpBonus: 0.07,
+        goldBonus: 0.05,
+        checkUnlocked: (state) => (state.player.stats?.STR || 1) >= 15
+    },
+    {
+        id: 't_polyglot',
+        name: 'Arcane Polyglot',
+        reqText: 'Capai atribut INT Level 15 (Penguasaan bahasa & belajar)',
+        buffText: '+10% Bonus XP dari semua misi',
+        xpBonus: 0.10,
+        goldBonus: 0,
+        checkUnlocked: (state) => (state.player.stats?.INT || 1) >= 15
+    },
+    {
+        id: 't_ascetic',
+        name: 'Serene Sage',
+        reqText: 'Capai atribut WIS Level 15 (Ibadah, dzikir & ketenangan jiwa)',
+        buffText: '+8% XP & +7% Gold',
+        xpBonus: 0.08,
+        goldBonus: 0.07,
+        checkUnlocked: (state) => (state.player.stats?.WIS || 1) >= 15
+    },
+    {
+        id: 't_sovereign_voice',
+        name: 'Silver-Tongued',
+        reqText: 'Capai atribut CHR Level 15 (Komunikasi & perawatan diri)',
+        buffText: '+12% Bonus Gold dari semua misi',
+        xpBonus: 0,
+        goldBonus: 0.12,
+        checkUnlocked: (state) => (state.player.stats?.CHR || 1) >= 15
+    },
+    {
+        id: 't_unbroken',
+        name: 'Unbroken Will',
+        reqText: 'Capai Streak Harian 14 Hari berturut-turut',
+        buffText: '+12% Bonus XP & +8% Gold',
+        xpBonus: 0.12,
+        goldBonus: 0.08,
+        checkUnlocked: (state) => Math.max(state.player.streak || 0, state.player.longestStreak || 0) >= 14
+    },
+    {
+        id: 't_abyss_walker',
+        name: 'Abyss Conqueror',
+        reqText: 'Selesaikan 25x Dungeon atau total 10 Jam Deep Focus',
+        buffText: '+14% Bonus XP Permanen',
+        xpBonus: 0.14,
+        goldBonus: 0,
+        checkUnlocked: (state) => (state.player.dungeonClears || 0) >= 25 || (state.player.dungeonMinutesTotal || 0) >= 600
+    },
+    {
+        id: 't_treasurer',
+        name: 'Golden Sovereign',
+        reqText: 'Kumpulkan saldo 3.000 Gold atau capai D-Rank (Lv.10 & Avg Stat Lv.8)',
+        buffText: '+15% Bonus Gold Permanen',
+        xpBonus: 0,
+        goldBonus: 0.15,
+        checkUnlocked: (state) => (state.player.gold || 0) >= 3000 || (state.player.level >= 10 && getAverageStatLevel(state.player.stats) >= 8)
+    },
+    {
+        id: 't_centurion',
+        name: 'Relentless Centurion',
+        reqText: 'Capai Streak Harian 30 Hari berturut-turut',
+        buffText: '+16% XP & +14% Gold Permanen',
+        xpBonus: 0.16,
+        goldBonus: 0.14,
+        checkUnlocked: (state) => Math.max(state.player.streak || 0, state.player.longestStreak || 0) >= 30
+    },
+    {
+        id: 't_grandmaster',
+        name: 'Transcendent Master',
+        reqText: 'Capai Rank B-Rank (Level 45 & Rata-rata Atribut Lv.32)',
+        buffText: '+20% XP & +18% Gold Permanen',
+        xpBonus: 0.20,
+        goldBonus: 0.18,
+        checkUnlocked: (state) => state.player.level >= 45 && getAverageStatLevel(state.player.stats) >= 32
+    },
+    {
         id: 't_monarch',
         name: 'Monarch of Shadows',
-        reqText: 'Capai Level 15 atau total Level atribut >= 60',
-        buffText: '+15% XP & +15% Gold Permanen',
-        xpBonus: 0.15,
-        goldBonus: 0.15,
-        checkUnlocked: (state) => {
-            const s = state.player.stats;
-            return state.player.level >= 15 || (s.STR + s.INT + s.WIS + s.CHR) >= 60;
-        }
+        reqText: 'Capai S-Rank Sovereign (Level 90 & Rata-rata Atribut Lv.70)',
+        buffText: '+25% XP & +25% Gold Permanen',
+        xpBonus: 0.25,
+        goldBonus: 0.25,
+        checkUnlocked: (state) => state.player.level >= 90 && getAverageStatLevel(state.player.stats) >= 70
     }
 ];
 
@@ -997,27 +1105,48 @@ function loadState() {
                     if (!q.timeSlot) q.timeSlot = inferQuestTimeSlot(q);
                 });
             }
-            if (Array.isArray(parsed.shop)) {
-                const s1Item = parsed.shop.find(s => s.id === 's1');
-                if (s1Item && s1Item.title === 'Health Potion (+30 HP)') {
-                    s1Item.title = 'Minor Health Potion (+25% Max HP)';
-                    s1Item.cost = 120;
-                    s1Item.healPct = 0.25;
-                    s1Item.desc = 'Memulihkan 25% Max HP secara instan.';
-                }
-                if (!parsed.shop.some(s => s.id === 's_elixir' || s.type === 'elixir')) {
-                    const s1Idx = parsed.shop.findIndex(s => s.id === 's1');
-                    const elixirObj = {
-                        id: 's_elixir',
-                        title: 'Elixir of Vitality (+100% Max HP)',
+            if (Array.isArray(parsed.shop) && !parsed.shopRebalancedV2) {
+                const rebalancedMap = {
+                    s1: 250,
+                    s_elixir: 650,
+                    s2: 450,
+                    s3: 850,
+                    s4: 600
+                };
+                parsed.shop.forEach(item => {
+                    if (rebalancedMap[item.id] !== undefined) {
+                        item.cost = rebalancedMap[item.id];
+                    }
+                });
+                const extraDefaultItems = [
+                    {
+                        id: 's_snack',
+                        title: 'Snack / Camilan Favorit',
                         cost: 350,
-                        type: 'elixir',
-                        healPct: 1.0,
-                        desc: 'Memulihkan HP hingga penuh (100% Max HP) dalam kondisi darurat.'
-                    };
-                    if (s1Idx >= 0) parsed.shop.splice(s1Idx + 1, 0, elixirObj);
-                    else parsed.shop.unshift(elixirObj);
-                }
+                        type: 'reward',
+                        desc: 'Reward ringan untuk mengapresiasi konsistensi harian.'
+                    },
+                    {
+                        id: 's_cheatmeal',
+                        title: 'Makan Enak / Cheat Meal Spesial',
+                        cost: 1200,
+                        type: 'reward',
+                        desc: 'Hidangan spesial setelah disiplin menjaga pola makan & latihan.'
+                    },
+                    {
+                        id: 's_restpass',
+                        title: 'Half-Day Rest Pass (Santai Setengah Hari)',
+                        cost: 1800,
+                        type: 'reward',
+                        desc: 'Waktu istirahat total untuk memulihkan fokus & energi mental.'
+                    }
+                ];
+                extraDefaultItems.forEach(defItem => {
+                    if (!parsed.shop.some(s => s.id === defItem.id)) {
+                        parsed.shop.push(defItem);
+                    }
+                });
+                parsed.shopRebalancedV2 = true;
             }
             return parsed;
         }
@@ -1232,7 +1361,7 @@ if (document.readyState === 'loading') {
 // 4. CORE RPG CALCULATIONS & RANKING
 // ==========================================
 function getRequiredXP(level) {
-    return Math.round(250 * Math.pow(level, 1.35));
+    return Math.round(650 + 320 * Math.pow(level, 1.48));
 }
 
 function getTodayDailyXpEarned() {
@@ -1243,73 +1372,100 @@ function getTodayDailyXpEarned() {
         .reduce((sum, l) => sum + (l.xp || 0), 0);
 }
 
+function getAverageStatLevel(statsObj) {
+    const s = statsObj || (typeof gameState !== 'undefined' && gameState?.player?.stats) || { STR: 1, INT: 1, WIS: 1, CHR: 1 };
+    const total = (s.STR || 1) + (s.INT || 1) + (s.WIS || 1) + (s.CHR || 1);
+    return Math.floor(total / 4);
+}
+
 const RANKS_CATALOG = [
     {
         minLevel: 1,
+        minAvgStat: 1,
         rankCode: 'E-RANK',
         name: 'Novice',
         title: 'E-Rank • Novice',
-        perkText: 'Fase Awal Kebangkitan (Base Status)',
+        perkText: 'Fase Awal Kebangkitan (Lv.1+ • Avg Stat Lv.1+)',
         style: 'color: #cbd5e1; background: rgba(51,65,85,0.45); border: 1px solid #475569;',
         accentColor: '#94a3b8'
     },
     {
-        minLevel: 5,
+        minLevel: 10,
+        minAvgStat: 8,
         rankCode: 'D-RANK',
         name: 'Awakened',
         title: 'D-Rank • Awakened',
-        perkText: 'Kebiasaan Mulai Terbentuk (+5% Fokus Motivasi)',
+        perkText: 'Fondasi Kebiasaan Terbentuk (Lv.10+ • Avg Stat Lv.8+)',
         style: 'color: #60a5fa; background: rgba(37,99,235,0.22); border: 1px solid rgba(59,130,246,0.55);',
         accentColor: '#60a5fa'
     },
     {
-        minLevel: 10,
+        minLevel: 25,
+        minAvgStat: 18,
         rankCode: 'C-RANK',
         name: 'Vanguard',
         title: 'C-Rank • Vanguard',
-        perkText: 'Disiplin Konsisten & Penakluk Daily Quest',
+        perkText: 'Disiplin Konsisten & Penakluk Harian (Lv.25+ • Avg Stat Lv.18+)',
         style: 'color: #34d399; background: rgba(16,185,129,0.2); border: 1px solid rgba(16,185,129,0.5);',
         accentColor: '#34d399'
     },
     {
-        minLevel: 15,
+        minLevel: 45,
+        minAvgStat: 32,
         rankCode: 'B-RANK',
         name: 'Strategist',
         title: 'B-Rank • Strategist',
-        perkText: 'Penguasaan Sistem & Eksekusi Deep Work',
+        perkText: 'Penguasaan Sistem & Eksekusi Deep Work (Lv.45+ • Avg Stat Lv.32+)',
         style: 'color: #67e8f9; background: rgba(6,182,212,0.2); border: 1px solid rgba(6,182,212,0.55);',
         accentColor: '#22d3ee'
     },
     {
-        minLevel: 25,
+        minLevel: 70,
+        minAvgStat: 50,
         rankCode: 'A-RANK',
         name: 'Commander',
         title: 'A-Rank • Commander',
-        perkText: 'Elit Produktivitas & Ketahanan Mental Tinggi',
+        perkText: 'Elit Produktivitas & Ketahanan Mental Tinggi (Lv.70+ • Avg Stat Lv.50+)',
         style: 'color: #d8b4fe; background: rgba(168,85,247,0.22); border: 1px solid rgba(168,85,247,0.55);',
         accentColor: '#c084fc'
     },
     {
-        minLevel: 35,
+        minLevel: 90,
+        minAvgStat: 70,
         rankCode: 'S-RANK',
         name: 'Sovereign',
         title: 'S-Rank • Sovereign',
-        perkText: 'Puncak Kekuatan Hunter (Shadow Monarch)',
+        perkText: 'Hunter Kelas Atas (Lv.90+ • Avg Stat Lv.70+)',
         style: 'color: #fcd34d; background: rgba(245,158,11,0.22); border: 1px solid rgba(251,191,36,0.6); box-shadow: 0 0 10px rgba(251,191,36,0.25);',
         accentColor: '#fbbf24'
+    },
+    {
+        minLevel: 100,
+        minAvgStat: 85,
+        rankCode: 'NATIONAL',
+        name: 'Shadow Monarch',
+        title: 'National • Shadow Monarch',
+        perkText: 'Puncak Tertinggi Sistem (Lv.100 • Avg Stat Lv.85+)',
+        style: 'color: #fda4af; background: linear-gradient(135deg, rgba(225,29,72,0.28), rgba(168,85,247,0.28)); border: 1px solid rgba(251,113,133,0.75); box-shadow: 0 0 14px rgba(244,63,94,0.35);',
+        accentColor: '#fb7185'
     }
 ];
 
-function getPlayerRank(level) {
+function getPlayerRank(level, statsObj = null) {
+    const avgStat = getAverageStatLevel(statsObj);
     let current = RANKS_CATALOG[0];
     let next = null;
     for (let i = 0; i < RANKS_CATALOG.length; i++) {
-        if (level >= RANKS_CATALOG[i].minLevel) {
-            current = RANKS_CATALOG[i];
+        const tier = RANKS_CATALOG[i];
+        if (level >= tier.minLevel && avgStat >= (tier.minAvgStat || 1)) {
+            current = tier;
             next = RANKS_CATALOG[i + 1] || null;
+        } else {
+            next = tier;
+            break;
         }
     }
-    return { ...current, next };
+    return { ...current, avgStat, next };
 }
 
 function openRankRoadmapModal() {
@@ -1317,12 +1473,12 @@ function openRankRoadmapModal() {
     const listEl = document.getElementById('rank-roadmap-list');
     if (!listEl) return;
     const curLvl = gameState.player.level;
-    const currentRank = getPlayerRank(curLvl);
+    const avgStat = getAverageStatLevel(gameState.player.stats);
+    const currentRank = getPlayerRank(curLvl, gameState.player.stats);
 
-    listEl.innerHTML = RANKS_CATALOG.map((r, idx) => {
-        const nextTier = RANKS_CATALOG[idx + 1];
-        const rangeLabel = nextTier ? `Lv.${r.minLevel} – Lv.${nextTier.minLevel - 1}` : `Lv.${r.minLevel}+`;
-        const isUnlocked = curLvl >= r.minLevel;
+    listEl.innerHTML = RANKS_CATALOG.map((r) => {
+        const reqLabel = `Lv.${r.minLevel} + Avg Stat ${r.minAvgStat}`;
+        const isUnlocked = curLvl >= r.minLevel && avgStat >= r.minAvgStat;
         const isCurrent = r.minLevel === currentRank.minLevel;
 
         const cardBorder = isCurrent
@@ -1339,11 +1495,11 @@ function openRankRoadmapModal() {
                         <span class="font-display" style="font-weight: 800; font-size: 0.85rem; color: ${r.accentColor};">${r.title.toUpperCase()}</span>
                     </div>
                     <span class="font-display" style="font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 9999px; background: rgba(15,23,42,0.95); color: ${isUnlocked ? '#67e8f9' : '#64748b'}; border: 1px solid #334155;">
-                        ${rangeLabel}
+                        ${reqLabel}
                     </span>
                 </div>
                 <p style="font-size: 11px; color: #cbd5e1; margin-top: 4px;">${r.perkText}</p>
-                ${isCurrent ? `<span class="font-display" style="display: inline-block; margin-top: 4px; font-size: 9px; font-weight: 800; color: #34d399; text-transform: uppercase; letter-spacing: 0.06em;">★ RANK KAMU SAAT INI</span>` : ''}
+                ${isCurrent ? `<span class="font-display" style="display: inline-block; margin-top: 4px; font-size: 9px; font-weight: 800; color: #34d399; text-transform: uppercase; letter-spacing: 0.06em;">★ RANK KAMU SAAT INI (AVG STAT: LV.${avgStat})</span>` : ''}
             </div>
         `;
     }).join('');
@@ -1364,26 +1520,26 @@ function getActiveTitleObj() {
 const MAX_STAT_LEVEL = 100;
 
 function getRequiredStatXP(statLevel) {
-    return Math.max(100, statLevel * 100);
+    return Math.max(60, Math.round(60 + statLevel * 40));
 }
 
 function getQuestStatXpGain(questOrCategory) {
     const cat = typeof questOrCategory === 'string' ? questOrCategory : (questOrCategory.category || 'Daily Quest');
     const baseXp = typeof questOrCategory === 'object' ? (questOrCategory.xp || 20) : 20;
-    if (cat === 'Boss Fight') return 100;
-    if (cat === 'Main Quest') return 50;
-    if (baseXp >= 30) return 25;
-    return 15;
+    if (cat === 'Boss Fight') return 150;
+    if (cat === 'Main Quest') return 80;
+    if (baseXp >= 30) return 35;
+    return 25;
 }
 
-function getStatTierInfo(maxStatVal) {
-    if (maxStatVal < 20) return { cap: 20, tier: 'Rank E' };
-    if (maxStatVal < 40) return { cap: 40, tier: 'Rank D' };
-    if (maxStatVal < 60) return { cap: 60, tier: 'Rank C' };
-    if (maxStatVal < 80) return { cap: 80, tier: 'Rank B' };
-    return { cap: MAX_STAT_LEVEL, tier: 'Rank S' };
+function getStatTierInfo(maxStatVal, currentRankObj = null) {
+    const rankLabel = currentRankObj ? currentRankObj.rankCode : 'HUNTER';
+    const avgStat = getAverageStatLevel();
+    if (maxStatVal < 25) return { cap: 25, tier: `${rankLabel} • Avg Lv.${avgStat}` };
+    if (maxStatVal < 50) return { cap: 50, tier: `${rankLabel} • Avg Lv.${avgStat}` };
+    if (maxStatVal < 75) return { cap: 75, tier: `${rankLabel} • Avg Lv.${avgStat}` };
+    return { cap: MAX_STAT_LEVEL, tier: `${rankLabel} • Avg Lv.${avgStat}` };
 }
-
 function getStreakThresholdPct() {
     const val = Number(typeof gameState !== 'undefined' && gameState ? gameState.streakThresholdPct : 80);
     if (!Number.isFinite(val) || val < 10 || val > 100) return 80;
@@ -1937,16 +2093,15 @@ function renderStatus() {
     const rankProgBar = document.getElementById('rank-progress-bar');
     if (rankNextLabel && rankTargetLvl && rankProgBar) {
         if (rank.next) {
-            const lvlLeft = rank.next.minLevel - p.level;
-            const spanTotal = Math.max(1, rank.next.minLevel - rank.minLevel);
-            const spanDone = Math.max(0, p.level - rank.minLevel);
-            const pctRank = Math.min(100, Math.max(8, Math.round((spanDone / spanTotal) * 100)));
-            rankNextLabel.textContent = `${lvlLeft} Level lagi menuju ${rank.next.title.toUpperCase()}`;
-            rankTargetLvl.textContent = `Lv.${p.level} / Lv.${rank.next.minLevel}`;
+            const lvlPct = Math.min(1, p.level / Math.max(1, rank.next.minLevel));
+            const statPct = Math.min(1, rank.avgStat / Math.max(1, rank.next.minAvgStat));
+            const pctRank = Math.min(99, Math.max(8, Math.round(((lvlPct + statPct) / 2) * 100)));
+            rankNextLabel.textContent = `Menuju ${rank.next.rankCode}: butuh Lv.${rank.next.minLevel} & Avg Stat ${rank.next.minAvgStat}`;
+            rankTargetLvl.textContent = `Lv.${p.level}/${rank.next.minLevel} • Stat ${rank.avgStat}/${rank.next.minAvgStat}`;
             rankProgBar.style.width = `${pctRank}%`;
         } else {
-            rankNextLabel.textContent = '👑 RANK TERTINGGI TERCAPAI (S-RANK)';
-            rankTargetLvl.textContent = `Lv.${p.level} (MAX)`;
+            rankNextLabel.textContent = '👑 PUNCAK TERTINGGI TERCAPAI (SHADOW MONARCH)';
+            rankTargetLvl.textContent = `Lv.${p.level} • Avg Stat ${rank.avgStat}`;
             rankProgBar.style.width = '100%';
         }
     }
@@ -1974,10 +2129,10 @@ function renderStatus() {
     document.getElementById('xp-bar').style.width = `${xpPct}%`;
 
     const maxCurrentStat = Math.max(p.stats.STR, p.stats.INT, p.stats.WIS, p.stats.CHR);
-    const tierInfo = getStatTierInfo(maxCurrentStat);
+    const tierInfo = getStatTierInfo(maxCurrentStat, rank);
     const scaleBadge = document.getElementById('stat-scale-badge');
     if (scaleBadge) {
-        scaleBadge.textContent = `${tierInfo.tier} • Max Lv.${MAX_STAT_LEVEL}`;
+        scaleBadge.textContent = tierInfo.tier;
     }
 
     if (!p.statXp) p.statXp = { STR: 0, INT: 0, WIS: 0, CHR: 0 };
@@ -3226,13 +3381,15 @@ function renderShop() {
     const container = document.getElementById('shop-list');
     container.innerHTML = '';
 
-    // Update status tombol Gacha
+    // Update status & label harga tombol Gacha (150 Gold)
     const gachaBtn = document.getElementById('btn-open-gacha');
     if (gachaBtn) {
-        const canGacha = gameState.player.gold >= 100;
+        const canGacha = gameState.player.gold >= 150;
         gachaBtn.style.opacity = canGacha ? '1' : '0.55';
+        if (gachaBtn.innerHTML.includes('100')) {
+            gachaBtn.innerHTML = gachaBtn.innerHTML.replace(/100/g, '150');
+        }
     }
-
     const filteredShop = gameState.shop.filter(item => {
         if (!shopSearchQuery) return true;
         return item.title.toLowerCase().includes(shopSearchQuery) || (item.desc || '').toLowerCase().includes(shopSearchQuery);
@@ -3498,24 +3655,22 @@ function deleteShopItem(id) {
 }
 
 // ==========================================
-// MYSTERY CHEST GACHA SYSTEM (100 GOLD)
+// MYSTERY CHEST GACHA SYSTEM (150 GOLD)
 // ==========================================
 function openMysteryGacha() {
-    const GACHA_COST = 100;
+    const GACHA_COST = 150;
     if (gameState.player.gold < GACHA_COST) {
         SoundFX.playDamage();
-        spawnFloatingReward('⚠️ Gold tidak cukup! Butuh 100 Gold.');
+        spawnFloatingReward('⚠️ Gold tidak cukup! Butuh 150 Gold.');
         return;
     }
 
-    // Potong 100 Gold langsung
+    // Potong 150 Gold langsung
     gameState.player.gold -= GACHA_COST;
     SoundFX.playClick();
     saveState();
     renderStatus();
 
-    // Tampilkan modal dengan animasi peti bergetar
-    const modal = document.getElementById('modal-gacha');
     const card = document.getElementById('gacha-modal-card');
     const badge = document.getElementById('gacha-rarity-badge');
     const icon = document.getElementById('gacha-chest-icon');
@@ -3525,7 +3680,7 @@ function openMysteryGacha() {
 
     card.style.borderColor = '#c084fc';
     card.style.boxShadow = '0 0 20px rgba(168,85,247,0.35)';
-    badge.textContent = 'SYSTEM GACHA';
+    badge.textContent = 'SYSTEM GACHA • 150G';
     badge.style.cssText = 'display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; padding: 3px 10px; border-radius: 9999px; background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.5);';
     icon.innerHTML = '<span class="animate-chest-shake">🎁</span>';
     titleEl.textContent = 'Membuka Peti Misteri...';
@@ -3540,6 +3695,7 @@ function openMysteryGacha() {
         syncPlayerMaxHp();
         const statsPool = ['STR', 'INT', 'WIS', 'CHR'];
         const randStat = statsPool[Math.floor(Math.random() * statsPool.length)];
+        const subRoll = Math.random();
 
         let rarity = 'COMMON';
         let rarityStyle = 'background: rgba(100,116,139,0.25); color: #cbd5e1; border: 1px solid #64748b;';
@@ -3551,78 +3707,126 @@ function openMysteryGacha() {
         let logEffect = '';
 
         if (roll < 5) {
-            // 5% LEGENDARY JACKPOT
+            // 5% LEGENDARY JACKPOT (2 Variasi Drop)
             rarity = '★ LEGENDARY JACKPOT (5%) ★';
             rarityStyle = 'background: rgba(245,158,11,0.25); color: #fcd34d; border: 1px solid #fbbf24;';
             borderCol = '#fbbf24';
             glowShadow = '0 0 28px rgba(251,191,36,0.55)';
-            emoji = '👑';
-            gameState.player.gold += 300;
-            gameState.player.hp = gameState.player.maxHp;
-            addRewards(100, 0, randStat, 30, true);
-            rewardTitle = '+300 GOLD + FULL HP + 100 XP!';
-            rewardDesc = `Keberuntungan tertinggi! HP pulih penuh (${gameState.player.maxHp}/${gameState.player.maxHp}) & +30 ${randStat} XP.`;
-            logEffect = 'Legendary: +300G, Full HP, +100XP';
+            if (subRoll < 0.5) {
+                emoji = '👑';
+                gameState.player.gold += 500;
+                gameState.player.hp = gameState.player.maxHp;
+                addRewards(250, 0, randStat, 60, true);
+                rewardTitle = '+500 GOLD + FULL HP + 250 XP!';
+                rewardDesc = `Jackpot Tertinggi! HP pulih penuh (${gameState.player.maxHp}/${gameState.player.maxHp}) & +60 ${randStat} XP.`;
+                logEffect = `Legendary: +500G, Full HP, +250XP, +60 ${randStat}`;
+            } else {
+                emoji = '🐉';
+                const gotShield = (gameState.player.shields || 0) < 2;
+                if (gotShield) gameState.player.shields = (gameState.player.shields || 0) + 1;
+                else gameState.player.gold += 350;
+                addRewards(300, 0, randStat, 80, true);
+                rewardTitle = gotShield ? '+1 SHIELD + 300 XP + 80 STAT XP!' : '+350 GOLD + 300 XP + 80 STAT XP!';
+                rewardDesc = gotShield
+                    ? `Berkah Monarch! +1 Streak Shield (${gameState.player.shields}/2), +300 XP & +80 ${randStat} XP.`
+                    : `Berkah Monarch! Stok Shield penuh, dikonversi jadi +350 Gold, +300 XP & +80 ${randStat} XP.`;
+                logEffect = `Legendary: ${gotShield ? '+1 Shield' : '+350G'}, +300XP, +80 ${randStat}`;
+            }
             SoundFX.playLevelUp();
         } else if (roll < 20) {
-            // 15% EPIC
+            // 15% EPIC (3 Variasi Drop)
             rarity = '✦ EPIC REWARD (15%) ✦';
             rarityStyle = 'background: rgba(168,85,247,0.25); color: #e9d5ff; border: 1px solid #c084fc;';
             borderCol = '#c084fc';
             glowShadow = '0 0 24px rgba(192,132,252,0.45)';
-            emoji = '🛡️';
-            if ((gameState.player.shields || 0) < 2) {
-                gameState.player.shields = (gameState.player.shields || 0) + 1;
-                addRewards(40, 0, 'WIS', 20, true);
-                rewardTitle = '+1 STREAK SHIELD & +40 XP!';
-                rewardDesc = `Pelindung Streak ditambahkan (Stok: ${gameState.player.shields}/2) +20 WIS XP.`;
-                logEffect = 'Epic: +1 Streak Shield & +40 XP';
+            if (subRoll < 0.34) {
+                emoji = '🛡️';
+                if ((gameState.player.shields || 0) < 2) {
+                    gameState.player.shields = (gameState.player.shields || 0) + 1;
+                    addRewards(120, 0, 'WIS', 40, true);
+                    rewardTitle = '+1 STREAK SHIELD & +120 XP!';
+                    rewardDesc = `Pelindung Streak ditambahkan (Stok: ${gameState.player.shields}/2) +40 WIS XP.`;
+                    logEffect = 'Epic: +1 Streak Shield, +120 XP, +40 WIS';
+                } else {
+                    gameState.player.gold += 280;
+                    addRewards(120, 0, 'WIS', 40, true);
+                    rewardTitle = '+280 GOLD & +120 XP!';
+                    rewardDesc = 'Stok Shield penuh (2/2), dikonversi menjadi +280 Gold & +120 XP!';
+                    logEffect = 'Epic: +280 Gold & +120 XP';
+                }
+            } else if (subRoll < 0.67) {
+                emoji = '🔮';
+                ['STR', 'INT', 'WIS', 'CHR'].forEach(st => addRewards(0, 0, st, 35, true));
+                addRewards(150, 0, null, 0, true);
+                rewardTitle = 'ALL STATS BLESSING (+35 XP SEMUA)!';
+                rewardDesc = 'Keempat atribut (STR, INT, WIS, CHR) masing-masing mendapat +35 Stat XP & +150 Hunter XP!';
+                logEffect = 'Epic: +35 All Stats XP & +150 XP';
             } else {
-                gameState.player.gold += 180;
-                addRewards(50, 0, 'WIS', 20, true);
-                rewardTitle = '+180 GOLD & +50 XP!';
-                rewardDesc = 'Stok Shield penuh (2/2), dikonversi menjadi +180 Gold & +50 XP!';
-                logEffect = 'Epic: +180 Gold & +50 XP';
+                emoji = '💰';
+                gameState.player.gold += 300;
+                addRewards(90, 0, 'CHR', 35, true);
+                rewardTitle = '+300 GOLD & +90 XP!';
+                rewardDesc = 'Harta karun tersembunyi! Profit bersih +150 Gold & +35 CHR XP.';
+                logEffect = 'Epic: +300 Gold, +90 XP, +35 CHR';
             }
             SoundFX.playCritical();
         } else if (roll < 50) {
-            // 30% RARE
+            // 30% RARE (3 Variasi Drop)
             rarity = '◆ RARE REWARD (30%) ◆';
             rarityStyle = 'background: rgba(6,182,212,0.22); color: #67e8f9; border: 1px solid #22d3ee;';
             borderCol = '#22d3ee';
             glowShadow = '0 0 20px rgba(34,211,238,0.4)';
-            emoji = '💎';
-            if (Math.random() < 0.5) {
-                addRewards(85, 0, randStat, 25, true);
-                rewardTitle = `+85 XP & +25 ${randStat} XP!`;
-                rewardDesc = `Lonjakan pengalaman instan untuk meningkatkan Level Hunter dan atribut ${randStat}.`;
-                logEffect = `Rare: +85 XP & +25 ${randStat} XP`;
+            if (subRoll < 0.34) {
+                emoji = '📘';
+                addRewards(180, 0, randStat, 50, true);
+                rewardTitle = `+180 XP & +50 ${randStat} XP!`;
+                rewardDesc = `Grimoire Langka! Lonjakan pengalaman besar untuk Level Hunter dan atribut ${randStat}.`;
+                logEffect = `Rare: +180 XP & +50 ${randStat} XP`;
+            } else if (subRoll < 0.67) {
+                emoji = '💎';
+                gameState.player.gold += 210;
+                addRewards(60, 0, randStat, 30, true);
+                rewardTitle = '+210 GOLD & +60 XP!';
+                rewardDesc = `Profit bersih +60 Gold beserta tambahan +30 ${randStat} XP!`;
+                logEffect = `Rare: +210 Gold & +60 XP`;
             } else {
-                gameState.player.gold += 130;
-                addRewards(25, 0, randStat, 15, true);
-                rewardTitle = '+130 GOLD & +25 XP!';
-                rewardDesc = 'Profit bersih +30 Gold beserta tambahan XP bonus!';
-                logEffect = 'Rare: +130 Gold & +25 XP';
+                emoji = '💖';
+                const healAmt = Math.max(15, Math.round(gameState.player.maxHp * 0.50));
+                const oldHp = gameState.player.hp;
+                gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + healAmt);
+                const healed = gameState.player.hp - oldHp;
+                addRewards(120, 0, 'STR', 35, true);
+                rewardTitle = `+${healed > 0 ? healed : healAmt} HP & +120 XP!`;
+                rewardDesc = `Vitality Surge (+50% Max HP) ke ${gameState.player.hp}/${gameState.player.maxHp} HP +35 STR XP.`;
+                logEffect = `Rare: +${healed} HP, +120 XP, +35 STR`;
             }
             SoundFX.playQuestComplete();
         } else {
-            // 50% COMMON
+            // 50% COMMON (3 Variasi Drop)
             rarity = '• COMMON SUPPLY (50%) •';
-            emoji = '🧪';
-            if (Math.random() < 0.5) {
-                addRewards(45, 0, randStat, 15, true);
-                rewardTitle = `+45 XP & +15 ${randStat} XP!`;
-                rewardDesc = 'Suplai energi harian untuk mempercepat progres levelmu.';
-                logEffect = `Common: +45 XP & +15 ${randStat} XP`;
+            if (subRoll < 0.35) {
+                emoji = '⚡';
+                addRewards(95, 0, randStat, 30, true);
+                rewardTitle = `+95 XP & +30 ${randStat} XP!`;
+                rewardDesc = `Suplai energi harian untuk mempercepat progres level & atribut ${randStat}.`;
+                logEffect = `Common: +95 XP & +30 ${randStat} XP`;
+            } else if (subRoll < 0.70) {
+                emoji = '🪙';
+                gameState.player.gold += 120;
+                addRewards(50, 0, 'CHR', 20, true);
+                rewardTitle = '+120 GOLD & +50 XP!';
+                rewardDesc = 'Cashback 120 Gold + bonus +50 XP & +20 CHR XP.';
+                logEffect = 'Common: +120 Gold & +50 XP';
             } else {
+                emoji = '🧪';
                 const healAmt = Math.max(10, Math.round(gameState.player.maxHp * 0.25));
                 const oldHp = gameState.player.hp;
                 gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + healAmt);
                 const healed = gameState.player.hp - oldHp;
-                addRewards(30, 0, 'STR', 10, true);
-                rewardTitle = `+${healed > 0 ? healed : healAmt} HP & +30 XP!`;
-                rewardDesc = `Vitality dipulihkan ke ${gameState.player.hp}/${gameState.player.maxHp} HP beserta bonus +30 XP.`;
-                logEffect = `Common: +${healed} HP & +30 XP`;
+                addRewards(80, 0, 'STR', 25, true);
+                rewardTitle = `+${healed > 0 ? healed : healAmt} HP & +80 XP!`;
+                rewardDesc = `Vitality dipulihkan ke ${gameState.player.hp}/${gameState.player.maxHp} HP +80 XP & +25 STR XP.`;
+                logEffect = `Common: +${healed} HP & +80 XP`;
             }
             SoundFX.playCoin();
         }
@@ -3642,7 +3846,6 @@ function openMysteryGacha() {
         renderAll();
     }, 750);
 }
-
 // ==========================================
 // 7. DUNGEON FOCUS TIMER + AMBIENT + WAKE LOCK
 // ==========================================
@@ -4082,29 +4285,55 @@ function confirmJournalAndAdvance(saveJournal) {
     syncPlayerMaxHp();
     const tier = evaluateDailyTier(ratio, gameState.player.maxHp);
 
-    if (tier.rawDamage > 0) {
-        let shieldMsg = '';
+   if (tier.rawDamage > 0) {
+        let streakStatusText = '';
+        let streakIcon = '🔥';
         if (tier.resetStreak) {
             if ((gameState.player.shields || 0) > 0 && gameState.player.streak > 0) {
                 gameState.player.shields -= 1;
-                shieldMsg = ` 🛡️ Streak Shield otomatis menahan Streak ${gameState.player.streak} hari (sisa Shield: ${gameState.player.shields})!`;
+                streakStatusText = `Ditahan Shield (${gameState.player.streak} hr • Sisa: ${gameState.player.shields})`;
+                streakIcon = '🛡️';
             } else {
+                const oldStreak = gameState.player.streak;
                 gameState.player.streak = 0;
                 gameState.lastStreakDate = null;
-                shieldMsg = ' Streak di-reset ke 0.';
+                streakStatusText = oldStreak > 0 ? `${oldStreak} → 0 Hari (Reset)` : '0 Hari';
+                streakIcon = '💔';
             }
         } else {
-            shieldMsg = ` Streak ${gameState.player.streak} hari tetap aman (≥${getStreakThresholdPct()}%), namun tanpa regen HP.`;
+            streakStatusText = `${gameState.player.streak} Hari (Aman ≥${getStreakThresholdPct()}%)`;
         }
-        // Satu modal saja: jika damage menyebabkan KO, gabungkan laporan kematian
-        // dengan evaluasi harian agar modal death tidak tertimpa modal evaluasi.
+
         const damageResult = takeDamage(tier.rawDamage, true);
         const actualDmg = damageResult.mitigatedDamage;
-        showSystemModal(
-            damageResult.deathReport ? `YOU DIED // ${tier.rank.toUpperCase()}` : `EVALUASI HARIAN // ${tier.rank.toUpperCase()}`,
-            `Progres Daily Quest tanggal ${currentKey}: ${pct}% (${doneCount}/${totalDaily}). Penalti ${Math.round(tier.penaltyRate * 100)}% Max HP (-${actualDmg} HP).${shieldMsg}\n\nTanggal sistem maju ke ${formatReadableDate(nextDateKey)}.`,
-            damageResult.deathReport
-        );
+
+        if (damageResult.deathReport) {
+            showSystemModal(
+                `YOU DIED // ${tier.rank.toUpperCase()}`,
+                `Progres Daily Quest (${currentKey}) hanya ${pct}% (${doneCount}/${totalDaily}). Penalti -${actualDmg} HP menyebabkan Hunter KO!`,
+                damageResult.deathReport
+            );
+        } else {
+            showSystemModal(
+                `EVALUASI HARIAN // ${tier.rank.toUpperCase()}`,
+                `Laporan evaluasi harian untuk tanggal ${currentKey} telah dicatat oleh Sistem.`,
+                null,
+                {
+                    type: 'penalty',
+                    cards: [
+                        ['DAILY QUEST', `${doneCount}/${totalDaily} (${pct}%)`, '📋'],
+                        ['RANK HARIAN', tier.rank.toUpperCase(), '⚔️'],
+                        ['PENALTI HP', `-${actualDmg} HP (${Math.round(tier.penaltyRate * 100)}%)`, '🩸'],
+                        ['SISA HP', `${gameState.player.hp}/${gameState.player.maxHp}`, '❤️'],
+                        ['STATUS STREAK', streakStatusText, streakIcon],
+                        ['HARI BERIKUTNYA', formatReadableDate(nextDateKey), '📅']
+                    ],
+                    hint: pct < getStreakThresholdPct()
+                        ? `Target minimal ${getStreakThresholdPct()}% tidak tercapai. Tingkatkan konsistensi besok!`
+                        : `Streak tetap terjaga (≥${getStreakThresholdPct()}%), selesaikan 100% untuk bonus Regen HP.`
+                }
+            );
+        }
     } else {
         SoundFX.playQuestComplete();
         if (gameState.lastStreakDate !== currentKey) {
@@ -4116,9 +4345,23 @@ function confirmJournalAndAdvance(saveJournal) {
         gameState.lastStreakDate = null;
         const healAmt = Math.min(tier.regenAmt, gameState.player.maxHp - gameState.player.hp);
         gameState.player.hp += healAmt;
+
         showSystemModal(
-            'EVALUASI HARIAN // S-RANK PERFECT CLEAR!',
-            `Sempurna! 100% Daily Quest (${doneCount}/${totalDaily}) selesai pada ${currentKey}. Streak menjadi ${gameState.player.streak} Hari!${healAmt > 0 ? ` Regen +${healAmt} HP (+15% Max HP).` : ' HP sudah penuh.'} Tanggal sistem maju ke ${formatReadableDate(nextDateKey)}.`
+            'EVALUASI HARIAN // S-RANK PERFECT!',
+            `Luar biasa! Seluruh misi harian pada ${currentKey} berhasil diselesaikan tanpa celah.`,
+            null,
+            {
+                type: 'perfect',
+                cards: [
+                    ['DAILY QUEST', `${doneCount}/${totalDaily} (100%)`, '✅'],
+                    ['RANK HARIAN', 'S-RANK CLEAR', '👑'],
+                    ['PEMULIHAN HP', healAmt > 0 ? `+${healAmt} HP (+15%)` : 'HP Sudah Penuh', '💚'],
+                    ['TOTAL HP', `${gameState.player.hp}/${gameState.player.maxHp}`, '❤️'],
+                    ['STREAK AKTIF', `${gameState.player.streak} Hari (+1)`, '🔥'],
+                    ['HARI BERIKUTNYA', formatReadableDate(nextDateKey), '📅']
+                ],
+                hint: 'PERFECT CLEAR • Pertahankan rekor streak untuk membuka Title & bonus EXP!'
+            }
         );
     }
 
@@ -4199,7 +4442,7 @@ function spawnFloatingReward(text) {
     setTimeout(() => badge.remove(), 1850);
 }
 
-function showSystemModal(title, body, deathReport = null) {
+function showSystemModal(title, body, deathReport = null, evalReport = null) {
     const titleEl = document.getElementById('sys-msg-title');
     const bodyEl = document.getElementById('sys-msg-body');
     const detailEl = document.getElementById('sys-msg-details');
@@ -4230,6 +4473,21 @@ function showSystemModal(title, body, deathReport = null) {
             if (cardEl) { cardEl.style.borderColor = '#ef4444'; cardEl.style.boxShadow = '0 0 35px rgba(239,68,68,.16)'; }
             const hint = document.getElementById('sys-msg-hint');
             if (hint) hint.textContent = repeat ? 'Selesaikan quest yang tersisa untuk keluar dari Penalty Zone.' : 'PENALTY ZONE AKTIF • Selesaikan 2 Daily Quest untuk memulihkan HP dan mendapat Gold.';
+        } else if (evalReport && Array.isArray(evalReport.cards)) {
+            const isPerfect = evalReport.type === 'perfect';
+            detailEl.innerHTML = evalReport.cards.map(([label, value, icon]) => `<div class="death-stat-card"><span class="death-stat-icon">${icon}</span><span class="death-stat-label">${label}</span><strong>${value}</strong></div>`).join('');
+            detailEl.classList.remove('hidden');
+            if (iconEl) {
+                iconEl.textContent = isPerfect ? '👑' : '📊';
+                iconEl.style.background = isPerfect ? 'rgba(16,185,129,.22)' : 'rgba(245,158,11,.22)';
+                iconEl.style.borderColor = isPerfect ? '#34d399' : '#fbbf24';
+            }
+            if (cardEl) {
+                cardEl.style.borderColor = isPerfect ? '#10b981' : '#f59e0b';
+                cardEl.style.boxShadow = isPerfect ? '0 0 35px rgba(16,185,129,.18)' : '0 0 35px rgba(245,158,11,.15)';
+            }
+            const hint = document.getElementById('sys-msg-hint');
+            if (hint) hint.textContent = evalReport.hint || '';
         } else {
             detailEl.innerHTML = '';
             detailEl.classList.add('hidden');
