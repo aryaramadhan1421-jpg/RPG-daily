@@ -1131,34 +1131,16 @@ function checkRealDayRollover() {
                 shieldMsg = ` Streak ${gameState.player.streak} hari tetap terjaga (≥${getStreakThresholdPct()}%), namun tidak ada regen HP.`;
             }
 
-            // Catat kondisi sebelum menerima damage untuk mendeteksi Death / Resurrection
-            const prevHp = gameState.player.hp;
-            const prevLevel = gameState.player.level;
-            const prevGold = gameState.player.gold;
-
-            takeDamage(totalRawDamage);
-
-            const { wisDmgReduce } = getAttributePassives();
-            const actualDmg = Math.max(1, Math.round(totalRawDamage * (1 - wisDmgReduce)));
-            const isResurrected = (prevHp - actualDmg) <= 0;
+            // Kirim suppressDeathModal = true agar modal tidak saling timpa saat pergantian hari
+            const dmgResult = takeDamage(totalRawDamage, true);
+            const actualDmg = dmgResult.mitigatedDamage;
+            const death = dmgResult.deathReport;
 
             setTimeout(() => {
-                if (isResurrected) {
-                    const lostLevels = Math.max(0, prevLevel - gameState.player.level);
-                    const lostGold = Math.max(0, prevGold - gameState.player.gold);
-                    const penaltyDetails = [
-                        lostLevels > 0 ? `Level turun (${prevLevel} ➔ ${gameState.player.level})` : `EXP di level ini hangus (0 EXP)`,
-                        lostGold > 0 ? `Gold terpotong -${lostGold} G (sisa ${gameState.player.gold} G)` : `Gold tidak terpotong (sisa ${gameState.player.gold} G)`,
-                        `HP dipulihkan penuh (${gameState.player.hp}/${gameState.player.maxHp})`
-                    ].join(' • ');
-
-                    if (typeof SoundFX !== 'undefined' && typeof SoundFX.playError === 'function') {
-                        SoundFX.playError();
-                    }
-
+                if (death) {
                     showSystemModal(
-                        `💀 SYSTEM PENALTY: RESURRECTION // ${tier.rank.toUpperCase()}`,
-                        `HP menyentuh 0 akibat penalti -${actualDmg} HP (Progres kemarin ${pct}%: ${doneCount}/${totalDaily}).${shieldMsg}\n\n⚠️ KONSEKUENSI KEBANGKITAN:\n• ${penaltyDetails}\n\nSemua Daily Habit telah di-reset untuk hari ini!`
+                        `💀 YOU DIED // ${tier.rank.toUpperCase()}`,
+                        `Progres kemarin hanya ${pct}% (${doneCount}/${totalDaily}) sehingga kamu menerima -${actualDmg} HP dan HP menyentuh 0!\n\n⚠️ HUKUMAN SISTEM:\n${death.summaryText}\n\nSemua Daily Habit telah di-reset. Selesaikan quest hari ini untuk memulihkan HP!`
                     );
                 } else {
                     showSystemModal(
@@ -1552,12 +1534,20 @@ function getHpCondition() {
             style: 'background: rgba(16,185,129,0.18); color: #34d399; border: 1px solid rgba(16,185,129,0.45);'
         };
     }
-    if (ratio < 0.30) {
+    if (ratio < 0.25) {
         return {
-            label: 'FATIGUE (-20% EXP)',
-            xpMod: -0.20,
-            goldMod: -0.15,
-            style: 'background: rgba(244,63,94,0.22); color: #fda4af; border: 1px solid rgba(244,63,94,0.55);'
+            label: 'SEKARAT (-25% EXP)',
+            xpMod: -0.25,
+            goldMod: -0.20,
+            style: 'background: rgba(225,29,72,0.28); color: #fecdd3; border: 1px solid rgba(244,63,94,0.75); box-shadow: 0 0 8px rgba(244,63,94,0.25);'
+        };
+    }
+    if (ratio < 0.50) {
+        return {
+            label: 'LELAH (-10% EXP)',
+            xpMod: -0.10,
+            goldMod: -0.10,
+            style: 'background: rgba(245,158,11,0.20); color: #fcd34d; border: 1px solid rgba(245,158,11,0.50);'
         };
     }
     return {
@@ -1567,7 +1557,6 @@ function getHpCondition() {
         style: 'background: rgba(56,189,248,0.15); color: #7dd3fc; border: 1px solid rgba(56,189,248,0.35);'
     };
 }
-
 function getDiscountedShopCost(baseCost) {
     const { chrShopDiscount } = getAttributePassives();
     return Math.max(5, Math.round(baseCost * (1 - chrShopDiscount)));
@@ -1691,7 +1680,7 @@ function revokeRewards(xpAmount, goldAmount, statType = null, statXpGain = 15) {
     }
 }
 
-function takeDamage(amount) {
+function takeDamage(amount, suppressDeathModal = false) {
     SoundFX.playDamage();
     syncPlayerMaxHp();
     const { wisDmgReduce } = getAttributePassives();
@@ -1700,37 +1689,60 @@ function takeDamage(amount) {
     gameState.player.hp = Math.max(0, gameState.player.hp - mitigatedDamage);
     spawnFloatingReward(`⚠️ -${mitigatedDamage} HP!${mitigatedDamage < amount ? ` (WIS menahan ${amount - mitigatedDamage})` : ''}`);
 
+    let deathReport = null;
+
     if (gameState.player.hp === 0) {
         const prevLevel = gameState.player.level;
+        const prevGold = gameState.player.gold;
+        const prevStreak = gameState.player.streak || 0;
         const levelLost = prevLevel > 1 ? 1 : 0;
+
         if (levelLost > 0) {
             gameState.player.level = prevLevel - 1;
-            gameState.player.xp = 0;
-        } else {
-            gameState.player.xp = 0;
         }
-        const lostGold = Math.floor(gameState.player.gold * 0.5);
-        const prevStreak = gameState.player.streak || 0;
+        gameState.player.xp = 0;
 
-        gameState.player.gold = Math.max(0, gameState.player.gold - lostGold);
+        // Jika Gold >= 10 potong 50%, jika < 10 disita habis sebagai denda kebangkitan
+        const lostGold = prevGold >= 10 ? Math.floor(prevGold * 0.5) : prevGold;
+        gameState.player.gold = Math.max(0, prevGold - lostGold);
+
         gameState.player.streak = 0;
         gameState.lastStreakDate = null;
-        gameState.player.hp = Math.round(gameState.player.maxHp * 0.5);
+
+        // Bangkit dalam kondisi SEKARAT (25% Max HP) agar harus berjuang memulihkan HP
+        gameState.player.hp = Math.max(1, Math.round(gameState.player.maxHp * 0.25));
 
         const lvlMsg = levelLost > 0
-            ? `Level turun (${prevLevel} → ${gameState.player.level})`
-            : `Level bertahan di Lv.${gameState.player.level} (XP di-reset ke 0)`;
+            ? `Level turun (${prevLevel} ➔ ${gameState.player.level}) & EXP hangus`
+            : `EXP hangus ke 0 (Lv.${gameState.player.level})`;
+        const goldMsg = lostGold > 0
+            ? `-${lostGold} Gold disita (sisa ${gameState.player.gold} G)`
+            : `0 Gold (saldo kosong)`;
 
-        showSystemModal(
-            'KNOCKED OUT // HP = 0!',
-            `Vitality habis total! Sistem memulihkan HP ke ${gameState.player.hp}/${gameState.player.maxHp} dengan penalti berat: ${lvlMsg}, -${lostGold} Gold (50%), dan Streak (${prevStreak} hari) di-reset ke 0. Selesaikan 100% Daily Quest atau beli Potion di Shop!`
-        );
+        deathReport = {
+            mitigatedDamage,
+            prevLevel,
+            newLevel: gameState.player.level,
+            lostGold,
+            remainingGold: gameState.player.gold,
+            prevStreak,
+            revivedHp: gameState.player.hp,
+            maxHp: gameState.player.maxHp,
+            summaryText: `• ${lvlMsg}\n• ${goldMsg}\n• Streak (${prevStreak} hari) di-reset ke 0\n• Bangkit dalam status SEKARAT: ${gameState.player.hp}/${gameState.player.maxHp} HP (-25% EXP)`
+        };
+
+        if (!suppressDeathModal) {
+            showSystemModal(
+                '💀 KNOCKED OUT // HP = 0!',
+                `Vitality habis total! Sistem membangkitkanmu dengan hukuman berat:\n\n${deathReport.summaryText}\n\nSegera selesaikan Daily Quest atau beli Potion di Shop untuk memulihkan kondisi!`
+            );
+        }
     }
 
     saveState();
     renderAll();
+    return { mitigatedDamage, deathReport };
 }
-
 // ==========================================
 // 5. UI RENDERING FUNCTIONS
 // ==========================================
