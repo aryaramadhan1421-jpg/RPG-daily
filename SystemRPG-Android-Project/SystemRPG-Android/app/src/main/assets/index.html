@@ -75,6 +75,29 @@
                 font-size: 0.7rem;
             }
         }
+        .death-cinematic-overlay {
+            position: fixed; inset: 0; z-index: 10050; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; background: radial-gradient(ellipse at center, rgba(70, 8, 18, .88), rgba(2, 3, 8, .98) 68%);
+            opacity: 0; animation: deathSceneIn .35s ease-out forwards; pointer-events: none;
+        }
+        .death-cinematic-vignette {
+            position: absolute; inset: -20%; background: radial-gradient(ellipse, transparent 15%, rgba(0,0,0,.92) 72%);
+            animation: deathPulse 1.2s ease-in-out infinite alternate;
+        }
+        .death-cinematic-content { position: relative; z-index: 1; width: min(92vw, 520px); padding: 1.5rem; text-align: center; }
+        .death-cinematic-kicker { color: #fca5a5; font: 800 .65rem Orbitron, sans-serif; letter-spacing: .22em; opacity: 0; animation: deathTextIn .45s .15s forwards; }
+        .death-cinematic-main { margin: .7rem 0; color: #fff; font: 900 clamp(2.8rem, 13vw, 5.5rem) Orbitron, sans-serif; letter-spacing: .08em; text-shadow: 0 0 12px #ef4444, 0 0 38px rgba(220,38,38,.8); opacity: 0; transform: scale(1.35); animation: deathTitleSlam .65s .35s cubic-bezier(.2,.8,.2,1) forwards; }
+        .death-cinematic-sub { color: #fda4af; font: 700 .65rem Rajdhani, sans-serif; letter-spacing: .18em; opacity: 0; animation: deathTextIn .4s .8s forwards; }
+        .death-cinematic-resurrect { margin-top: 1.5rem; color: #67e8f9; font: 800 .78rem Orbitron, sans-serif; letter-spacing: .12em; opacity: 0; text-shadow: 0 0 18px rgba(34,211,238,.85); }
+        .death-cinematic-overlay.is-resurrecting { background: radial-gradient(ellipse at center, rgba(8, 75, 100, .82), rgba(2, 3, 8, .98) 72%); transition: background .5s ease; }
+        .death-cinematic-overlay.is-resurrecting .death-cinematic-main { color: #a5f3fc; text-shadow: 0 0 15px #06b6d4, 0 0 42px rgba(6,182,212,.85); }
+        .death-cinematic-overlay.is-resurrecting .death-cinematic-resurrect { animation: deathTextIn .55s ease forwards; }
+        .death-cinematic-overlay.is-fading { opacity: 0; transition: opacity .35s ease; }
+        @keyframes deathSceneIn { to { opacity: 1; } }
+        @keyframes deathPulse { from { transform: scale(1); opacity: .65; } to { transform: scale(1.08); opacity: 1; } }
+        @keyframes deathTextIn { to { opacity: 1; } }
+        @keyframes deathTitleSlam { 60% { opacity: 1; transform: scale(.94); } 100% { opacity: 1; transform: scale(1); } }
+        @media (prefers-reduced-motion: reduce) { .death-cinematic-overlay *, .death-cinematic-overlay { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
     </style>
 </head>
 <body>
@@ -109,7 +132,7 @@
         </p>
 
         <!-- Interactive Fingerprint Scanner Button -->
-        <button type="button" id="btn-fingerprint-auth" class="fingerprint-pad" onpointerdown="startFingerprintHold(event)" onpointerup="cancelFingerprintHold()" onpointerleave="cancelFingerprintHold()" onpointercancel="cancelFingerprintHold()" oncontextmenu="return false;" aria-label="Tahan Sidik Jari untuk Masuk">
+        <button type="button" id="btn-fingerprint-auth" class="fingerprint-pad" onpointerdown="startFingerprintHold(event)" onpointerup="cancelFingerprintHold()" onpointercancel="cancelFingerprintHold()" oncontextmenu="return false;" aria-label="Tahan Sidik Jari untuk Masuk">
             <div class="fingerprint-scan-line" id="fp-scan-line"></div>
             <svg id="fp-svg-icon" width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 4"/>
@@ -256,7 +279,7 @@
                     </div>
                     <div class="flex items-center gap-1 shrink-0">
                         <button type="button" onclick="cycleActiveTitle()" class="font-display" style="font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 4px 8px; border-radius: 0.5rem; background: rgba(245,158,11,0.18); color: #fcd34d; border: 1px solid rgba(245,158,11,0.45);" title="Langsung ganti ke gelar berikutnya yang sudah terbuka">
-                            Ganti Title (<span id="unlocked-titles-count">1</span>/4)
+                            Ganti Title (<span id="unlocked-titles-count">1</span>/<span id="total-titles-count">14</span>)
                         </button>
                         <button type="button" onclick="openTitlesModal()" style="padding: 4px 6px; border-radius: 0.5rem; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155;" title="Lihat Daftar & Syarat Semua Title">
                             <svg class="icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
@@ -473,7 +496,7 @@
                     <div class="flex items-center gap-2 min-w-0">
                         <svg class="icon shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                         <div class="min-w-0">
-                            <span style="font-size: 10px; color: var(--text-muted); display: block; text-transform: uppercase;">Tanggal Aktif Sistem</span>
+                            <span style="font-size: 10px; color: var(--text-muted); display: block; text-transform: uppercase;">Tanggal Riwayat</span>
                             <span id="active-date-label" class="font-display truncate" style="font-size: 0.75rem; font-weight: 700; color: #fff; display: block;">-</span>
                         </div>
                     </div>
@@ -500,6 +523,9 @@
                     </div>
                     <div id="habit-heatmap" class="grid grid-cols-7 gap-1-5"></div>
                 </div>
+
+                <!-- Hunter Journal: placed directly below Habit Tracker calendar -->
+        <div class="system-card v6-entry" id="v6-journal-entry"><div><strong>📓 HUNTER JOURNAL</strong><p>Mood · Reflection · Tomorrow's Goal</p></div><button type="button" onclick="V6.openJournal()">Buka Journal →</button></div>
 
                 <!-- Per-Day Activity Log -->
                 <div style="padding-top: 0.5rem; border-top: 1px solid rgba(30,41,59,0.85);">
@@ -535,13 +561,10 @@
                     </div>
                 </div>
                 <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">
-                    Evaluasi misi pada tanggal terpilih lalu lanjut ke hari berikutnya. Target aman minimal <span id="eval-threshold-label" style="color: #67e8f9; font-weight: 700;">80% Daily Quest</span> selesai. Jika kurang dari target tersebut, HP berkurang &amp; Streak reset (kecuali ada Shield)!
+                    <span id="v6-auto-day-description">Pergantian hari dan evaluasi streak berjalan otomatis mengikuti kalender HP. Target harian dikunci sampai besok. Target aman minimal <span id="eval-threshold-label" style="color: #67e8f9; font-weight: 700;">80% Daily Quest</span> selesai. Jika kurang dari target tersebut, HP berkurang &amp; Streak reset (kecuali ada Shield)!</span>
                 </p>
                 <div class="flex gap-2">
-                    <button type="button" onclick="simulateNextDay()" class="flex-1 font-display shadow-neon-blue flex items-center justify-center gap-1-5" style="background: linear-gradient(to right, #0891b2, #2563eb); color: #fff; font-weight: 700; font-size: 0.875rem; padding: 0.625rem 0.75rem; border-radius: 0.75rem;">
-                        <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v8"/><path d="m4.93 10.93 1.41 1.41"/><path d="M2 18h2"/><path d="M20 18h2"/><path d="m19.07 10.93-1.41 1.41"/><path d="M22 22H2"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/></svg>
-                        Evaluasi & Lanjut Hari
-                    </button>
+                    <div class="v6-auto-day-note">🌅 <strong id="v6-auto-day-title">AUTO DAY ACTIVE</strong><span id="v6-auto-day-subtext">Quest direset otomatis saat tanggal berubah. Laporan harian tersimpan di History; jurnal tetap opsional.</span></div>
                     <button type="button" onclick="openResetModal()" style="background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid #334155; padding: 0.625rem; border-radius: 0.75rem;" title="Reset Data Demo">
                         <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                     </button>
@@ -587,6 +610,7 @@
                     </button>
                 </div>
             </div>
+
         </section>
 
         <!-- ==================== TAB 2: QUESTS ==================== -->
@@ -1157,6 +1181,7 @@
                     </button>
                 </div>
             </div>
+        <div class="system-card v6-entry" id="v6-library-entry"><div><strong>📚 KNOWLEDGE LIBRARY</strong><p>The Hunter's Knowledge Archive · Artikel & Catatan</p></div><button type="button" onclick="V6.openLibrary()">Buka Library →</button></div>
         </section>
 
         <!-- ==================== TAB 4: SHOP ==================== -->
@@ -1602,7 +1627,9 @@
         <div class="system-card max-w-xs w-full text-center modal-enter" style="border-color: rgba(244,63,94,0.5); padding: 1.25rem;">
             <svg class="icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2" style="margin: 0 auto 0.5rem auto;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <h3 class="font-display" style="font-weight: 700; font-size: 1.125rem; color: #fff;">RESET DATA SISTEM?</h3>
-            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 1rem;">Semua progres akan di-reset bersih ke awal (Level 1, 0 XP, 0 Gold, 0 Streak).</p>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 0.75rem;">Semua progres, Level, EXP, Rank, Gold, Streak, Title, dan Achievement akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.</p>
+            <label for="reset-confirm-input" style="display:block; text-align:left; font-size:11px; color:#cbd5e1; margin-bottom:4px;">Ketik <strong style="color:#fda4af;">RESET</strong> untuk mengaktifkan reset:</label>
+            <input id="reset-confirm-input" type="text" autocomplete="off" autocapitalize="characters" placeholder="Ketik RESET" class="input-cyber" style="margin-bottom: 0.9rem; text-align:center; letter-spacing:0.15em; text-transform:uppercase;">
             <div class="flex gap-2">
                 <button type="button" onclick="closeModal('modal-reset')" class="flex-1 font-display" style="background: var(--bg-slate-800); color: #cbd5e1; font-weight: 700; padding: 0.5rem; border-radius: 0.75rem; font-size: 0.875rem;">Batal</button>
                 <button type="button" onclick="confirmResetData()" class="flex-1 font-display" style="background: #e11d48; color: #fff; font-weight: 700; padding: 0.5rem; border-radius: 0.75rem; font-size: 0.875rem;">Reset</button>
@@ -1986,6 +2013,7 @@
     </div>
 
     <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+<div id="v6-overlay" class="hidden" role="dialog" aria-modal="true" aria-label="Hunter Archive"><div class="v6-panel"><header class="v6-panel-header"><button type="button" onclick="V6.close()" aria-label="Kembali">← Kembali</button><strong id="v6-heading">HUNTER ARCHIVE</strong></header><div id="v6-body"></div></div></div>
     <script src="app.js"></script>
     <script>
     (function () {
