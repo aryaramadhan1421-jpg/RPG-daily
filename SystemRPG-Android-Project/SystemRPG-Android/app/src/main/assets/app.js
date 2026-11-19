@@ -1131,14 +1131,41 @@ function checkRealDayRollover() {
                 shieldMsg = ` Streak ${gameState.player.streak} hari tetap terjaga (≥${getStreakThresholdPct()}%), namun tidak ada regen HP.`;
             }
 
+            // Catat kondisi sebelum menerima damage untuk mendeteksi Death / Resurrection
+            const prevHp = gameState.player.hp;
+            const prevLevel = gameState.player.level;
+            const prevGold = gameState.player.gold;
+
             takeDamage(totalRawDamage);
+
             const { wisDmgReduce } = getAttributePassives();
             const actualDmg = Math.max(1, Math.round(totalRawDamage * (1 - wisDmgReduce)));
+            const isResurrected = (prevHp - actualDmg) <= 0;
+
             setTimeout(() => {
-                showSystemModal(
-                    `PERGANTIAN HARI // ${tier.rank.toUpperCase()}`,
-                    `Selamat datang kembali! Kemarin progres Daily Habit ${pct}% (${doneCount}/${totalDaily}) • Total Penalti -${actualDmg} HP.${shieldMsg} Semua Daily Habit telah di-reset untuk hari ini!`
-                );
+                if (isResurrected) {
+                    const lostLevels = Math.max(0, prevLevel - gameState.player.level);
+                    const lostGold = Math.max(0, prevGold - gameState.player.gold);
+                    const penaltyDetails = [
+                        lostLevels > 0 ? `Level turun (${prevLevel} ➔ ${gameState.player.level})` : `EXP di level ini hangus (0 EXP)`,
+                        lostGold > 0 ? `Gold terpotong -${lostGold} G (sisa ${gameState.player.gold} G)` : `Gold tidak terpotong (sisa ${gameState.player.gold} G)`,
+                        `HP dipulihkan penuh (${gameState.player.hp}/${gameState.player.maxHp})`
+                    ].join(' • ');
+
+                    if (typeof SoundFX !== 'undefined' && typeof SoundFX.playError === 'function') {
+                        SoundFX.playError();
+                    }
+
+                    showSystemModal(
+                        `💀 SYSTEM PENALTY: RESURRECTION // ${tier.rank.toUpperCase()}`,
+                        `HP menyentuh 0 akibat penalti -${actualDmg} HP (Progres kemarin ${pct}%: ${doneCount}/${totalDaily}).${shieldMsg}\n\n⚠️ KONSEKUENSI KEBANGKITAN:\n• ${penaltyDetails}\n\nSemua Daily Habit telah di-reset untuk hari ini!`
+                    );
+                } else {
+                    showSystemModal(
+                        `PERGANTIAN HARI // ${tier.rank.toUpperCase()}`,
+                        `Selamat datang kembali! Kemarin progres Daily Habit ${pct}% (${doneCount}/${totalDaily}) • Total Penalti -${actualDmg} HP.${shieldMsg} Semua Daily Habit telah di-reset untuk hari ini!`
+                    );
+                }
             }, 500);
         } else {
             const healAmt = Math.min(tier.regenAmt, gameState.player.maxHp - gameState.player.hp);
