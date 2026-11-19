@@ -1139,8 +1139,9 @@ function checkRealDayRollover() {
             setTimeout(() => {
                 if (death) {
                     showSystemModal(
-                        `💀 YOU DIED // ${tier.rank.toUpperCase()}`,
-                        `Progres kemarin hanya ${pct}% (${doneCount}/${totalDaily}) sehingga kamu menerima -${actualDmg} HP dan HP menyentuh 0!\n\n⚠️ HUKUMAN SISTEM:\n${death.summaryText}\n\nSemua Daily Habit telah di-reset. Selesaikan quest hari ini untuk memulihkan HP!`
+                        `YOU DIED // ${tier.rank.toUpperCase()}`,
+                        `Progres kemarin ${pct}% (${doneCount}/${totalDaily}). Penalti evaluasi: -${actualDmg} HP. Daily Habit telah di-reset.`,
+                        death
                     );
                 } else {
                     showSystemModal(
@@ -1821,6 +1822,8 @@ function takeDamage(amount, suppressDeathModal = false) {
             gameState.player.hp = Math.max(1, Math.round(maxHp * 0.10));
             deathReport = {
                 repeatKnockout: true,
+                progress: gameState.penaltyQuest.progress,
+                targetCount: gameState.penaltyQuest.targetCount,
                 revivedHp: gameState.player.hp,
                 maxHp,
                 summaryText: `Kamu kembali tumbang saat Penalty Zone masih aktif. Tidak ada potongan Level, Gold, atau Streak tambahan. Progres Penalty Quest tetap tersimpan (${gameState.penaltyQuest.progress}/${gameState.penaltyQuest.targetCount}). Kamu dibangkitkan dengan ${gameState.player.hp}/${maxHp} HP.`
@@ -1855,6 +1858,7 @@ function takeDamage(amount, suppressDeathModal = false) {
 
             deathReport = {
                 repeatKnockout: false,
+                levelLost,
                 mitigatedDamage,
                 prevLevel,
                 newLevel: gameState.player.level,
@@ -1869,10 +1873,11 @@ function takeDamage(amount, suppressDeathModal = false) {
 
         if (!suppressDeathModal) {
             showSystemModal(
-                deathReport.repeatKnockout ? '⚠️ SECOND WIND // PENALTY ZONE' : '💀 KNOCKED OUT // HP = 0!',
+                deathReport.repeatKnockout ? 'SECOND WIND // PENALTY ZONE' : 'YOU DIED',
                 deathReport.repeatKnockout
-                    ? `${deathReport.summaryText}\n\nSelesaikan Daily Quest atau gunakan Recovery Quest/Potion untuk bertahan.`
-                    : `Vitality habis total! Sistem membangkitkanmu dengan hukuman:\n\n${deathReport.summaryText}\n\nSelesaikan Daily Quest untuk keluar dari Penalty Zone.`
+                    ? 'Kamu tumbang lagi saat Penalty Zone masih aktif. Hukuman utama tidak akan ditumpuk.'
+                    : 'Vitality mencapai 0. Sistem menjatuhkan penalti dan membangkitkanmu dalam kondisi kritis.',
+                deathReport
             );
         }
     }
@@ -4095,12 +4100,10 @@ function confirmJournalAndAdvance(saveJournal) {
         // dengan evaluasi harian agar modal death tidak tertimpa modal evaluasi.
         const damageResult = takeDamage(tier.rawDamage, true);
         const actualDmg = damageResult.mitigatedDamage;
-        const deathText = damageResult.deathReport
-            ? `\n\n💀 HUKUMAN KNOCKED OUT:\n${damageResult.deathReport.summaryText}`
-            : '';
         showSystemModal(
-            damageResult.deathReport ? `💀 YOU DIED // ${tier.rank.toUpperCase()}` : `EVALUASI HARIAN // ${tier.rank.toUpperCase()}`,
-            `Progres Daily Quest tanggal ${currentKey}: ${pct}% (${doneCount}/${totalDaily}). Penalti ${Math.round(tier.penaltyRate * 100)}% Max HP (-${actualDmg} HP).${shieldMsg}${deathText}\n\nTanggal sistem maju ke ${formatReadableDate(nextDateKey)}.`
+            damageResult.deathReport ? `YOU DIED // ${tier.rank.toUpperCase()}` : `EVALUASI HARIAN // ${tier.rank.toUpperCase()}`,
+            `Progres Daily Quest tanggal ${currentKey}: ${pct}% (${doneCount}/${totalDaily}). Penalti ${Math.round(tier.penaltyRate * 100)}% Max HP (-${actualDmg} HP).${shieldMsg}\n\nTanggal sistem maju ke ${formatReadableDate(nextDateKey)}.`,
+            damageResult.deathReport
         );
     } else {
         SoundFX.playQuestComplete();
@@ -4196,9 +4199,46 @@ function spawnFloatingReward(text) {
     setTimeout(() => badge.remove(), 1850);
 }
 
-function showSystemModal(title, body) {
-    document.getElementById('sys-msg-title').textContent = title;
-    document.getElementById('sys-msg-body').textContent = body;
+function showSystemModal(title, body, deathReport = null) {
+    const titleEl = document.getElementById('sys-msg-title');
+    const bodyEl = document.getElementById('sys-msg-body');
+    const detailEl = document.getElementById('sys-msg-details');
+    const iconEl = document.getElementById('sys-msg-icon');
+    const cardEl = document.getElementById('sys-msg-card');
+    if (titleEl) titleEl.textContent = title;
+    if (bodyEl) bodyEl.textContent = body;
+
+    if (detailEl) {
+        if (deathReport) {
+            const repeat = Boolean(deathReport.repeatKnockout);
+            const cards = repeat ? [
+                ['STATUS', 'SECOND KNOCKOUT', '⚠️'],
+                ['PENALTI TAMBAHAN', 'Tidak ada', '🛡️'],
+                ['PROGRES PENALTY QUEST', `${deathReport.progress ?? 0}/${deathReport.targetCount ?? 2}`, '🎯'],
+                ['HP KEBANGKITAN', `${deathReport.revivedHp}/${deathReport.maxHp}`, '❤️']
+            ] : [
+                ['LEVEL', deathReport.levelLost === 0 ? `Lv.${deathReport.newLevel} (tetap)` : `Lv.${deathReport.prevLevel} → Lv.${deathReport.newLevel}  (-1)`, '⬇️'],
+                ['GOLD DISITA', `-${deathReport.lostGold} G`, '🪙'],
+                ['SISA GOLD', `${deathReport.remainingGold} G`, '💰'],
+                ['EXP', 'Reset menjadi 0', '✦'],
+                ['STREAK', `${deathReport.prevStreak} → 0 hari`, '🔥'],
+                ['HP KEBANGKITAN', `${deathReport.revivedHp}/${deathReport.maxHp}`, '❤️']
+            ];
+            detailEl.innerHTML = cards.map(([label, value, icon]) => `<div class="death-stat-card"><span class="death-stat-icon">${icon}</span><span class="death-stat-label">${label}</span><strong>${value}</strong></div>`).join('');
+            detailEl.classList.remove('hidden');
+            if (iconEl) { iconEl.textContent = repeat ? '⚠️' : '☠'; iconEl.style.background = 'rgba(127,29,29,.45)'; iconEl.style.borderColor = '#f87171'; }
+            if (cardEl) { cardEl.style.borderColor = '#ef4444'; cardEl.style.boxShadow = '0 0 35px rgba(239,68,68,.16)'; }
+            const hint = document.getElementById('sys-msg-hint');
+            if (hint) hint.textContent = repeat ? 'Selesaikan quest yang tersisa untuk keluar dari Penalty Zone.' : 'PENALTY ZONE AKTIF • Selesaikan 2 Daily Quest untuk memulihkan HP dan mendapat Gold.';
+        } else {
+            detailEl.innerHTML = '';
+            detailEl.classList.add('hidden');
+            if (iconEl) { iconEl.textContent = 'ⓘ'; iconEl.style.background = 'rgba(6,182,212,.18)'; iconEl.style.borderColor = '#22d3ee'; }
+            if (cardEl) { cardEl.style.borderColor = '#475569'; cardEl.style.boxShadow = ''; }
+            const hint = document.getElementById('sys-msg-hint');
+            if (hint) hint.textContent = '';
+        }
+    }
     openModal('modal-system-msg');
 }
 
