@@ -5579,8 +5579,39 @@ const FONT_FAMILIES = {
     tactical: "'Rajdhani', sans-serif"
 };
 
+const SYSRPG_THEME_KEY = 'sysrpg_theme';
+const ALLOWED_THEMES = ['cyber', 'grimoire', 'emerald', 'daylight'];
+
+function syncThemeChips(themeName) {
+    const activeTheme = ALLOWED_THEMES.includes(themeName) ? themeName : 'cyber';
+    document.querySelectorAll('[data-theme-choice]').forEach((btn) => {
+        btn.classList.toggle('is-active', btn.getAttribute('data-theme-choice') === activeTheme);
+    });
+}
+
+function setAppTheme(themeName) {
+    const chosen = ALLOWED_THEMES.includes(themeName) ? themeName : 'cyber';
+    document.documentElement.setAttribute('data-theme', chosen);
+    try {
+        localStorage.setItem(SYSRPG_THEME_KEY, chosen);
+    } catch (_) {}
+    if (typeof gameState !== 'undefined') {
+        gameState.uiTheme = chosen;
+        if (typeof saveState === 'function') saveState();
+    }
+    syncThemeChips(chosen);
+    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+}
+
+window.setAppTheme = setAppTheme;
+
 function openFontSettingsModal() {
     if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+    const savedTheme = (typeof gameState !== 'undefined' && gameState.uiTheme) ||
+        (() => {
+            try { return localStorage.getItem(SYSRPG_THEME_KEY) || 'cyber'; } catch (_) { return 'cyber'; }
+        })();
+    syncThemeChips(savedTheme);
     const modal = document.getElementById('font-settings-modal');
     if (modal) modal.classList.remove('hidden');
 }
