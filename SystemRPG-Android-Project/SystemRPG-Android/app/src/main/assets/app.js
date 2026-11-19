@@ -6299,9 +6299,9 @@ function stopAutoSplashFantasyBGM() {
         try {
             const now = fpAudioCtx.currentTime;
             splashBgmMasterGain.gain.cancelScheduledValues(now);
-            splashBgmMasterGain.gain.setValueAtTime(Math.max(0.001, splashBgmMasterGain.gain.value), now);
-            splashBgmMasterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
-        } catch (e) {}
+            splashBgmMasterGain.gain.setValueAtTime(0.05, now);
+            splashBgmMasterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+        } catch (_e) {}
     }
 }
 
