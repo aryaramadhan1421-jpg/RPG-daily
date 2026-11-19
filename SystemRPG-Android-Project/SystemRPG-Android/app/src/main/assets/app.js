@@ -7568,17 +7568,20 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
 // =========================================================
 // SISTEM TUTORIAL MANDIRI (ANTI-GAGAL & MULTI-BAHASA)
 // =========================================================
+const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
+
 (function () {
     let tutStep = 0;
-
-   let highlightedEl = null;
+    let highlightedEl = null;
 
     function playTutorialSound(type) {
         try {
             if (typeof SoundFX !== 'undefined' && SoundFX.muted) return;
             const AudioCtx = window.AudioContext || window.webkitAudioContext;
             if (!AudioCtx) return;
-            const ctx = new AudioCtx();
+            if (!window._tutAudioCtx) window._tutAudioCtx = new AudioCtx();
+            const ctx = window._tutAudioCtx;
+            if (ctx.state === 'suspended') ctx.resume();
             const now = ctx.currentTime;
 
             const tones = type === 'finish'
@@ -7619,7 +7622,6 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
     function switchAndHighlightFeature(tabName, targetSelectors) {
         clearTutorialSpotlight();
 
-        // Pindah ke tab asli agar pengguna melihat langsung fiturnya
         if (tabName) {
             if (typeof switchTab === 'function') {
                 try { switchTab(tabName); } catch (e) {}
@@ -7629,7 +7631,6 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
             }
         }
 
-        // Cari elemen fitur yang ingin disorot dan beri bingkai cahaya cyan
         setTimeout(() => {
             if (!Array.isArray(targetSelectors)) return;
             for (const sel of targetSelectors) {
@@ -7679,14 +7680,13 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
             { tab: 'status', targets: ['#btn-evaluate-day', '#player-rank-badge'], icon: '🌙', title: '6. 1日の評価', desc: 'STATUSタブに戻りました。1日の終わりに「Evaluasi & Lanjut Hari」を押して次の日へ進みましょう。', tip: 'システム準備完了。最高ランクを目指せ、ハンター！' }
         ]
     };
+
     function detectActiveLang() {
-        // Cek tombol bahasa yang sedang aktif di modal pengaturan (paling akurat)
         if (document.getElementById('lang-btn-ja')?.style.borderColor.includes('6, 182, 212') ||
             document.getElementById('lang-btn-ja')?.style.background.includes('8, 51, 68')) return 'ja';
         if (document.getElementById('lang-btn-en')?.style.borderColor.includes('6, 182, 212') ||
             document.getElementById('lang-btn-en')?.style.background.includes('8, 51, 68')) return 'en';
 
-        // Cek semua kemungkinan key localStorage yang dipakai app.js
         const saved = (typeof gameState !== 'undefined' && gameState.language) ||
                       localStorage.getItem('system_rpg_lang') ||
                       localStorage.getItem('sysrpg_language') ||
@@ -7750,14 +7750,13 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
             '<span style="width:' + (idx === tutStep ? '18px' : '7px') + ';height:7px;border-radius:99px;background:' + (idx === tutStep ? '#22d3ee' : '#334155') + ';transition:all .2s;"></span>'
         ).join('');
 
-        // Buka tab & beri sorotan pada fitur yang sedang dijelaskan
         switchAndHighlightFeature(item.tab, item.targets);
     }
 
     function closeTutorialTour(playDoneSound) {
         playTutorialSound(playDoneSound ? 'finish' : 'back');
         clearTutorialSpotlight();
-        localStorage.setItem('sysrpg_tutorial_v2', 'true');
+        localStorage.setItem(TUTORIAL_STORAGE_KEY, 'true');
         const box = document.getElementById('sysrpg-force-tutorial');
         if (box) box.remove();
         if (typeof switchTab === 'function') {
@@ -7769,7 +7768,6 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
         if (typeof startIndex !== 'number') startIndex = 0;
         playTutorialSound('open');
 
-        // Tutup modal pengaturan font jika sedang terbuka
         const fontModal = document.getElementById('font-settings-modal');
         if (fontModal) fontModal.classList.add('hidden');
 
@@ -7777,7 +7775,6 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
         if (!box) {
             box = document.createElement('div');
             box.id = 'sysrpg-force-tutorial';
-            // Posisikan di bawah layar dengan backdrop semi-transparan agar fitur tab di atas terlihat jelas
             box.setAttribute('style', 'position:fixed;inset:0;width:100vw;height:100vh;background:rgba(2,6,23,0.42);z-index:999999;display:flex;align-items:flex-end;justify-content:center;padding:0.85rem;box-sizing:border-box;');
             box.innerHTML = `
                 <div style="width:100%;max-width:420px;background:rgba(15,23,42,0.97);backdrop-filter:blur(10px);border:1.5px solid #22d3ee;border-radius:1rem;padding:1rem 1.15rem;box-shadow:0 -4px 32px rgba(6,182,212,0.4);color:#f8fafc;box-sizing:border-box;font-family:inherit;margin-bottom:0.35rem;">
@@ -7842,7 +7839,31 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
         tutStep = Math.max(0, Math.min(startIndex, getSteps().length - 1));
         renderBox();
     };
-  // Perbarui bahasa tombol panduan saat bahasa diganti & tangkap klik tombol panduan
+
+    // Pemicu otomatis HANYA sekali saat pertama kali buka aplikasi
+    function checkFirstTimeTutorial() {
+        if (localStorage.getItem(TUTORIAL_STORAGE_KEY) === 'true') return;
+
+        const splash = document.getElementById('system-splash-screen');
+        const isSplashVisible = splash && splash.style.display !== 'none' && !splash.classList.contains('hidden');
+
+        // Jika splash screen masih tampil, tunggu sampai splash screen selesai/hilang
+        if (isSplashVisible) {
+            const observer = new MutationObserver(() => {
+                if (splash.style.display === 'none' || splash.classList.contains('hidden')) {
+                    observer.disconnect();
+                    if (localStorage.getItem(TUTORIAL_STORAGE_KEY) !== 'true') {
+                        setTimeout(() => window.openTutorialModal(0), 250);
+                    }
+                }
+            });
+            observer.observe(splash, { attributes: true, attributeFilter: ['style', 'class'] });
+        } else {
+            // Jika tidak ada splash screen, langsung buka tutorial
+            setTimeout(() => window.openTutorialModal(0), 350);
+        }
+    }
+
     document.addEventListener('click', function (e) {
         if (e.target.closest('#sysrpg-force-tutorial')) return;
 
@@ -7863,9 +7884,12 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
         }
     }, true);
 
-    window.addEventListener('DOMContentLoaded', updateTutorialTriggerButtonLabel);
+    window.addEventListener('DOMContentLoaded', () => {
+        updateTutorialTriggerButtonLabel();
+        checkFirstTimeTutorial();
+    });
     setTimeout(updateTutorialTriggerButtonLabel, 200);
-    })();
+})();
 
 // ==========================================
 
