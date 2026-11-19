@@ -6113,6 +6113,68 @@ function completeFingerprintUnlock() {
     clearInterval(fpVibrateInterval);
     fpVibrateInterval = null;
 
+    // ==========================================
+// TUTORIAL & GUIDE BUTTON CLICK SOUND EFFECT
+// ==========================================
+(function initTutorialClickSFX() {
+    function playTutorialUISound(type = 'tap') {
+        try {
+            if (typeof SoundFX !== 'undefined' && typeof SoundFX.play === 'function') {
+                SoundFX.play(type);
+                return;
+            }
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            if (!window._tutAudioCtx) window._tutAudioCtx = new AudioCtx();
+            const ctx = window._tutAudioCtx;
+            if (ctx.state === 'suspended') ctx.resume();
+
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            if (type === 'complete') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(783.99, now + 0.07);
+                gain.gain.setValueAtTime(0.14, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.23);
+            } else {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(660, now);
+                osc.frequency.exponentialRampToValueAtTime(980, now + 0.055);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.085);
+            }
+        } catch (e) {}
+    }
+
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('button, [role="button"]');
+        if (!btn) return;
+
+        const isTutorialElement =
+            btn.closest('[id*="tutorial" i], [class*="tutorial" i], [id*="guide" i], [class*="guide" i], [id*="onboarding" i]') ||
+            (btn.id && /tutorial|guide|onboarding/i.test(btn.id)) ||
+            (btn.getAttribute('onclick') && /tutorial|guide/i.test(btn.getAttribute('onclick')));
+
+        if (!isTutorialElement) return;
+
+        const label = (btn.textContent || '').trim().toLowerCase();
+        const isFinishBtn = /selesai|finish|mulai|start|tutup|close|mengerti|got it|完了|閉じる/.test(label);
+
+        playTutorialUISound(isFinishBtn ? 'complete' : 'tap');
+    }, true);
+})();
+
     const pad = document.getElementById('btn-fingerprint-auth');
     const icon = document.getElementById('fp-svg-icon');
     const statusText = document.getElementById('fp-status-text');
