@@ -2313,24 +2313,41 @@
                     '</div>';
                 document.body.appendChild(box);
 
-                box.querySelector('#sft-tab-guide').onclick = function () {
+                box.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                });
+
+                box.querySelector('#sft-tab-guide').onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     tutMode = 'guide';
                     renderTutorialBox();
                 };
-                box.querySelector('#sft-tab-codex').onclick = function () {
+                box.querySelector('#sft-tab-codex').onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     tutMode = 'codex';
                     renderTutorialBox();
                 };
-                box.querySelector('#sft-skip').onclick = function () {
-                    localStorage.setItem('sysrpg_tutorial_v2', 'true');
+                box.querySelector('#sft-skip').onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    try { localStorage.setItem('sysrpg_tutorial_v2', 'true'); } catch (_) {}
                     box.remove();
                 };
-                box.querySelector('#sft-prev').onclick = function () {
-                    if (tutStep > 0) { tutStep--; renderTutorialBox(); }
+                box.querySelector('#sft-prev').onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (tutStep > 0) {
+                        tutStep--;
+                        renderTutorialBox();
+                    }
                 };
-                box.querySelector('#sft-next').onclick = function () {
+                box.querySelector('#sft-next').onclick = function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     if (tutMode === 'codex') {
-                        localStorage.setItem('sysrpg_tutorial_v2', 'true');
+                        try { localStorage.setItem('sysrpg_tutorial_v2', 'true'); } catch (_) {}
                         box.remove();
                         return;
                     }
@@ -2339,11 +2356,10 @@
                         tutStep++;
                         renderTutorialBox();
                     } else {
-                        localStorage.setItem('sysrpg_tutorial_v2', 'true');
+                        try { localStorage.setItem('sysrpg_tutorial_v2', 'true'); } catch (_) {}
                         box.remove();
                     }
                 };
-            }
 
             tutMode = 'guide';
             const total = (TUT_DATA[getActiveLang()] || TUT_DATA.id).length;
