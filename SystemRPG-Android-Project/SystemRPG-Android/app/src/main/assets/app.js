@@ -6391,14 +6391,15 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
     }, true);
 })();
 
+function finishFingerprintUnlock() {
     const pad = document.getElementById('btn-fingerprint-auth');
     const icon = document.getElementById('fp-svg-icon');
     const statusText = document.getElementById('fp-status-text');
     const subText = document.getElementById('fp-sub-text');
     const splash = document.getElementById('system-splash-screen');
 
-    playBiometricAudio('success');
-    triggerFingerprintVibrate([60, 45, 120], 'complete');
+    if (typeof playBiometricAudio === 'function') playBiometricAudio('success');
+    if (typeof triggerFingerprintVibrate === 'function') triggerFingerprintVibrate([60, 45, 120], 'complete');
 
     if (pad) {
         pad.classList.remove('scanning');
@@ -6414,14 +6415,14 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
     }
 
     setTimeout(() => {
-            if (splash) splash.classList.add('fade-out');
-            setTimeout(() => {
-                if (splash) splash.style.display = 'none';
-                if (!localStorage.getItem(TUTORIAL_STORAGE_KEY)) {
-                    openTutorialModal(0);
-                }
-            }, 680);
-        }, 450);
+        if (splash) splash.classList.add('fade-out');
+        setTimeout(() => {
+            if (splash) splash.style.display = 'none';
+            if (typeof TUTORIAL_STORAGE_KEY !== 'undefined' && !localStorage.getItem(TUTORIAL_STORAGE_KEY)) {
+                if (typeof openTutorialModal === 'function') openTutorialModal(0);
+            }
+        }, 680);
+    }, 450);
 }
 
 // ==========================================
