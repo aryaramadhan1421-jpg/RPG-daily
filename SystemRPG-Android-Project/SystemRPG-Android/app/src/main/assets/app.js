@@ -6156,6 +6156,14 @@ let fpVibrateInterval = null;
 let fpAudioCtx = null;
 
 // ==========================================
+// PENGAMAN VARIABEL GLOBAL FINGERPRINT
+// ==========================================
+if (typeof isSplashUnlocking === 'undefined') var isSplashUnlocking = false;
+if (typeof fpAudioCtx === 'undefined') var fpAudioCtx = null;
+if (typeof fpHoldTimer === 'undefined') var fpHoldTimer = null;
+if (typeof fpVibrateInterval === 'undefined') var fpVibrateInterval = null;
+
+// ==========================================
 // AUTO FANTASY AMBIENT BGM (SPLASH SCREEN ONLY)
 // ==========================================
 let splashBgmInterval = null;
@@ -6178,7 +6186,6 @@ function startAutoSplashFantasyBGM() {
         if (fpAudioCtx.state === 'suspended') {
             fpAudioCtx.resume().catch(() => {});
         }
-        // Bersihkan interval lama jika ada
         if (splashBgmInterval) {
             clearInterval(splashBgmInterval);
             splashBgmInterval = null;
@@ -6189,12 +6196,10 @@ function startAutoSplashFantasyBGM() {
 
         const nowInit = fpAudioCtx.currentTime;
         splashBgmMasterGain = fpAudioCtx.createGain();
-        // Volume master dinaikkan agar lebih kencang & jelas di speaker HP
         splashBgmMasterGain.gain.setValueAtTime(0.001, nowInit);
         splashBgmMasterGain.gain.exponentialRampToValueAtTime(0.65, nowInit + 0.4);
         splashBgmMasterGain.connect(fpAudioCtx.destination);
 
-        // Melodi harpa & synth atmosferik bernuansa Dark Fantasy (D Dorian)
         const fantasyNotes = [
             146.83, 220.00, 261.63, 293.66, 329.63, 349.23, 440.00, 523.25,
             440.00, 349.23, 329.63, 293.66, 261.63, 220.00, 174.61, 220.00
@@ -6209,8 +6214,6 @@ function startAutoSplashFantasyBGM() {
             }
 
             const now = fpAudioCtx.currentTime;
-
-            // Petikan Harpa / Celesta Fantasy (lebih berkarakter & kencang)
             const freq = fantasyNotes[step % fantasyNotes.length];
             const osc = fpAudioCtx.createOscillator();
             const overtoneOsc = fpAudioCtx.createOscillator();
@@ -6220,7 +6223,6 @@ function startAutoSplashFantasyBGM() {
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(freq, now);
 
-            // Oktaf halus untuk mempertegas suara di speaker kecil
             overtoneOsc.type = 'sine';
             overtoneOsc.frequency.setValueAtTime(freq * 2, now);
 
@@ -6245,7 +6247,6 @@ function startAutoSplashFantasyBGM() {
             osc.stop(now + 1.5);
             overtoneOsc.stop(now + 1.5);
 
-            // Pad Bass hangat setiap 4 ketukan (ditambah oktaf atas agar terdengar di speaker HP)
             if (step % 4 === 0) {
                 const bassFreq = bassNotes[Math.floor(step / 4) % bassNotes.length];
                 const bassOsc = fpAudioCtx.createOscillator();
@@ -6402,6 +6403,12 @@ function unlockSystemSplashScreen() {
 
         setTimeout(() => {
             splashEl.style.display = 'none';
+            // Jalankan tutorial otomatis HANYA SEKALI saat pertama kali buka aplikasi
+            if (localStorage.getItem('sysrpg_tutorial_v2') !== 'true') {
+                if (typeof window.openTutorialModal === 'function') {
+                    window.openTutorialModal(0);
+                }
+            }
         }, 360);
     }
 
@@ -6483,102 +6490,6 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 } else {
     window.addEventListener('DOMContentLoaded', initSplashBgmAutoplay, { once: true });
     window.addEventListener('load', initSplashBgmAutoplay, { once: true });
-}
-
-    // ==========================================
-// TUTORIAL & GUIDE BUTTON CLICK SOUND EFFECT
-// ==========================================
-(function initTutorialClickSFX() {
-    function playTutorialUISound(type = 'tap') {
-        try {
-            if (typeof SoundFX !== 'undefined' && typeof SoundFX.play === 'function') {
-                SoundFX.play(type);
-                return;
-            }
-            const AudioCtx = window.AudioContext || window.webkitAudioContext;
-            if (!AudioCtx) return;
-            if (!window._tutAudioCtx) window._tutAudioCtx = new AudioCtx();
-            const ctx = window._tutAudioCtx;
-            if (ctx.state === 'suspended') ctx.resume();
-
-            const now = ctx.currentTime;
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-
-            if (type === 'complete') {
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(523.25, now);
-                osc.frequency.setValueAtTime(783.99, now + 0.07);
-                gain.gain.setValueAtTime(0.14, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.23);
-            } else {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(660, now);
-                osc.frequency.exponentialRampToValueAtTime(980, now + 0.055);
-                gain.gain.setValueAtTime(0.12, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.085);
-            }
-        } catch (e) {}
-    }
-
-    document.addEventListener('click', (e) => {
-        const btn = e.target.closest('button, [role="button"]');
-        if (!btn) return;
-
-        const isTutorialElement =
-            btn.closest('[id*="tutorial" i], [class*="tutorial" i], [id*="guide" i], [class*="guide" i], [id*="onboarding" i]') ||
-            (btn.id && /tutorial|guide|onboarding/i.test(btn.id)) ||
-            (btn.getAttribute('onclick') && /tutorial|guide/i.test(btn.getAttribute('onclick')));
-
-        if (!isTutorialElement) return;
-
-        const label = (btn.textContent || '').trim().toLowerCase();
-        const isFinishBtn = /selesai|finish|mulai|start|tutup|close|mengerti|got it|完了|閉じる/.test(label);
-
-        playTutorialUISound(isFinishBtn ? 'complete' : 'tap');
-    }, true);
-})();
-
-function finishFingerprintUnlock() {
-    const pad = document.getElementById('btn-fingerprint-auth');
-    const icon = document.getElementById('fp-svg-icon');
-    const statusText = document.getElementById('fp-status-text');
-    const subText = document.getElementById('fp-sub-text');
-    const splash = document.getElementById('system-splash-screen');
-
-    if (typeof playBiometricAudio === 'function') playBiometricAudio('success');
-    if (typeof triggerFingerprintVibrate === 'function') triggerFingerprintVibrate([60, 45, 120], 'complete');
-
-    if (pad) {
-        pad.classList.remove('scanning');
-        pad.classList.add('verified');
-    }
-    if (icon) icon.setAttribute('stroke', '#34d399');
-    if (statusText) {
-        statusText.textContent = '[ AKSES DITERIMA • SELAMAT DATANG HUNTER ]';
-        statusText.style.color = '#34d399';
-    }
-    if (subText) {
-        subText.textContent = 'Memasuki antarmuka SYSTEM RPG...';
-    }
-
-    setTimeout(() => {
-        if (splash) splash.classList.add('fade-out');
-        setTimeout(() => {
-            if (splash) splash.style.display = 'none';
-            if (typeof TUTORIAL_STORAGE_KEY !== 'undefined' && !localStorage.getItem(TUTORIAL_STORAGE_KEY)) {
-                if (typeof openTutorialModal === 'function') openTutorialModal(0);
-            }
-        }, 680);
-    }, 450);
 }
 
 // ==========================================
