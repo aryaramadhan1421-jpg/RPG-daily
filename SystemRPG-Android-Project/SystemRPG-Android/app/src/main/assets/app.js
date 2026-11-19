@@ -6191,7 +6191,7 @@ function startAutoSplashFantasyBGM() {
         splashBgmMasterGain = fpAudioCtx.createGain();
         // Volume master dinaikkan agar lebih kencang & jelas di speaker HP
         splashBgmMasterGain.gain.setValueAtTime(0.001, nowInit);
-        splashBgmMasterGain.gain.exponentialRampToValueAtTime(0.38, nowInit + 0.6);
+        splashBgmMasterGain.gain.exponentialRampToValueAtTime(0.65, nowInit + 0.4);
         splashBgmMasterGain.connect(fpAudioCtx.destination);
 
         // Melodi harpa & synth atmosferik bernuansa Dark Fantasy (D Dorian)
