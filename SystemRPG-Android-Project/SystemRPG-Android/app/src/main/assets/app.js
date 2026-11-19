@@ -5669,6 +5669,19 @@ function setAppFontFamily(famKey) {
     if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
 }
 
+(function initSystemThemeOnLoad() {
+    let saved = 'cyber';
+    if (typeof gameState !== 'undefined' && gameState.uiTheme && ALLOWED_THEMES.includes(gameState.uiTheme)) {
+        saved = gameState.uiTheme;
+    } else {
+        try {
+            saved = localStorage.getItem(SYSRPG_THEME_KEY) || 'cyber';
+        } catch (_) {}
+    }
+    document.documentElement.setAttribute('data-theme', ALLOWED_THEMES.includes(saved) ? saved : 'cyber');
+    syncThemeChips(saved);
+})();
+
 // ==========================================
 // 14. ANIME LOFI 1-HOUR ENGINE (DUNGEON)
 // ==========================================
