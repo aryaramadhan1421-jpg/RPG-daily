@@ -5580,7 +5580,7 @@ const FONT_FAMILIES = {
 };
 
 const SYSRPG_THEME_KEY = 'sysrpg_theme';
-const ALLOWED_THEMES = ['cyber', 'grimoire', 'emerald', 'daylight'];
+const ALLOWED_THEMES = ['cyber', 'crimson', 'cobalt'];
 
 function syncThemeChips(themeName) {
     const activeTheme = ALLOWED_THEMES.includes(themeName) ? themeName : 'cyber';
