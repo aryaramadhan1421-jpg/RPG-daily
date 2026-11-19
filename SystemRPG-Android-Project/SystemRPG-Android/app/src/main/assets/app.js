@@ -5850,7 +5850,138 @@ setTimeout(syncAndroidHomeWidget, 800);
 
 let isSplashUnlocking = false;
 let fpHoldTimer = null;
+let fpVibrateInterval = null;
 let fpAudioCtx = null;
+
+// ==========================================
+// AUTO FANTASY AMBIENT BGM (SPLASH SCREEN ONLY)
+// ==========================================
+let splashBgmInterval = null;
+let splashBgmMasterGain = null;
+let isSplashBgmPlaying = false;
+
+function startAutoSplashFantasyBGM() {
+    if (isSplashUnlocking || isSplashBgmPlaying) return;
+
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        if (!fpAudioCtx) fpAudioCtx = new AudioCtx();
+        if (fpAudioCtx.state === 'suspended') {
+            fpAudioCtx.resume();
+        }
+        if (fpAudioCtx.state !== 'running') return;
+
+        isSplashBgmPlaying = true;
+        splashBgmMasterGain = fpAudioCtx.createGain();
+        splashBgmMasterGain.gain.setValueAtTime(0.001, fpAudioCtx.currentTime);
+        splashBgmMasterGain.gain.exponentialRampToValueAtTime(0.14, fpAudioCtx.currentTime + 1.5);
+        splashBgmMasterGain.connect(fpAudioCtx.destination);
+
+        // Melodi harpa & synth atmosferik bernuansa Dark Fantasy (D Dorian)
+        const fantasyNotes = [
+            146.83, 220.00, 261.63, 293.66, 329.63, 349.23, 440.00, 523.25,
+            440.00, 349.23, 329.63, 293.66, 261.63, 220.00, 174.61, 220.00
+        ];
+        const bassNotes = [73.42, 73.42, 87.31, 65.41];
+        let step = 0;
+
+        const playFantasyStep = () => {
+            if (!isSplashBgmPlaying || isSplashUnlocking || !fpAudioCtx || !splashBgmMasterGain) return;
+            const now = fpAudioCtx.currentTime;
+
+            // Petikan Harpa / Celesta Fantasy
+            const freq = fantasyNotes[step % fantasyNotes.length];
+            const osc = fpAudioCtx.createOscillator();
+            const noteGain = fpAudioCtx.createGain();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now);
+
+            noteGain.gain.setValueAtTime(0.001, now);
+            noteGain.gain.linearRampToValueAtTime(0.32, now + 0.04);
+            noteGain.gain.exponentialRampToValueAtTime(0.0008, now + 1.45);
+
+            osc.connect(noteGain);
+            noteGain.connect(splashBgmMasterGain);
+            osc.start(now);
+            osc.stop(now + 1.5);
+
+            // Pad Bass hangat setiap 4 ketukan
+            if (step % 4 === 0) {
+                const bassFreq = bassNotes[Math.floor(step / 4) % bassNotes.length];
+                const bassOsc = fpAudioCtx.createOscillator();
+                const bassGain = fpAudioCtx.createGain();
+
+                bassOsc.type = 'sine';
+                bassOsc.frequency.setValueAtTime(bassFreq, now);
+
+                bassGain.gain.setValueAtTime(0.001, now);
+                bassGain.gain.linearRampToValueAtTime(0.35, now + 0.35);
+                bassGain.gain.exponentialRampToValueAtTime(0.001, now + 2.2);
+
+                bassOsc.connect(bassGain);
+                bassGain.connect(splashBgmMasterGain);
+                bassOsc.start(now);
+                bassOsc.stop(now + 2.25);
+            }
+
+            step++;
+        };
+
+        playFantasyStep();
+        splashBgmInterval = setInterval(playFantasyStep, 520);
+    } catch (e) {
+        isSplashBgmPlaying = false;
+    }
+}
+
+function stopAutoSplashFantasyBGM() {
+    isSplashBgmPlaying = false;
+    if (splashBgmInterval) {
+        clearInterval(splashBgmInterval);
+        splashBgmInterval = null;
+    }
+    if (splashBgmMasterGain && fpAudioCtx) {
+        try {
+            const now = fpAudioCtx.currentTime;
+            splashBgmMasterGain.gain.setValueAtTime(Math.max(0.001, splashBgmMasterGain.gain.value), now);
+            splashBgmMasterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+        } catch (e) {}
+    }
+}
+
+// Jalankan otomatis saat aplikasi dibuka (plus fallback jika browser menahan autoplay)
+window.addEventListener('load', () => {
+    startAutoSplashFantasyBGM();
+    setTimeout(startAutoSplashFantasyBGM, 400);
+
+    const resumeIfBlocked = () => {
+        if (!isSplashUnlocking && !isSplashBgmPlaying) {
+            startAutoSplashFantasyBGM();
+        }
+        if (isSplashBgmPlaying) {
+            document.removeEventListener('pointerdown', resumeIfBlocked);
+            document.removeEventListener('touchstart', resumeIfBlocked);
+        }
+    };
+    document.addEventListener('pointerdown', resumeIfBlocked, { passive: true });
+    document.addEventListener('touchstart', resumeIfBlocked, { passive: true });
+});
+
+function triggerFingerprintVibrate(pattern, bridgeType = 'tap') {
+    try {
+        if (window.AndroidBridge && typeof window.AndroidBridge.hapticFeedback === 'function') {
+            window.AndroidBridge.hapticFeedback(bridgeType);
+        }
+        if (typeof SoundFX !== 'undefined' && typeof SoundFX.triggerHaptic === 'function') {
+            SoundFX.triggerHaptic(bridgeType);
+        }
+        if (navigator && typeof navigator.vibrate === 'function') {
+            navigator.vibrate(pattern);
+        }
+    } catch (e) {}
+}
 
 function playBiometricAudio(stage) {
     try {
@@ -5932,11 +6063,20 @@ function startFingerprintHold(e) {
     }
 
     playBiometricAudio('pulse');
-    if (navigator.vibrate) {
-        try { navigator.vibrate(25); } catch (err) {}
-    }
+    triggerFingerprintVibrate(35, 'quest');
+
+    clearInterval(fpVibrateInterval);
+    fpVibrateInterval = setInterval(() => {
+        if (!fpHoldTimer || isSplashUnlocking) {
+            clearInterval(fpVibrateInterval);
+            return;
+        }
+        triggerFingerprintVibrate(22, 'tap');
+    }, 260);
 
     fpHoldTimer = setTimeout(() => {
+        clearInterval(fpVibrateInterval);
+        fpVibrateInterval = null;
         fpHoldTimer = null;
         completeFingerprintUnlock();
     }, 900);
@@ -5947,8 +6087,11 @@ function cancelFingerprintHold() {
 
     clearTimeout(fpHoldTimer);
     fpHoldTimer = null;
+    clearInterval(fpVibrateInterval);
+    fpVibrateInterval = null;
 
     playBiometricAudio('cancel');
+    triggerFingerprintVibrate([40, 30, 40], 'damage');
 
     const pad = document.getElementById('btn-fingerprint-auth');
     const statusText = document.getElementById('fp-status-text');
@@ -5966,6 +6109,9 @@ function cancelFingerprintHold() {
 
 function completeFingerprintUnlock() {
     isSplashUnlocking = true;
+    stopAutoSplashFantasyBGM();
+    clearInterval(fpVibrateInterval);
+    fpVibrateInterval = null;
 
     const pad = document.getElementById('btn-fingerprint-auth');
     const icon = document.getElementById('fp-svg-icon');
@@ -5974,9 +6120,7 @@ function completeFingerprintUnlock() {
     const splash = document.getElementById('system-splash-screen');
 
     playBiometricAudio('success');
-    if (navigator.vibrate) {
-        try { navigator.vibrate([50, 40, 100]); } catch (e) {}
-    }
+    triggerFingerprintVibrate([60, 45, 120], 'complete');
 
     if (pad) {
         pad.classList.remove('scanning');
@@ -6138,6 +6282,12 @@ function completeFingerprintUnlock() {
             '▶ Putar Anime Lofi (1 Jam)': '▶ Play Anime Lofi (1 Hour)',
             '⏸ Jeda Anime Lofi': '⏸ Pause Anime Lofi',
             '🎵 MP3 HP': '🎵 Phone MP3',
+            'ANCIENT GRIMOIRE // PDF READER': 'ANCIENT GRIMOIRE // PDF READER',
+            'Pilih file .PDF dari HP untuk membaca sambil timer fokus berjalan. Halaman terakhir otomatis tersimpan saat menekan 🔖 Tandai Hal Ini.': 'Select a .PDF file from your phone to read while the focus timer runs. The last page is saved automatically when you tap 🔖 Bookmark Page.',
+            'Pilih file': 'Select a',
+            'dari HP untuk membaca sambil timer fokus berjalan. Halaman terakhir otomatis tersimpan saat menekan': 'file from your phone to read while the focus timer runs. The last page is saved automatically when you tap',
+            'Belum ada file PDF dibuka': 'No PDF file opened yet',
+            'Ketuk tombol "Buka PDF" di atas untuk memilih materi bacaan': 'Tap "Open PDF" above to select reading material',
             '🔖 Bookmark Tersimpan (Per Judul File)': '🔖 Saved Bookmarks (By File Title)',
             'Belum ada bookmark tersimpan.': 'No bookmarks saved yet.',
             '🔖 Tandai Hal Ini': '🔖 Bookmark Page',
@@ -6337,6 +6487,12 @@ function completeFingerprintUnlock() {
             '▶ Putar Anime Lofi (1 Jam)': '▶ アニメLo-Fi再生 (1時間)',
             '⏸ Jeda Anime Lofi': '⏸ アニメLo-Fi一時停止',
             '🎵 MP3 HP': '🎵 端末MP3',
+            'ANCIENT GRIMOIRE // PDF READER': '古代の魔導書 // PDFリーダー',
+            'Pilih file .PDF dari HP untuk membaca sambil timer fokus berjalan. Halaman terakhir otomatis tersimpan saat menekan 🔖 Tandai Hal Ini.': '端末から .PDF ファイルを選択して集中タイマー中に閲覧できます。🔖 このページを保存 を押すと最後のページが自動保存されます。',
+            'Pilih file': '端末から',
+            'dari HP untuk membaca sambil timer fokus berjalan. Halaman terakhir otomatis tersimpan saat menekan': 'ファイルを選択して集中タイマー中に閲覧できます。',
+            'Belum ada file PDF dibuka': 'PDFファイルがまだ開かれていません',
+            'Ketuk tombol "Buka PDF" di atas untuk memilih materi bacaan': '上の「PDFを開く」をタップして教材を選択してください',
             '🔖 Bookmark Tersimpan (Per Judul File)': '🔖 保存済みブックマーク（ファイル別）',
             'Belum ada bookmark tersimpan.': '保存されたブックマークはありません。',
             '🔖 Tandai Hal Ini': '🔖 このページを保存',
@@ -6477,8 +6633,8 @@ function completeFingerprintUnlock() {
             },
             {
                 match: 'Pilih file',
-                subMatch: 'membaca sambil timer fokus berjalan',
-                html: 'Select a <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> file from your device to read while the focus timer runs. The last page is saved automatically when you tap <span style="color: #fcd34d; font-weight: 700;">🔖 Bookmark Page</span>.'
+                subMatch: 'timer fokus berjalan',
+                html: 'Select a <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> file from your phone to read while the focus timer runs. The last page is saved automatically when you tap <span style="color: #fcd34d; font-weight: 700;">🔖 Bookmark Page</span>.'
             },
             {
                 match: 'Common (50%):',
@@ -6529,7 +6685,7 @@ function completeFingerprintUnlock() {
             },
             {
                 match: 'Pilih file',
-                subMatch: 'membaca sambil timer fokus berjalan',
+                subMatch: 'timer fokus berjalan',
                 html: '端末から <span style="color: #d8b4fe; font-weight: 700;">.PDF</span> ファイルを選択して集中タイマー中に閲覧できます。<span style="color: #fcd34d; font-weight: 700;">🔖 このページを保存</span> を押すと最後のページが自動保存されます。'
             },
             {
