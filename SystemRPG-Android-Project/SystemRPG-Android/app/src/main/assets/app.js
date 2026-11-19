@@ -6161,23 +6161,37 @@ let fpAudioCtx = null;
 let splashBgmInterval = null;
 let splashBgmMasterGain = null;
 let isSplashBgmPlaying = false;
+let isStartingSplashBgm = false;
 
 function startAutoSplashFantasyBGM() {
-    if (isSplashUnlocking || isSplashBgmPlaying) return;
+    if (isSplashUnlocking || isSplashBgmPlaying || isStartingSplashBgm) return;
+    isStartingSplashBgm = true;
 
     try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        if (!fpAudioCtx) fpAudioCtx = new AudioCtx();
-        if (fpAudioCtx.state === 'suspended') {
-            fpAudioCtx.resume();
+        if (!AudioCtx) {
+            isStartingSplashBgm = false;
+            return;
         }
-        if (fpAudioCtx.state !== 'running') return;
+        if (!fpAudioCtx) fpAudioCtx = new AudioCtx();
+
+        if (fpAudioCtx.state === 'suspended') {
+            fpAudioCtx.resume().catch(() => {});
+        }
+        // Bersihkan interval lama jika ada
+        if (splashBgmInterval) {
+            clearInterval(splashBgmInterval);
+            splashBgmInterval = null;
+        }
 
         isSplashBgmPlaying = true;
+        isStartingSplashBgm = false;
+
+        const nowInit = fpAudioCtx.currentTime;
         splashBgmMasterGain = fpAudioCtx.createGain();
-        splashBgmMasterGain.gain.setValueAtTime(0.001, fpAudioCtx.currentTime);
-        splashBgmMasterGain.gain.exponentialRampToValueAtTime(0.14, fpAudioCtx.currentTime + 1.5);
+        // Volume master dinaikkan agar lebih kencang & jelas di speaker HP
+        splashBgmMasterGain.gain.setValueAtTime(0.001, nowInit);
+        splashBgmMasterGain.gain.exponentialRampToValueAtTime(0.38, nowInit + 0.6);
         splashBgmMasterGain.connect(fpAudioCtx.destination);
 
         // Melodi harpa & synth atmosferik bernuansa Dark Fantasy (D Dorian)
@@ -6190,42 +6204,77 @@ function startAutoSplashFantasyBGM() {
 
         const playFantasyStep = () => {
             if (!isSplashBgmPlaying || isSplashUnlocking || !fpAudioCtx || !splashBgmMasterGain) return;
+            if (fpAudioCtx.state === 'suspended') {
+                fpAudioCtx.resume().catch(() => {});
+            }
+
             const now = fpAudioCtx.currentTime;
 
-            // Petikan Harpa / Celesta Fantasy
+            // Petikan Harpa / Celesta Fantasy (lebih berkarakter & kencang)
             const freq = fantasyNotes[step % fantasyNotes.length];
             const osc = fpAudioCtx.createOscillator();
+            const overtoneOsc = fpAudioCtx.createOscillator();
+            const filter = fpAudioCtx.createBiquadFilter();
             const noteGain = fpAudioCtx.createGain();
 
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(freq, now);
 
+            // Oktaf halus untuk mempertegas suara di speaker kecil
+            overtoneOsc.type = 'sine';
+            overtoneOsc.frequency.setValueAtTime(freq * 2, now);
+
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(2400, now);
+
+            const overtoneGain = fpAudioCtx.createGain();
+            overtoneGain.gain.setValueAtTime(0.14, now);
+
             noteGain.gain.setValueAtTime(0.001, now);
-            noteGain.gain.linearRampToValueAtTime(0.32, now + 0.04);
-            noteGain.gain.exponentialRampToValueAtTime(0.0008, now + 1.45);
+            noteGain.gain.linearRampToValueAtTime(0.55, now + 0.03);
+            noteGain.gain.exponentialRampToValueAtTime(0.001, now + 1.45);
 
-            osc.connect(noteGain);
+            osc.connect(filter);
+            overtoneOsc.connect(overtoneGain);
+            overtoneGain.connect(filter);
+            filter.connect(noteGain);
             noteGain.connect(splashBgmMasterGain);
-            osc.start(now);
-            osc.stop(now + 1.5);
 
-            // Pad Bass hangat setiap 4 ketukan
+            osc.start(now);
+            overtoneOsc.start(now);
+            osc.stop(now + 1.5);
+            overtoneOsc.stop(now + 1.5);
+
+            // Pad Bass hangat setiap 4 ketukan (ditambah oktaf atas agar terdengar di speaker HP)
             if (step % 4 === 0) {
                 const bassFreq = bassNotes[Math.floor(step / 4) % bassNotes.length];
                 const bassOsc = fpAudioCtx.createOscillator();
+                const bassMidOsc = fpAudioCtx.createOscillator();
+                const bassFilter = fpAudioCtx.createBiquadFilter();
                 const bassGain = fpAudioCtx.createGain();
 
                 bassOsc.type = 'sine';
                 bassOsc.frequency.setValueAtTime(bassFreq, now);
 
-                bassGain.gain.setValueAtTime(0.001, now);
-                bassGain.gain.linearRampToValueAtTime(0.35, now + 0.35);
-                bassGain.gain.exponentialRampToValueAtTime(0.001, now + 2.2);
+                bassMidOsc.type = 'triangle';
+                bassMidOsc.frequency.setValueAtTime(bassFreq * 2, now);
 
-                bassOsc.connect(bassGain);
+                bassFilter.type = 'lowpass';
+                bassFilter.frequency.setValueAtTime(420, now);
+
+                bassGain.gain.setValueAtTime(0.001, now);
+                bassGain.gain.linearRampToValueAtTime(0.45, now + 0.25);
+                bassGain.gain.exponentialRampToValueAtTime(0.001, now + 2.15);
+
+                bassOsc.connect(bassFilter);
+                bassMidOsc.connect(bassFilter);
+                bassFilter.connect(bassGain);
                 bassGain.connect(splashBgmMasterGain);
+
                 bassOsc.start(now);
-                bassOsc.stop(now + 2.25);
+                bassMidOsc.start(now);
+                bassOsc.stop(now + 2.2);
+                bassMidOsc.stop(now + 2.2);
             }
 
             step++;
@@ -6235,11 +6284,13 @@ function startAutoSplashFantasyBGM() {
         splashBgmInterval = setInterval(playFantasyStep, 520);
     } catch (e) {
         isSplashBgmPlaying = false;
+        isStartingSplashBgm = false;
     }
 }
 
 function stopAutoSplashFantasyBGM() {
     isSplashBgmPlaying = false;
+    isStartingSplashBgm = false;
     if (splashBgmInterval) {
         clearInterval(splashBgmInterval);
         splashBgmInterval = null;
@@ -6247,173 +6298,36 @@ function stopAutoSplashFantasyBGM() {
     if (splashBgmMasterGain && fpAudioCtx) {
         try {
             const now = fpAudioCtx.currentTime;
+            splashBgmMasterGain.gain.cancelScheduledValues(now);
             splashBgmMasterGain.gain.setValueAtTime(Math.max(0.001, splashBgmMasterGain.gain.value), now);
-            splashBgmMasterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+            splashBgmMasterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
         } catch (e) {}
     }
 }
 
-// Jalankan otomatis saat aplikasi dibuka (plus fallback jika browser menahan autoplay)
-window.addEventListener('load', () => {
+function initSplashBgmAutoplay() {
     startAutoSplashFantasyBGM();
-    setTimeout(startAutoSplashFantasyBGM, 400);
 
-    const resumeIfBlocked = () => {
-        if (!isSplashUnlocking && !isSplashBgmPlaying) {
-            startAutoSplashFantasyBGM();
-        }
-        if (isSplashBgmPlaying) {
-            document.removeEventListener('pointerdown', resumeIfBlocked);
-            document.removeEventListener('touchstart', resumeIfBlocked);
-        }
-    };
-    document.addEventListener('pointerdown', resumeIfBlocked, { passive: true });
-    document.addEventListener('touchstart', resumeIfBlocked, { passive: true });
-});
-
-function triggerFingerprintVibrate(pattern, bridgeType = 'tap') {
-    try {
-        if (window.AndroidBridge && typeof window.AndroidBridge.hapticFeedback === 'function') {
-            window.AndroidBridge.hapticFeedback(bridgeType);
-        }
-        if (typeof SoundFX !== 'undefined' && typeof SoundFX.triggerHaptic === 'function') {
-            SoundFX.triggerHaptic(bridgeType);
-        }
-        if (navigator && typeof navigator.vibrate === 'function') {
-            navigator.vibrate(pattern);
-        }
-    } catch (e) {}
-}
-
-function playBiometricAudio(stage) {
-    try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
-        if (!fpAudioCtx) fpAudioCtx = new AudioContext();
-        if (fpAudioCtx.state === 'suspended') fpAudioCtx.resume();
-
-        const now = fpAudioCtx.currentTime;
-
-        if (stage === 'pulse') {
-            // 1 tap halus saat jari menyentuh sensor
-            const osc = fpAudioCtx.createOscillator();
-            const gain = fpAudioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(340, now);
-            osc.frequency.exponentialRampToValueAtTime(440, now + 0.06);
-
-            gain.gain.setValueAtTime(0.06, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
-
-            osc.connect(gain);
-            gain.connect(fpAudioCtx.destination);
-            osc.start(now);
-            osc.stop(now + 0.07);
-        } else if (stage === 'cancel') {
-            // 1 ketukan rendah lembut jika dilepas terlalu cepat
-            const osc = fpAudioCtx.createOscillator();
-            const gain = fpAudioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(240, now);
-            osc.frequency.exponentialRampToValueAtTime(170, now + 0.09);
-
-            gain.gain.setValueAtTime(0.05, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
-
-            osc.connect(gain);
-            gain.connect(fpAudioCtx.destination);
-            osc.start(now);
-            osc.stop(now + 0.1);
-        } else if (stage === 'success') {
-            // 2 nada chime bersih & modern saat akses terbuka
-            const freqs = [523.25, 659.25];
-            freqs.forEach((f, idx) => {
-                const osc = fpAudioCtx.createOscillator();
-                const gain = fpAudioCtx.createGain();
-                const start = now + idx * 0.07;
-
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(f, start);
-
-                gain.gain.setValueAtTime(0.08, start);
-                gain.gain.exponentialRampToValueAtTime(0.001, start + 0.14);
-
-                osc.connect(gain);
-                gain.connect(fpAudioCtx.destination);
-                osc.start(start);
-                osc.stop(start + 0.15);
-            });
-        }
-    } catch (e) {}
-}
-
-function startFingerprintHold(e) {
-    if (e && e.button !== undefined && e.button !== 0) return;
-    if (isSplashUnlocking || fpHoldTimer) return;
-
-    const pad = document.getElementById('btn-fingerprint-auth');
-    const statusText = document.getElementById('fp-status-text');
-    const subText = document.getElementById('fp-sub-text');
-
-    if (pad) pad.classList.add('scanning');
-    if (statusText) {
-        statusText.textContent = 'TAHAN JARI • MEMINDAI BIOMETRIK...';
-        statusText.style.color = '#38bdf8';
-    }
-    if (subText) {
-        subText.textContent = 'Jangan lepaskan jari sampai verifikasi penuh...';
-    }
-
-    playBiometricAudio('pulse');
-    triggerFingerprintVibrate(35, 'quest');
-
-    clearInterval(fpVibrateInterval);
-    fpVibrateInterval = setInterval(() => {
-        if (!fpHoldTimer || isSplashUnlocking) {
-            clearInterval(fpVibrateInterval);
+    const autoRetryTimer = setInterval(() => {
+        if (isSplashUnlocking || isSplashBgmPlaying) {
+            clearInterval(autoRetryTimer);
             return;
         }
-        triggerFingerprintVibrate(22, 'tap');
-    }, 260);
+        if (fpAudioCtx && fpAudioCtx.state === 'suspended') {
+            fpAudioCtx.resume().catch(() => {});
+        }
+        startAutoSplashFantasyBGM();
+    }, 300);
 
-    fpHoldTimer = setTimeout(() => {
-        clearInterval(fpVibrateInterval);
-        fpVibrateInterval = null;
-        fpHoldTimer = null;
-        completeFingerprintUnlock();
-    }, 900);
+    setTimeout(() => clearInterval(autoRetryTimer), 15000);
 }
 
-function cancelFingerprintHold() {
-    if (isSplashUnlocking || !fpHoldTimer) return;
-
-    clearTimeout(fpHoldTimer);
-    fpHoldTimer = null;
-    clearInterval(fpVibrateInterval);
-    fpVibrateInterval = null;
-
-    playBiometricAudio('cancel');
-    triggerFingerprintVibrate([40, 30, 40], 'damage');
-
-    const pad = document.getElementById('btn-fingerprint-auth');
-    const statusText = document.getElementById('fp-status-text');
-    const subText = document.getElementById('fp-sub-text');
-
-    if (pad) pad.classList.remove('scanning');
-    if (statusText) {
-        statusText.textContent = 'PEMINDAIAN TERPUTUS • TAHAN LEBIH LAMA';
-        statusText.style.color = '#f87171';
-    }
-    if (subText) {
-        subText.textContent = 'Tekan dan tahan sensor sidik jari untuk masuk';
-    }
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    initSplashBgmAutoplay();
+} else {
+    window.addEventListener('DOMContentLoaded', initSplashBgmAutoplay, { once: true });
+    window.addEventListener('load', initSplashBgmAutoplay, { once: true });
 }
-
-function completeFingerprintUnlock() {
-    isSplashUnlocking = true;
-    stopAutoSplashFantasyBGM();
-    clearInterval(fpVibrateInterval);
-    fpVibrateInterval = null;
 
     // ==========================================
 // TUTORIAL & GUIDE BUTTON CLICK SOUND EFFECT
