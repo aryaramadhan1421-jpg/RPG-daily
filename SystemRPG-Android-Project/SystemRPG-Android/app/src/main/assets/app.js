@@ -1680,6 +1680,76 @@ function revokeRewards(xpAmount, goldAmount, statType = null, statXpGain = 15) {
     }
 }
 
+function ensureRpgExtendedState() {
+    if (!gameState.penaltyQuest || typeof gameState.penaltyQuest !== 'object') {
+        gameState.penaltyQuest = {
+            active: false,
+            progress: 0,
+            targetCount: 2,
+            rewardHp: 25,
+            rewardGold: 15
+        };
+    } else {
+        gameState.penaltyQuest.active = Boolean(gameState.penaltyQuest.active);
+        gameState.penaltyQuest.progress = Math.max(0, Number(gameState.penaltyQuest.progress) || 0);
+        gameState.penaltyQuest.targetCount = Math.max(1, Number(gameState.penaltyQuest.targetCount) || 2);
+        gameState.penaltyQuest.rewardHp = Math.max(1, Number(gameState.penaltyQuest.rewardHp) || 25);
+        gameState.penaltyQuest.rewardGold = Math.max(0, Number(gameState.penaltyQuest.rewardGold) || 15);
+    }
+
+    if (!gameState.dailyCombo || typeof gameState.dailyCombo !== 'object') {
+        gameState.dailyCombo = {
+            dateKey: getCurrentGameDateKey(),
+            count: 0
+        };
+    } else {
+        gameState.dailyCombo.count = Math.max(0, Number(gameState.dailyCombo.count) || 0);
+    }
+}
+
+function assignPenaltyQuestOnDeath() {
+    ensureRpgExtendedState();
+    const maxHp = Math.max(50, Number(gameState.player.maxHp) || 100);
+    const healAmt = Math.max(20, Math.round(maxHp * 0.25));
+    gameState.penaltyQuest = {
+        active: true,
+        progress: 0,
+        targetCount: 2,
+        rewardHp: healAmt,
+        rewardGold: 15
+    };
+}
+
+function advancePenaltyQuestProgress() {
+    ensureRpgExtendedState();
+    const pq = gameState.penaltyQuest;
+    if (!pq.active) return null;
+
+    pq.progress += 1;
+    if (pq.progress >= pq.targetCount) {
+        const rewardHp = pq.rewardHp;
+        const rewardGold = pq.rewardGold;
+        gameState.player.hp = Math.min(gameState.player.maxHp, (gameState.player.hp || 0) + rewardHp);
+        gameState.player.gold = (gameState.player.gold || 0) + rewardGold;
+        pq.active = false;
+        pq.progress = 0;
+        return { completed: true, rewardHp, rewardGold };
+    }
+    return { completed: false, progress: pq.progress, targetCount: pq.targetCount };
+}
+
+function getDailyComboBonus() {
+    ensureRpgExtendedState();
+    const todayKey = getCurrentGameDateKey();
+    const dc = gameState.dailyCombo;
+    const count = (dc && dc.dateKey === todayKey) ? (dc.count || 0) : 0;
+
+    if (count >= 6) return { count, mult: 0.25, label: `${count}x OVERDRIVE (+25% XP)` };
+    if (count >= 4) return { count, mult: 0.15, label: `${count}x COMBO (+15% XP)` };
+    if (count >= 2) return { count, mult: 0.08, label: `${count}x STREAK (+8% XP)` };
+    return { count, mult: 0, label: '' };
+}
+
 function getPenaltyQuestBannerHtml() {
     ensureRpgExtendedState();
     const pq = gameState.penaltyQuest;
