@@ -7737,17 +7737,27 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
             `;
             document.body.appendChild(box);
 
-            box.querySelector('#sft-skip').onclick = function () {
+            box.addEventListener('click', function (e) {
+                e.stopPropagation();
+            });
+
+            box.querySelector('#sft-skip').onclick = function (e) {
+                e.preventDefault();
+                e.stopPropagation();
                 closeTutorialTour(false);
             };
-            box.querySelector('#sft-prev').onclick = function () {
+            box.querySelector('#sft-prev').onclick = function (e) {
+                e.preventDefault();
+                e.stopPropagation();
                 if (tutStep > 0) {
                     playTutorialSound('back');
                     tutStep--;
                     renderBox();
                 }
             };
-            box.querySelector('#sft-next').onclick = function () {
+            box.querySelector('#sft-next').onclick = function (e) {
+                e.preventDefault();
+                e.stopPropagation();
                 const total = getSteps().length;
                 if (tutStep < total - 1) {
                     playTutorialSound('next');
@@ -7764,6 +7774,8 @@ const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
     };
   // Perbarui bahasa tombol panduan saat bahasa diganti & tangkap klik tombol panduan
     document.addEventListener('click', function (e) {
+        if (e.target.closest('#sysrpg-force-tutorial')) return;
+
         const btn = e.target.closest('button');
         if (!btn) return;
 
