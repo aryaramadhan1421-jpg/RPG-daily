@@ -9290,84 +9290,81 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 // =============================================
-// SYSTEM RPG V6 - Settings Backup & Restore
+// SYSTEM RPG V6 - Hunter Save / Load Center
 // =============================================
 (function () {
-    'use strict';
-    const FORMAT = 'system-rpg-v6-backup';
-    const MAIN_KEY = 'system_rpg_productivity_offline_v2';
-    const EXTRA_KEYS = [
-        'system_rpg_flashcards_v1',
-        'sysrpg_tutorial_v2',
-        'system_rpg_lang',
-        'sysrpg_zoom_key',
-        'sysrpg_ffam_key'
-    ];
-    function validState(data) {
-        return data && typeof data === 'object' && !Array.isArray(data) &&
-            data.player && typeof data.player === 'object' &&
-            Array.isArray(data.quests) && data.quests.every(q => q && typeof q === 'object' && q.id != null);
-    }
-    function message(msg) { window.alert(msg); }
-    window.sysrpgExportBackup = function () {
-        try {
-            // Do not trigger a save: export the last successfully persisted state.
-            const raw = localStorage.getItem(MAIN_KEY);
-            if (!raw || !validState(JSON.parse(raw))) throw Error('Data progres belum tersedia atau tidak valid.');
-            const data = {format: FORMAT, version: 1, createdAt: new Date().toISOString(), storage: {[MAIN_KEY]: raw}};
-            EXTRA_KEYS.forEach(k => { const value = localStorage.getItem(k); if (value !== null) data.storage[k] = value; });
-            const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'SYSTEM_RPG_Backup_' + new Date().toISOString().slice(0,10) + '.json';
-            document.body.appendChild(link);
-            link.click(); link.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 30000);
-            message('Backup disiapkan. Pastikan file JSON benar-benar tersimpan di perangkat sebelum melakukan reset atau update.');
-        } catch (err) { message('Backup gagal: ' + err.message); }
-    };
-    window.sysrpgImportBackup = async function (event) {
-        const input = event && event.target;
-        const file = input && input.files && input.files[0];
-        if (!file) return;
-        try {
-            if (file.size > 20 * 1024 * 1024) throw Error('File terlalu besar (maksimal 20 MB).');
-            const obj = JSON.parse(await file.text());
-            if (!obj || obj.format !== FORMAT || obj.version !== 1 || !obj.storage || typeof obj.storage !== 'object') {
-                throw Error('Format backup tidak dikenali.');
-            }
-            const raw = obj.storage[MAIN_KEY];
-            if (typeof raw !== 'string') throw Error('Backup tidak berisi data progres.');
-            const parsed = JSON.parse(raw);
-            if (!validState(parsed)) throw Error('Struktur data progres tidak valid.');
-            for (const k of EXTRA_KEYS) {
-                if (Object.prototype.hasOwnProperty.call(obj.storage, k) && typeof obj.storage[k] !== 'string') {
-                    throw Error('Isi backup tidak valid: ' + k);
-                }
-            }
-            const who = String(parsed.player.name || 'Hunter').slice(0, 60);
-            const count = parsed.quests.length;
-            if (!window.confirm('RESTORE DATA SYSTEM RPG?\n\nHunter: ' + who + '\nQuest: ' + count + '\nTanggal backup: ' + (obj.createdAt || 'tidak diketahui') + '\n\nPERINGATAN: Progres saat ini akan diganti. Pastikan kamu sudah membuat backup terbaru.\n\nLanjutkan?')) return;
-            const keys = [MAIN_KEY, ...EXTRA_KEYS];
-            const old = {};
-            keys.forEach(k => { old[k] = localStorage.getItem(k); });
-            try {
-                localStorage.setItem(MAIN_KEY, raw);
-                EXTRA_KEYS.forEach(k => {
-                    if (Object.prototype.hasOwnProperty.call(obj.storage, k)) localStorage.setItem(k, obj.storage[k]);
-                });
-                // Keep Android's silent auto-backup in sync, otherwise it may restore stale progress.
-                if (window.AndroidBridge && typeof window.AndroidBridge.saveAutoBackup === 'function') {
-                    window.AndroidBridge.saveAutoBackup(raw);
-                }
-            } catch (writeError) {
-                keys.forEach(k => { try { if (old[k] === null) localStorage.removeItem(k); else localStorage.setItem(k, old[k]); } catch (_) {} });
-                throw writeError;
-            }
-            message('Restore berhasil disimpan. Aplikasi akan dimuat ulang untuk menerapkan progres.');
-            window.location.reload();
-        } catch (err) { message('Restore dibatalkan: ' + err.message); }
-        finally { if (input) input.value = ''; }
-    };
+ 'use strict';
+ const FORMAT='system-rpg-v6-backup', MAIN='system_rpg_productivity_offline_v2';
+ const EXTRA=['system_rpg_flashcards_v1','sysrpg_tutorial_v2','system_rpg_lang','sysrpg_zoom_key','sysrpg_ffam_key'];
+ const SLOT_PREFIX='system_rpg_manual_save_slot_v2_';
+ const css='background:#071827;color:#e2e8f0;border:1px solid #155e75;border-radius:12px;padding:14px;';
+ const btn='border:1px solid #0891b2;border-radius:8px;background:#083344;color:#a5f3fc;padding:10px;font-weight:700;cursor:pointer;';
+ function valid(s){return s&&typeof s==='object'&&!Array.isArray(s)&&s.player&&typeof s.player==='object'&&Array.isArray(s.quests)&&s.quests.every(q=>q&&typeof q==='object'&&q.id!=null);}
+ function readBackup(){
+   // saveState() is the game's existing persistence mechanism; do not recalculate penalties.
+   if(typeof saveState==='function') saveState();
+   const raw=localStorage.getItem(MAIN);
+   if(!raw||!valid(JSON.parse(raw))) throw Error('Progres tidak valid; backup tidak dibuat.');
+   const storage={[MAIN]:raw};EXTRA.forEach(k=>{const v=localStorage.getItem(k);if(v!==null)storage[k]=v;});
+   return {format:FORMAT,version:1,createdAt:new Date().toISOString(),storage};
+ }
+ function parseBackup(obj){
+   if(!obj||obj.format!==FORMAT||obj.version!==1||!obj.storage||typeof obj.storage!=='object'||Array.isArray(obj.storage))throw Error('Format backup tidak dikenali.');
+   const raw=obj.storage[MAIN];if(typeof raw!=='string')throw Error('Backup tidak berisi progres.');
+   const state=JSON.parse(raw);if(!valid(state))throw Error('Struktur Quest atau Hunter tidak valid.');
+   for(const k of EXTRA)if(Object.hasOwn(obj.storage,k)&&typeof obj.storage[k]!=='string')throw Error('Data tambahan rusak: '+k);
+   return {raw,state};
+ }
+ function modal(title,render){
+   document.getElementById('sysrpg-save-overlay')?.remove();
+   const overlay=document.createElement('div');overlay.id='sysrpg-save-overlay';
+   overlay.style.cssText='position:fixed;inset:0;z-index:2147483646;background:rgba(0,0,0,.86);display:flex;align-items:center;justify-content:center;padding:18px;';
+   const panel=document.createElement('section');panel.style.cssText=css+'width:min(100%,420px);max-height:85vh;overflow:auto;box-shadow:0 12px 50px #000;';
+   const h=document.createElement('h2');h.textContent=title;h.style.cssText='font-weight:900;color:#67e8f9;margin-bottom:12px;font-size:17px;';panel.appendChild(h);
+   const body=document.createElement('div');body.style.cssText='display:grid;gap:10px;';panel.appendChild(body);
+   const close=document.createElement('button');close.textContent='TUTUP';close.style.cssText=btn+'margin-top:14px;width:100%;';close.onclick=()=>overlay.remove();panel.appendChild(close);
+   overlay.appendChild(panel);document.body.appendChild(overlay);render(body,()=>overlay.remove());
+ }
+ function line(body,text){const el=document.createElement('div');el.textContent=text;el.style.cssText='font-size:12px;line-height:1.5;color:#cbd5e1;';body.appendChild(el);return el;}
+ function action(body,text,handler){const b=document.createElement('button');b.textContent=text;b.style.cssText=btn+'width:100%;text-align:left;';b.onclick=handler;body.appendChild(b);return b;}
+ function notice(title,text){modal(title,(b)=>line(b,text));}
+ function slot(i){const s=localStorage.getItem(SLOT_PREFIX+i);if(!s)return null;try{const obj=JSON.parse(s);const {state}=parseBackup(obj);return {obj,state};}catch(_){return {invalid:true};}}
+ function desc(s){if(!s)return 'KOSONG';if(s.invalid)return 'DATA RUSAK — jangan digunakan';return `${new Date(s.obj.createdAt).toLocaleString('id-ID')} · ${String(s.state.player.name||'Hunter').slice(0,30)} · ${s.state.quests.length} Quest`;}
+ function confirmScreen(title,info,onYes){modal(title,(b,close)=>{line(b,info);action(b,'YA, LANJUTKAN',()=>{close();onYes();});action(b,'BATAL',close);});}
+ function restore(obj){
+   let checked;try{checked=parseBackup(obj);}catch(e){notice('LOAD GAGAL',e.message);return;}
+   const name=String(checked.state.player.name||'Hunter').slice(0,50);
+   confirmScreen('KONFIRMASI LOAD GAME',`Hunter: ${name} · ${checked.state.quests.length} Quest. Progres aktif akan diganti dengan backup ${new Date(obj.createdAt).toLocaleString('id-ID')}.`,()=>{
+     const keys=[MAIN,...EXTRA];const old={};keys.forEach(k=>old[k]=localStorage.getItem(k));
+     try{
+       localStorage.setItem(MAIN,checked.raw);
+       EXTRA.forEach(k=>{if(Object.hasOwn(obj.storage,k))localStorage.setItem(k,obj.storage[k]);});
+       if(window.AndroidBridge&&typeof window.AndroidBridge.saveAutoBackup==='function')window.AndroidBridge.saveAutoBackup(checked.raw);
+       notice('LOAD BERHASIL','Progres berhasil dipulihkan. Tekan tombol di bawah untuk memuat ulang aplikasi.');
+       const panel=document.querySelector('#sysrpg-save-overlay section div');
+       if(panel)action(panel,'MUAT ULANG SEKARANG',()=>window.location.reload());
+     }catch(e){keys.forEach(k=>{try{if(old[k]===null)localStorage.removeItem(k);else localStorage.setItem(k,old[k]);}catch(_){}});notice('LOAD GAGAL','Penyimpanan tidak berhasil: '+e.message);}
+   });
+ }
+ window.sysrpgOpenSaveCenter=function(){modal('🛡️ HUNTER SAVE GAME',(b)=>{
+   line(b,'Pilih slot untuk menyimpan progres saat ini. Slot lama akan diganti hanya setelah konfirmasi.');
+   for(let i=1;i<=3;i++){const n=i,s=slot(n);action(b,`SLOT ${n} · ${desc(s)}`,()=>{
+     const doSave=()=>{try{const obj=readBackup();localStorage.setItem(SLOT_PREFIX+n,JSON.stringify(obj));notice('SAVE BERHASIL',`Progres tersimpan di Slot ${n}. Slot ini berada di data aplikasi, bukan file HP.`);}catch(e){notice('SAVE GAGAL',e.message);}};
+     if(s)confirmScreen('TIMPA SLOT '+n,'Cadangan lama di slot ini akan diganti. Lanjutkan?',doSave);else doSave();
+   });}
+   line(b,'Penting: Slot lokal ikut terhapus jika data aplikasi dibersihkan atau aplikasi di-uninstall. Gunakan Export ke HP untuk cadangan tambahan.');
+ });};
+ window.sysrpgOpenLoadCenter=function(){modal('📂 HUNTER LOAD GAME',(b)=>{
+   line(b,'Pilih slot yang ingin dipulihkan. Tidak perlu mencari file di Drive.');
+   for(let i=1;i<=3;i++){const s=slot(i);const button=action(b,`SLOT ${i} · ${desc(s)}`,()=>{if(s&&!s.invalid)restore(s.obj);});if(!s||s.invalid){button.disabled=true;button.style.opacity='.45';}}
+   action(b,'📁 IMPORT FILE JSON DARI HP',()=>{document.getElementById('sysrpg-backup-import')?.click();});
+ });};
+ window.sysrpgExportBackup=function(){
+   try{const obj=readBackup();const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='SYSTEM_RPG_Backup_'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+     notice('EXPORT DIMULAI','Permintaan penyimpanan JSON sudah dikirim. Periksa folder Download atau lokasi yang dipilih; ekspor belum dapat dipastikan berhasil dari dalam WebView.');
+   }catch(e){notice('EXPORT GAGAL',e.message);}
+ };
+ window.sysrpgImportBackup=async function(event){const input=event?.target;const file=input?.files?.[0];if(!file)return;
+   try{if(file.size>20*1024*1024)throw Error('File terlalu besar (maks. 20 MB).');const obj=JSON.parse(await file.text());parseBackup(obj);restore(obj);}catch(e){notice('IMPORT GAGAL',e.message);}finally{if(input)input.value='';}
+ };
 })();
