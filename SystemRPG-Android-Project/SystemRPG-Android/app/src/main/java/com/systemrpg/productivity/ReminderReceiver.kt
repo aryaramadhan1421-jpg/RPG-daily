@@ -59,27 +59,30 @@ class ReminderReceiver : BroadcastReceiver() {
         // Ambil target dinamis yang dipilih pengguna (default 70 jika belum diatur)
         val targetPct = widgetPrefs.getInt("dailyTargetPct", 70)
 
-        // Jika target hari ini sudah >= targetPct dan bukan slot Malam, lewati notifikasi
-        if (dailyPct >= targetPct && slot != "Malam") {
-            MainActivity.scheduleExactAlarmsFromPrefs(context)
-            return
-        }
+        // Five user-chosen reminders fire even after quests are complete;
+        // the message below switches to a positive completion note.
 
         val title = when {
             lang.startsWith("en") -> when (slot) {
-                "Pagi" -> "[SYSTEM] Morning Daily Quests Ready, $playerName"
+                "Pagi" -> "[SYSTEM] Dawn Hunter Check-in, $playerName"
+                "Siang" -> "[SYSTEM] Noon Quest Check ($dailyPct%)"
+                "Petang" -> "[SYSTEM] Evening Quest Review ($dailyPct%)"
                 "Sore" -> "[SYSTEM] Afternoon Check ($dailyPct% Clear)"
                 "Malam" -> "[PENALTY WARNING] Finish Quests Before 00:00!"
                 else -> "[SYSTEM] Daily Quest Reminder"
             }
             lang.startsWith("ja") -> when (slot) {
-                "Pagi" -> "[SYSTEM] 朝のデイリークエスト準備完了、$playerName"
+                "Pagi" -> "[SYSTEM] 早朝のハンター点検、$playerName"
+                "Siang" -> "[SYSTEM] お昼のクエスト確認 ($dailyPct%)"
+                "Petang" -> "[SYSTEM] 夕方の進捗確認 ($dailyPct%)"
                 "Sore" -> "[SYSTEM] 夕方の進捗確認 (達成率 $dailyPct%)"
                 "Malam" -> "[ペナルティ警告] 00:00までにクエストを完了せよ！"
                 else -> "[SYSTEM] デイリークエスト通知"
             }
             else -> when (slot) {
-                "Pagi" -> "[SYSTEM] Daily Quest Pagi Siap, $playerName"
+                "Pagi" -> "[SYSTEM] Check-in Subuh, $playerName"
+                "Siang" -> "[SYSTEM] Pantau Quest Siang ($dailyPct%)"
+                "Petang" -> "[SYSTEM] Evaluasi Petang ($dailyPct%)"
                 "Sore" -> "[SYSTEM] Evaluasi Sore ($dailyPct% Clear)"
                 "Malam" -> "[PERINGATAN PENALTI] Selesaikan Quest Sebelum 00:00!"
                 else -> "[SYSTEM] Pengingat Daily Quest"
@@ -143,7 +146,7 @@ class ReminderReceiver : BroadcastReceiver() {
         )
 
         val notification = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))

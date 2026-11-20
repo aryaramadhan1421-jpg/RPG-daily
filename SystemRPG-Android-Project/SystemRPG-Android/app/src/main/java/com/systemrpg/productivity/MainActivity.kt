@@ -172,7 +172,7 @@ class MainActivity : ComponentActivity() {
 
             try {
                 val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                for (reqCode in listOf(1001, 1002, 1003)) {
+                for (reqCode in listOf(1001, 1002, 1003, 1004, 1005)) {
                     val intent = Intent(this@MainActivity, ReminderReceiver::class.java)
                     val pendingIntent = PendingIntent.getBroadcast(
                         this@MainActivity,
@@ -395,7 +395,7 @@ class MainActivity : ComponentActivity() {
 
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
@@ -559,15 +559,10 @@ class MainActivity : ComponentActivity() {
                 val lastUpdated = prefs.getString("lastUpdatedDate", "") ?: ""
 
                 if (lastUpdated != todayStr) {
-                    val prevDailyPct = prefs.getInt("dailyPct", 0)
-                    var streak = prefs.getInt("streak", 0)
+                    // The widget cannot determine whether a Streak Shield covered yesterday.
+                    // Keep the last confirmed streak until JS settles missed days on the next app open.
+                    val streak = prefs.getInt("streak", 0)
                     val oldHistory = prefs.getString("weekHistory", "0000000") ?: "0000000"
-                    val threshold = prefs.getInt("dailyTargetPct", 70)
-
-                    // Jika kemarin < threshold target, streak reset ke 0
-                    if (prevDailyPct < threshold) {
-                        streak = 0
-                    }
 
                     val cal = Calendar.getInstance()
                     val isMonday = cal.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY
@@ -614,7 +609,7 @@ class MainActivity : ComponentActivity() {
 
                 val times = JSONObject(timesJson)
                 val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                val slots = listOf("Pagi" to 1001, "Sore" to 1002, "Malam" to 1003)
+                val slots = listOf("Pagi" to 1001, "Sore" to 1002, "Malam" to 1003, "Siang" to 1004, "Petang" to 1005)
 
                 for ((slotName, reqCode) in slots) {
                     val intent = Intent(context, ReminderReceiver::class.java).apply {
@@ -631,11 +626,13 @@ class MainActivity : ComponentActivity() {
 
                     alarmManager.cancel(pendingIntent)
 
-                    val timeStr = times.optString(slotName, "")
+                    val defaults = mapOf("Pagi" to "04:00", "Siang" to "12:00", "Sore" to "15:30", "Petang" to "18:00", "Malam" to "20:00")
+                    val timeStr = times.optString(slotName, defaults[slotName] ?: "")
                     val parts = timeStr.split(":")
                     if (parts.size == 2) {
                         val hour = parts[0].toIntOrNull() ?: continue
                         val minute = parts[1].toIntOrNull() ?: continue
+                        if (hour !in 0..23 || minute !in 0..59) continue
 
                         val cal = Calendar.getInstance().apply {
                             set(Calendar.HOUR_OF_DAY, hour)
