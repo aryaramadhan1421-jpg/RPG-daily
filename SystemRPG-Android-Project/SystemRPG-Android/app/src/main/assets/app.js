@@ -1216,6 +1216,34 @@ function evaluateDailyTier(ratio, maxHp) {
     }
 }
 
+// Pending daily reports are stored with the game state so an interrupted splash
+// cannot silently consume a report or re-apply its HP penalty.
+let dailyReportOpen = false;
+function showPendingDailyReport() {
+    if (!gameState || !gameState.pendingDailyReport || dailyReportOpen) return;
+    const splash = document.getElementById('system-splash-screen');
+    if (splash && splash.style.display !== 'none' && !splash.classList.contains('hidden') && !splash.classList.contains('is-hidden')) return;
+    const report = gameState.pendingDailyReport;
+    if (!document.getElementById('modal-system-msg')) return;
+    dailyReportOpen = true;
+    const rows = (report.days || []).map(day => {
+        const state = day.status === 'protected' ? '🛡️ Shield' : day.status === 'completed' ? '✅' : '❌';
+        return [day.date, `${day.done}/${day.total} (${day.pct}%) ${state} · -${day.damage} HP`, '📅'];
+    });
+    rows.push(['TOTAL HP LOST', `-${report.damage} HP`, '💔']);
+    rows.push(['CURRENT HP', `${gameState.player.hp}/${gameState.player.maxHp}`, '❤️']);
+    showSystemModal('📊 DAILY SYSTEM REPORT',
+        `${report.days.length} hari dievaluasi. Penalti sudah diterapkan satu kali dan tidak akan dihitung ulang.`,
+        null, {type:'daily', cards:rows, hint:'Tekan OK untuk menandai laporan telah dibaca.'});
+}
+function acknowledgeDailyReport() {
+    if (!dailyReportOpen) return;
+    dailyReportOpen = false;
+    if (gameState && gameState.pendingDailyReport) {
+        delete gameState.pendingDailyReport;
+        saveState();
+    }
+}
 function checkRealDayRollover() {
     // Calendar-based, idempotent settlement. All data stays local/offline.
     if (!gameState || !gameState.player || !Array.isArray(gameState.quests)) return;
@@ -1233,6 +1261,7 @@ function checkRealDayRollover() {
     // Snapshot today's target was captured before midnight; old installs use existing target.
     const threshold = Number(gameState.activeDayThresholdPct) || getStreakThresholdPct();
     let settled = 0, protectedDays = 0, brokenDays = 0, totalDamage = 0;
+    const dailyReportDays = [];
     for (let i = 0; i < Math.min(diff, 3660); i++) {
         const date = new Date(Date.UTC(+cursor.slice(0,4), +cursor.slice(5,7)-1, +cursor.slice(8)+i));
         const key = date.toISOString().slice(0,10);
@@ -1259,11 +1288,14 @@ function checkRealDayRollover() {
             gameState.player.streak = 0;
             status = 'broken'; brokenDays++;
         }
+        let appliedDamage = 0;
         if (damage > 0) {
             // Process once per date. takeDamage also honors existing mitigation/death rules.
             const result = takeDamage(damage, true);
-            totalDamage += result.mitigatedDamage || 0;
+            appliedDamage = result.mitigatedDamage || 0;
+            totalDamage += appliedDamage;
         }
+        dailyReportDays.push({date:key, done, total, pct, status, damage:appliedDamage});
         gameState.history.evaluations[key] = {dateStr:key, doneCount:done, totalDaily:total, pct, thresholdPct:threshold, streakStatus:status, evaluatedAt:new Date().toISOString(), automatic:true};
         settled++;
     }
@@ -1273,9 +1305,15 @@ function checkRealDayRollover() {
     gameState.lastRealDate = today;
     gameState.lastStreakDate = null;
     gameState.activeDayThresholdPct = getStreakThresholdPct();
+    if (dailyReportDays.length) {
+        const previous = gameState.pendingDailyReport;
+        const days = [...(previous && Array.isArray(previous.days) ? previous.days : []), ...dailyReportDays];
+        gameState.pendingDailyReport = {days:days.slice(-3660), damage:days.reduce((n,d)=>n+(Number(d.damage)||0),0)};
+    }
     saveState();
     renderAll();
-    if (settled && typeof spawnFloatingReward === 'function') spawnFloatingReward(`📅 ${settled} hari dicatat • 🛡️ ${protectedDays} terlindungi • 💔 ${brokenDays} streak putus • -${totalDamage} HP`);
+    // The full persistent report appears after the fingerprint splash is dismissed.
+    if (settled) setTimeout(showPendingDailyReport, 500);
 }
 
 function saveState() {
@@ -2755,6 +2793,153 @@ function saveEditedQuest(e) {
     spawnFloatingReward('✏️ Quest Berhasil Diperbarui!');
 }
 
+// Quest ordering is stored in the existing gameState.quests array.
+// Reordering changes positions only; XP, rewards, and completion remain untouched.
+function questOrderVisibleIds() {
+    return Array.from(document.querySelectorAll('#quest-list [data-quest-order-id]'))
+        .map(el => el.dataset.questOrderId);
+}
+function moveQuestInOrder(fromId, toId) {
+    if (!fromId || !toId || fromId === toId) return;
+    const quests = gameState.quests;
+    const from = quests.findIndex(q => String(q.id) === String(fromId));
+    const to = quests.findIndex(q => String(q.id) === String(toId));
+    if (from < 0 || to < 0) return;
+    const [item] = quests.splice(from, 1);
+    quests.splice(to, 0, item);
+    saveState();
+    renderQuests();
+}
+// Long-press quest sorting: live DOM reordering, commit only on release.
+const questSort = {timer:null, active:false, pointerId:null, card:null, origin:null,
+    startX:0,startY:0,x:0,y:0,raf:0, suppressUntil:0, moved:false};
+function questSortClearTimer() {
+    if (questSort.timer) clearTimeout(questSort.timer);
+    questSort.timer = null;
+}
+function questSortStart(event) {
+    if (event.button !== undefined && event.button !== 0) return;
+    if (questSort.active || questSort.timer) return;
+    if (event.target.closest('button, input, textarea, select, a, [contenteditable="true"]')) return;
+    const card = event.target.closest('[data-quest-order-id]');
+    if (!card || !card.closest('#quest-list')) return;
+    questSort.pointerId = event.pointerId;
+    questSort.card = card;
+    questSort.origin = questOrderVisibleIds();
+    questSort.startX = questSort.x = event.clientX;
+    questSort.startY = questSort.y = event.clientY;
+    questSort.moved = false;
+    questSort.timer = setTimeout(() => {
+        questSort.timer = null;
+        if (!questSort.card || !questSort.card.isConnected) return;
+        questSort.active = true;
+        questSort.card.style.cssText += ';position:relative;z-index:25;box-shadow:0 10px 30px rgba(34,211,238,.28);border-color:#22d3ee;transform:scale(1.018);transition:transform .14s ease, box-shadow .14s ease;';
+        questSort.card.style.touchAction = 'none';
+        document.body.style.userSelect = 'none';
+        try {
+            if (window.AndroidBridge && typeof window.AndroidBridge.vibrate === 'function') window.AndroidBridge.vibrate(25);
+            else if (navigator.vibrate) navigator.vibrate(25);
+        } catch (_) {}
+        questSort.raf = requestAnimationFrame(questSortAutoScroll);
+    }, 350);
+}
+function questSortMove(event) {
+    if (questSort.pointerId !== event.pointerId || !questSort.card) return;
+    questSort.x = event.clientX;
+    questSort.y = event.clientY;
+    if (!questSort.active) {
+        if (Math.hypot(questSort.x-questSort.startX,questSort.y-questSort.startY)>9) questSortAbort(false);
+        return;
+    }
+    if (event.cancelable) event.preventDefault();
+    questSort.moved = true;
+    questSortReposition();
+}
+function questSortReposition() {
+    if (!questSort.active || !questSort.card) return;
+    const container = document.getElementById('quest-list');
+    if (!container) return;
+    const siblings = [...container.querySelectorAll('[data-quest-order-id]')].filter(el => el!==questSort.card);
+    for (const sibling of siblings) {
+        const rect=sibling.getBoundingClientRect();
+        const midpoint=rect.top+rect.height/2;
+        if (questSort.y < midpoint) {
+            if (questSort.card.nextElementSibling!==sibling) container.insertBefore(questSort.card,sibling);
+            return;
+        }
+    }
+    if (siblings.length && container.lastElementChild!==questSort.card) container.appendChild(questSort.card);
+}
+function questSortAutoScroll() {
+    if (!questSort.active) return;
+    const edge=75, y=questSort.y, h=window.innerHeight;
+    const speed=y<edge ? -Math.min(16,(edge-y)/edge*16) : y>h-edge ? Math.min(16,(y-(h-edge))/edge*16) : 0;
+    if (speed) {
+        const candidates=[...document.querySelectorAll('*')].filter(el=>{
+            if (!el.contains(questSort.card)) return false;
+            const st=getComputedStyle(el), overflow=st.overflowY;
+            return (overflow==='auto'||overflow==='scroll') && el.scrollHeight>el.clientHeight+2;
+        });
+        const scrollBox=candidates[0];
+        if (scrollBox) scrollBox.scrollTop+=speed;
+        else window.scrollBy(0,speed);
+        questSortReposition();
+    }
+    questSort.raf=requestAnimationFrame(questSortAutoScroll);
+}
+function questSortFinish(event) {
+    if (event.pointerId!==questSort.pointerId) return;
+    if (!questSort.active) { questSortAbort(false); return; }
+    const ordered=questOrderVisibleIds();
+    const original=questSort.origin || [];
+    const changed=ordered.length===original.length && ordered.some((id,i)=>id!==original[i]);
+    questSort.suppressUntil=Date.now()+500;
+    questSortAbort(false);
+    if (!changed) return;
+    // Preserve filtered-out quests in their original slots; never change quest data.
+    const visible=new Set(original);
+    let next=0;
+    gameState.quests=gameState.quests.map(q=>visible.has(String(q.id))
+        ? gameState.quests.find(x=>String(x.id)===ordered[next++]) : q);
+    saveState();
+    renderQuests();
+}
+function questSortAbort(restore) {
+    questSortClearTimer();
+    if (questSort.raf) cancelAnimationFrame(questSort.raf);
+    questSort.raf=0;
+    if (restore && questSort.active && questSort.origin) {
+        const list=document.getElementById('quest-list');
+        if (list) for (const id of questSort.origin) {
+            const el=[...list.querySelectorAll('[data-quest-order-id]')].find(x=>x.dataset.questOrderId===id);
+            if (el) list.appendChild(el);
+        }
+    }
+    if (questSort.card && questSort.active) {
+        questSort.card.style.removeProperty('position');
+        questSort.card.style.removeProperty('z-index');
+        questSort.card.style.removeProperty('box-shadow');
+        questSort.card.style.removeProperty('transform');
+        questSort.card.style.removeProperty('transition');
+        questSort.card.style.removeProperty('touch-action');
+    }
+    document.body.style.removeProperty('user-select');
+    questSort.active=false;questSort.card=null;questSort.origin=null;questSort.pointerId=null;
+}
+// Android WebView: stop native page scrolling only after long-press has activated.
+document.addEventListener('touchmove', event => {
+    if (questSort.active && event.cancelable) event.preventDefault();
+}, {passive:false, capture:true});
+document.addEventListener('pointermove',questSortMove,{passive:false});
+document.addEventListener('pointerup',questSortFinish);
+document.addEventListener('pointercancel',()=>questSortAbort(true));
+window.addEventListener('blur',()=>questSortAbort(true));
+document.addEventListener('click',event=>{
+    if (Date.now()<questSort.suppressUntil && event.target.closest('#quest-list')) {
+        event.preventDefault();event.stopImmediatePropagation();
+    }
+},true);
+
 function renderQuests() {
     const container = document.getElementById('quest-list');
     container.innerHTML = '';
@@ -2807,7 +2992,7 @@ function renderQuests() {
             const matchDay = currentQuestDayFilter === 'ALL' || isQuestActiveOnDate(q, getCurrentGameDateKey());
             return matchCat && matchTime && matchStatus && matchSearch && matchDay;
         })
-        .sort((a, b) => Number(a.completed) - Number(b.completed));
+        ; // Manual quest order: do not auto-move completed quests
 
     if (filtered.length === 0) {
         container.innerHTML = `
@@ -2853,6 +3038,9 @@ function renderQuests() {
         const slot = inferQuestTimeSlot(q);
         const card = document.createElement('div');
         card.className = 'system-card flex items-center justify-between gap-2';
+        card.dataset.questOrderId = String(q.id);
+        card.addEventListener('pointerdown', questSortStart, {passive:true});
+        card.addEventListener('contextmenu', event => { if (questSort.active) event.preventDefault(); });
         card.style.cssText = `padding: 0.875rem; border-radius: 0.75rem; ${isDone ? 'opacity: 0.74; border-color: rgba(16,185,129,0.38);' : ''}`;
 
         const checkBtnStyle = isDone 
@@ -4674,6 +4862,7 @@ function openModal(id) {
 }
 
 function closeModal(id) {
+    if (id === 'modal-system-msg') acknowledgeDailyReport();
     SoundFX.playClick();
     document.getElementById(id).classList.add('hidden');
 }
@@ -6505,7 +6694,7 @@ let rpgSplashAudio = null;
 function startAutoSplashFantasyBGM() {
     if (isSplashUnlocking || isSplashBgmPlaying) return;
     if (!rpgSplashAudio) {
-        rpgSplashAudio = new Audio('dark-awakening.ogg');
+        rpgSplashAudio = new Audio('awakening-cinematic.ogg');
         rpgSplashAudio.loop = true;
         rpgSplashAudio.preload = 'auto';
         rpgSplashAudio.volume = 0.9;
@@ -6518,6 +6707,22 @@ function stopAutoSplashFantasyBGM() {
     isStartingSplashBgm = false;
     if (splashBgmInterval) { clearInterval(splashBgmInterval); splashBgmInterval = null; }
     if (rpgSplashAudio) { rpgSplashAudio.pause(); rpgSplashAudio.currentTime = 0; }
+}
+
+// Native haptics first: Android WebView does not reliably implement navigator.vibrate.
+// The preference is opt-out, and is safe to use even before Settings is opened.
+function awakeningHaptic(kind) {
+    try {
+        if (localStorage.getItem('system_rpg_haptic_enabled') === 'false') return;
+        const bridge = window.AndroidBridge;
+        if (bridge && typeof bridge.hapticFeedback === 'function') {
+            bridge.hapticFeedback(kind === 'success' ? 'levelup' : 'tap');
+            return;
+        }
+        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+            navigator.vibrate(kind === 'success' ? [60, 45, 110, 55, 160] : 35);
+        }
+    } catch (_) {}
 }
 
 function setFingerprintFeedback(statusText, subText, color = '#67e8f9', scanning = false) {
@@ -6601,12 +6806,7 @@ function unlockSystemSplashScreen() {
 
     playFingerprintUnlockSound();
 
-    // Distinct success/awakening haptic pattern for Android WebView and browsers.
-    try {
-        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
-            navigator.vibrate([60, 40, 120, 45, 180]);
-        }
-    } catch (_e) {}
+    awakeningHaptic('success');
 
     const splashEl = document.getElementById('system-splash-screen');
     if (splashEl) {
@@ -6621,6 +6821,7 @@ function unlockSystemSplashScreen() {
         }, 360);
     }
 
+    setTimeout(showPendingDailyReport, 520);
     if (typeof window.onSystemUnlocked === 'function') {
         try { window.onSystemUnlocked(); } catch (_e) {}
     } else if (typeof renderAll === 'function') {
@@ -6652,16 +6853,14 @@ function startFingerprintHold(event) {
         true
     );
 
-    if (navigator.vibrate) {
-        try { navigator.vibrate(35); } catch (_e) {}
-        fpVibrateInterval = setInterval(() => {
-            if (isSplashUnlocking) {
-                clearFingerprintHoldTimers();
-                return;
-            }
-            try { navigator.vibrate(30); } catch (_e) {}
-        }, 380);
-    }
+    awakeningHaptic('tap');
+    fpVibrateInterval = setInterval(() => {
+        if (isSplashUnlocking) {
+            clearFingerprintHoldTimers();
+            return;
+        }
+        awakeningHaptic('tap');
+    }, 420);
 
     fpHoldTimer = setTimeout(() => {
         unlockSystemSplashScreen();
@@ -6798,6 +6997,7 @@ function finishFingerprintUnlock() {
         if (splash) splash.classList.add('fade-out');
         setTimeout(() => {
             if (splash) splash.style.display = 'none';
+            setTimeout(showPendingDailyReport, 60);
         }, 680);
     }, 450);
 }
@@ -8934,6 +9134,7 @@ setInterval(() => {
     renderAll();
     updateDungeonTimerUI();
     syncSystemReminders();
+    setTimeout(showPendingDailyReport, 1200);
 
     if (typeof applyAppLanguage === 'function') {
         applyAppLanguage();
