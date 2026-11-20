@@ -4018,8 +4018,31 @@ function updateDungeonTimerUI() {
 }
 
 function startDungeon() {
-    if (isDungeonRunning) return;
+    if (isDungeonRunning || document.getElementById('sysrpg-dungeon-entry-warning')) return;
     SoundFX.playClick();
+    const lang = getReminderLang();
+    const copy = {
+        id: ['⚠️ PERINGATAN DUNGEON', 'Keluar sebelum timer selesai menyebabkan penalti dasar -10 HP (dapat berkurang oleh pasif WIS), dan seluruh hadiah sesi ini hangus. Lanjut masuk?', 'Batal', 'Masuk Dungeon'],
+        en: ['⚠️ DUNGEON WARNING', 'Leaving before the timer finishes causes a base -10 HP penalty (reduced by WIS passive) and forfeits all session rewards. Enter?', 'Cancel', 'Enter Dungeon'],
+        ja: ['⚠️ ダンジョン警告', 'タイマー終了前に退出すると基本10 HPのペナルティ（WISの軽減あり）を受け、報酬を失います。入場しますか？', 'キャンセル', '入場する']
+    }[lang] || [];
+    const modal = document.createElement('div');
+    modal.id = 'sysrpg-dungeon-entry-warning';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', copy[0]);
+    modal.style.cssText = 'position:fixed;inset:0;z-index:1000000;background:rgba(2,6,23,.84);display:flex;align-items:center;justify-content:center;padding:16px;';
+    modal.innerHTML = `<div style="width:min(100%,410px);padding:20px;border:1px solid #fb7185;background:#0f172a;border-radius:16px;color:#f8fafc;box-shadow:0 0 30px #be123c44;"><h3 style="color:#fda4af;font-weight:800;margin:0 0 12px;">${copy[0]}</h3><p style="line-height:1.6;font-size:13px;">${copy[1]}</p><div style="display:flex;gap:10px;justify-content:end;margin-top:20px;"><button id="sysrpg-dungeon-entry-cancel" style="background:#334155;color:#fff;padding:10px;border-radius:9px;">${copy[2]}</button><button id="sysrpg-dungeon-entry-confirm" style="background:#be123c;color:#fff;font-weight:800;padding:10px;border-radius:9px;">${copy[3]}</button></div></div>`;
+    document.body.appendChild(modal);
+    modal.querySelector('#sysrpg-dungeon-entry-cancel').onclick = () => modal.remove();
+    modal.querySelector('#sysrpg-dungeon-entry-confirm').onclick = () => {
+        modal.remove();
+        beginDungeonSession();
+    };
+}
+
+function beginDungeonSession() {
+    if (isDungeonRunning) return;
     isDungeonRunning = true;
 
     ScreenWakeManager.enable();
@@ -4662,17 +4685,151 @@ function escapeHtml(str) {
 }
 
 // ==========================================
+// Health, Death & Shield Guide: strictly mirrors evaluateDailyTier, takeDamage, and rollover.
+const HUNTER_HEALTH_GUIDE = {
+    id: {
+        summary: 'Aturan HP, penalti, Shield, kematian dan respawn', open: 'Baca Panduan →', close: 'Tutup',
+        title: 'HUNTER SURVIVAL GUIDE',
+        sections: [
+            ['🩸 Kerusakan HP Harian', [
+                'Evaluasi otomatis ketika tanggal lokal berganti. Penyelesaian 100% (S): 0 damage dan pulih +15% Max HP (dibatasi Max HP).',
+                'Mencapai target streak harian tetapi di bawah 100% (A): penalti dasar 10% Max HP.',
+                'Menyelesaikan 50% hingga di bawah target harian (B): penalti dasar 25% Max HP.',
+                'Menyelesaikan di bawah 50% (F): penalti dasar 40% Max HP.',
+                'Hari yang terlewat diproses satu kali per tanggal saat aplikasi dibuka lagi. Jika target tidak terpenuhi, Shield dapat melindungi streak, tetapi bukan HP.'
+            ]],
+            ['⚔️ Dungeon & Pengurangan Damage', [
+                'Menyelesaikan timer Dungeon: tidak ada penalti HP; reward XP dan Gold diperoleh.',
+                'Menyerah sebelum timer habis: damage dasar 10 HP dan reward sesi hangus.',
+                'Pasif atribut WIS mengurangi damage sebelum HP dikurangi (maksimal pengurangan 90%, minimal 1 HP).'
+            ]],
+            ['🛡️ Shield & Pemulihan', [
+                'Streak Shield/Freeze otomatis digunakan hanya saat target harian gagal dan streak masih aktif. Stok maksimal 2. Shield tidak meniadakan penalti HP.',
+                'Potion/Elixir di Shop dan penyelesaian Penalty Quest bisa memulihkan HP; pemulihan tidak melebihi Max HP.'
+            ]],
+            ['☠️ Jika HP Mencapai Nol', [
+                'HP 0 menyebabkan YOU DIED. Dalam 7 hari: kematian pertama mengurangi 10% Gold dan 0% XP; kedua 20% Gold dan 5% XP; ketiga dan seterusnya 30% Gold dan 10% XP.',
+                'Pada kematian ketiga atau berikutnya dalam 7 hari, streak berkurang 1 jika ada. Level dan Rank tidak turun.',
+                'Hunter bangkit otomatis dengan 30% Max HP (minimal 1 HP). Penalty Quest: selesaikan 2 Daily Quest untuk pemulihan sekitar 25% Max HP (minimal 20 HP) dan +15 Gold.'
+            ]]
+        ]
+    },
+    en: {
+        summary: 'HP damage, penalties, Shields, death and revival', open: 'Read Guide →', close: 'Close',
+        title: 'HUNTER SURVIVAL GUIDE',
+        sections: [
+            ['🩸 Daily HP Damage', [
+                'Automatic evaluation runs when the local date changes. 100% completion (S): 0 damage and +15% Max HP healing (capped at Max HP).',
+                'Reaching your streak threshold but below 100% (A): base damage of 10% Max HP.',
+                '50% completion but below the target (B): base damage of 25% Max HP.',
+                'Below 50% completion (F): base damage of 40% Max HP.',
+                'Missed days settle once per date when you return. Shields may protect the streak, but not HP.'
+            ]],
+            ['⚔️ Dungeon & Mitigation', [
+                'Finishing the Dungeon timer causes no HP penalty and awards XP/Gold.',
+                'Aborting early causes a base 10 HP penalty and forfeits the session rewards.',
+                'WIS passive reduces incoming damage (up to 90% reduction, minimum 1 HP).'
+            ]],
+            ['🛡️ Shields & Healing', [
+                'Streak Shield/Freeze is used automatically when the daily target is missed and you still have a streak. Maximum stock: 2. It does not prevent HP damage.',
+                'Shop potions/elixirs and Penalty Quest completion heal HP, without exceeding Max HP.'
+            ]],
+            ['☠️ When HP Reaches Zero', [
+                'At 0 HP, YOU DIED triggers. Deaths within 7 days: first loses 10% Gold and 0% XP; second 20% Gold and 5% XP; third+ 30% Gold and 10% XP.',
+                'On the third or later death within 7 days, lose 1 streak day if any. Level and Rank remain unchanged.',
+                'Revive automatically with 30% Max HP (minimum 1 HP). The Penalty Quest requires 2 Daily Quests to earn roughly 25% Max HP healing (at least 20 HP) and +15 Gold.'
+            ]]
+        ]
+    },
+    ja: {
+        summary: 'HPダメージ・ペナルティ・シールド・復活のルール', open: 'ガイドを読む →', close: '閉じる',
+        title: 'ハンター生存ガイド',
+        sections: [
+            ['🩸 毎日のHPダメージ', [
+                '日付が変わると自動評価されます。達成率100%（S）：ダメージなし、最大HPの15%を回復（上限あり）。',
+                '設定した目標以上・100%未満（A）：最大HPの10%を基本ダメージとして受けます。',
+                '達成率50%以上・目標未満（B）：最大HPの25%を基本ダメージとして受けます。',
+                '達成率50%未満（F）：最大HPの40%を基本ダメージとして受けます。',
+                '未確認の日は次回起動時に1日につき一度だけ評価されます。シールドは連続記録のみ保護し、HPダメージは防ぎません。'
+            ]],
+            ['⚔️ ダンジョンと軽減', [
+                'タイマー完了時はHPペナルティなしでXPとゴールドがもらえます。',
+                '途中で中止すると基本10 HPのダメージを受け、報酬は失われます。',
+                'WISのパッシブ効果でダメージが軽減されます（最大90%軽減、最低1 HP）。'
+            ]],
+            ['🛡️ シールドと回復', [
+                'デイリー目標未達でストリークがある場合、シールドが自動使用されます（最大2個）。HPダメージは無効化しません。',
+                'ショップのポーション／エリクサーやペナルティクエストでHPを回復できます。最大HPは超えません。'
+            ]],
+            ['☠️ HPが0になると', [
+                'HPが0になるとYOU DIEDが発生します。7日間の死亡回数：1回目はゴールド10%、XP0%；2回目はゴールド20%、XP5%；3回目以降はゴールド30%、XP10%を失います。',
+                '7日以内の3回目以降はストリークが1日減少します。レベルとランクは下がりません。',
+                '最大HPの30%（最低1 HP）で自動復活します。ペナルティクエストでデイリークエスト2件を完了すると、最大HPの約25%（最低20 HP）と15ゴールドを獲得します。'
+            ]]
+        ]
+    }
+};
+function openHunterHealthGuide() {
+    const modal = document.getElementById('hunter-health-guide-modal');
+    const lang = typeof getReminderLang === 'function' ? getReminderLang() : 'id';
+    const data = HUNTER_HEALTH_GUIDE[lang] || HUNTER_HEALTH_GUIDE.id;
+    if (!modal) return;
+    document.getElementById('hunter-health-guide-heading').textContent = data.title;
+    document.getElementById('hunter-health-close').textContent = data.close;
+    const content = document.getElementById('hunter-health-guide-content');
+    content.replaceChildren();
+    data.sections.forEach(([heading, facts]) => {
+        const section = document.createElement('section');
+        const h3 = document.createElement('h3'); h3.textContent = heading;
+        const list = document.createElement('ul');
+        facts.forEach(fact => { const li = document.createElement('li'); li.textContent = fact; list.appendChild(li); });
+        section.append(h3, list); content.appendChild(section);
+    });
+    modal.classList.remove('hidden');
+}
+function closeHunterHealthGuide() {
+    document.getElementById('hunter-health-guide-modal')?.classList.add('hidden');
+}
+function updateHunterHealthGuideLanguage() {
+    const lang = typeof getReminderLang === 'function' ? getReminderLang() : 'id';
+    document.querySelectorAll('[data-health-i18n]').forEach(el => {
+        const value = HUNTER_HEALTH_GUIDE[lang]?.[el.getAttribute('data-health-i18n')];
+        if (typeof value === 'string') el.textContent = value;
+    });
+    if (!document.getElementById('hunter-health-guide-modal')?.classList.contains('hidden')) openHunterHealthGuide();
+}
+window.addEventListener('DOMContentLoaded', updateHunterHealthGuideLanguage);
+
 // 10. MOBILE PUSH NOTIFICATION REMINDERS
 // ==========================================
+// Five independent local-time reminder slots. Earlier three-slot settings are migrated once.
+const SYSTEM_REMINDER_DEFAULT_TIMES = Object.freeze({
+    Pagi: '04:00', Siang: '12:00', Sore: '15:30', Petang: '18:00', Malam: '20:00'
+});
+const SYSTEM_REMINDER_SLOTS = Object.keys(SYSTEM_REMINDER_DEFAULT_TIMES);
 function ensureReminderState() {
-    if (!gameState.reminders) {
-        gameState.reminders = {
-            enabled: false,
-            times: { Pagi: '07:30', Sore: '16:30', Malam: '20:30' },
-            lastFired: {}
-        };
+    if (!gameState.reminders || typeof gameState.reminders !== 'object') {
+        gameState.reminders = { enabled: false, times: {}, lastFired: {} };
     }
-    return gameState.reminders;
+    const rem = gameState.reminders;
+    if (!rem.times || typeof rem.times !== 'object') rem.times = {};
+    if (!rem.lastFired || typeof rem.lastFired !== 'object') rem.lastFired = {};
+    if ((rem.scheduleVersion || 0) < 2) {
+        // Keep manually customized legacy slots; replace only the historical stock values.
+        const oldDefaults = { Pagi: '07:30', Sore: '16:30', Malam: '20:30' };
+        for (const slot of Object.keys(oldDefaults)) {
+            if (!rem.times[slot] || rem.times[slot] === oldDefaults[slot]) {
+                rem.times[slot] = SYSTEM_REMINDER_DEFAULT_TIMES[slot];
+            }
+        }
+        rem.scheduleVersion = 2;
+    }
+    for (const slot of SYSTEM_REMINDER_SLOTS) {
+        if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(rem.times[slot] || ''))) {
+            rem.times[slot] = SYSTEM_REMINDER_DEFAULT_TIMES[slot];
+        }
+    }
+    return rem;
 }
 
 function getReminderLang() {
@@ -4699,7 +4856,7 @@ function getReminderDict() {
             deniedBody: 'Izin notifikasi saat ini berstatus Diblokir. Silakan aktifkan izin Notifikasi untuk aplikasi/situs ini di Pengaturan HP Anda.',
             enabledToast: '🔔 Reminder Notifikasi HP Aktif!',
             disabledToast: '🔕 Reminder Notifikasi Dimatikan',
-            slots: { Pagi: 'Pagi', Sore: 'Sore', Malam: 'Malam' },
+            slots: { Pagi: 'Subuh', Siang: 'Siang', Sore: 'Sore', Petang: 'Petang', Malam: 'Malam' },
             testPending: (name, count, list) => `Hunter ${name}, masih ada ${count} Daily Quest belum selesai (${list})!`,
             testDone: (name) => `Luar biasa Hunter ${name}! Semua Daily Quest hari ini sudah selesai 100%!`,
             testTitle: '⚔️ SYSTEM // Pengingat Daily Quest',
@@ -4723,7 +4880,7 @@ function getReminderDict() {
             deniedBody: 'Notifications are currently blocked. Please enable Notification permission for this app/site in your phone Settings.',
             enabledToast: '🔔 Mobile Push Reminders Enabled!',
             disabledToast: '🔕 Push Reminders Disabled',
-            slots: { Pagi: 'Morning', Sore: 'Afternoon', Malam: 'Night' },
+            slots: { Pagi: 'Early Morning', Siang: 'Noon', Sore: 'Afternoon', Petang: 'Evening', Malam: 'Night' },
             testPending: (name, count, list) => `Hunter ${name}, you still have ${count} unfinished Daily Quests (${list})!`,
             testDone: (name) => `Outstanding, Hunter ${name}! All Daily Quests for today are 100% complete!`,
             testTitle: '⚔️ SYSTEM // Daily Quest Alert',
@@ -4747,7 +4904,7 @@ function getReminderDict() {
             deniedBody: '現在通知がブロックされています。端末の設定からこのアプリ/サイトの通知を許可してください。',
             enabledToast: '🔔 スマホ通知リマインダーを有効にしました！',
             disabledToast: '🔕 通知リマインダーをオフにしました',
-            slots: { Pagi: '朝', Sore: '夕方', Malam: '夜' },
+            slots: { Pagi: '早朝', Siang: '昼', Sore: '午後', Petang: '夕方', Malam: '夜' },
             testPending: (name, count, list) => `ハンター ${name}、未完了のデイリークエストが残り ${count} 件あります（${list}）！`,
             testDone: (name) => `素晴らしい、ハンター ${name}！本日のデイリークエストは100%完了しています！`,
             testTitle: '⚔️ SYSTEM // デイリークエスト通知',
@@ -4765,17 +4922,20 @@ function getReminderDict() {
 
 function renderReminderUI() {
     const rem = ensureReminderState();
+    if (typeof updateHunterHealthGuideLanguage === 'function') updateHunterHealthGuideLanguage();
     const d = getReminderDict();
     const badge = document.getElementById('notif-status-badge');
     const btn = document.getElementById('btn-toggle-notif');
-    const inPagi = document.getElementById('rem-time-pagi');
-    const inSore = document.getElementById('rem-time-sore');
-    const inMalam = document.getElementById('rem-time-malam');
+    for (const slot of SYSTEM_REMINDER_SLOTS) {
+        const el = document.getElementById('rem-time-' + slot.toLowerCase());
+        if (el) el.value = rem.times[slot];
+    }
 
-    if (inPagi) inPagi.value = rem.times.Pagi || '07:30';
-    if (inSore) inSore.value = rem.times.Sore || '16:30';
-    if (inMalam) inMalam.value = rem.times.Malam || '20:30';
-
+    document.querySelectorAll('[data-rem-label]').forEach(label => {
+        const slot = label.getAttribute('data-rem-label');
+        const icon = {Pagi:'🌄', Siang:'☀️', Sore:'🌤️', Petang:'🌇', Malam:'🌙'}[slot] || '⏰';
+        label.textContent = `${icon} ${d.slots[slot] || slot}`;
+    });
     if (badge && btn) {
         if (rem.enabled) {
             badge.textContent = d.active;
@@ -4798,12 +4958,10 @@ function renderReminderUI() {
 function saveReminders() {
     const rem = ensureReminderState();
     const d = getReminderDict();
-    const p = document.getElementById('rem-time-pagi')?.value;
-    const s = document.getElementById('rem-time-sore')?.value;
-    const m = document.getElementById('rem-time-malam')?.value;
-    if (p) rem.times.Pagi = p;
-    if (s) rem.times.Sore = s;
-    if (m) rem.times.Malam = m;
+    for (const slot of SYSTEM_REMINDER_SLOTS) {
+        const value = document.getElementById('rem-time-' + slot.toLowerCase())?.value;
+        if (value && /^([01]\d|2[0-3]):[0-5]\d$/.test(value)) rem.times[slot] = value;
+    }
     saveState();
     syncSystemReminders();
     spawnFloatingReward(d.saved);
@@ -4923,11 +5081,10 @@ function syncSystemReminders() {
                     language: lang
                 }));
             }
-            if (typeof window.AndroidBridge.scheduleDailyReminders === 'function') {
+            else if (typeof window.AndroidBridge.scheduleDailyReminders === 'function') {
+                // Fallback for older APKs only; avoid scheduling all alarms twice.
                 window.AndroidBridge.scheduleDailyReminders(
-                    JSON.stringify(rem.times),
-                    summary.pendingCount,
-                    gameState.player.name
+                    JSON.stringify(rem.times), summary.pendingCount, gameState.player.name
                 );
             }
         }
@@ -4969,6 +5126,8 @@ function syncHomeScreenWidget() {
 function checkScheduledReminderTick() {
     const rem = ensureReminderState();
     if (!rem.enabled) return;
+    // The Android AlarmManager owns background and foreground delivery inside the APK.
+    if (window.AndroidBridge && typeof window.AndroidBridge.scheduleDailyRemindersFull === 'function') return;
     const d = getReminderDict();
 
     const now = new Date();
@@ -4979,12 +5138,12 @@ function checkScheduledReminderTick() {
 
     if (!rem.lastFired) rem.lastFired = {};
 
-    ['Pagi', 'Sore', 'Malam'].forEach(slot => {
+    SYSTEM_REMINDER_SLOTS.forEach(slot => {
         const targetTime = rem.times[slot];
         const fireKey = `${todayKey}_${slot}`;
         if (targetTime && nowTime === targetTime && !rem.lastFired[fireKey]) {
             const summary = getPendingDailySummary();
-            if (summary.pendingCount > 0) {
+            {
                 rem.lastFired[fireKey] = true;
                 saveState();
                 const slotLbl = d.slots[slot] || slot;
@@ -4997,7 +5156,7 @@ function checkScheduledReminderTick() {
 
                 fireOsNotification(
                     d.schedTitle(slotLbl),
-                    d.schedBody(gameState.player.name, focusText, gameState.player.streak),
+                    summary.pendingCount ? d.schedBody(gameState.player.name, focusText, gameState.player.streak) : d.testDone(gameState.player.name),
                     `system-rpg-${slot.toLowerCase()}`
                 );
             }
@@ -5839,6 +5998,35 @@ let lofiCountdownInterval = null;
 let lofiRemainingSec = 3600;
 let lofiStep = 0;
 let lofiUseLocalFile = false;
+let rpgLofiTrack = 'moonlit';
+function selectRpgLofiTrack(value) {
+    const wasPlaying = lofiIsPlaying;
+    if (wasPlaying) stopAnimeLofi1Hour();
+    rpgLofiTrack = ['moonlit','night','synth','custom'].includes(value) ? value : 'moonlit';
+    try { if (rpgLofiTrack !== 'custom') localStorage.setItem('system_rpg_lofi_track_v2', rpgLofiTrack); } catch (_e) {}
+    const picker = document.getElementById('rpg-lofi-track');
+    if (picker) picker.value = rpgLofiTrack;
+    const audio = document.getElementById('lofi-local-audio-player');
+    if (audio && audio.src.startsWith('blob:') && rpgLofiTrack !== 'custom') URL.revokeObjectURL(audio.src);
+    if (rpgLofiTrack === 'moonlit' || rpgLofiTrack === 'night') {
+        if (audio) audio.src = rpgLofiTrack === 'moonlit' ? 'moonlit-study.ogg' : 'night-quest.ogg';
+        lofiUseLocalFile = true;
+    } else if (rpgLofiTrack === 'synth') {
+        lofiUseLocalFile = false;
+    } else {
+        lofiUseLocalFile = !!(audio && audio.src && audio.src.startsWith('blob:'));
+        if (!lofiUseLocalFile) { document.getElementById('lofi-local-mp3')?.click(); return; }
+    }
+    if (wasPlaying) toggleAnimeLofi1Hour();
+}
+
+
+function cycleRpgLofiTrack(direction) {
+    const tracks = ['moonlit', 'night', 'synth'];
+    const i = tracks.indexOf(rpgLofiTrack);
+    const next = tracks[(Math.max(0, i) + (direction < 0 ? tracks.length - 1 : 1)) % tracks.length];
+    selectRpgLofiTrack(next);
+}
 
 let lofiVinylSource = null;
 let lofiVinylGain = null;
@@ -6182,6 +6370,9 @@ function loadLocalLofiMp3(e) {
         URL.revokeObjectURL(localAudio.src);
     }
     lofiUseLocalFile = true;
+    rpgLofiTrack = 'custom';
+    const selector = document.getElementById('rpg-lofi-track');
+    if (selector) selector.value = 'custom';
     lofiRemainingSec = 3600;
     localAudio.src = URL.createObjectURL(file);
     toggleAnimeLofi1Hour();
@@ -6309,146 +6500,24 @@ let splashBgmMasterGain = null;
 let isSplashBgmPlaying = false;
 let isStartingSplashBgm = false;
 
+// Original offline audio, played through HTMLAudioElement to avoid oscillator clipping.
+let rpgSplashAudio = null;
 function startAutoSplashFantasyBGM() {
-    if (isSplashUnlocking || isSplashBgmPlaying || isStartingSplashBgm) return;
-    isStartingSplashBgm = true;
-
-    try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) {
-            isStartingSplashBgm = false;
-            return;
-        }
-        if (!fpAudioCtx) fpAudioCtx = new AudioCtx();
-
-        if (fpAudioCtx.state === 'suspended') {
-            fpAudioCtx.resume().catch(() => {});
-        }
-        // Bersihkan interval lama jika ada
-        if (splashBgmInterval) {
-            clearInterval(splashBgmInterval);
-            splashBgmInterval = null;
-        }
-
-        isSplashBgmPlaying = true;
-        isStartingSplashBgm = false;
-
-        const nowInit = fpAudioCtx.currentTime;
-        splashBgmMasterGain = fpAudioCtx.createGain();
-        // Volume master dinaikkan agar lebih kencang & jelas di speaker HP
-        splashBgmMasterGain.gain.setValueAtTime(0.001, nowInit);
-        splashBgmMasterGain.gain.exponentialRampToValueAtTime(0.24, nowInit + 0.7);
-        splashBgmMasterGain.connect(fpAudioCtx.destination);
-
-        // Melodi harpa & synth atmosferik bernuansa Dark Fantasy (D Dorian)
-        const fantasyNotes = [
-            146.83, 174.61, 220.00, 261.63, 293.66, 261.63, 220.00, 174.61,
-            146.83, 130.81, 174.61, 220.00, 196.00, 174.61, 146.83, 110.00
-        ];
-        const bassNotes = [73.42, 65.41, 58.27, 55.00];
-        let step = 0;
-
-        const playFantasyStep = () => {
-            if (!isSplashBgmPlaying || isSplashUnlocking || !fpAudioCtx || !splashBgmMasterGain) return;
-            if (fpAudioCtx.state === 'suspended') {
-                fpAudioCtx.resume().catch(() => {});
-            }
-
-            const now = fpAudioCtx.currentTime;
-
-            // Petikan Harpa / Celesta Fantasy (lebih berkarakter & kencang)
-            const freq = fantasyNotes[step % fantasyNotes.length];
-            const osc = fpAudioCtx.createOscillator();
-            const overtoneOsc = fpAudioCtx.createOscillator();
-            const filter = fpAudioCtx.createBiquadFilter();
-            const noteGain = fpAudioCtx.createGain();
-
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(freq, now);
-
-            // Oktaf halus untuk mempertegas suara di speaker kecil
-            overtoneOsc.type = 'sine';
-            overtoneOsc.frequency.setValueAtTime(freq * 2, now);
-
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(2400, now);
-
-            const overtoneGain = fpAudioCtx.createGain();
-            overtoneGain.gain.setValueAtTime(0.055, now);
-
-            noteGain.gain.setValueAtTime(0.001, now);
-            noteGain.gain.linearRampToValueAtTime(0.24, now + 0.08);
-            noteGain.gain.exponentialRampToValueAtTime(0.001, now + 1.45);
-
-            osc.connect(filter);
-            overtoneOsc.connect(overtoneGain);
-            overtoneGain.connect(filter);
-            filter.connect(noteGain);
-            noteGain.connect(splashBgmMasterGain);
-
-            osc.start(now);
-            overtoneOsc.start(now);
-            osc.stop(now + 1.5);
-            overtoneOsc.stop(now + 1.5);
-
-            // Pad Bass hangat setiap 4 ketukan (ditambah oktaf atas agar terdengar di speaker HP)
-            if (step % 4 === 0) {
-                const bassFreq = bassNotes[Math.floor(step / 4) % bassNotes.length];
-                const bassOsc = fpAudioCtx.createOscillator();
-                const bassMidOsc = fpAudioCtx.createOscillator();
-                const bassFilter = fpAudioCtx.createBiquadFilter();
-                const bassGain = fpAudioCtx.createGain();
-
-                bassOsc.type = 'sine';
-                bassOsc.frequency.setValueAtTime(bassFreq, now);
-
-                bassMidOsc.type = 'triangle';
-                bassMidOsc.frequency.setValueAtTime(bassFreq * 2, now);
-
-                bassFilter.type = 'lowpass';
-                bassFilter.frequency.setValueAtTime(420, now);
-
-                bassGain.gain.setValueAtTime(0.001, now);
-                bassGain.gain.linearRampToValueAtTime(0.22, now + 0.35);
-                bassGain.gain.exponentialRampToValueAtTime(0.001, now + 2.15);
-
-                bassOsc.connect(bassFilter);
-                bassMidOsc.connect(bassFilter);
-                bassFilter.connect(bassGain);
-                bassGain.connect(splashBgmMasterGain);
-
-                bassOsc.start(now);
-                bassMidOsc.start(now);
-                bassOsc.stop(now + 2.2);
-                bassMidOsc.stop(now + 2.2);
-            }
-
-            step++;
-        };
-
-        playFantasyStep();
-        splashBgmInterval = setInterval(playFantasyStep, 650);
-    } catch (e) {
-        isSplashBgmPlaying = false;
-        isStartingSplashBgm = false;
+    if (isSplashUnlocking || isSplashBgmPlaying) return;
+    if (!rpgSplashAudio) {
+        rpgSplashAudio = new Audio('dark-awakening.ogg');
+        rpgSplashAudio.loop = true;
+        rpgSplashAudio.preload = 'auto';
+        rpgSplashAudio.volume = 0.9;
     }
+    isSplashBgmPlaying = true;
+    rpgSplashAudio.play().catch(() => { isSplashBgmPlaying = false; });
 }
-
 function stopAutoSplashFantasyBGM() {
     isSplashBgmPlaying = false;
     isStartingSplashBgm = false;
-    if (splashBgmInterval) {
-        clearInterval(splashBgmInterval);
-        splashBgmInterval = null;
-    }
-    if (splashBgmMasterGain && fpAudioCtx) {
-        try {
-            const now = fpAudioCtx.currentTime;
-            splashBgmMasterGain.gain.cancelScheduledValues(now);
-            splashBgmMasterGain.gain.setValueAtTime(0.05, now);
-            splashBgmMasterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
-        } catch (_e) {}
-    }
+    if (splashBgmInterval) { clearInterval(splashBgmInterval); splashBgmInterval = null; }
+    if (rpgSplashAudio) { rpgSplashAudio.pause(); rpgSplashAudio.currentTime = 0; }
 }
 
 function setFingerprintFeedback(statusText, subText, color = '#67e8f9', scanning = false) {
@@ -7824,8 +7893,8 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
 
     function clearTutorialSpotlight() {
         if (highlightedEl) {
-            highlightedEl.style.outline = '';
-            highlightedEl.style.outlineOffset = '';
+            highlightedEl.style.outline = highlightedEl.dataset.prevOutline || '';
+            highlightedEl.style.outlineOffset = highlightedEl.dataset.prevOutlineOffset || '';
             highlightedEl.style.boxShadow = highlightedEl.dataset.prevShadow || '';
             highlightedEl.style.position = highlightedEl.dataset.prevPos || '';
             highlightedEl.style.zIndex = highlightedEl.dataset.prevZ || '';
@@ -7850,6 +7919,8 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
             for (const sel of targetSelectors) {
                 const el = document.querySelector(sel);
                 if (el && el.offsetParent !== null) {
+                    el.dataset.prevOutline = el.style.outline || '';
+                    el.dataset.prevOutlineOffset = el.style.outlineOffset || '';
                     el.dataset.prevShadow = el.style.boxShadow || '';
                     el.dataset.prevPos = el.style.position || '';
                     el.dataset.prevZ = el.style.zIndex || '';
@@ -7875,6 +7946,7 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
             { tab: 'dungeon', targets: ['#dungeon-timer-text', '#tab-content-dungeon'], icon: '⏳', title: '3. Dungeon Deep Focus', desc: 'Ini ruang DUNGEON untuk fokus belajar/kerja, lengkap dengan Grimoire PDF Reader & Anime Lofi Radio di bawahnya.', tip: 'Tips: Jangan menyerah sebelum timer habis agar tidak terkena penalti -10 HP!' },
             { tab: 'shop', targets: ['#shop-items-container', '#tab-content-shop'], icon: '🛒', title: '4. System Shop & Armory', desc: 'Di tab SHOP ini kamu bisa menukar Gold dengan Potion pemulih HP, Relic pasif, Peti Misteri, atau hadiah dunia nyata.', tip: 'Tips: Tingkatkan atribut CHR untuk mendapatkan diskon otomatis di Shop.' },
             { tab: 'treasury', targets: ['#tr-net-balance', '#tab-content-treasury'], icon: '💰', title: '5. Treasury Vault & Grafik', desc: 'Ini brankas keuanganmu! Catat pemasukan/pengeluaran, lihat Pie Chart kategori, dan gunakan kalkulator bawaan.', tip: 'Tips: Mencatat transaksi memberi bonus XP & atribut WIS (maks 3x/hari).' },
+            { tab: 'dungeon', targets: ['#dungeon-subtab-flashcard', '#dungeon-mode-flashcard'], icon: '🃏', title: 'Flashcard Arena & Review Terjadwal', desc: 'Buka mode Flashcard di DUNGEON, balik kartunya, lalu nilai: Tidak Tahu (10 menit), Lupa (1 hari), Ingat (3 hari+), Mudah (7 hari+).', tip: 'Review muncul saat jatuh tempo. Gunakan Latihan Bebas untuk mengacak seluruh deck.' },
             { tab: 'status', targets: ['#btn-evaluate-day', '#player-rank-badge'], icon: '🌙', title: '6. Evaluasi Harian', desc: 'Kembali ke tab STATUS: di akhir hari, tekan tombol "Evaluasi & Lanjut Hari" untuk merekap progresmu ke hari berikutnya.', tip: 'Sistem siap. Selamat berjuang naik ke Rank tertinggi, Hunter!' }
         ],
         en: [
@@ -7883,6 +7955,7 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
             { tab: 'dungeon', targets: ['#dungeon-timer-text', '#tab-content-dungeon'], icon: '⏳', title: '3. Dungeon Deep Focus', desc: 'This is the DUNGEON room for distraction-free focus sessions, complete with a PDF Reader and Anime Lofi Radio.', tip: 'Tip: Do not abort early or you will suffer a -10 HP penalty!' },
             { tab: 'shop', targets: ['#shop-items-container', '#tab-content-shop'], icon: '🛒', title: '4. System Shop & Armory', desc: 'In the SHOP tab above, spend earned Gold on HP Potions, passive Relics, Mystery Chests, or real-world rewards.', tip: 'Tip: Level up CHR to unlock automatic Shop discounts.' },
             { tab: 'treasury', targets: ['#tr-net-balance', '#tab-content-treasury'], icon: '💰', title: '5. Treasury Vault & Charts', desc: 'Your financial vault! Log income/expenses, inspect the category Pie Chart, and use the built-in calculator.', tip: 'Tip: Logging transactions grants bonus XP & WIS (up to 3x/day).' },
+            { tab: 'dungeon', targets: ['#dungeon-subtab-flashcard', '#dungeon-mode-flashcard'], icon: '🃏', title: 'Flashcard Arena & Spaced Repetition', desc: 'Open Flashcards inside DUNGEON. Flip a card and rate it: No Idea (10 min), Forgot (1 day), Remember (3+ days), Easy (7+ days).', tip: 'Due cards return automatically. Free Practice shuffles the whole deck.' },
             { tab: 'status', targets: ['#btn-evaluate-day', '#player-rank-badge'], icon: '🌙', title: '6. Daily Evaluation', desc: 'Back on STATUS: after the real date changes, tap "Evaluate & Advance Day" to review your progress.', tip: 'System ready. Rise to the highest Rank, Hunter!' }
         ],
         ja: [
@@ -7891,6 +7964,7 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
             { tab: 'dungeon', targets: ['#dungeon-timer-text', '#tab-content-dungeon'], icon: '⏳', title: '3. ダンジョン集中モード', desc: 'ここは集中タイマーのDUNGEONタブです。PDFリーダーやアニメLo-Fiラジオも利用できます。', tip: 'ヒント：途中で諦めるとHPが10減少するので注意！' },
             { tab: 'shop', targets: ['#shop-items-container', '#tab-content-shop'], icon: '🛒', title: '4. システムショップ', desc: '上のSHOPタブで、獲得したゴールドをHPポーションやレリック、現実のご褒美と交換できます。', tip: 'ヒント：CHRを上げるとショップが割引されます。' },
             { tab: 'treasury', targets: ['#tr-net-balance', '#tab-content-treasury'], icon: '💰', title: '5. トレジャリー（家計簿）', desc: '家計簿タブです！電卓やカテゴリ別円グラフで収入と支出をスマートに管理できます。', tip: 'ヒント：取引を記録するとボーナスXPとWISを獲得できます（1日3回まで）。' },
+            { tab: 'dungeon', targets: ['#dungeon-subtab-flashcard', '#dungeon-mode-flashcard'], icon: '🃏', title: 'フラッシュカードと間隔反復', desc: 'DUNGEONの単語カードを開き、答えを見て評価しましょう：わからない（10分）、忘れた（1日）、覚えた（3日以上）、簡単（7日以上）。', tip: '期限になったカードは自動で戻ります。自由練習では全カードがシャッフルされます。' },
             { tab: 'status', targets: ['#btn-evaluate-day', '#player-rank-badge'], icon: '🌙', title: '6. 1日の評価', desc: 'STATUSタブに戻りました。実際の日付が変わった後、「評価して次の日へ」を押して進行状況を確認しましょう。', tip: 'システム準備完了。最高ランクを目指せ、ハンター！' }
         ]
     };
@@ -7980,8 +8054,8 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
     }
 
     window.openTutorialModal = function (startIndex = 0) {
-        // First-run tour cannot be replayed after completion or skip.
-        if (hasCompletedTutorial() || tutorialIsOpen) return;
+        // Only automatic onboarding is once; Settings can replay the guided tour.
+        if (tutorialIsOpen) return;
         if (typeof startIndex !== 'number') startIndex = 0;
         tutorialIsOpen = true;
         tutorialLaunchScheduled = true;
@@ -8100,7 +8174,9 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
 
         const onclickStr = btn.getAttribute('onclick') || '';
         const label = (btn.textContent || '').toUpperCase();
-        if (onclickStr.includes('openTutorialModal') || label.includes('TUTORIAL') || label.includes('PANDUAN') || label.includes('チュートリアル')) {
+        // Only the dedicated Settings tutorial button starts the tour.
+        // Avoid hijacking unrelated buttons such as 'Baca Panduan' (Survival Guide).
+        if (onclickStr.includes('openTutorialModal')) {
             e.preventDefault();
             e.stopPropagation();
             window.openTutorialModal(0);
@@ -8147,13 +8223,19 @@ const FC_I18N_MAP = {
         fc_tap_hint: 'Ketuk kartu untuk melihat arti',
         fc_meaning_lbl: 'ARTI (BAHASA INDONESIA)',
         fc_rate_hint: 'Pilih tingkat ingatan di bawah',
+        fc_rate_easy: 'Mudah',
+        fc_rate_easy_sub: '7 hari+',
         fc_rate_forgot: 'Lupa',
-        fc_rate_forgot_sub: 'Ulang Cepat',
-        fc_rate_dont: 'Tidak Ingat',
-        fc_rate_dont_sub: 'Masuk Antrean',
+        fc_rate_forgot_sub: '1 hari',
+        fc_rate_dont: 'Tidak Tahu',
+        fc_rate_dont_sub: '10 menit',
         fc_rate_remember: 'Ingat',
-        fc_rate_remember_sub: 'Selesai (+INT)',
-        fc_btn_restart_session: 'Mulai Ulang Sesi Latihan',
+        fc_rate_remember_sub: '3 hari+',
+        fc_btn_restart_session: 'Muat Review Jatuh Tempo',
+        fc_free_practice: 'Latihan Bebas (Acak)',
+        fc_due_info: 'Kartu yang sudah dijadwalkan muncul lagi saat waktunya tiba.',
+        fc_next_due: 'Review berikutnya',
+        fc_no_due: 'Belum ada kartu jatuh tempo. Coba lagi nanti atau gunakan Latihan Bebas.',
         fc_form_lang: 'Deck Bahasa',
         fc_form_word: 'Kata / Frasa',
         fc_form_romaji: 'Romaji (Wajib untuk Bahasa Jepang)',
@@ -8193,13 +8275,19 @@ const FC_I18N_MAP = {
         fc_tap_hint: 'Tap card to reveal meaning',
         fc_meaning_lbl: 'MEANING (INDONESIAN)',
         fc_rate_hint: 'Select your recall level below',
+        fc_rate_easy: 'Easy',
+        fc_rate_easy_sub: '7+ days',
         fc_rate_forgot: 'Forgot',
-        fc_rate_forgot_sub: 'Fast Repeat',
-        fc_rate_dont: 'Don\'t Recall',
-        fc_rate_dont_sub: 'Re-queue Card',
+        fc_rate_forgot_sub: '1 day',
+        fc_rate_dont: 'No Idea',
+        fc_rate_dont_sub: '10 minutes',
         fc_rate_remember: 'Remember',
-        fc_rate_remember_sub: 'Done (+INT)',
-        fc_btn_restart_session: 'Restart Practice Session',
+        fc_rate_remember_sub: '3+ days',
+        fc_btn_restart_session: 'Load Due Reviews',
+        fc_free_practice: 'Free Practice (Shuffle)',
+        fc_due_info: 'Scheduled cards will return when their review time arrives.',
+        fc_next_due: 'Next review',
+        fc_no_due: 'No cards are due yet. Come back later or use Free Practice.',
         fc_form_lang: 'Language Deck',
         fc_form_word: 'Word / Phrase',
         fc_form_romaji: 'Romaji (Required for Japanese)',
@@ -8239,13 +8327,19 @@ const FC_I18N_MAP = {
         fc_tap_hint: 'タップして意味を表示',
         fc_meaning_lbl: '意味（インドネシア語）',
         fc_rate_hint: '記憶度を選択してください',
+        fc_rate_easy: '簡単',
+        fc_rate_easy_sub: '7日以上',
         fc_rate_forgot: '忘れた',
-        fc_rate_forgot_sub: 'すぐ復習',
-        fc_rate_dont: '覚えていない',
-        fc_rate_dont_sub: 'キューへ戻す',
+        fc_rate_forgot_sub: '1日後',
+        fc_rate_dont: 'わからない',
+        fc_rate_dont_sub: '10分後',
         fc_rate_remember: '覚えた',
-        fc_rate_remember_sub: '完了 (+INT)',
-        fc_btn_restart_session: '練習セッションを再開',
+        fc_rate_remember_sub: '3日以上',
+        fc_btn_restart_session: '復習カードを読み込む',
+        fc_free_practice: '自由練習（シャッフル）',
+        fc_due_info: '復習カードは次の予定時刻になると表示されます。',
+        fc_next_due: '次の復習',
+        fc_no_due: '復習期限のカードはありません。後で戻るか自由練習を選んでください。',
         fc_form_lang: '言語デッキ',
         fc_form_word: '単語・フレーズ',
         fc_form_romaji: 'ローマ字（日本語は必須）',
@@ -8315,6 +8409,7 @@ function loadFlashcardState() {
                 if (!flashcardState.queues) flashcardState.queues = { en: [], jp: [] };
                 if (!flashcardState.sessionRepeats) flashcardState.sessionRepeats = { en: 0, jp: 0 };
                 flashcardState.isFlipped = false;
+                ensureFlashcardScheduling();
                 return;
             }
         }
@@ -8324,8 +8419,7 @@ function loadFlashcardState() {
 
     flashcardState.decks.en = buildDefaultFlashcardDeck('en');
     flashcardState.decks.jp = buildDefaultFlashcardDeck('jp');
-    flashcardState.queues.en = flashcardState.decks.en.map(c => c.id);
-    flashcardState.queues.jp = flashcardState.decks.jp.map(c => c.id);
+    ensureFlashcardScheduling();
     saveFlashcardState();
 }
 
@@ -8380,31 +8474,71 @@ function setFlashcardDeck(lang) {
     renderFlashcardUI();
 }
 
+// Deterministic due-time rules. Date.now() is only read for scheduling, never for rewards.
+const FC_DAY_MS = 86400000;
+const FC_TEN_MIN_MS = 600000;
+function shuffleFlashcardIds(items) {
+    const copy = [...items];
+    for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+}
+function ensureFlashcardScheduling() {
+    const now = Date.now();
+    if (!flashcardState.queues || typeof flashcardState.queues !== 'object') flashcardState.queues = {};
+    if (!flashcardState.sessionRepeats) flashcardState.sessionRepeats = { en: 0, jp: 0 };
+    if (!flashcardState.answeredInSession) flashcardState.answeredInSession = { en: [], jp: [] };
+    if (!flashcardState.freePracticeByDeck || typeof flashcardState.freePracticeByDeck !== 'object') flashcardState.freePracticeByDeck = { en: false, jp: false };
+    for (const lang of ['en', 'jp']) {
+        const deck = flashcardState.decks[lang] || [];
+        for (const card of deck) {
+            if (!Number.isFinite(card.dueAt) || card.dueAt < 0) {
+                // Previously mastered cards should not instantly reappear after upgrading.
+                card.dueAt = card.status === 'mastered' ? now + 3 * FC_DAY_MS : now;
+            }
+            if (!Number.isFinite(card.intervalDays)) card.intervalDays = card.status === 'mastered' ? 3 : 0;
+            if (!Number.isFinite(card.reviewCount)) card.reviewCount = 0;
+            if (!Number.isFinite(card.successStreak)) card.successStreak = card.status === 'mastered' ? 1 : 0;
+            if (!Number.isFinite(card.easeFactor)) card.easeFactor = 2;
+        }
+        const currentIds = new Set(deck.map(c => c.id));
+        const queued = Array.isArray(flashcardState.queues[lang]) ? flashcardState.queues[lang] : [];
+        const seen = new Set();
+        flashcardState.queues[lang] = queued.filter(id => currentIds.has(id) && !seen.has(id) && seen.add(id));
+        if (!Array.isArray(flashcardState.answeredInSession[lang])) flashcardState.answeredInSession[lang] = [];
+    }
+    if (!flashcardState.activeDeck || !flashcardState.decks[flashcardState.activeDeck]) flashcardState.activeDeck = 'en';
+}
+function refreshDueFlashcardQueue(lang = flashcardState.activeDeck) {
+    const deck = flashcardState.decks[lang] || [];
+    const now = Date.now();
+    const byId = new Map(deck.map(c => [c.id, c]));
+    const queue = Array.isArray(flashcardState.queues[lang]) ? flashcardState.queues[lang] : [];
+    const pending = queue.filter(id => byId.has(id) && (flashcardState.freePracticeByDeck?.[lang] || byId.get(id).dueAt <= now));
+    const seen = new Set(pending);
+    const due = deck.filter(c => c.dueAt <= now && !seen.has(c.id)).map(c => c.id);
+    // New due cards are shuffled to avoid fixed alphabetical order.
+    flashcardState.queues[lang] = [...pending, ...shuffleFlashcardIds(due)];
+}
 function getFilteredActiveQueueIds() {
     const lang = flashcardState.activeDeck;
     const deck = flashcardState.decks[lang] || [];
     const queue = flashcardState.queues[lang] || [];
     const query = (document.getElementById('fc-search-input')?.value || '').trim().toLowerCase();
     const filter = document.getElementById('fc-status-filter')?.value || 'ALL';
-
-    const cardMap = new Map(deck.map(c => [c.id, c]));
-    const sourceIds = (filter === 'MASTERED' || query.length > 0)
-        ? deck.map(c => c.id)
-        : queue;
-
-    return sourceIds.filter(id => {
-        const c = cardMap.get(id);
-        if (!c) return false;
-        if (filter === 'QUEUE' && !queue.includes(c.id)) return false;
-        if (filter === 'MASTERED' && c.status !== 'mastered') return false;
-        if (filter === 'REVIEW' && c.status !== 'review') return false;
-        if (filter === 'CUSTOM' && !c.isCustom) return false;
-
-        if (query) {
-            const hay = `${c.word} ${c.romaji || ''} ${c.meaning}`.toLowerCase();
-            if (!hay.includes(query)) return false;
-        }
-        return true;
+    const byId = new Map(deck.map(c => [c.id, c]));
+    const ids = (filter === 'MASTERED' || filter === 'REVIEW' || filter === 'CUSTOM' || query)
+        ? deck.map(c => c.id) : queue;
+    return ids.filter(id => {
+        const card = byId.get(id);
+        if (!card) return false;
+        if (filter === 'QUEUE' && !queue.includes(id)) return false;
+        if (filter === 'MASTERED' && card.status !== 'mastered') return false;
+        if (filter === 'REVIEW' && card.status !== 'review') return false;
+        if (filter === 'CUSTOM' && !card.isCustom) return false;
+        return !query || `${card.word} ${card.romaji || ''} ${card.meaning}`.toLowerCase().includes(query);
     });
 }
 
@@ -8431,63 +8565,79 @@ function rateCurrentFlashcard(rating) {
     const lang = flashcardState.activeDeck;
     const card = getCurrentActiveFlashcard();
     if (!card) return;
+    const aliases = { dont_remember: 'dont_know', forgot: 'forgot', remember: 'remember', easy: 'easy' };
+    rating = aliases[rating];
+    if (!rating) return;
 
-    const queue = flashcardState.queues[lang];
-    const qIdx = queue.indexOf(card.id);
-    if (qIdx !== -1) {
-        queue.splice(qIdx, 1);
-    }
-
-    if (rating === 'remember') {
+    const now = Date.now();
+    const previousDays = Math.max(0, Number(card.intervalDays) || 0);
+    const streak = Math.max(0, Number(card.successStreak) || 0);
+    let intervalMs;
+    if (rating === 'dont_know') {
+        intervalMs = FC_TEN_MIN_MS;
+        card.intervalDays = 0;
+        card.successStreak = 0;
+        card.easeFactor = Math.max(1.3, (card.easeFactor || 2) - 0.25);
+        card.status = 'review';
+    } else if (rating === 'forgot') {
+        card.intervalDays = 1;
+        intervalMs = FC_DAY_MS;
+        card.successStreak = 0;
+        card.easeFactor = Math.max(1.3, (card.easeFactor || 2) - 0.15);
+        card.status = 'review';
+    } else {
+        const factor = rating === 'easy' ? Math.max(2.4, card.easeFactor || 2) : Math.max(1.8, (card.easeFactor || 2) * 0.9);
+        const baseDays = rating === 'easy' ? 7 : 3;
+        card.intervalDays = Math.min(365, Math.max(baseDays, Math.round(previousDays * factor)));
+        card.successStreak = streak + 1;
+        card.easeFactor = Math.min(3, (card.easeFactor || 2) + (rating === 'easy' ? 0.15 : 0.03));
+        intervalMs = card.intervalDays * FC_DAY_MS;
         card.status = 'mastered';
-        if (typeof SoundFX !== 'undefined' && SoundFX.playQuestComplete) SoundFX.playQuestComplete();
-
+        // A flashcard pays only once, even after refresh, due reviews, or free practice.
         if (!card.rewardClaimed) {
             card.rewardClaimed = true;
-            if (typeof addRewards === 'function') {
-                addRewards(5, 3, 'INT', 5, true);
-            }
-            if (typeof spawnFloatingReward === 'function') {
-                spawnFloatingReward('⚡ Ingat! +5 XP | +3 Gold | +5 INT XP');
-            }
+            if (typeof addRewards === 'function') addRewards(5, 3, 'INT', 5, true);
+            if (typeof spawnFloatingReward === 'function') spawnFloatingReward('⚡ +5 XP | +3 Gold | +5 INT XP');
         }
-    } else if (rating === 'dont_remember') {
-        card.status = 'review';
-        card.repeatCount = (card.repeatCount || 0) + 1;
-        flashcardState.sessionRepeats[lang] = (flashcardState.sessionRepeats[lang] || 0) + 1;
-        if (typeof SoundFX !== 'undefined' && SoundFX.playUndo) SoundFX.playUndo();
-
-        const insertPos = Math.min(queue.length, 6);
-        queue.splice(insertPos, 0, card.id);
-    } else if (rating === 'forgot') {
-        card.status = 'review';
-        card.repeatCount = (card.repeatCount || 0) + 1;
-        flashcardState.sessionRepeats[lang] = (flashcardState.sessionRepeats[lang] || 0) + 1;
-        if (typeof SoundFX !== 'undefined' && SoundFX.playDamage) SoundFX.playDamage();
-
-        const insertPos = Math.min(queue.length, 2);
-        queue.splice(insertPos, 0, card.id);
     }
-
+    card.dueAt = now + intervalMs;
+    card.lastReviewedAt = now;
+    card.reviewCount = (card.reviewCount || 0) + 1;
+    if (rating === 'forgot' || rating === 'dont_know') {
+        card.repeatCount = (card.repeatCount || 0) + 1;
+        flashcardState.sessionRepeats[lang] = (flashcardState.sessionRepeats[lang] || 0) + 1;
+    }
+    if (typeof SoundFX !== 'undefined') {
+        if ((rating === 'remember' || rating === 'easy') && SoundFX.playQuestComplete) SoundFX.playQuestComplete();
+        else if (SoundFX.playClick) SoundFX.playClick();
+    }
+    flashcardState.queues[lang] = (flashcardState.queues[lang] || []).filter(id => id !== card.id);
     flashcardState.isFlipped = false;
+    // Leaving search mode prevents repeatedly grading the same first result.
+    const search = document.getElementById('fc-search-input');
+    if (search && search.value.trim()) search.value = '';
+    const filter = document.getElementById('fc-status-filter');
+    if (filter && filter.value !== 'ALL' && filter.value !== 'QUEUE') filter.value = 'QUEUE';
+    refreshDueFlashcardQueue(lang);
     saveFlashcardState();
     renderFlashcardUI();
 }
 
-function restartFlashcardSessionQueue() {
+function restartFlashcardSessionQueue(freePractice = false) {
     if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
     const lang = flashcardState.activeDeck;
     const deck = flashcardState.decks[lang] || [];
-    const reviewFirst = deck.filter(c => c.status !== 'mastered').map(c => c.id);
-    const shuffled = reviewFirst.length > 0 ? reviewFirst : deck.map(c => c.id);
-    // Fisher-Yates: unpredictable order on each new session, review cards prioritized.
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    flashcardState.queues[lang] = shuffled;
+    if (!flashcardState.freePracticeByDeck) flashcardState.freePracticeByDeck = { en: false, jp: false };
+    flashcardState.freePracticeByDeck[lang] = !!freePractice;
+    const now = Date.now();
+    const source = freePractice ? deck : deck.filter(card => card.dueAt <= now);
+    flashcardState.queues[lang] = shuffleFlashcardIds(source.map(card => card.id));
     flashcardState.sessionRepeats[lang] = 0;
     flashcardState.isFlipped = false;
+    const search = document.getElementById('fc-search-input');
+    const filter = document.getElementById('fc-status-filter');
+    if (search) search.value = '';
+    if (filter) filter.value = 'ALL';
     saveFlashcardState();
     renderFlashcardUI();
 }
@@ -8498,6 +8648,7 @@ function handleFlashcardFilterChange() {
 }
 
 function renderFlashcardUI() {
+    refreshDueFlashcardQueue();
     applyFlashcardLanguage();
     const lang = flashcardState.activeDeck;
     const deck = flashcardState.decks[lang] || [];
@@ -8532,6 +8683,10 @@ function renderFlashcardUI() {
     if (!card) {
         if (stage) stage.classList.add('hidden');
         if (empty) empty.classList.remove('hidden');
+        const uiLang = localStorage.getItem('system_rpg_lang') || localStorage.getItem('sysrpg_lang') || 'id';
+        const text = FC_I18N_MAP[uiLang] || FC_I18N_MAP.id;
+        const emptyDesc = document.getElementById('fc-empty-desc');
+        if (emptyDesc) emptyDesc.textContent = text.fc_no_due;
         return;
     }
 
@@ -8572,6 +8727,11 @@ function renderFlashcardUI() {
         statusBadge.style.cssText = 'background: rgba(6,182,212,0.18); color: #67e8f9; border: 1px solid rgba(34,211,238,0.4);';
     }
 
+    const dueBadge = document.getElementById('fc-next-due');
+    if (dueBadge) {
+        const due = new Date(card.dueAt);
+        dueBadge.textContent = `${uiDict.fc_next_due}: ${card.dueAt > Date.now() ? due.toLocaleString(uiLang === 'ja' ? 'ja-JP' : uiLang === 'en' ? 'en-US' : 'id-ID') : 'NOW'}`;
+    }
     const repBadge = document.getElementById('fc-card-repeat-badge');
     if ((card.repeatCount || 0) > 0) {
         repBadge.textContent = `${uiDict.fc_repeat_prefix} ${card.repeatCount}x`;
@@ -8660,6 +8820,11 @@ function saveFlashcardForm(e) {
             isCustom: true
         };
         deck.unshift(newCard);
+        newCard.dueAt = Date.now();
+        newCard.intervalDays = 0;
+        newCard.reviewCount = 0;
+        newCard.successStreak = 0;
+        newCard.easeFactor = 2;
         flashcardState.queues[lang].unshift(newId);
         flashcardState.activeDeck = lang;
     }
@@ -8731,7 +8896,9 @@ function confirmResetFlashcards() {
         if (typeof SoundFX !== 'undefined' && SoundFX.playDamage) SoundFX.playDamage();
 
         flashcardState.decks[lang] = buildDefaultFlashcardDeck(lang);
-        flashcardState.queues[lang] = flashcardState.decks[lang].map(c => c.id);
+        flashcardState.queues[lang] = shuffleFlashcardIds(flashcardState.decks[lang].map(c => c.id));
+        if (!flashcardState.freePracticeByDeck) flashcardState.freePracticeByDeck = { en: false, jp: false };
+        flashcardState.freePracticeByDeck[lang] = false;
         flashcardState.sessionRepeats[lang] = 0;
         flashcardState.isFlipped = false;
         saveFlashcardState();
@@ -8751,6 +8918,11 @@ window.addEventListener('system-language-changed', () => {
 });
 
 loadFlashcardState();
+// Return 10-minute and later due reviews while this screen stays open.
+setInterval(() => {
+    const pane = document.getElementById('dungeon-mode-flashcard');
+    if (pane && !pane.classList.contains('hidden')) renderFlashcardUI();
+}, 60000);
 
 
 // 17. INITIAL BOOT SEQUENCE
@@ -8767,7 +8939,7 @@ loadFlashcardState();
         applyAppLanguage();
     }
 
-    // Cek pengingat jadwal Pagi / Sore / Malam setiap 20 detik
+    // Check five web-only reminders every 20 seconds (Android alarms are independent).
     setInterval(checkScheduledReminderTick, 20000);
 })();
 // SYSTEM RPG V6 Refined additions. Separate namespaces preserve legacy save data.
@@ -8879,3 +9051,15 @@ window.addEventListener('system-language-changed',()=>{if(typeof V6!=='undefined
 function v6RefreshEntryLabels(){const l=v6UiLang();const entries=[['v6-journal-entry','HUNTER JOURNAL','Mood · Reflection · Tomorrow’s Goal','Buka Journal →','Open Journal →','日記を開く →'],['v6-library-entry','KNOWLEDGE LIBRARY','The Hunter’s Knowledge Archive · Artikel & Catatan','Buka Library →','Open Library →','ライブラリーを開く →']];for(const [id,title,sub,idBtn,enBtn,jaBtn] of entries){const e=document.getElementById(id);if(!e)continue;const btn=e.querySelector('button');if(btn)btn.textContent=l==='en'?enBtn:l==='ja'?jaBtn:idBtn;}}
 window.addEventListener('system-language-changed',v6RefreshEntryLabels);
 setTimeout(v6RefreshEntryLabels,0);
+
+// Bundled track is selected by default; no music auto-plays in the Dungeon.
+window.addEventListener('DOMContentLoaded', () => {
+    const picker = document.getElementById('rpg-lofi-track');
+    if (picker) {
+        let lastTrack = 'moonlit';
+        try { lastTrack = localStorage.getItem('system_rpg_lofi_track_v2') || 'moonlit'; } catch (_e) {}
+        if (!['moonlit', 'night', 'synth'].includes(lastTrack)) lastTrack = 'moonlit';
+        picker.value = lastTrack;
+        selectRpgLofiTrack(lastTrack);
+    }
+});

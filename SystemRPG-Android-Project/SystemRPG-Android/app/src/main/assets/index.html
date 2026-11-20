@@ -105,20 +105,7 @@
     <div id="system-splash-screen">
         <!-- Adaptive App Launcher Icon -->
         <div class="launcher-icon-box">
-            <svg width="68" height="68" viewBox="0 0 100 100" fill="none">
-                <defs>
-                    <linearGradient id="launcherGrad" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-                        <stop offset="0%" stop-color="#00f0ff"/>
-                        <stop offset="55%" stop-color="#a855f7"/>
-                        <stop offset="100%" stop-color="#fbbf24"/>
-                    </linearGradient>
-                </defs>
-                <polygon points="50,6 88,28 88,72 50,94 12,72 12,28" stroke="url(#launcherGrad)" stroke-width="4" fill="rgba(6,182,212,0.08)"/>
-                <path d="M50 18 L63 44 L50 38 L37 44 Z" fill="#00f0ff"/>
-                <rect x="47.5" y="36" width="5" height="36" rx="2" fill="url(#launcherGrad)"/>
-                <path d="M35 62 L50 70 L65 62" stroke="#fbbf24" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="50" cy="80" r="3.5" fill="#fbbf24"/>
-            </svg>
+            <img src="system-rpg-logo.png" alt="SYSTEM RPG" class="splash-brand-logo">
         </div>
 
         <p class="font-display" style="font-size: 10px; letter-spacing: 0.24em; color: #38bdf8; text-transform: uppercase; font-weight: 700;">
@@ -586,19 +573,12 @@
                     Munculkan notifikasi pop-up di layar atas HP jika masih ada Daily Quest yang belum dikerjakan atau lupa buka SYSTEM RPG.
                 </p>
 
-                <div class="grid grid-cols-3 gap-1-5">
-                    <div>
-                        <label style="display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 3px;">🌅 Pagi</label>
-                        <input type="time" id="rem-time-pagi" value="07:30" onchange="saveReminders()" class="input-cyber font-display" style="font-size: 0.75rem; padding: 0.35rem 0.4rem;">
-                    </div>
-                    <div>
-                        <label style="display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 3px;">🌇 Sore</label>
-                        <input type="time" id="rem-time-sore" value="16:30" onchange="saveReminders()" class="input-cyber font-display" style="font-size: 0.75rem; padding: 0.35rem 0.4rem;">
-                    </div>
-                    <div>
-                        <label style="display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 3px;">🌙 Malam</label>
-                        <input type="time" id="rem-time-malam" value="20:30" onchange="saveReminders()" class="input-cyber font-display" style="font-size: 0.75rem; padding: 0.35rem 0.4rem;">
-                    </div>
+                <div class="reminder-time-grid" id="reminder-time-grid">
+                    <div><label for="rem-time-pagi" data-rem-label="Pagi">🌄 Subuh</label><input type="time" id="rem-time-pagi" value="04:00" onchange="saveReminders()" class="input-cyber font-display"></div>
+                    <div><label for="rem-time-siang" data-rem-label="Siang">☀️ Siang</label><input type="time" id="rem-time-siang" value="12:00" onchange="saveReminders()" class="input-cyber font-display"></div>
+                    <div><label for="rem-time-sore" data-rem-label="Sore">🌤️ Sore</label><input type="time" id="rem-time-sore" value="15:30" onchange="saveReminders()" class="input-cyber font-display"></div>
+                    <div><label for="rem-time-petang" data-rem-label="Petang">🌇 Petang</label><input type="time" id="rem-time-petang" value="18:00" onchange="saveReminders()" class="input-cyber font-display"></div>
+                    <div><label for="rem-time-malam" data-rem-label="Malam">🌙 Malam</label><input type="time" id="rem-time-malam" value="20:00" onchange="saveReminders()" class="input-cyber font-display"></div>
                 </div>
 
                 <div class="flex gap-2">
@@ -611,6 +591,10 @@
                 </div>
             </div>
 
+            <div class="system-card v6-entry" id="hunter-survival-guide-entry">
+                <div><strong>❤️ HUNTER SURVIVAL GUIDE</strong><p data-health-i18n="summary">Aturan HP, penalti, Shield, kematian dan respawn</p></div>
+                <button type="button" onclick="openHunterHealthGuide()" data-health-i18n="open">Baca Panduan →</button>
+            </div>
         </section>
 
         <!-- ==================== TAB 2: QUESTS ==================== -->
@@ -988,6 +972,7 @@
                                 style="flex: 1; accent-color: #a855f7; height: 6px; background: #334155; border-radius: 9999px; cursor: pointer;">
                             <span id="lofi-volume-label" class="font-display shrink-0" style="font-size: 11px; color: #d8b4fe; font-weight: 700; width: 2.25rem; text-align: right;">45%</span>
                         </div>
+                        <div class="rpg-music-picker"><label for="rpg-lofi-track">🎼 Offline Soundtrack</label><div class="lofi-playlist-controls"><button type="button" onclick="cycleRpgLofiTrack(-1)" aria-label="Previous soundtrack" title="Previous">⏮</button><select id="rpg-lofi-track" onchange="selectRpgLofiTrack(this.value)" aria-label="Choose soundtrack"><option value="moonlit">Moonlit Study</option><option value="night">Night Quest</option><option value="synth">Classic Synth</option><option value="custom">MP3 dari HP</option></select><button type="button" onclick="cycleRpgLofiTrack(1)" aria-label="Next soundtrack" title="Next">⏭</button></div></div>
                         <audio id="lofi-local-audio-player" loop class="hidden"></audio>
                     </div>
 
@@ -1084,6 +1069,9 @@
                         </select>
                     </div>
 
+                    <div class="fc-practice-actions"><button type="button" onclick="restartFlashcardSessionQueue(false)" data-fc-i18n="fc_btn_restart_session">Muat Review Jatuh Tempo</button><button type="button" onclick="restartFlashcardSessionQueue(true)" data-fc-i18n="fc_free_practice">Latihan Bebas (Acak)</button></div>
+                    <p class="fc-due-info" data-fc-i18n="fc_due_info">Kartu yang sudah dijadwalkan muncul lagi saat waktunya tiba.</p>
+
                     <!-- Session Queue & Mastery Metrics -->
                     <div class="fc-stats-bar">
                         <div class="fc-stat-pill">
@@ -1148,24 +1136,14 @@
                         </div>
                     </div>
 
-                    <!-- 3 Rating Buttons: Lupa, Tidak Ingat, Ingat -->
-                    <div class="grid grid-cols-3 gap-2">
-                        <button type="button" onclick="rateCurrentFlashcard('forgot')" class="fc-rate-btn fc-btn-forgot font-display">
-                            <span>💀</span>
-                            <span data-fc-i18n="fc_rate_forgot">Lupa</span>
-                            <small data-fc-i18n="fc_rate_forgot_sub">Ulang Cepat</small>
-                        </button>
-                        <button type="button" onclick="rateCurrentFlashcard('dont_remember')" class="fc-rate-btn fc-btn-dont font-display">
-                            <span>🔄</span>
-                            <span data-fc-i18n="fc_rate_dont">Tidak Ingat</span>
-                            <small data-fc-i18n="fc_rate_dont_sub">Masuk Antrean</small>
-                        </button>
-                        <button type="button" onclick="rateCurrentFlashcard('remember')" class="fc-rate-btn fc-btn-remember font-display">
-                            <span>⚡</span>
-                            <span data-fc-i18n="fc_rate_remember">Ingat</span>
-                            <small data-fc-i18n="fc_rate_remember_sub">Selesai (+INT)</small>
-                        </button>
+                    <!-- Spaced repetition ratings, from shortest to longest interval. -->
+                    <div class="fc-rating-grid">
+                        <button type="button" onclick="rateCurrentFlashcard('dont_remember')" class="fc-rate-btn fc-btn-dont font-display"><span>❔</span><span data-fc-i18n="fc_rate_dont">Tidak Tahu</span><small data-fc-i18n="fc_rate_dont_sub">10 menit</small></button>
+                        <button type="button" onclick="rateCurrentFlashcard('forgot')" class="fc-rate-btn fc-btn-forgot font-display"><span>💀</span><span data-fc-i18n="fc_rate_forgot">Lupa</span><small data-fc-i18n="fc_rate_forgot_sub">1 hari</small></button>
+                        <button type="button" onclick="rateCurrentFlashcard('remember')" class="fc-rate-btn fc-btn-remember font-display"><span>⚡</span><span data-fc-i18n="fc_rate_remember">Ingat</span><small data-fc-i18n="fc_rate_remember_sub">3 hari+</small></button>
+                        <button type="button" onclick="rateCurrentFlashcard('easy')" class="fc-rate-btn fc-btn-easy font-display"><span>🌟</span><span data-fc-i18n="fc_rate_easy">Mudah</span><small data-fc-i18n="fc_rate_easy_sub">7 hari+</small></button>
                     </div>
+                    <p id="fc-next-due" class="fc-next-due" aria-live="polite"></p>
                 </div>
 
                 <!-- Empty / Session Complete State -->
@@ -1179,6 +1157,7 @@
                         style="background: var(--cyan-500); color: #020617; font-size: 12px; font-weight: 800; padding: 0.6rem 1.1rem; border-radius: 0.75rem;">
                         🔁 <span data-fc-i18n="fc_btn_restart_session">Mulai Ulang Sesi Latihan</span>
                     </button>
+                    <button type="button" onclick="restartFlashcardSessionQueue(true)" class="fc-free-empty-btn" data-fc-i18n="fc_free_practice">Latihan Bebas (Acak)</button>
                 </div>
             </div>
         <div class="system-card v6-entry" id="v6-library-entry"><div><strong>📚 KNOWLEDGE LIBRARY</strong><p>The Hunter's Knowledge Archive · Artikel & Catatan</p></div><button type="button" onclick="V6.openLibrary()">Buka Library →</button></div>
@@ -2014,431 +1993,10 @@
 
     <!-- ==================== JAVASCRIPT LOGIC ==================== -->
 <div id="v6-overlay" class="hidden" role="dialog" aria-modal="true" aria-label="Hunter Archive"><div class="v6-panel"><header class="v6-panel-header"><button type="button" onclick="V6.close()" aria-label="Kembali">← Kembali</button><strong id="v6-heading">HUNTER ARCHIVE</strong></header><div id="v6-body"></div></div></div>
+    <div id="hunter-health-guide-modal" class="hidden hunter-guide-backdrop" role="dialog" aria-modal="true" aria-labelledby="hunter-health-guide-heading">
+        <div class="hunter-guide-card"><div class="hunter-guide-top"><strong id="hunter-health-guide-heading">HUNTER SURVIVAL GUIDE</strong><button type="button" onclick="closeHunterHealthGuide()" aria-label="Close guide">✕</button></div><div id="hunter-health-guide-content"></div><button type="button" onclick="closeHunterHealthGuide()" id="hunter-health-close">Tutup</button></div>
+    </div>
     <script src="app.js"></script>
-    <script>
-    (function () {
-        let tutStep = 0;
-        let tutMode = 'guide';
 
-        const TUT_DATA = {
-            id: {
-                tabs: { guide: '🧭 Panduan Cepat', codex: '📜 Aturan Sistem' },
-                skip: 'Lewati',
-                prev: '← Kembali',
-                next: 'Lanjut →',
-                done: 'Selesai ✓',
-                steps: [
-                    {
-                        icon: '⚔️',
-                        title: '1. Status, HP & Rank',
-                        desc: 'Cek Level, Rank, HP (Vitality), dan Streak di tab STATUS. Menjaga HP tetap prima memberi dukungan performa, sementara HP terlalu rendah dapat memengaruhi perolehan EXP.',
-                        tip: 'Klik badge Rank untuk melihat roadmap kenaikan Level & rata-rata atribut.'
-                    },
-                    {
-                        icon: '📋',
-                        title: '2. Quest Board & Target Streak',
-                        desc: 'Selesaikan Daily Quest, Main Quest, dan Boss Fight di tab QUESTS. Capai target persentase Daily Quest yang kamu atur agar Streak tetap terjaga dan terhindar dari penalti harian.',
-                        tip: 'Kamu bisa mengatur jadwal hari aktif serta misi bertipe ceklis atau hitungan (count).'
-                    },
-                    {
-                        icon: '⏳',
-                        title: '3. Dungeon Focus & Latihan',
-                        desc: 'Gunakan timer fokus di tab DUNGEON untuk blok belajar atau kerja, baca materi PDF di Grimoire Reader, putar Anime Lofi Radio, atau latihan kosakata EN/JP di Flashcard Arena.',
-                        tip: 'Hindari menyerah sebelum waktu habis agar tidak terkena penalti -10 HP.'
-                    },
-                    {
-                        icon: '🛒',
-                        title: '4. Shop, Armory & Mystery Chest',
-                        desc: 'Gunakan Gold di tab SHOP untuk membeli Potion/Elixir, Streak Freeze (maksimal stok 2), reward dunia nyata, memasang Relic 24 jam di Armory, atau membuka Mystery System Chest (150 Gold).',
-                        tip: 'Harga item di Shop tetap bisa kamu edit sendiri kapan saja sesuai kebutuhan.'
-                    },
-                    {
-                        icon: '💰',
-                        title: '5. Treasury Vault',
-                        desc: 'Catat pemasukan dan pengeluaran di tab TREASURY menggunakan kalkulator bawaan untuk melatih kedisiplinan finansial sehari-hari.',
-                        tip: 'Pencatatan transaksi memberi bonus XP & WIS dengan batas klaim 3x per hari.'
-                    },
-                    {
-                        icon: '🌙',
-                        title: '6. Evaluasi & Lanjut Hari',
-                        desc: 'Di tab STATUS, pada bagian Kontrol Sistem & Evaluasi Harian, tekan "Evaluasi & Lanjut Hari" (opsional isi Awakening Journal) untuk merekap progres, menerapkan aturan streak/penalti, dan pindah ke hari berikutnya.',
-                        tip: 'Tekan "Selesai ✓" untuk menutup panduan ini—bisa dibuka ulang kapan saja dari Pengaturan Font.'
-                    }
-                ],
-                codex: [
-                    {
-                        badge: 'RANK & ATRIBUT',
-                        title: 'STR • INT • WIS • CHR',
-                        points: [
-                            '<strong>STR (Strength):</strong> Tumbuh dari misi fisik & latihan; menopang kapasitas Max HP.',
-                            '<strong>INT (Intelligence):</strong> Tumbuh dari belajar, fokus Dungeon & Flashcard; menopang bonus EXP.',
-                            '<strong>WIS (Wisdom):</strong> Tumbuh dari konsistensi, refleksi & keuangan; membantu meredam penalti.',
-                            '<strong>CHR (Charisma):</strong> Tumbuh dari interaksi & target sosial/rutin; memberi keuntungan di Shop.'
-                        ]
-                    },
-                    {
-                        badge: 'STREAK & SHIELD',
-                        title: 'Aturan Streak & Penalti',
-                        points: [
-                            '<strong>Streak Aman:</strong> Tercapai saat persentase Daily Quest pada hari tersebut memenuhi target harianmu.',
-                            '<strong>Streak Freeze:</strong> Stok maksimal <strong>2</strong>; otomatis menahan Streak jika target harian terlewat.',
-                            '<strong>Evaluasi Harian:</strong> Menutup hari, mengecek target quest, dan menerapkan pemulihan atau penalti sesuai kondisi.'
-                        ]
-                    },
-                    {
-                        badge: 'EKONOMI & GACHA',
-                        title: 'Shop, Relic & Peti 150 Gold',
-                        points: [
-                            '<strong>Shop:</strong> Menyediakan Potion, Elixir, Streak Freeze, serta reward dunia nyata yang bisa diedit/ditambah.',
-                            '<strong>Armory:</strong> Relic bersifat sementara (24 jam) pada 3 slot aktif untuk memberi buff khusus.',
-                            '<strong>Mystery Chest (150 G):</strong> Mengacak hadiah dari tier Common, Rare, Epic, hingga Legendary.'
-                        ]
-                    }
-                ]
-            },
-            en: {
-                tabs: { guide: '🧭 Quick Guide', codex: '📜 System Codex' },
-                skip: 'Skip',
-                prev: '← Back',
-                next: 'Next →',
-                done: 'Finish ✓',
-                steps: [
-                    {
-                        icon: '⚔️',
-                        title: '1. Status, HP & Rank',
-                        desc: 'Track your Level, Rank, HP (Vitality), and Streak in the STATUS tab. Keeping HP healthy supports smooth progression, while low HP can reduce EXP gains.',
-                        tip: 'Tap your Rank badge to check Level and average stat requirements for higher ranks.'
-                    },
-                    {
-                        icon: '📋',
-                        title: '2. Quest Board & Streak Target',
-                        desc: 'Complete Daily Quests, Main Quests, and Boss Fights in QUESTS. Hit your configured Daily Quest percentage target to protect your Streak and avoid end-of-day penalties.',
-                        tip: 'Customize active weekdays and switch quests between standard checkboxes or count targets.'
-                    },
-                    {
-                        icon: '⏳',
-                        title: '3. Dungeon Focus & Study',
-                        desc: 'Start focus timers in DUNGEON for study or work blocks, read PDFs in Grimoire Reader, play Anime Lofi Radio, or practice EN/JP cards in Flashcard Arena.',
-                        tip: 'Avoid aborting sessions early so you do not lose -10 HP.'
-                    },
-                    {
-                        icon: '🛒',
-                        title: '4. Shop, Armory & Mystery Chest',
-                        desc: 'Spend Gold in SHOP on Potions/Elixirs, Streak Freeze (max stock 2), real-life rewards, 24-hour Armory Relics, or the 150 Gold Mystery System Chest.',
-                        tip: 'You can edit Shop item prices anytime to match your personal economy.'
-                    },
-                    {
-                        icon: '💰',
-                        title: '5. Treasury Vault',
-                        desc: 'Log income and expenses in TREASURY with the built-in calculator to build consistent financial awareness.',
-                        tip: 'Logging transactions grants bonus XP & WIS up to 3 times per day.'
-                    },
-                    {
-                        icon: '🌙',
-                        title: '6. Daily Evaluation',
-                        desc: 'In the STATUS tab under System Controls & Daily Evaluation, tap "Evaluasi & Lanjut Hari" (with optional Awakening Journal) to summarize progress, apply streak/penalty rules, and advance to the next day.',
-                        tip: 'Tap "Finish ✓" to close this guide—you can reopen it anytime from Font Settings.'
-                    }
-                ],
-                codex: [
-                    {
-                        badge: 'RANK & STATS',
-                        title: 'STR • INT • WIS • CHR',
-                        points: [
-                            '<strong>STR (Strength):</strong> Grows from physical quests & workouts; supports Max HP.',
-                            '<strong>INT (Intelligence):</strong> Grows from study, Dungeon focus & Flashcards; boosts EXP.',
-                            '<strong>WIS (Wisdom):</strong> Grows from consistency, reflection & Treasury; helps mitigate penalties.',
-                            '<strong>CHR (Charisma):</strong> Grows from social/routine milestones; grants Shop advantages.'
-                        ]
-                    },
-                    {
-                        badge: 'STREAK & SHIELD',
-                        title: 'Streak & Penalty Rules',
-                        points: [
-                            '<strong>Streak Progress:</strong> Earned when your completed Daily Quest ratio meets your configured target.',
-                            '<strong>Streak Freeze:</strong> Max stock of <strong>2</strong>; automatically protects your Streak if a day falls short.',
-                            '<strong>Daily Evaluation:</strong> Closes the day, checks completion ratio, and applies outcomes before moving forward.'
-                        ]
-                    },
-                    {
-                        badge: 'ECONOMY & GACHA',
-                        title: 'Shop, Relics & 150G Chest',
-                        points: [
-                            '<strong>Shop:</strong> Offers Potions, Elixirs, Streak Freeze, and editable/custom real-life rewards.',
-                            '<strong>Armory:</strong> Temporary 24-hour Relics across 3 active slots for targeted buffs.',
-                            '<strong>Mystery Chest (150 G):</strong> Randomizes rewards across Common, Rare, Epic, and Legendary tiers.'
-                        ]
-                    }
-                ]
-            },
-            ja: {
-                tabs: { guide: '🧭 クイックガイド', codex: '📜 システム規則' },
-                skip: 'スキップ',
-                prev: '← 戻る',
-                next: '次へ →',
-                done: '完了 ✓',
-                steps: [
-                    {
-                        icon: '⚔️',
-                        title: '1. ステータス・HP・ランク',
-                        desc: 'STATUSタブでレベル、ランク、HP、ストリークを確認しましょう。HPを高く保つことで安定した成長につながり、低下するとEXP獲得に影響します。',
-                        tip: 'ランクバッジをタップすると昇格に必要なレベルと平均ステータスの目安を確認できます。'
-                    },
-                    {
-                        icon: '📋',
-                        title: '2. クエストボードと目標',
-                        desc: 'QUESTSタブでデイリー・メイン・ボスクエストを進めましょう。設定したデイリー達成率を満たすとストリークを維持できます。',
-                        tip: '曜日ごとのスケジュールや、回数カウント型のクエストも設定可能です。'
-                    },
-                    {
-                        icon: '⏳',
-                        title: '3. ダンジョン集中・学習',
-                        desc: 'DUNGEONタブの集中タイマーで学習・作業を行い、PDFリーダーやアニメLo-Fiラジオ、EN/JPフラッシュカードを活用できます。',
-                        tip: '途中で諦めるとHPが10減少するため注意しましょう。'
-                    },
-                    {
-                        icon: '🛒',
-                        title: '4. ショップ・レリック・宝箱',
-                        desc: 'SHOPで獲得ゴールドを使い、ポーション・エリクサー、ストリーク保護（最大2個）、現実のご褒美、24時間レリック、150Gミステリーボックスを利用できます。',
-                        tip: 'ショップアイテムの価格はいつでも自分で編集できます。'
-                    },
-                    {
-                        icon: '💰',
-                        title: '5. トレジャリー（家計簿）',
-                        desc: 'TREASURYタブの電卓を使って収入と支出を記録し、日々の金銭管理を習慣化しましょう。',
-                        tip: '記録によるボーナスXPとWISは1日3回まで獲得できます。'
-                    },
-                    {
-                        icon: '🌙',
-                        title: '6. 1日の評価と更新',
-                        desc: 'STATUSタブのシステム管理・日次評価から「Evaluasi & Lanjut Hari」を押して振り返り（任意でジャーナル記録）を行い、ストリークや日次結果を反映して翌日へ進みます。',
-                        tip: '「完了 ✓」を押すとガイドを閉じます。フォント設定からいつでも再表示できます。'
-                    }
-                ],
-                codex: [
-                    {
-                        badge: 'ランクとステータス',
-                        title: 'STR • INT • WIS • CHR',
-                        points: [
-                            '<strong>STR：</strong>運動・身体習慣で成長し、最大HPに関わります。',
-                            '<strong>INT：</strong>学習・集中・フラッシュカードで成長し、EXP効率を高めます。',
-                            '<strong>WIS：</strong>継続・振り返り・家計管理で成長し、ペナルティ軽減に役立ちます。',
-                            '<strong>CHR：</strong>習慣達成や対人目標で成長し、ショップ面で有利になります。'
-                        ]
-                    },
-                    {
-                        badge: 'ストリークと保護',
-                        title: '連続記録とペナルティ',
-                        points: [
-                            '<strong>目標達成：</strong>その日のデイリークエスト達成率が設定目標に達するとストリークが伸びます。',
-                            '<strong>ストリーク保護：</strong>所持上限は<strong>2</strong>で、条件未達時に自動で連続記録を守ります。',
-                            '<strong>日次評価：</strong>1日の達成状況を判定して次の日へ進みます。'
-                        ]
-                    },
-                    {
-                        badge: '経済とガチャ',
-                        title: 'ショップ・レリック・150G箱',
-                        points: [
-                            '<strong>ショップ：</strong>回復アイテムや保護アイテム、編集・追加できる現実のご褒美を扱います。',
-                            '<strong>レリック：</strong>3スロットに装着できる24時間効果の装備アイテムです。',
-                            '<strong>ミステリーボックス（150 G）：</strong>Common〜Legendaryの各種報酬がランダムで排出されます。'
-                        ]
-                    }
-                ]
-            }
-        };
-
-        function getActiveLang() {
-            const saved = localStorage.getItem('sysrpg_language') ||
-                          localStorage.getItem('sysrpg_lang') ||
-                          localStorage.getItem('appLanguage') ||
-                          document.documentElement.lang || 'id';
-            if (String(saved).indexOf('ja') === 0) return 'ja';
-            if (String(saved).indexOf('en') === 0) return 'en';
-            return 'id';
-        }
-
-        function getCurrentTargetPct() {
-            const inp = document.getElementById('input-streak-threshold');
-            const val = inp ? parseInt(inp.value, 10) : 80;
-            return isNaN(val) ? 80 : Math.max(10, Math.min(100, val));
-        }
-
-        function getActiveSteps() {
-            const pack = TUT_DATA[getActiveLang()] || TUT_DATA.id;
-            return pack.steps || TUT_DATA.id.steps;
-        }
-
-        function renderTutorialBox() {
-            const lang = getActiveLang();
-            const pack = TUT_DATA[lang] || TUT_DATA.id;
-            const steps = pack.steps;
-            const targetPct = getCurrentTargetPct();
-            const box = document.getElementById('sysrpg-force-tutorial');
-            if (!box) return;
-
-            const tabGuideBtn = box.querySelector('#sft-tab-guide');
-            const tabCodexBtn = box.querySelector('#sft-tab-codex');
-            const guidePane = box.querySelector('#sft-pane-guide');
-            const codexPane = box.querySelector('#sft-pane-codex');
-            const dots = box.querySelector('#sft-dots');
-            const prevBtn = box.querySelector('#sft-prev');
-            const nextBtn = box.querySelector('#sft-next');
-            const skipBtn = box.querySelector('#sft-skip');
-
-            tabGuideBtn.textContent = pack.tabs.guide;
-            tabCodexBtn.textContent = pack.tabs.codex;
-            skipBtn.textContent = pack.skip;
-
-            const isGuide = tutMode === 'guide';
-            tabGuideBtn.style.background = isGuide ? 'rgba(6,182,212,0.22)' : '#0f172a';
-            tabGuideBtn.style.color = isGuide ? '#67e8f9' : '#94a3b8';
-            tabGuideBtn.style.borderColor = isGuide ? '#22d3ee' : '#334155';
-
-            tabCodexBtn.style.background = !isGuide ? 'rgba(168,85,247,0.22)' : '#0f172a';
-            tabCodexBtn.style.color = !isGuide ? '#e9d5ff' : '#94a3b8';
-            tabCodexBtn.style.borderColor = !isGuide ? '#c084fc' : '#334155';
-
-            if (isGuide) {
-                guidePane.style.display = 'block';
-                codexPane.style.display = 'none';
-                dots.style.display = 'flex';
-                prevBtn.style.display = 'inline-block';
-
-                const item = steps[tutStep] || steps[0];
-                box.querySelector('#sft-counter').textContent = (tutStep + 1) + ' / ' + steps.length;
-                box.querySelector('#sft-icon').textContent = item.icon;
-                box.querySelector('#sft-title').textContent = item.title;
-                box.querySelector('#sft-desc').textContent = item.desc;
-                box.querySelector('#sft-tip').textContent = item.tip + ' (Target aktif: ' + targetPct + '%)';
-
-                prevBtn.textContent = pack.prev;
-                prevBtn.style.visibility = tutStep === 0 ? 'hidden' : 'visible';
-                nextBtn.textContent = tutStep === steps.length - 1 ? pack.done : pack.next;
-
-                dots.innerHTML = steps.map(function (_, idx) {
-                    return '<span style="width:' + (idx === tutStep ? '18px' : '7px') + ';height:7px;border-radius:99px;background:' + (idx === tutStep ? '#22d3ee' : '#334155') + ';transition:all .2s;"></span>';
-                }).join('');
-            } else {
-                guidePane.style.display = 'none';
-                codexPane.style.display = 'block';
-                dots.style.display = 'none';
-                prevBtn.style.display = 'none';
-
-                box.querySelector('#sft-counter').textContent = 'CODEX';
-                codexPane.innerHTML = pack.codex.map(function (sec) {
-                    return '<div style="background:rgba(2,6,23,0.72);border:1px solid #334155;border-radius:0.75rem;padding:0.75rem;margin-bottom:0.65rem;text-align:left;">' +
-                        '<div style="font-size:10px;font-weight:800;letter-spacing:0.1em;color:#c084fc;">' + sec.badge + '</div>' +
-                        '<div style="font-size:13px;font-weight:800;color:#fff;margin:2px 0 6px 0;">' + sec.title + '</div>' +
-                        '<ul style="margin:0;padding-left:1rem;font-size:12px;color:#cbd5e1;line-height:1.5;">' +
-                            sec.points.map(function (pt) { return '<li style="margin-bottom:3px;">' + pt + '</li>'; }).join('') +
-                        '</ul>' +
-                    '</div>';
-                }).join('') +
-                '<div style="font-size:11px;color:#67e8f9;background:rgba(8,51,68,0.65);border:1px solid rgba(34,211,238,0.35);border-radius:0.65rem;padding:0.55rem 0.7rem;text-align:left;">' +
-                    'Target Streak aktif saat ini: <strong>' + targetPct + '%</strong> • Mystery Chest: <strong>150 Gold</strong>.' +
-                '</div>';
-
-                nextBtn.textContent = pack.done;
-            }
-        }
-
-        window.openTutorialModal = function (startIndex) {
-            if (typeof startIndex !== 'number') startIndex = 0;
-            const fontModal = document.getElementById('font-settings-modal');
-            if (fontModal) fontModal.classList.add('hidden');
-
-            let box = document.getElementById('sysrpg-force-tutorial');
-            if (!box) {
-                box = document.createElement('div');
-                box.id = 'sysrpg-force-tutorial';
-                box.setAttribute('style', 'position:fixed;inset:0;width:100vw;height:100vh;background:rgba(2,6,23,0.92);backdrop-filter:blur(8px);z-index:999999;display:flex;align-items:center;justify-content:center;padding:1rem;box-sizing:border-box;');
-                box.innerHTML =
-                    '<div style="width:100%;max-width:410px;max-height:90vh;overflow-y:auto;background:#0f172a;border:1.5px solid #22d3ee;border-radius:1rem;padding:1.15rem;box-shadow:0 0 30px rgba(6,182,212,0.35);color:#f8fafc;box-sizing:border-box;font-family:inherit;">' +
-                        '<div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1e293b;padding-bottom:0.65rem;margin-bottom:0.75rem;">' +
-                            '<div>' +
-                                '<div style="font-size:10px;letter-spacing:0.15em;color:#22d3ee;font-weight:700;">💠 SYSTEM GUIDE</div>' +
-                                '<div style="font-size:13px;font-weight:800;color:#fff;margin-top:2px;">HUNTER MANUAL & CODEX</div>' +
-                            '</div>' +
-                            '<span id="sft-counter" style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:#083344;color:#67e8f9;border:1px solid #0e7490;"></span>' +
-                        '</div>' +
-                        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:0.85rem;">' +
-                            '<button type="button" id="sft-tab-guide" style="padding:0.45rem;border-radius:0.6rem;border:1px solid #22d3ee;font-size:11.5px;font-weight:800;cursor:pointer;"></button>' +
-                            '<button type="button" id="sft-tab-codex" style="padding:0.45rem;border-radius:0.6rem;border:1px solid #334155;font-size:11.5px;font-weight:800;cursor:pointer;"></button>' +
-                        '</div>' +
-                        '<div id="sft-pane-guide" style="text-align:center;padding:0.35rem 0.15rem;">' +
-                            '<div id="sft-icon" style="font-size:2.5rem;margin-bottom:0.55rem;"></div>' +
-                            '<h3 id="sft-title" style="font-size:15px;font-weight:800;color:#fff;margin:0 0 0.45rem 0;"></h3>' +
-                            '<p id="sft-desc" style="font-size:12.5px;color:#cbd5e1;line-height:1.55;margin:0;"></p>' +
-                            '<div id="sft-tip" style="margin-top:0.8rem;font-size:11.5px;color:#67e8f9;background:rgba(8,51,68,0.65);border:1px solid rgba(34,211,238,0.35);border-radius:0.65rem;padding:0.55rem 0.7rem;line-height:1.45;"></div>' +
-                        '</div>' +
-                        '<div id="sft-pane-codex" style="display:none;max-height:46vh;overflow-y:auto;padding-right:2px;"></div>' +
-                        '<div id="sft-dots" style="display:flex;justify-content:center;gap:6px;margin:0.9rem 0;"></div>' +
-                        '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #1e293b;padding-top:0.75rem;margin-top:0.5rem;">' +
-                            '<button type="button" id="sft-skip" style="background:transparent;border:none;color:#94a3b8;font-size:12px;font-weight:700;cursor:pointer;padding:6px 8px;">Lewati</button>' +
-                            '<div style="display:flex;gap:8px;">' +
-                                '<button type="button" id="sft-prev" style="background:#1e293b;border:1px solid #334155;color:#e2e8f0;font-size:12px;font-weight:700;border-radius:0.6rem;padding:7px 12px;cursor:pointer;">← Kembali</button>' +
-                                '<button type="button" id="sft-next" style="background:#06b6d4;border:none;color:#020617;font-size:12px;font-weight:800;border-radius:0.6rem;padding:7px 14px;cursor:pointer;">Lanjut →</button>' +
-                            '</div>' +
-                        '</div>' +
-                    '</div>';
-                document.body.appendChild(box);
-
-                box.addEventListener('click', function (e) {
-                    e.stopPropagation();
-                });
-
-                box.querySelector('#sft-tab-guide').onclick = function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    tutMode = 'guide';
-                    renderTutorialBox();
-                };
-                box.querySelector('#sft-tab-codex').onclick = function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    tutMode = 'codex';
-                    renderTutorialBox();
-                };
-                box.querySelector('#sft-skip').onclick = function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    try { localStorage.setItem('sysrpg_tutorial_v2', 'true'); } catch (_) {}
-                    box.remove();
-                };
-                box.querySelector('#sft-prev').onclick = function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (tutStep > 0) {
-                        tutStep--;
-                        renderTutorialBox();
-                    }
-                };
-                box.querySelector('#sft-next').onclick = function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (tutMode === 'codex') {
-                        try { localStorage.setItem('sysrpg_tutorial_v2', 'true'); } catch (_) {}
-                        box.remove();
-                        return;
-                    }
-                    const total = getActiveSteps().length;
-                    if (tutStep < total - 1) {
-                        tutStep++;
-                        renderTutorialBox();
-                    } else {
-                        try { localStorage.setItem('sysrpg_tutorial_v2', 'true'); } catch (_) {}
-                        box.remove();
-                    }
-                };
-            }
-
-            tutMode = 'guide';
-            const total = getActiveSteps().length;
-            tutStep = Math.max(0, Math.min(startIndex, total - 1));
-            renderTutorialBox();
-        };
-    })();
-    </script>
 </body>
 </html>

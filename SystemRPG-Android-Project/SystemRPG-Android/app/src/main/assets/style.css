@@ -818,3 +818,33 @@ pre, code {
 .v6-moods{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin-top:12px}.v6-mood{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px solid #334155;border-radius:10px;background:#0b1627;padding:9px 2px;color:#cbd5e1}.v6-mood span{font-size:clamp(21px,6vw,30px);line-height:1.2}.v6-mood small{font-size:clamp(8px,2.4vw,10px)}.v6-mood.selected{border:2px solid #22d3ee;background:rgba(34,211,238,.14);box-shadow:0 0 12px rgba(34,211,238,.16)}.v6-progress{height:6px;border-radius:6px;background:#1e293b;overflow:hidden;margin:12px 0}.v6-progress span{display:block;height:100%;background:linear-gradient(90deg,#0891b2,#a78bfa)}.v6-reader-nav{display:grid;grid-template-columns:1fr 1fr}.v6-reader-nav button{min-height:46px;white-space:normal}.v6-reader-nav button:disabled{opacity:.35}.v6-article p{line-height:1.85;font-size:16px}.v6-history-list{max-height:300px}.v6-panel{max-width:28rem}.v6-card textarea{width:100%;box-sizing:border-box}#v6-overlay{overflow-x:hidden}
 
 .v6-auto-day-note{width:100%;padding:12px 14px;border:1px solid rgba(34,211,238,.35);background:rgba(8,145,178,.08);border-radius:12px;color:#67e8f9;font-size:13px;line-height:1.55}.v6-auto-day-note span{display:block;color:#a1a1aa;font-size:12px;margin-top:3px}
+
+/* SYSTEM RPG Audio Phase 1 */
+.splash-brand-logo{width:100%;height:100%;object-fit:cover;display:block;border-radius:1.4rem}
+.rpg-music-picker{display:flex;gap:.7rem;align-items:center;justify-content:space-between;margin:.65rem 0;color:#d8b4fe;font-size:.75rem;flex-wrap:wrap}
+.rpg-music-picker select{background:#10152a;color:#e9d5ff;border:1px solid #8b5cf6;border-radius:.55rem;padding:.55rem;max-width:100%;min-height:40px}
+
+/* SYSTEM RPG V6 Full Upgrade — small-screen, accessible additions */
+.reminder-time-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:9px 0 12px}
+.reminder-time-grid label{display:block;font-size:10px;color:var(--text-muted,#94a3b8);margin-bottom:4px}
+.reminder-time-grid input{width:100%;min-width:0;font-size:12px;padding:6px 3px;color-scheme:dark}
+.fc-rating-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.fc-rating-grid .fc-rate-btn{min-width:0;padding:9px 3px;font-size:11px;white-space:normal;line-height:1.2}
+.fc-rating-grid .fc-rate-btn small{font-size:9px}
+.fc-btn-easy{background:rgba(16,185,129,.15);border:1px solid #10b981;color:#6ee7b7}
+.fc-practice-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:5px}
+.fc-practice-actions button,.fc-free-empty-btn{padding:9px 6px;border:1px solid #0e7490;background:rgba(8,145,178,.14);color:#a5f3fc;font-size:11px;font-weight:700;border-radius:9px}
+.fc-practice-actions button:last-child,.fc-free-empty-btn{border-color:#7c3aed;color:#e9d5ff;background:rgba(109,40,217,.16)}
+.fc-due-info,.fc-next-due{font-size:10px;color:#94a3b8;text-align:center;line-height:1.5;margin-top:4px}
+.hunter-guide-backdrop{position:fixed;inset:0;z-index:999998;background:rgba(2,6,23,.87);display:flex;align-items:center;justify-content:center;padding:10px}
+.hunter-guide-backdrop.hidden{display:none!important}
+.hunter-guide-card{background:#0f172a;border:1px solid #22d3ee;color:#e2e8f0;border-radius:14px;padding:15px;width:min(100%,520px);max-height:88dvh;overflow-y:auto;box-shadow:0 8px 30px #0008}
+.hunter-guide-top{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #334155;padding-bottom:10px;margin-bottom:10px;color:#67e8f9}
+.hunter-guide-top button{font-size:20px;padding:4px 10px;color:#e2e8f0}
+.hunter-guide-card section{padding:9px 4px;border-bottom:1px solid #334155}
+.hunter-guide-card h3{font-size:13px;font-weight:800;color:#c4b5fd;margin:0 0 7px}
+.hunter-guide-card ul{list-style:disc;padding-left:20px;font-size:12px;line-height:1.6;display:grid;gap:6px}
+#hunter-health-close{display:block;margin:13px 0 0 auto;padding:9px 20px;color:#020617;background:#22d3ee;font-size:12px;font-weight:800;border-radius:8px}
+@media(max-width:360px){.reminder-time-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.fc-rating-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}}
+
+.lofi-playlist-controls{display:flex;gap:6px;align-items:center}.lofi-playlist-controls select{min-width:0;flex:1}.lofi-playlist-controls button{background:#1e293b;color:#e9d5ff;border:1px solid #7c3aed;border-radius:8px;padding:8px 10px;font-size:13px;flex-shrink:0}
