@@ -1320,6 +1320,10 @@ function saveState() {
     try {
         gameState.muted = SoundFX.muted;
         gameState.ambientMode = SoundFX.ambientMode;
+        if (!Array.isArray(gameState.quests) || gameState.quests.some(q => !q || typeof q !== 'object' || q.id == null)) {
+            console.error('Save blocked: malformed quest data. Existing saved progress was not overwritten.');
+            return;
+        }
         const serialized = JSON.stringify(gameState);
         localStorage.setItem(STORAGE_KEY, serialized);
 
@@ -2896,11 +2900,28 @@ function questSortFinish(event) {
     questSort.suppressUntil=Date.now()+500;
     questSortAbort(false);
     if (!changed) return;
-    // Preserve filtered-out quests in their original slots; never change quest data.
-    const visible=new Set(original);
-    let next=0;
-    gameState.quests=gameState.quests.map(q=>visible.has(String(q.id))
-        ? gameState.quests.find(x=>String(x.id)===ordered[next++]) : q);
+    // Build from an immutable snapshot: never search an array while mutating it.
+    const snapshot = gameState.quests.slice();
+    const byId = new Map(snapshot.filter(q => q && q.id != null).map(q => [String(q.id), q]));
+    const unique = new Set(ordered);
+    if (unique.size !== ordered.length || ordered.some(id => !byId.has(id)) ||
+        snapshot.some(q => !q || q.id == null)) {
+        console.error('Quest reorder cancelled: invalid quest IDs or data');
+        renderQuests();
+        return;
+    }
+    let next = 0;
+    const visible = new Set(original);
+    const reordered = snapshot.map(q => visible.has(String(q.id)) ? byId.get(ordered[next++]) : q);
+    if (reordered.length !== snapshot.length || reordered.some(q => !q) ||
+        new Set(reordered).size !== snapshot.length) {
+        console.error('Quest reorder cancelled: quest integrity check failed');
+        renderQuests();
+        return;
+    }
+    // Save a pre-reorder recovery point before committing any changed order.
+    try { localStorage.setItem('system_rpg_pre_reorder_backup_v1', JSON.stringify(gameState)); } catch (_) {}
+    gameState.quests = reordered;
     saveState();
     renderQuests();
 }
