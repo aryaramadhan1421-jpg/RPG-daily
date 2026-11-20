@@ -1941,6 +1941,15 @@
                     📖 BANTUAN & PANDUAN HUNTER (TUTORIAL)
                 </button>
             </div>
+            <div id="sysrpg-backup-settings" style="margin-top: 0.85rem; padding-top: 0.85rem; border-top: 1px solid #1e293b;">
+                <div style="font-size: 11px; font-weight: 700; color: #94a3b8; margin-bottom: 0.55rem;">🛡️ DATA PROTECTION · BACKUP & RESTORE</div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button type="button" onclick="sysrpgExportBackup()" style="flex:1; min-width:110px; padding:0.7rem 0.4rem; border-radius:0.6rem; border:1px solid #0891b2; background:#083344; color:#a5f3fc; font-size:12px; font-weight:700;">📥 Backup Data</button>
+                    <button type="button" onclick="document.getElementById('sysrpg-backup-import').click()" style="flex:1; min-width:110px; padding:0.7rem 0.4rem; border-radius:0.6rem; border:1px solid #64748b; background:#1e293b; color:#e2e8f0; font-size:12px; font-weight:700;">📤 Restore Data</button>
+                </div>
+                <input type="file" id="sysrpg-backup-import" accept=".json,application/json" style="display:none" onchange="sysrpgImportBackup(event)">
+                <div style="font-size:10px; color:#94a3b8; line-height:1.5; margin-top:0.5rem;">Simpan file JSON di tempat aman. Restore mengganti progres setelah pemeriksaan dan konfirmasi.</div>
+            </div>
         </div>
     </div>
 

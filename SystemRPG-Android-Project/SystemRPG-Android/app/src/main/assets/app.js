@@ -3013,7 +3013,9 @@ function renderQuests() {
             const matchDay = currentQuestDayFilter === 'ALL' || isQuestActiveOnDate(q, getCurrentGameDateKey());
             return matchCat && matchTime && matchStatus && matchSearch && matchDay;
         })
-        ; // Manual quest order: do not auto-move completed quests
+        // Stable display-only partition: completed quests appear below active quests.
+        // Do not mutate gameState.quests here: manual order and progress remain intact.
+        .sort((a, b) => Number(Boolean(a.completed)) - Number(Boolean(b.completed)));
 
     if (filtered.length === 0) {
         container.innerHTML = `
@@ -9285,3 +9287,87 @@ window.addEventListener('DOMContentLoaded', () => {
         selectRpgLofiTrack(lastTrack);
     }
 });
+
+
+// =============================================
+// SYSTEM RPG V6 - Settings Backup & Restore
+// =============================================
+(function () {
+    'use strict';
+    const FORMAT = 'system-rpg-v6-backup';
+    const MAIN_KEY = 'system_rpg_productivity_offline_v2';
+    const EXTRA_KEYS = [
+        'system_rpg_flashcards_v1',
+        'sysrpg_tutorial_v2',
+        'system_rpg_lang',
+        'sysrpg_zoom_key',
+        'sysrpg_ffam_key'
+    ];
+    function validState(data) {
+        return data && typeof data === 'object' && !Array.isArray(data) &&
+            data.player && typeof data.player === 'object' &&
+            Array.isArray(data.quests) && data.quests.every(q => q && typeof q === 'object' && q.id != null);
+    }
+    function message(msg) { window.alert(msg); }
+    window.sysrpgExportBackup = function () {
+        try {
+            // Do not trigger a save: export the last successfully persisted state.
+            const raw = localStorage.getItem(MAIN_KEY);
+            if (!raw || !validState(JSON.parse(raw))) throw Error('Data progres belum tersedia atau tidak valid.');
+            const data = {format: FORMAT, version: 1, createdAt: new Date().toISOString(), storage: {[MAIN_KEY]: raw}};
+            EXTRA_KEYS.forEach(k => { const value = localStorage.getItem(k); if (value !== null) data.storage[k] = value; });
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'SYSTEM_RPG_Backup_' + new Date().toISOString().slice(0,10) + '.json';
+            document.body.appendChild(link);
+            link.click(); link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 30000);
+            message('Backup disiapkan. Pastikan file JSON benar-benar tersimpan di perangkat sebelum melakukan reset atau update.');
+        } catch (err) { message('Backup gagal: ' + err.message); }
+    };
+    window.sysrpgImportBackup = async function (event) {
+        const input = event && event.target;
+        const file = input && input.files && input.files[0];
+        if (!file) return;
+        try {
+            if (file.size > 20 * 1024 * 1024) throw Error('File terlalu besar (maksimal 20 MB).');
+            const obj = JSON.parse(await file.text());
+            if (!obj || obj.format !== FORMAT || obj.version !== 1 || !obj.storage || typeof obj.storage !== 'object') {
+                throw Error('Format backup tidak dikenali.');
+            }
+            const raw = obj.storage[MAIN_KEY];
+            if (typeof raw !== 'string') throw Error('Backup tidak berisi data progres.');
+            const parsed = JSON.parse(raw);
+            if (!validState(parsed)) throw Error('Struktur data progres tidak valid.');
+            for (const k of EXTRA_KEYS) {
+                if (Object.prototype.hasOwnProperty.call(obj.storage, k) && typeof obj.storage[k] !== 'string') {
+                    throw Error('Isi backup tidak valid: ' + k);
+                }
+            }
+            const who = String(parsed.player.name || 'Hunter').slice(0, 60);
+            const count = parsed.quests.length;
+            if (!window.confirm('RESTORE DATA SYSTEM RPG?\n\nHunter: ' + who + '\nQuest: ' + count + '\nTanggal backup: ' + (obj.createdAt || 'tidak diketahui') + '\n\nPERINGATAN: Progres saat ini akan diganti. Pastikan kamu sudah membuat backup terbaru.\n\nLanjutkan?')) return;
+            const keys = [MAIN_KEY, ...EXTRA_KEYS];
+            const old = {};
+            keys.forEach(k => { old[k] = localStorage.getItem(k); });
+            try {
+                localStorage.setItem(MAIN_KEY, raw);
+                EXTRA_KEYS.forEach(k => {
+                    if (Object.prototype.hasOwnProperty.call(obj.storage, k)) localStorage.setItem(k, obj.storage[k]);
+                });
+                // Keep Android's silent auto-backup in sync, otherwise it may restore stale progress.
+                if (window.AndroidBridge && typeof window.AndroidBridge.saveAutoBackup === 'function') {
+                    window.AndroidBridge.saveAutoBackup(raw);
+                }
+            } catch (writeError) {
+                keys.forEach(k => { try { if (old[k] === null) localStorage.removeItem(k); else localStorage.setItem(k, old[k]); } catch (_) {} });
+                throw writeError;
+            }
+            message('Restore berhasil disimpan. Aplikasi akan dimuat ulang untuk menerapkan progres.');
+            window.location.reload();
+        } catch (err) { message('Restore dibatalkan: ' + err.message); }
+        finally { if (input) input.value = ''; }
+    };
+})();
