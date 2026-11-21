@@ -26,6 +26,11 @@ android {
     }
 
     buildTypes {
+        // Keep the experimental V7 debug app separate from a Hunter's installed V6.
+        getByName("debug") {
+            applicationIdSuffix = ".v7preview"
+            versionNameSuffix = "-v7preview"
+        }
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
