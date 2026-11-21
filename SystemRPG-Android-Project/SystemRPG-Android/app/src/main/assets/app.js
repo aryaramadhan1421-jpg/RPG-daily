@@ -1355,6 +1355,7 @@ function captureActiveDaySnapshot() {
 function saveState() {
     try {
         captureActiveDaySnapshot();
+        if (window.V7Raid && typeof window.V7Raid.prepareSave === 'function') window.V7Raid.prepareSave();
         gameState.muted = SoundFX.muted;
         gameState.ambientMode = SoundFX.ambientMode;
         if (!Array.isArray(gameState.quests) || gameState.quests.some(q => !q || typeof q !== 'object' || q.id == null)) {
@@ -1758,10 +1759,16 @@ function statusText(id, params = {}) {
         viewAll: {id: 'Lihat Semua', en: 'View All', ja: 'すべて表示'},
         noQuests: {id: 'Tidak ada misi selesai pada tanggal {date}.', en: 'No quests completed on {date}.', ja: '{date} に完了したクエストはありません。'},
         dailyTarget: {id: 'Daily Habit (Target Streak ≥ {pct}%)', en: 'Daily Habit (Streak Target ≥ {pct}%)', ja: '毎日の習慣（ストリーク目標 ≥ {pct}%）'},
+        passiveStr: {id: 'Pasif: +{value} Max HP (Fisik & Vitality)', en: 'Passive: +{value} Max HP (Physical & Vitality)', ja: 'パッシブ：最大HP +{value}（体力・生命力）'},
+        passiveInt: {id: 'Pasif: +{value}% XP (Belajar & Fokus)', en: 'Passive: +{value}% XP (Learning & Focus)', ja: 'パッシブ：経験値 +{value}%（学習・集中力）'},
+        passiveWis: {id: 'Pasif: -{value}% Damage Penalti (Mindfulness)', en: 'Passive: -{value}% Penalty Damage (Mindfulness)', ja: 'パッシブ：ペナルティダメージ -{value}%（マインドフルネス）'},
+        passiveChr: {id: 'Pasif: Diskon Shop {value}% (Relasi & Sosial)', en: 'Passive: Shop Discount {value}% (Relationships & Social)', ja: 'パッシブ：ショップ割引 {value}%（人間関係・交流）'},
+        radarAll: {id: 'Distribusi Level Atribut (All-Time)', en: 'Attribute Level Distribution (All-Time)', ja: '能力値レベル分布（全期間）'},
+        radar7d: {id: 'Aktivitas 7 Hari (STR:{str} • INT:{int} • WIS:{wis} • CHR:{chr})', en: '7-Day Activity (STR:{str} • INT:{int} • WIS:{wis} • CHR:{chr})', ja: '直近7日間の活動（STR:{str} • INT:{int} • WIS:{wis} • CHR:{chr}）'},
         autoDescription: {
-            id: 'Pergantian hari dan evaluasi streak berjalan otomatis mengikuti kalender HP. Target harian dikunci sampai besok. Target aman minimal {pct}% Daily Quest selesai. Jika kurang dari target tersebut, HP berkurang & Streak reset (kecuali ada Shield)!',
-            en: 'Day changes and streak evaluations run automatically based on your device calendar. Today’s target is locked until tomorrow. Complete at least {pct}% of Daily Quests to stay safe. Below that, HP decreases and the Streak resets (unless you have a Shield)!',
-            ja: '日付の切り替えとストリークの判定は端末のカレンダーに合わせて自動で行われます。今日の目標は翌日まで変更できません。デイリークエストを最低 {pct}% 達成すると安全です。未達成の場合、シールドがなければHPが減少し、ストリークがリセットされます！'
+            id: 'Evaluasi harian berjalan otomatis sesuai tanggal. HP berkurang jika Habits selesai kurang dari 100% (penalti progresif). Streak tetap bertahan jika minimal {pct}% Daily Quest selesai; Shield hanya melindungi Streak.',
+            en: 'Daily evaluations run automatically by date. HP decreases if under 100% of Habits are completed (progressive penalty). Your Streak survives at ≥{pct}% Daily Quest completion; Shields only protect Streak.',
+            ja: '日次評価は日付に沿って自動実行されます。習慣達成率が100%未満ならHPが減少します（段階的ペナルティ）。デイリークエストを{pct}%以上達成するとストリークを維持できます。シールドはストリークのみを保護します。'
         },
         autoSub: {id: '日付', en: 'Quests reset automatically when the date changes. Daily reports are saved in History; journaling is optional.', ja: '日付が変わるとクエストは自動的にリセットされます。日次レポートは履歴に保存され、日記の記入は任意です。'},
         autoTitle: {id: 'AUTO DAY ACTIVE', en: 'AUTO DAY ACTIVE', ja: '自動日付更新：有効'}
@@ -2259,10 +2266,10 @@ function renderStatus() {
     const pIntEl = document.getElementById('perk-INT-text');
     const pWisEl = document.getElementById('perk-WIS-text');
     const pChrEl = document.getElementById('perk-CHR-text');
-    if (pStrEl) pStrEl.textContent = `Pasif: +${passives.bonusMaxHp} Max HP (Fisik & Vitality)`;
-    if (pIntEl) pIntEl.textContent = `Pasif: +${(passives.intXpBonus * 100).toFixed(1)}% XP (Belajar & Fokus)`;
-    if (pWisEl) pWisEl.textContent = `Pasif: -${(passives.wisDmgReduce * 100).toFixed(1)}% Damage Penalti (Mindfulness)`;
-    if (pChrEl) pChrEl.textContent = `Pasif: Diskon Shop ${(passives.chrShopDiscount * 100).toFixed(0)}% (Relasi & Sosial)`;
+    if (pStrEl) pStrEl.textContent = statusText('passiveStr', {value: passives.bonusMaxHp});
+    if (pIntEl) pIntEl.textContent = statusText('passiveInt', {value: (passives.intXpBonus * 100).toFixed(1)});
+    if (pWisEl) pWisEl.textContent = statusText('passiveWis', {value: (passives.wisDmgReduce * 100).toFixed(1)});
+    if (pChrEl) pChrEl.textContent = statusText('passiveChr', {value: (passives.chrShopDiscount * 100).toFixed(0)});
 
     renderPlayerPortrait();
     updateRadarChart(p.stats, tierInfo.cap);
@@ -2334,7 +2341,7 @@ function updateRadarChart(stats, dynamicCap = 100) {
         rCHR = norm7(counts.CHR) * maxR;
         poly.setAttribute('fill', 'rgba(168, 85, 247, 0.26)');
         poly.setAttribute('stroke', '#c084fc');
-        if (subEl) subEl.textContent = `Aktivitas 7 Hari (STR:${counts.STR} • INT:${counts.INT} • WIS:${counts.WIS} • CHR:${counts.CHR})`;
+        if (subEl) subEl.textContent = statusText('radar7d', {str: counts.STR, int: counts.INT, wis: counts.WIS, chr: counts.CHR});
     } else {
         const maxVal = dynamicCap;
         const norm = (v) => Math.min(1, Math.max(0.15, v / maxVal));
@@ -2344,7 +2351,7 @@ function updateRadarChart(stats, dynamicCap = 100) {
         rCHR = norm(stats.CHR) * maxR;
         poly.setAttribute('fill', 'rgba(0, 240, 255, 0.24)');
         poly.setAttribute('stroke', '#00f0ff');
-        if (subEl) subEl.textContent = 'Distribusi Level Atribut (All-Time)';
+        if (subEl) subEl.textContent = statusText('radarAll');
     }
 
     const pSTR = `${cx},${(cy - rSTR).toFixed(1)}`;

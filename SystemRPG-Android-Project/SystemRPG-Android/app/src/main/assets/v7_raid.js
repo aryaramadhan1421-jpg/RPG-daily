@@ -4,7 +4,9 @@
  */
 (function () {
     'use strict';
-    const HIT = 10;
+    const LEGACY_HIT = 10;
+    const DAILY_POTENTIAL = 100;
+    const DAMAGE_SCALE = 1000000;
     const ROSTER = Object.freeze([
         {id:'fenrir',name:'Fenrir Shade',epithet:'The Forgotten Beast',tier:0,motif:{id:'sumpah yang terlupakan di bawah cahaya bulan',en:'a forgotten oath beneath the moon',ja:'月光の下に忘れられた誓い'}},
         {id:'golem',name:'Runebound Golem',epithet:'The Silent Sentinel',tier:0,motif:{id:'rune yang menjaga gerbang sunyi',en:'runes guarding a silent gate',ja:'静かな門を守る古代のルーン'}},
@@ -74,13 +76,17 @@
         return true;
     }
     function initialState() {return {version:1, defaultMode:'normal', raidCrystals:0, active:null, archive:{},
-        lastBossId:null, seenBosses:[], cosmetics:{owned:{frames:[],auras:[]},equipped:{frame:null,aura:null}}, effects:'simple'};}
+        lastBossId:null, seenBosses:[], questHitLedger:{}, cosmetics:{owned:{frames:[],auras:[]},equipped:{frame:null,aura:null}}, effects:'simple'};}
     function state() {
         if (!gameState.v7Raid || typeof gameState.v7Raid !== 'object' || Array.isArray(gameState.v7Raid)) gameState.v7Raid=initialState();
         const v=gameState.v7Raid;
         if (v.defaultMode!=='challenge') v.defaultMode='normal';
         if (!v.archive || typeof v.archive!=='object' || Array.isArray(v.archive)) v.archive={};
         v.seenBosses=A(v.seenBosses);
+        if(!v.questHitLedger || typeof v.questHitLedger!=='object' || Array.isArray(v.questHitLedger)) v.questHitLedger={};
+        // Migrate recorded hits from older versions without granting a second attack.
+        if(v.active && v.active.hits && typeof v.active.hits==='object')
+            for(const key of Object.keys(v.active.hits)) v.questHitLedger[key]=v.active.week;
         if (!v.cosmetics || typeof v.cosmetics!=='object') v.cosmetics={owned:{frames:[],auras:[]},equipped:{frame:null,aura:null}};
         if (!v.cosmetics.owned) v.cosmetics.owned={frames:[],auras:[]};
         if (!v.cosmetics.equipped) v.cosmetics.equipped={frame:null,aura:null};
@@ -89,15 +95,63 @@
         v.raidCrystals=Math.max(0,Math.floor(Number(v.raidCrystals)||0));
         return v;
     }
-    function currentScheduleCapacity(start) {
-        let total=0;
-        const all=A(gameState.quests).filter(q=>q&&q.category==='Daily Quest');
+    // Adaptive raid v2: each active calendar day offers up to 100 damage,
+    // independent of how many Daily Quests are scheduled for that day.
+    function planForDay(day) {
+        const ids = [...new Set(A(gameState.quests)
+            .filter(q => q && q.id != null && q.category === 'Daily Quest' && isQuestActiveOnDate(q,day))
+            .map(q => String(q.id)))].sort();
+        return {questIds:ids};
+    }
+    function plansForWeek(start) {
+        const plans={};
         for(let i=0;i<7;i++) {
             const day=plusDays(start,i);
-            const ids=new Set(all.filter(q=>isQuestActiveOnDate(q,day)).map(q=>String(q.id)));
-            total+=ids.size;
+            plans[day]=planForDay(day);
         }
-        return total;
+        return plans;
+    }
+    function raidPotential(plans) {
+        return Object.values(plans||{}).filter(p=>p && Array.isArray(p.questIds) && p.questIds.length>0).length * DAILY_POTENTIAL;
+    }
+    function updateAdaptiveTargets(w) {
+        if(!w || w.balanceVersion!==2)return false;
+        // The weekly Boss HP/targets are locked at creation; future Quest edits
+        // only change how the next day's 100 potential damage is distributed.
+        // This prevents shrinking the weekly target by deleting Habits.
+        w.projectedPotential=raidPotential(w.dayPlans);
+        return false;
+    }
+    function refreshFuturePlans(dateKey) {
+        const w=state().active;
+        if(!w || w.closed || w.balanceVersion!==2 || w.week!==weekKey(dateKey))return false;
+        let changed=false;
+        // Today and previous dates are immutable. Edits affect TOMORROW onward.
+        for(let i=0;i<7;i++) {
+            const day=plusDays(w.week,i);
+            if(day<=dateKey)continue;
+            const next=planForDay(day),old=w.dayPlans[day];
+            if(!old || JSON.stringify(old.questIds)!==JSON.stringify(next.questIds)) {
+                w.dayPlans[day]=next;changed=true;
+            }
+        }
+        return updateAdaptiveTargets(w) || changed;
+    }
+    function prepareSave() {
+        // Called before app.js serializes gameState, not from raid saveState():
+        // schedule edits are committed atomically with recalculated future capacity.
+        return refreshFuturePlans(keyOf(new Date()));
+    }
+    function adaptiveHit(w,dateKey,id) {
+        const plan=w.dayPlans && w.dayPlans[dateKey];
+        if(!plan || !Array.isArray(plan.questIds))return 0;
+        const index=plan.questIds.indexOf(String(id));
+        if(index<0)return 0; // Added/edited today: eligible from next day.
+        const count=plan.questIds.length;
+        const totalUnits=DAILY_POTENTIAL*DAMAGE_SCALE;
+        const base=Math.floor(totalUnits/count);
+        const units=base+(index < totalUnits%count ? 1 : 0);
+        return units/DAMAGE_SCALE;
     }
     function countsByBoss(v) {
         const counts={};
@@ -117,8 +171,11 @@
     }
     function createWeek(v,key) {
         const b=chooseBoss(v,key);
-        const maxDamage=currentScheduleCapacity(key)*HIT;
-        const w={week:key,bossId:b.id,rankTier:b.tier,maxDamage,normalTarget:Math.ceil(maxDamage*.8),
+        const dayPlans=plansForWeek(key);
+        const potential=raidPotential(dayPlans);
+        const maxDamage=Math.ceil(potential*.60);
+        const w={week:key,bossId:b.id,rankTier:b.tier,balanceVersion:2,dayPlans,weekPotential:potential,
+            maxDamage,normalTarget:Math.ceil(potential*.40),
             challengeTarget:maxDamage,mode:v.defaultMode,damage:0,hits:{},battleView:{seenHitKeys:[]},seen:false,closed:false};
         v.active=w;v.lastBossId=b.id;
         return w;
@@ -139,7 +196,7 @@
     function advance(dateKey) {
         const v=state(),week=weekKey(dateKey||keyOf(new Date()));
         if (v.active && week < v.active.week) return false; // Device clock moved backwards.
-        if (v.active && v.active.week===week) return false;
+        if (v.active && v.active.week===week) return refreshFuturePlans(dateKey||keyOf(new Date()));
         if (v.active) finalizeWeek(v);
         createWeek(v,week);
         return true;
@@ -153,10 +210,19 @@
         const w=v.active;
         if(!w||w.week!==weekKey(dateKey)||w.closed||w.maxDamage<=0) return false;
         const hitKey=dateKey+'|'+String(q.id);
-        if (Object.prototype.hasOwnProperty.call(w.hits,hitKey)) return false;
+        // Two independent persistent guards protect against toggle/recheck, reordering,
+        // reloading the app, and a partially migrated combat record.
+        if (Object.prototype.hasOwnProperty.call(w.hits,hitKey) ||
+            Object.prototype.hasOwnProperty.call(v.questHitLedger,hitKey)) return false;
+        // If the weekly maximum was reached, don't create zero-damage queued attacks.
+        if(w.damage>=w.maxDamage)return false;
+        const hit=w.balanceVersion===2?adaptiveHit(w,dateKey,q.id):LEGACY_HIT;
+        if(hit<=0)return false;
         battleView(w); // Capture old hits as displayed BEFORE adding a new pending hit.
-        w.hits[hitKey]=HIT;
-        w.damage=Math.min(w.maxDamage, w.damage+HIT);
+        const awarded=Math.max(0,Math.min(hit,w.maxDamage-w.damage));
+        w.hits[hitKey]=Math.round(awarded*DAMAGE_SCALE)/DAMAGE_SCALE;
+        w.damage=Math.round(Math.min(w.maxDamage,w.damage+awarded)*DAMAGE_SCALE)/DAMAGE_SCALE;
+        v.questHitLedger[hitKey]=w.week;
         return true;
     }
     // Display-only progression. The authoritative combat ledger remains w.hits / w.damage.
@@ -207,12 +273,13 @@
         const arena=document.querySelector('.v7-replay-stage');
         if(arena)arena.classList.remove('v7-replay-active','v7-move-shadow','v7-move-phantom','v7-move-abyss');
         const action=document.getElementById('v7-watch-battle');if(action)action.disabled=false;
+        const again=document.getElementById('v7-visual-replay');if(again)again.disabled=false;
     }
     function scheduleBattle(fn,ms){battleTimer=setTimeout(()=>{battleTimer=null;fn();},ms);}
 
 function renderVictory(w,p) {
     if(!w || !p || p.max<=0 || p.displayedDamage<w.normalTarget)return '';
-    const challenge=w.mode==='challenge'&&p.displayedDamage>=w.challengeTarget;
+    const challenge=w.mode==='challenge'&&p.displayedDamage+1e-6>=w.challengeTarget;
     const b=ROSTER.find(x=>x.id===w.bossId);
     const label=challenge?t('✦ CHALLENGE CLEAR · BOSS DEFEATED!','✦ CHALLENGE CLEAR · BOSS DEFEATED!','✦ チャレンジ達成 · ボス撃破！'):
         t('⚔ NORMAL CLEAR · ENRAGED PHASE','⚔ NORMAL CLEAR · ENRAGED PHASE','⚔ 通常クリア · 激怒フェーズ');
@@ -239,13 +306,17 @@ function paintVictory(w,p) {
     const slot=document.getElementById('v7-victory-slot');
     if(slot)slot.innerHTML=renderVictory(w,p);
 }
+    function damageLabel(n) {
+        const value=Math.round((Number(n)||0)*100)/100;
+        return Number.isInteger(value)?String(value):value.toFixed(2).replace(/0+$/,'').replace(/\.$/,'');
+    }
     function paintBattleHP(w) {
         const p=battleProgress(w),remaining=p.max-p.displayedDamage;
         const label=document.getElementById('v7-boss-hp-number');
         const track=document.getElementById('v7-boss-hp-track');
         const bar=document.getElementById('v7-boss-hp-fill');
         const pending=document.getElementById('v7-pending-hits');
-        if(label)label.textContent=remaining+' / '+p.max;
+        if(label)label.textContent=damageLabel(remaining)+' / '+damageLabel(p.max);
         if(track)track.setAttribute('aria-valuenow',String(remaining));
         if(bar)bar.style.width=(p.max?100*remaining/p.max:0)+'%';
         if(pending)pending.textContent=p.pending.length+' '+t('serangan menunggu','attacks queued','未再生の攻撃');
@@ -292,7 +363,7 @@ function paintVictory(w,p) {
                 cancelBattle();render();return; // no lost or duplicate damage on save failure
             }
             const total=frame.reduce((sum,h)=>sum+h.amount,0);
-            if(impact)impact.textContent=total>0?'−'+total:'';
+            if(impact)impact.textContent=total>0?'−'+damageLabel(total):'';
             if(!session.visualOnly)paintBattleHP(session.week);
             session.step++;
             scheduleBattle(()=>playBattleFrame(session),session.reduced?110:760);
@@ -311,6 +382,20 @@ function paintVictory(w,p) {
         const session={week:w,frames:battleFrames(hits),step:0,visualOnly,reduced};
         activeBattle=session;
         const btn=document.getElementById('v7-watch-battle');if(btn)btn.disabled=true;
+        playBattleFrame(session);
+        return true;
+    }
+    function replayVisual() {
+        if(activeBattle || state().effects==='off')return false;
+        const w=state().active;if(!w)return false;
+        const alreadySeen=new Set(battleView(w).seenHitKeys);
+        const hits=Object.entries(w.hits||{}).filter(([key])=>alreadySeen.has(key))
+            .slice(-5).map(([key,amount])=>({key,amount:Number(amount)||0}));
+        if(!hits.length)return false;
+        const reduced=typeof matchMedia==='function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const session={week:w,frames:battleFrames(hits),step:0,visualOnly:true,reduced};
+        activeBattle=session;
+        const btn=document.getElementById('v7-visual-replay');if(btn)btn.disabled=true;
         playBattleFrame(session);
         return true;
     }
@@ -501,7 +586,7 @@ function renderAppearance() {
         if(!w||!b)return `<p>${esc(t('Raid belum tersedia.','Raid not available.','レイドはまだ利用できません。'))}</p>`;
         const p=battleProgress(w),remaining=Math.max(0,p.max-p.displayedDamage);
         const pct=p.max?remaining/p.max*100:0,normal=p.max>0&&p.displayedDamage>=w.normalTarget;
-        const challenge=normal&&p.displayedDamage>=w.challengeTarget;
+        const challenge=normal&&p.displayedDamage+1e-6>=w.challengeTarget;
         const attacks=Object.keys(w.hits||{}).length;
         const introduction = !v.seenBosses.includes(b.id) ?
             `<div class="v7-raid-panel v7-intro"><div class="v7-muted">${esc(t('PERTEMUAN PERTAMA','FIRST ENCOUNTER','初遭遇'))} · ${esc(b.epithet)}</div>
@@ -521,17 +606,19 @@ function renderAppearance() {
                 <div class="v7-damage-float" id="v7-damage-float" aria-live="off"></div>
                 <div class="v7-attack-name" id="v7-attack-name">${esc(t('PEDANG BAYANGAN','SHADOW SWORD','シャドウソード'))}</div>
                 <div class="v7-arena-hp">
-                  <div class="v7-boss-hp-label"><span>❤️ ${esc(t('HP BOSS','BOSS HP','ボスHP'))}</span><b id="v7-boss-hp-number">${remaining} / ${p.max}</b></div>
+                  <div class="v7-boss-hp-label"><span>❤️ ${esc(t('HP BOSS','BOSS HP','ボスHP'))}</span><b id="v7-boss-hp-number">${damageLabel(remaining)} / ${damageLabel(p.max)}</b></div>
                   <div class="v7-hp-track" id="v7-boss-hp-track" role="progressbar" aria-label="${esc(t('Sisa HP Boss','Boss HP remaining','ボスの残りHP'))}" aria-valuemin="0" aria-valuemax="${p.max}" aria-valuenow="${remaining}">
                     <div id="v7-boss-hp-fill" class="v7-boss-hp-remaining" style="width:${pct}%"></div>
-                    <span class="v7-normal-marker" title="${esc(t('Normal Clear saat sisa HP 20%','Normal clear at 20% HP remaining','残りHP20%で通常クリア'))}"></span>
+                    <span class="v7-normal-marker" style="left:${p.max?100*(1-w.normalTarget/p.max):0}%"
+                      title="${esc(t('Penanda target Normal Clear','Normal Clear threshold','通常クリアの目標'))}"></span>
                   </div>
                 </div>
               </div>
             </div>
             <div id="v7-victory-slot">${renderVictory(w,p)}</div>
             <p class="v7-muted" id="v7-pending-hits">${p.pending.length} ${esc(t('serangan menunggu','attacks queued','未再生の攻撃'))}</p>
-            <p class="v7-muted">${esc(t('Normal clear','Normal clear','通常クリア'))}: ${w.normalTarget} ${esc(t('damage','damage','ダメージ'))} · ${esc(t('Challenge','Challenge','チャレンジ'))}: ${w.challengeTarget} ${esc(t('damage','damage','ダメージ'))}</p>
+            <p class="v7-muted">${esc(t('Normal clear','Normal clear','通常クリア'))}${w.balanceVersion===2?' (40%)':''}: ${damageLabel(w.normalTarget)} ${esc(t('damage','damage','ダメージ'))} · ${esc(t('Challenge','Challenge','チャレンジ'))}${w.balanceVersion===2?' (60%)':''}: ${damageLabel(w.challengeTarget)} ${esc(t('damage','damage','ダメージ'))}</p>
+            ${w.balanceVersion===2?`<p class="v7-muted">${esc(t('Setiap hari aktif: maksimal 100 damage, dibagi ke Habits yang dijadwalkan. Tambah/kurangi Quest berlaku mulai besok; target Boss tetap terkunci sampai Raid berikutnya.','Each active day: up to 100 damage, divided among scheduled habits. Quest edits apply from tomorrow; Boss targets stay locked for this week.','活動日ごとに最大100ダメージを習慣に分配します。クエスト編集は翌日から反映され、今週のボス目標は固定です。'))}</p>`:''}
             <p class="v7-result">${p.max===0?esc(t('Tidak ada Habits terjadwal saat minggu dimulai.','No habits scheduled at week start.','週の開始時点で予定された習慣はありません。')):
               p.pending.length?esc(t('⚔️ Serangan tersimpan. Tekan tombol untuk menyaksikan!','⚔️ Attacks saved. Tap to watch!','⚔️ 攻撃を保存しました。ボタンを押して戦闘を再生！')):
               challenge&&w.mode==='challenge'?esc(t('✨ CHALLENGE CLEAR! Reward tersedia Senin depan.','✨ CHALLENGE CLEAR! Claim next Monday.','✨ チャレンジ達成！報酬は来週月曜日から受け取れます。')):
@@ -541,9 +628,13 @@ function renderAppearance() {
               ${p.pending.length?
                 `<button type="button" id="v7-watch-battle" class="v7-raid-btn v7-watch-btn" onclick="V7Raid.replay()">${esc(t('▶ Saksikan Pertarungan','▶ Watch Battle','▶ バトルを見る'))} (${p.pending.length})</button>
                  <button type="button" class="v7-raid-btn v7-skip-btn" onclick="V7Raid.skipBattle()">${esc(t('Lewati animasi','Skip animation','演出をスキップ'))}</button>`:
-                `<button type="button" id="v7-watch-battle" class="v7-raid-btn" onclick="V7Raid.replay()" ${attacks===0?'disabled':''}>${esc(t('↻ Ulangi Animasi','↻ Replay Animation','↻ 再生'))}</button>`}
+                `<button type="button" id="v7-watch-battle" class="v7-raid-btn" disabled>${esc(attacks>0?t('✓ Semua serangan sudah digunakan','✓ All attacks already used','✓ 攻撃はすべて使用済み'):t('Belum ada serangan','No attacks yet','攻撃はまだありません'))}</button>`}
+              <button type="button" id="v7-visual-replay" class="v7-raid-btn v7-replay-only"
+                  onclick="V7Raid.replayVisual()" ${battleView(w).seenHitKeys.length && v.effects!=='off'?'':'disabled'}
+                  title="${esc(t('Animasi saja. Tidak menambah damage atau reward.','Visual only. No extra damage or rewards.','演出のみ。ダメージや報酬は増えません。'))}">
+                  ${esc(t('↻ Battle Replay','↻ Battle Replay','↻ バトルリプレイ'))}</button>
             </div>
-            <p class="v7-muted v7-battle-rule">${esc(t('Damage Quest langsung tersimpan, tetapi HP pada layar baru turun ketika serangan ditonton. Lewati animasi untuk langsung menampilkan hasil.','Quest damage saves immediately; displayed HP decreases only during battle. Skip to show final HP.','クエストのダメージは即時保存。演出でHPが減少します。'))}</p>
+            <p class="v7-muted v7-battle-rule">${esc(t('Satu Daily Quest memberi satu serangan per tanggal. Centang ulang tidak memberi serangan tambahan. Damage langsung tersimpan; HP Boss di layar berkurang saat benturan.','Each Daily Quest grants one attack per date. Rechecking never grants extra attacks. Damage saves immediately; visible Boss HP drops on impact.','各デイリークエストは1日に1回だけ攻撃できます。チェックし直しても攻撃は増えません。ダメージは即時保存され、演出時にHP表示が減少します。'))}</p>
         </div>`;
     }
     function renderCodex() {
@@ -631,7 +722,7 @@ function renderExchange() {
         const rewards=pendingRewards();
         const banner=rewards.length?`<div class="v7-raid-panel">🎁 ${esc(t('Reward menunggu klaim','Rewards ready to claim','受け取り待ち報酬'))}: ${rewards.length}</div>`:'';
         const next=v.defaultMode==='challenge'?'challenge':'normal';
-        el.innerHTML=`<div class="v7-raid-panel v7-header"><span>⚔️ SYSTEM RPG V7 · ${esc(t('BOSS MINGGUAN','WEEKLY BOSS','週間ボス'))}</span><small>${esc(t('Offline • Boss tidak mengurangi HP Hunter','Offline • Boss does not attack Hunter HP','オフライン・ボスはハンターのHPを減らしません'))}</small></div>
+        el.innerHTML=`<div class="v7-raid-panel v7-header"><span>⚔️ SYSTEM RPG · ${esc(t('BOSS MINGGUAN','WEEKLY BOSS','週間ボス'))}</span><small>${esc(t('Offline • Boss tidak mengurangi HP Hunter','Offline • Boss does not attack Hunter HP','オフライン・ボスはハンターのHPを減らしません'))}</small></div>
           ${banner}${renderBoss()}
           <div class="v7-raid-panel"><h3>⚙️ ${esc(t('Mode minggu depan','Mode next week','来週のモード'))}</h3>
             <div class="v7-button-row">${button(t('NORMAL','NORMAL','通常'),"V7Raid.setMode('normal')",next==='normal'?'selected':'')}${button(t('CHALLENGE','CHALLENGE','チャレンジ'),"V7Raid.setMode('challenge')",next==='challenge'?'selected':'')}</div>
@@ -647,7 +738,7 @@ function renderExchange() {
         if(saveState()===false){v.seenBosses.pop();return false;}
         render();return true;
     }
-    window.V7Raid={state,advance,recordQuest,claim,setMode,unlock,equip,unequip,openAppearance,collapseAppearance,renderAppearance,syncStaticLabels,applyCosmetics,syncRankFrames,replay,skipBattle,cancelBattle,dismissEncounter,render,renderShopExchange,weekKey,
+    window.V7Raid={state,advance,recordQuest,prepareSave,claim,setMode,unlock,equip,unequip,openAppearance,collapseAppearance,renderAppearance,syncStaticLabels,applyCosmetics,syncRankFrames,replay,replayVisual,skipBattle,cancelBattle,dismissEncounter,render,renderShopExchange,weekKey,
         roster:ROSTER,exchange:EXCHANGE,rankFrames:RANK_FRAMES};
     // Run after the V6 boot sequence, not before its gameState initialization.
     const didChange=advance(keyOf(new Date()));
