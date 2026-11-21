@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240" viewBox="0 0 290 185" role="img" aria-label="queen boss silhouette">
+<defs><radialGradient id="back"><stop stop-color="#831843"/><stop offset="1" stop-color="#030813"/></radialGradient><radialGradient id="mist"><stop stop-color="#f9a8d4" stop-opacity=".28"/><stop offset="1" stop-color="#f9a8d4" stop-opacity="0"/></radialGradient><filter id="halo"><feGaussianBlur stdDeviation="8"/></filter></defs>
+<rect width="290" height="185" rx="12" fill="url(#back)"/>
+<circle cx="145" cy="93" r="92" fill="url(#mist)"/>
+<circle cx="145" cy="93" r="57" stroke="#f9a8d4" stroke-opacity=".24" stroke-width="1.5" fill="none"/>
+<g fill="#831843" stroke="#f9a8d4" stroke-width="2.5" stroke-linejoin="round" transform="translate(0,-2)"><path d="M88 62l13-40 30 30 21-43 24 43 30-30 12 40-22 18-3 74h-90l-3-74z"/><path d="M111 92l18 10 21-10 21 10 18-10" fill="none" stroke="#f9a8d4" stroke-width="4"/><circle cx="151" cy="61" r="9" fill="#f472b6"/></g>
+<path d="M24 155h242" stroke="#f9a8d4" stroke-opacity=".35" stroke-width="2"/>
+<path d="M18 163l20-20M250 143l20 20" stroke="#f9a8d4" stroke-opacity=".45"/>
+</svg>

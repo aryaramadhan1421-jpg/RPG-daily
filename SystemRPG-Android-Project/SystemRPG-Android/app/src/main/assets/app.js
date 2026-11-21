@@ -1211,39 +1211,20 @@ function loadState() {
 }
 
 function evaluateDailyTier(ratio, maxHp) {
-    if (ratio >= 1.0) {
-        return {
-            rank: 'S-Rank (Perfect Clear)',
-            penaltyRate: 0,
-            rawDamage: 0,
-            regenAmt: Math.round(maxHp * 0.15),
-            resetStreak: false
-        };
-    } else if (ratio >= getStreakThresholdRatio()) {
-        return {
-            rank: 'A-Rank (Safe Clear)',
-            penaltyRate: 0.10,
-            rawDamage: Math.max(1, Math.round(maxHp * 0.10)),
-            regenAmt: 0,
-            resetStreak: false
-        };
-    } else if (ratio >= 0.5) {
-        return {
-            rank: 'B-Rank (Sluggish)',
-            penaltyRate: 0.25,
-            rawDamage: Math.max(1, Math.round(maxHp * 0.25)),
-            regenAmt: 0,
-            resetStreak: true
-        };
-    } else {
-        return {
-            rank: 'F-Rank (Critical Fail)',
-            penaltyRate: 0.40,
-            rawDamage: Math.max(1, Math.round(maxHp * 0.40)),
-            regenAmt: 0,
-            resetStreak: true
-        };
-    }
+    // V7 trial: HP penalties are independent of the configurable streak target.
+    const pct = Math.max(0, Math.min(100, Math.floor((Number(ratio) || 0) * 100 + 1e-9)));
+    const rawDamage = pct === 100 ? 0 : pct >= 90 ? 5 : pct >= 80 ? 10 :
+        pct >= 70 ? 15 : pct >= 50 ? 20 : 25;
+    return {
+        rank: pct === 100 ? 'S-Rank (Perfect Clear)' :
+            pct >= 90 ? 'A-Rank (Excellent)' :
+            pct >= 80 ? 'B-Rank (Great)' :
+            pct >= 70 ? 'C-Rank (Good)' :
+            pct >= 50 ? 'D-Rank (Struggling)' : 'F-Rank (Critical)',
+        penaltyRate: 0, rawDamage,
+        regenAmt: pct === 100 ? Math.round(maxHp * 0.15) : 0,
+        resetStreak: false // Streak is settled separately against each day's locked target.
+    };
 }
 
 // Pending daily reports are stored with the game state so an interrupted splash
@@ -1257,8 +1238,8 @@ function showPendingDailyReport() {
     if (!document.getElementById('modal-system-msg')) return;
     dailyReportOpen = true;
     const rows = (report.days || []).map(day => {
-        const state = day.status === 'protected' ? '🛡️ Shield' : day.status === 'completed' ? '✅' : '❌';
-        return [day.date, `${day.done}/${day.total} (${day.pct}%) ${state} · -${day.damage} HP`, '📅'];
+        const state = day.status === 'no_quests' ? '➖ No scheduled quests' : day.status === 'protected' ? '🛡️ Shield' : day.status === 'completed' ? '✅' : '❌';
+        return [day.date, `${day.done}/${day.total} (${day.pct}%) ${state}${day.estimated ? ' ⚠️ estimasi (data lama)' : ''} · -${day.damage} HP`, '📅'];
     });
     rows.push(['TOTAL HP LOST', `-${report.damage} HP`, '💔']);
     rows.push(['CURRENT HP', `${gameState.player.hp}/${gameState.player.maxHp}`, '❤️']);
@@ -1283,28 +1264,37 @@ function checkRealDayRollover() {
     let cursor = gameState.lastRealDate || gameState.selectedDate || today;
     if (cursor > today) return; // Device clock rolled back: never rewind or pay twice.
     if (cursor === today) {
+        if (window.V7Raid && window.V7Raid.advance(today)) saveState();
         if (gameState.selectedDate !== today) { gameState.selectedDate = today; saveState(); renderAll(); }
         return;
     }
     const diff = Math.round((Date.UTC(+today.slice(0,4), +today.slice(5,7)-1, +today.slice(8)) - Date.UTC(+cursor.slice(0,4), +cursor.slice(5,7)-1, +cursor.slice(8))) / 86400000);
     if (diff <= 0) return;
-    // Snapshot today's target was captured before midnight; old installs use existing target.
-    const threshold = Number(gameState.activeDayThresholdPct) || getStreakThresholdPct();
+    // Use per-day snapshot when available; older saves may lack historical records.
     let settled = 0, protectedDays = 0, brokenDays = 0, totalDamage = 0;
     const dailyReportDays = [];
     for (let i = 0; i < Math.min(diff, 3660); i++) {
         const date = new Date(Date.UTC(+cursor.slice(0,4), +cursor.slice(5,7)-1, +cursor.slice(8)+i));
         const key = date.toISOString().slice(0,10);
         if (gameState.history.evaluations[key]) continue;
-        const quests = i === 0 ? gameState.quests.filter(q => q.category === 'Daily Quest' && isQuestActiveOnDate(q,key)) : [];
-        const done = quests.filter(q => q.completed).length;
-        const total = quests.length;
-        const pct = total ? Math.round(100*done/total) : 0;
-        const met = total > 0 && pct >= threshold;
+        const snap = gameState.dailyScheduleSnapshots && gameState.dailyScheduleSnapshots[key];
+        const quests = gameState.quests.filter(q => q.category === 'Daily Quest' && isQuestActiveOnDate(q,key));
+        const total = snap && Array.isArray(snap.questIds) ? snap.questIds.length : quests.length;
+        const done = snap && Array.isArray(snap.completedIds) ?
+            snap.completedIds.filter(id => snap.questIds.includes(id)).length :
+            (i === 0 ? quests.filter(q => q.completed).length : 0);
+        const threshold = snap && Number(snap.thresholdPct) >= 10 && Number(snap.thresholdPct) <= 100 ?
+            Number(snap.thresholdPct) : (Number(gameState.activeDayThresholdPct) || getStreakThresholdPct());
+        const ratio = total ? done / total : 0;
+        const pct = total ? Math.floor(100*ratio + 1e-9) : 0;
+        const met = total > 0 && ratio*100 + 1e-9 >= threshold;
+        const estimated = !snap; // Legacy history has no immutable schedule. Warn instead of claiming certainty.
         const tier = evaluateDailyTier(total ? done/total : 0, gameState.player.maxHp);
-        const damage = met ? tier.rawDamage : Math.max(1, Math.round(gameState.player.maxHp*(pct >= 50 ? .25 : .40)));
-        let status = met ? 'completed' : 'broken';
-        if (met) {
+        const damage = total > 0 ? tier.rawDamage : 0; // Independent of streak threshold.
+        let status = total === 0 ? 'no_quests' : met ? 'completed' : 'broken';
+        if (total === 0) {
+            // No scheduled habits: do not punish HP or break streak.
+        } else if (met) {
             // Quest handler already awarded today's streak when target was reached.
             if (gameState.lastStreakDate !== key) {
                 gameState.player.streak = (gameState.player.streak || 0)+1;
@@ -1321,14 +1311,16 @@ function checkRealDayRollover() {
         let appliedDamage = 0;
         if (damage > 0) {
             // Process once per date. takeDamage also honors existing mitigation/death rules.
-            const result = takeDamage(damage, true);
+            const result = takeDamage(damage, true, true);
             appliedDamage = result.mitigatedDamage || 0;
             totalDamage += appliedDamage;
         }
-        dailyReportDays.push({date:key, done, total, pct, status, damage:appliedDamage});
-        gameState.history.evaluations[key] = {dateStr:key, doneCount:done, totalDaily:total, pct, thresholdPct:threshold, streakStatus:status, evaluatedAt:new Date().toISOString(), automatic:true};
+        dailyReportDays.push({date:key, done, total, pct, status, damage:appliedDamage, estimated});
+        gameState.history.evaluations[key] = {dateStr:key, doneCount:done, totalDaily:total, pct, thresholdPct:threshold, streakStatus:status, evaluatedAt:new Date().toISOString(), automatic:true, estimated};
         settled++;
     }
+    // Finalize the previous raid after all pending Daily Evaluations.
+    if (window.V7Raid) window.V7Raid.advance(today);
     // Reset only after settlement, never before snapshotting yesterday.
     gameState.quests.forEach(q => { if(q.category === 'Daily Quest') { q.completed=false; if(q.trackingType === 'count') q.currentCount=0; delete q.lastReward; } });
     gameState.selectedDate = today;
@@ -1346,8 +1338,23 @@ function checkRealDayRollover() {
     if (settled) setTimeout(showPendingDailyReport, 500);
 }
 
+function captureActiveDaySnapshot() {
+    if (!gameState || !Array.isArray(gameState.quests)) return;
+    const key = gameState.lastRealDate;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(key || ''))) return;
+    if (key !== formatDateKey(new Date())) return; // Never rewrite a previous day's snapshot with today's quest state.
+    if (!gameState.dailyScheduleSnapshots || typeof gameState.dailyScheduleSnapshots !== 'object')
+        gameState.dailyScheduleSnapshots = {};
+    const scheduled = gameState.quests.filter(q => q.category === 'Daily Quest' && isQuestActiveOnDate(q, key));
+    gameState.dailyScheduleSnapshots[key] = {
+        questIds: [...new Set(scheduled.map(q => String(q.id)))],
+        completedIds: [...new Set(scheduled.filter(q => q.completed).map(q => String(q.id)))],
+        thresholdPct: Number(gameState.activeDayThresholdPct) || getStreakThresholdPct()
+    };
+}
 function saveState() {
     try {
+        captureActiveDaySnapshot();
         gameState.muted = SoundFX.muted;
         gameState.ambientMode = SoundFX.ambientMode;
         if (!Array.isArray(gameState.quests) || gameState.quests.some(q => !q || typeof q !== 'object' || q.id == null)) {
@@ -1356,19 +1363,21 @@ function saveState() {
         }
         const serialized = JSON.stringify(gameState);
         localStorage.setItem(STORAGE_KEY, serialized);
-
-        // Silent Auto-Backup ke penyimpanan internal Android (tanpa popup/teks)
-        if (window.AndroidBridge && typeof window.AndroidBridge.saveAutoBackup === 'function') {
-            window.AndroidBridge.saveAutoBackup(serialized);
-        }
-
-       if (typeof syncHomeScreenWidget === 'function') {
-            syncHomeScreenWidget();
-        } else if (typeof syncAndroidHomeWidget === 'function') {
-            syncAndroidHomeWidget();
-        }
+        // The local save has committed. Nonessential Android bridges must not make
+        // this operation appear to fail after progress is already persisted.
+        try {
+            if (window.AndroidBridge && typeof window.AndroidBridge.saveAutoBackup === 'function') {
+                window.AndroidBridge.saveAutoBackup(serialized);
+            }
+        } catch (bridgeError) { console.error('Auto-backup Android gagal:', bridgeError); }
+        try {
+            if (typeof syncHomeScreenWidget === 'function') syncHomeScreenWidget();
+            else if (typeof syncAndroidHomeWidget === 'function') syncAndroidHomeWidget();
+        } catch (widgetError) { console.error('Widget sync gagal:', widgetError); }
+        return true;
     } catch (e) {
         console.error('Gagal menyimpan state:', e);
+        return false;
     }
 }
 
@@ -1380,6 +1389,12 @@ function runSilentAutoRestore() {
         const currentLocal = localStorage.getItem(STORAGE_KEY);
         const backupStr = window.AndroidBridge.loadAutoBackup();
         if (!backupStr || backupStr.length < 20) return;
+        // Never silently restore a malformed Android backup over valid local progress.
+        const safeBackup = JSON.parse(backupStr);
+        if (!safeBackup || typeof safeBackup !== 'object' ||
+            !safeBackup.player || typeof safeBackup.player !== 'object' ||
+            !Array.isArray(safeBackup.quests) ||
+            safeBackup.quests.some(q => !q || typeof q !== 'object' || q.id == null)) return;
 
         let shouldRestore = !currentLocal;
         if (!shouldRestore) {
@@ -1398,11 +1413,9 @@ function runSilentAutoRestore() {
 
         if (shouldRestore) {
             localStorage.setItem(STORAGE_KEY, backupStr);
-            const restored = JSON.parse(backupStr);
-            if (typeof gameState !== 'undefined' && restored && typeof restored === 'object') {
-                Object.assign(gameState, restored);
-                if (typeof renderAll === 'function') renderAll();
-            }
+            // Re-boot through loadState() + rollover: never mix two different saves.
+            window.location.reload();
+            return;
         }
         if (typeof syncHomeScreenWidget === 'function') syncHomeScreenWidget();
     } catch (_) {}
@@ -2033,13 +2046,13 @@ function renderDailyComboBadge() {
     }
 }
 
-function takeDamage(amount, suppressDeathModal = false) {
+function takeDamage(amount, suppressDeathModal = false, deferPersistence = false) {
     const rawDamage = Number(amount);
     if (!Number.isFinite(rawDamage) || rawDamage <= 0) {
         return { mitigatedDamage: 0, deathReport: null };
     }
 
-    SoundFX.playDamage();
+    if (!deferPersistence) SoundFX.playDamage();
     syncPlayerMaxHp();
     ensureRpgExtendedState();
 
@@ -2048,7 +2061,7 @@ function takeDamage(amount, suppressDeathModal = false) {
     const mitigatedDamage = Math.max(1, Math.round(rawDamage * (1 - safeReduction)));
     const hpBeforeDamage = Math.max(0, Number(gameState.player.hp) || 0);
     gameState.player.hp = Math.max(0, hpBeforeDamage - mitigatedDamage);
-    spawnFloatingReward(`⚠️ -${mitigatedDamage} HP!${mitigatedDamage < rawDamage ? ` (WIS menahan ${Math.round(rawDamage - mitigatedDamage)} HP)` : ''}`);
+    if (!deferPersistence) spawnFloatingReward(`⚠️ -${mitigatedDamage} HP!${mitigatedDamage < rawDamage ? ` (WIS menahan ${Math.round(rawDamage - mitigatedDamage)} HP)` : ''}`);
 
     let deathReport = null;
     if (gameState.player.hp <= 0) {
@@ -2119,8 +2132,9 @@ function takeDamage(amount, suppressDeathModal = false) {
         }
     }
 
-    saveState();
-    renderAll();
+    // Day rollover commits HP changes and the corresponding evaluation ledger
+    // in ONE save. Never persist a penalty before recording its date.
+    if (!deferPersistence) { saveState(); renderAll(); }
     return { mitigatedDamage, deathReport };
 }
 // ==========================================
@@ -2141,6 +2155,7 @@ function renderAll() {
     if (typeof renderReminderUI === 'function') renderReminderUI();
     if (typeof renderTreasury === 'function') renderTreasury();
     if (typeof renderGrimoireBookmarks === 'function') renderGrimoireBookmarks();
+    if (window.V7Raid) window.V7Raid.render();
 }
 
 function renderStatus() {
@@ -2168,6 +2183,16 @@ function renderStatus() {
     const rankBadge = document.getElementById('player-rank-badge');
     rankBadge.textContent = rank.title;
     rankBadge.style.cssText = `font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; cursor: pointer; ${rank.style}`;
+    // Rank frames are earned immediately on rank-up, not bought with Crystals.
+    // Reconcile entitlements only when Rank actually changed; the operation is idempotent.
+    if (window.V7Raid && typeof window.V7Raid.syncRankFrames === 'function') {
+        const granted = window.V7Raid.syncRankFrames();
+        if (granted) {
+            if (typeof window.V7Raid.applyCosmetics === 'function') window.V7Raid.applyCosmetics();
+            if (typeof window.V7Raid.renderAppearance === 'function') window.V7Raid.renderAppearance();
+        }
+    }
+
 
     const rankNextLabel = document.getElementById('rank-next-label');
     const rankTargetLvl = document.getElementById('rank-target-lvl');
@@ -3463,6 +3488,8 @@ function toggleQuest(id, preserveCount = false) {
 
     if (!q.completed) {
         q.completed = true;
+        // V7 raid ledger must be updated before addRewards() triggers saveState().
+        if (q.category === 'Daily Quest' && window.V7Raid) window.V7Raid.recordQuest(q, todayKey);
         if (q.trackingType === 'count' && !preserveCount) {
             q.currentCount = q.targetCount || 1;
         }
@@ -3637,9 +3664,26 @@ function clearShopSearch() {
     handleShopSearch('');
 }
 
+// V7: Survival economy must be stable. User-created real-life rewards stay editable.
+const V7_FIXED_SURVIVAL_ITEMS=Object.freeze({
+    s1:{title:'Minor Health Potion (+25% Max HP)',cost:250,type:'potion',healPct:0.25,desc:'Memulihkan 25% Max HP secara instan.'},
+    s_elixir:{title:'Elixir of Vitality (+100% Max HP)',cost:650,type:'elixir',healPct:1.0,desc:'Memulihkan HP hingga penuh (100% Max HP) dalam kondisi darurat.'},
+    s3:{title:'Streak Freeze (Pelindung Streak • Maks 2)',cost:850,type:'shield',healPct:0,desc:'Otomatis menahan Streak saat terlewat (Maksimal stok 2 di inventori).'}
+});
+function isFixedSurvivalItem(id){return Object.prototype.hasOwnProperty.call(V7_FIXED_SURVIVAL_ITEMS,id);}
+function enforceFixedSurvivalItems(){
+    if(!gameState||!Array.isArray(gameState.shop))return false;
+    let changed=false;
+    for(const [id,def] of Object.entries(V7_FIXED_SURVIVAL_ITEMS)){
+        let item=gameState.shop.find(s=>s&&s.id===id);
+        if(!item){gameState.shop.unshift({id,...def});changed=true;continue;}
+        for(const [k,v] of Object.entries(def))if(item[k]!==v){item[k]=v;changed=true;}
+    }
+    return changed;
+}
 function openEditShopModal(id) {
     const item = gameState.shop.find(s => s.id === id);
-    if (!item) return;
+    if (!item || isFixedSurvivalItem(id)) return; // Locked: no editing core consumables.
     SoundFX.playClick();
     document.getElementById('edit-s-id').value = item.id;
     document.getElementById('edit-s-title').value = item.title;
@@ -3653,7 +3697,7 @@ function saveEditedShopItem(e) {
     e.preventDefault();
     const id = document.getElementById('edit-s-id').value;
     const item = gameState.shop.find(s => s.id === id);
-    if (!item) return;
+    if (!item || isFixedSurvivalItem(id)) return; // Block even direct form submission.
 
     item.title = document.getElementById('edit-s-title').value.trim() || item.title;
     item.cost = Math.max(10, parseInt(document.getElementById('edit-s-cost').value, 10) || item.cost);
@@ -3684,6 +3728,7 @@ function v6ShopDescription(item){
  return t[l]||item.desc;
 }
 function renderShop() {
+    if(enforceFixedSurvivalItems())saveState(); // Recover any older customized base prices.
     const container = document.getElementById('shop-list');
     container.innerHTML = '';
 
@@ -3702,8 +3747,9 @@ function renderShop() {
     });
 
     if (filteredShop.length === 0) {
-        container.innerHTML = `<div class="system-card text-center" style="padding: 1.25rem; color: var(--text-muted); font-size: 0.75rem;">Tidak ada item Shop yang cocok dengan pencarian.</div>`;
+        container.innerHTML = `<div class="system-card text-center" style="padding: 1.25rem; color: var(--text-muted); font-size: 0.75rem;">${v6Text('Tidak ada item Shop yang cocok dengan pencarian.','No Shop items match your search.','検索条件に一致するショップアイテムがありません。')}</div>`;
         renderRedeemHistory();
+        if(window.V7Raid?.renderShopExchange)window.V7Raid.renderShopExchange();
         return;
     }
 
@@ -3750,23 +3796,23 @@ function renderShop() {
                 <div class="min-w-0">
                     <h4 class="truncate" style="font-size: 0.875rem; font-weight: 700; color: #f1f5f9;">${escapeHtml(item.title)}</h4>
                     <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${escapeHtml(v6ShopDescription(item))}</p>
-                    ${isShield ? `<span class="font-display" style="display: inline-block; margin-top: 3px; font-size: 10px; font-weight: 700; color: ${isShieldMaxed ? '#fbbf24' : '#38bdf8'};">Stok Dimiliki: ${currentShields} / ${MAX_STREAK_SHIELDS}${isShieldMaxed ? ' (MAKS)' : ''}</span>` : ''}
+                    ${isShield ? `<span class="font-display" style="display: inline-block; margin-top: 3px; font-size: 10px; font-weight: 700; color: ${isShieldMaxed ? '#fbbf24' : '#38bdf8'};">${v6Text('Stok Dimiliki','Owned','所持数')}: ${currentShields} / ${MAX_STREAK_SHIELDS}${isShieldMaxed ? ' (' + v6Text('MAKS','MAX','上限') + ')' : ''}</span>` : ''}
                 </div>
             </div>
             <div class="flex items-center gap-1 shrink-0">
                 <button onclick="buyShopItem('${item.id}')" ${!canAfford ? 'disabled' : ''} class="font-display"
                     style="padding: 0.5rem 0.65rem; border-radius: 0.75rem; font-weight: 700; font-size: 0.75rem; display: flex; flex-direction: column; align-items: center; ${buyBtnStyle}">
                     ${isShieldMaxed
-                        ? `<span>MAKS</span><span style="font-size: 9px; opacity: 0.8;">2 / 2</span>`
+                        ? `<span>${v6Text('MAKS','MAX','上限')}</span><span style="font-size: 9px; opacity: 0.8;">2 / 2</span>`
                         : `<span>${finalCost} G${hasDiscount ? ` <span style="text-decoration: line-through; opacity: 0.65; font-size: 9px;">${item.cost}</span>` : ''}</span>
-                           <span style="font-size: 9px; text-transform: uppercase; opacity: 0.85;">Beli</span>`
+                           <span style="font-size: 9px; text-transform: uppercase; opacity: 0.85;">${v6Text('Beli','Buy','購入')}</span>`
                     }
                 </button>
-                <button onclick="openEditShopModal('${item.id}')" style="color: #94a3b8; padding: 4px;" title="Edit Item">
+                ${isFixedSurvivalItem(item.id)?`<span class="v7-fixed-lock" title="${v6Text('Harga dasar dan efek item tetap','Fixed base price and effect','基本価格と効果は固定です')}">🔒</span>`:`<button onclick="openEditShopModal('${item.id}')" style="color: #94a3b8; padding: 4px;" title="${v6Text('Edit Item','Edit Item','アイテムを編集')}">
                     <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                </button>
+                </button>`}
                 ${!['s1', 's_elixir', 's2', 's3', 's4'].includes(item.id) ? `
-                <button onclick="deleteShopItem('${item.id}')" style="color: #64748b; padding: 4px;" title="Hapus Item">
+                <button onclick="deleteShopItem('${item.id}')" style="color: #64748b; padding: 4px;" title="${v6Text('Hapus Item','Delete Item','アイテムを削除')}">
                     <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
                 ` : ''}
@@ -3775,13 +3821,14 @@ function renderShop() {
         container.appendChild(card);
     });
     renderRedeemHistory();
+    if(window.V7Raid?.renderShopExchange)window.V7Raid.renderShopExchange();
 }
 
 function handleAddShopItem(e) {
     e.preventDefault();
     const title = document.getElementById('s-title').value.trim();
     const cost = parseInt(document.getElementById('s-cost').value, 10);
-    const type = document.getElementById('s-type').value;
+    const type = 'reward'; // Custom items cannot create cheap copies of fixed consumables.
 
     if (!title || isNaN(cost) || cost <= 0) return;
 
@@ -3954,6 +4001,7 @@ function buyShopItem(id) {
 }
 
 function deleteShopItem(id) {
+    if(isFixedSurvivalItem(id))return;
     SoundFX.playClick();
     gameState.shop = gameState.shop.filter(s => s.id !== id);
     saveState();
@@ -4793,6 +4841,7 @@ function confirmResetData() {
 // 9. NAVIGATION & VISUAL HELPERS
 // ==========================================
 function switchTab(tabName) {
+    if(window.V7Raid && window.V7Raid.cancelBattle)window.V7Raid.cancelBattle();
     SoundFX.playClick();
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
     document.getElementById(`tab-${tabName}`).classList.remove('hidden');
@@ -4935,9 +4984,9 @@ const HUNTER_HEALTH_GUIDE = {
         sections: [
             ['🩸 Kerusakan HP Harian', [
                 'Evaluasi otomatis ketika tanggal lokal berganti. Penyelesaian 100% (S): 0 damage dan pulih +15% Max HP (dibatasi Max HP).',
-                'Mencapai target streak harian tetapi di bawah 100% (A): penalti dasar 10% Max HP.',
-                'Menyelesaikan 50% hingga di bawah target harian (B): penalti dasar 25% Max HP.',
-                'Menyelesaikan di bawah 50% (F): penalti dasar 40% Max HP.',
+                '90–99%: −5 HP; 80–89%: −10 HP (sebelum mitigasi WIS). Target streak tidak memengaruhi HP.',
+                '70–79%: −15 HP; 50–69%: −20 HP (sebelum mitigasi WIS).',
+                '0–49%: −25 HP (sebelum mitigasi WIS). Hari benar-benar tanpa Habits terjadwal tidak dikenai penalti.',
                 'Hari yang terlewat diproses satu kali per tanggal saat aplikasi dibuka lagi. Jika target tidak terpenuhi, Shield dapat melindungi streak, tetapi bukan HP.'
             ]],
             ['⚔️ Dungeon & Pengurangan Damage', [
@@ -4962,9 +5011,9 @@ const HUNTER_HEALTH_GUIDE = {
         sections: [
             ['🩸 Daily HP Damage', [
                 'Automatic evaluation runs when the local date changes. 100% completion (S): 0 damage and +15% Max HP healing (capped at Max HP).',
-                'Reaching your streak threshold but below 100% (A): base damage of 10% Max HP.',
-                '50% completion but below the target (B): base damage of 25% Max HP.',
-                'Below 50% completion (F): base damage of 40% Max HP.',
+                '90–99%: −5 HP; 80–89%: −10 HP (before WIS mitigation). Streak target never changes HP loss.',
+                '70–79%: −15 HP; 50–69%: −20 HP (before WIS mitigation).',
+                '0–49%: −25 HP (before WIS mitigation). Days with no scheduled habits incur no penalty.',
                 'Missed days settle once per date when you return. Shields may protect the streak, but not HP.'
             ]],
             ['⚔️ Dungeon & Mitigation', [
@@ -4989,9 +5038,9 @@ const HUNTER_HEALTH_GUIDE = {
         sections: [
             ['🩸 毎日のHPダメージ', [
                 '日付が変わると自動評価されます。達成率100%（S）：ダメージなし、最大HPの15%を回復（上限あり）。',
-                '設定した目標以上・100%未満（A）：最大HPの10%を基本ダメージとして受けます。',
-                '達成率50%以上・目標未満（B）：最大HPの25%を基本ダメージとして受けます。',
-                '達成率50%未満（F）：最大HPの40%を基本ダメージとして受けます。',
+                '達成率90～99%：基本5 HP、80～89%：基本10 HPのダメージ。ストリーク目標とは独立しています。',
+                '達成率70～79%：基本15 HP、50～69%：基本20 HPのダメージです。',
+                '達成率0～49%：基本25 HPのダメージ。予定した習慣がない日はペナルティなし。',
                 '未確認の日は次回起動時に1日につき一度だけ評価されます。シールドは連続記録のみ保護し、HPダメージは防ぎません。'
             ]],
             ['⚔️ ダンジョンと軽減', [
@@ -8720,14 +8769,27 @@ function applyFlashcardLanguage() {
 }
 
 function switchDungeonSubMode(mode) {
+    if(window.V7Raid && window.V7Raid.cancelBattle)window.V7Raid.cancelBattle();
     if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
     const focusPane = document.getElementById('dungeon-mode-focus');
     const fcPane = document.getElementById('dungeon-mode-flashcard');
     const btnFocus = document.getElementById('dungeon-subtab-focus');
     const btnFc = document.getElementById('dungeon-subtab-flashcard');
+    const weeklyPane = document.getElementById('dungeon-mode-weekly');
+    const btnWeekly = document.getElementById('dungeon-subtab-weekly');
     if (!focusPane || !fcPane) return;
+    if (weeklyPane) weeklyPane.classList.add('hidden');
+    if (btnWeekly) btnWeekly.style.cssText = 'padding: 0.55rem 0.25rem; border-radius: 0.65rem; font-size: 11px; font-weight: 800; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);';
 
-    if (mode === 'flashcard') {
+    if (mode === 'weekly') {
+        focusPane.classList.add('hidden');
+        fcPane.classList.add('hidden');
+        if (weeklyPane) weeklyPane.classList.remove('hidden');
+        if (btnWeekly) btnWeekly.style.cssText = 'padding: 0.55rem 0.25rem; border-radius: 0.65rem; font-size: 11px; font-weight: 800; background: rgba(168,85,247,0.24); color: #e9d5ff; border: 1px solid rgba(168,85,247,0.55);';
+        if (btnFc) btnFc.style.cssText = 'padding: 0.55rem 0.5rem; border-radius: 0.65rem; font-size: 11px; font-weight: 800; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);';
+        if (btnFocus) btnFocus.style.cssText = 'padding: 0.55rem 0.5rem; border-radius: 0.65rem; font-size: 11px; font-weight: 800; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);';
+        if (window.V7Raid) window.V7Raid.render();
+    } else if (mode === 'flashcard') {
         focusPane.classList.add('hidden');
         fcPane.classList.remove('hidden');
         if (btnFc) btnFc.style.cssText = 'padding: 0.55rem 0.5rem; border-radius: 0.65rem; font-size: 11px; font-weight: 800; background: rgba(6,182,212,0.24); color: #67e8f9; border: 1px solid rgba(34,211,238,0.55);';

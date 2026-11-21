@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240" viewBox="0 0 290 185" role="img" aria-label="dragon boss silhouette">
+<defs><radialGradient id="back"><stop stop-color="#7c2d12"/><stop offset="1" stop-color="#030813"/></radialGradient><radialGradient id="mist"><stop stop-color="#fb923c" stop-opacity=".28"/><stop offset="1" stop-color="#fb923c" stop-opacity="0"/></radialGradient><filter id="halo"><feGaussianBlur stdDeviation="8"/></filter></defs>
+<rect width="290" height="185" rx="12" fill="url(#back)"/>
+<circle cx="145" cy="93" r="92" fill="url(#mist)"/>
+<circle cx="145" cy="93" r="57" stroke="#fb923c" stroke-opacity=".24" stroke-width="1.5" fill="none"/>
+<g fill="#7c2d12" stroke="#fb923c" stroke-width="2.5" stroke-linejoin="round" transform="translate(0,-2)"><path d="M97 139l-33-26 27-20-13-35 37 10 17-38 35 23 34-13-17 35 45 22-33 18-22 37-42 5z"/><path d="M127 90l17 8 18-8m-3 20-17 12-19-12" fill="none" stroke="#fdba74" stroke-width="5"/><path d="M190 93l26-25-8 32" fill="#f59e0b"/></g>
+<path d="M24 155h242" stroke="#fb923c" stroke-opacity=".35" stroke-width="2"/>
+<path d="M18 163l20-20M250 143l20 20" stroke="#fb923c" stroke-opacity=".45"/>
+</svg>

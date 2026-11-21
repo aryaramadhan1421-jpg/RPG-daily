@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240" viewBox="0 0 290 185" role="img" aria-label="fenrir boss silhouette">
+<defs><radialGradient id="back"><stop stop-color="#164e63"/><stop offset="1" stop-color="#030813"/></radialGradient><radialGradient id="mist"><stop stop-color="#67e8f9" stop-opacity=".28"/><stop offset="1" stop-color="#67e8f9" stop-opacity="0"/></radialGradient><filter id="halo"><feGaussianBlur stdDeviation="8"/></filter></defs>
+<rect width="290" height="185" rx="12" fill="url(#back)"/>
+<circle cx="145" cy="93" r="92" fill="url(#mist)"/>
+<circle cx="145" cy="93" r="57" stroke="#67e8f9" stroke-opacity=".24" stroke-width="1.5" fill="none"/>
+<g fill="#164e63" stroke="#67e8f9" stroke-width="2.5" stroke-linejoin="round" transform="translate(0,-2)"><path d="M87 114 L62 92 65 51 88 70 104 42 128 79 147 43 166 75 191 52 192 97 170 114 146 151 110 154 Z"/><path d="M113 110 L130 119 149 109" stroke="#8be9ff" stroke-width="3" fill="none"/><path d="M98 91l11 8 10-8m40 0-11 8-10-8" fill="#8be9ff" stroke="#8be9ff" stroke-width="3"/></g>
+<path d="M24 155h242" stroke="#67e8f9" stroke-opacity=".35" stroke-width="2"/>
+<path d="M18 163l20-20M250 143l20 20" stroke="#67e8f9" stroke-opacity=".45"/>
+</svg>

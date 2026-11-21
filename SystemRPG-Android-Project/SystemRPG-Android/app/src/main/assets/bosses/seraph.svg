@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240" viewBox="0 0 290 185" role="img" aria-label="seraph boss silhouette">
+<defs><radialGradient id="back"><stop stop-color="#6d28d9"/><stop offset="1" stop-color="#030813"/></radialGradient><radialGradient id="mist"><stop stop-color="#e9d5ff" stop-opacity=".28"/><stop offset="1" stop-color="#e9d5ff" stop-opacity="0"/></radialGradient><filter id="halo"><feGaussianBlur stdDeviation="8"/></filter></defs>
+<rect width="290" height="185" rx="12" fill="url(#back)"/>
+<circle cx="145" cy="93" r="92" fill="url(#mist)"/>
+<circle cx="145" cy="93" r="57" stroke="#e9d5ff" stroke-opacity=".24" stroke-width="1.5" fill="none"/>
+<g fill="#6d28d9" stroke="#e9d5ff" stroke-width="2.5" stroke-linejoin="round" transform="translate(0,-2)"><path d="M147 49L93 13l13 43-49-5 46 39-50 17 64 14 30 33 30-33 63-14-49-17 46-39-49 5 13-43z"/><path d="M127 76a20 20 0 1 1 41 0 20 20 0 0 1-41 0" fill="#0b1220" stroke="#e9d5ff" stroke-width="6"/><path d="M115 156h65" stroke="#e9d5ff" stroke-width="5"/></g>
+<path d="M24 155h242" stroke="#e9d5ff" stroke-opacity=".35" stroke-width="2"/>
+<path d="M18 163l20-20M250 143l20 20" stroke="#e9d5ff" stroke-opacity=".45"/>
+</svg>

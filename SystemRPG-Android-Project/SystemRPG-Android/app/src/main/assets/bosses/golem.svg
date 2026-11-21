@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240" viewBox="0 0 290 185" role="img" aria-label="golem boss silhouette">
+<defs><radialGradient id="back"><stop stop-color="#1d4d4b"/><stop offset="1" stop-color="#030813"/></radialGradient><radialGradient id="mist"><stop stop-color="#5eead4" stop-opacity=".28"/><stop offset="1" stop-color="#5eead4" stop-opacity="0"/></radialGradient><filter id="halo"><feGaussianBlur stdDeviation="8"/></filter></defs>
+<rect width="290" height="185" rx="12" fill="url(#back)"/>
+<circle cx="145" cy="93" r="92" fill="url(#mist)"/>
+<circle cx="145" cy="93" r="57" stroke="#5eead4" stroke-opacity=".24" stroke-width="1.5" fill="none"/>
+<g fill="#1d4d4b" stroke="#5eead4" stroke-width="2.5" stroke-linejoin="round" transform="translate(0,-2)"><rect x="93" y="63" width="99" height="89" rx="13"/><path d="M75 95l-31 18 10 35 37-8m106-45 31 18-10 35-31-8M116 55l-7-22h67l-7 22"/><path d="M118 94h20m19 0h20m-50 22 27-18 17 25" fill="none" stroke="#99f6e4" stroke-width="6"/></g>
+<path d="M24 155h242" stroke="#5eead4" stroke-opacity=".35" stroke-width="2"/>
+<path d="M18 163l20-20M250 143l20 20" stroke="#5eead4" stroke-opacity=".45"/>
+</svg>

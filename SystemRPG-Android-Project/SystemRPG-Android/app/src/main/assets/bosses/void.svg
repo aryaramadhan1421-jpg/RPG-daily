@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240" viewBox="0 0 290 185" role="img" aria-label="void boss silhouette">
+<defs><radialGradient id="back"><stop stop-color="#3b0764"/><stop offset="1" stop-color="#030813"/></radialGradient><radialGradient id="mist"><stop stop-color="#c084fc" stop-opacity=".28"/><stop offset="1" stop-color="#c084fc" stop-opacity="0"/></radialGradient><filter id="halo"><feGaussianBlur stdDeviation="8"/></filter></defs>
+<rect width="290" height="185" rx="12" fill="url(#back)"/>
+<circle cx="145" cy="93" r="92" fill="url(#mist)"/>
+<circle cx="145" cy="93" r="57" stroke="#c084fc" stroke-opacity=".24" stroke-width="1.5" fill="none"/>
+<g fill="#3b0764" stroke="#c084fc" stroke-width="2.5" stroke-linejoin="round" transform="translate(0,-2)"><path d="M146 17l46 38 19 72-34 28H106l-34-28 18-72z"/><path d="M113 86q34-23 68 0l-18 37h-34z" fill="#060616"/><path d="M124 92l17 8m38-8-17 8" fill="none" stroke="#d8b4fe" stroke-width="6"/><path d="M145 12v45" stroke="#c084fc" stroke-width="4"/></g>
+<path d="M24 155h242" stroke="#c084fc" stroke-opacity=".35" stroke-width="2"/>
+<path d="M18 163l20-20M250 143l20 20" stroke="#c084fc" stroke-opacity=".45"/>
+</svg>
