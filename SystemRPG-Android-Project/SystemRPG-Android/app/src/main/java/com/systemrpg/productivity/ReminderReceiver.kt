@@ -68,7 +68,7 @@ class ReminderReceiver : BroadcastReceiver() {
                 "Siang" -> "[SYSTEM] Noon Quest Check ($dailyPct%)"
                 "Petang" -> "[SYSTEM] Evening Quest Review ($dailyPct%)"
                 "Sore" -> "[SYSTEM] Afternoon Check ($dailyPct% Clear)"
-                "Malam" -> "[PENALTY WARNING] Finish Quests Before 00:00!"
+                "Malam" -> if (dailyPct >= 100) "[SYSTEM] Daily Quest Perfect Clear!" else "[PENALTY WARNING] Finish Quests Before 00:00!"
                 else -> "[SYSTEM] Daily Quest Reminder"
             }
             lang.startsWith("ja") -> when (slot) {
@@ -76,7 +76,7 @@ class ReminderReceiver : BroadcastReceiver() {
                 "Siang" -> "[SYSTEM] お昼のクエスト確認 ($dailyPct%)"
                 "Petang" -> "[SYSTEM] 夕方の進捗確認 ($dailyPct%)"
                 "Sore" -> "[SYSTEM] 夕方の進捗確認 (達成率 $dailyPct%)"
-                "Malam" -> "[ペナルティ警告] 00:00までにクエストを完了せよ！"
+                "Malam" -> if (dailyPct >= 100) "[SYSTEM] デイリークエスト完全達成！" else "[ペナルティ警告] 00:00までにクエストを完了せよ！"
                 else -> "[SYSTEM] デイリークエスト通知"
             }
             else -> when (slot) {
@@ -84,26 +84,27 @@ class ReminderReceiver : BroadcastReceiver() {
                 "Siang" -> "[SYSTEM] Pantau Quest Siang ($dailyPct%)"
                 "Petang" -> "[SYSTEM] Evaluasi Petang ($dailyPct%)"
                 "Sore" -> "[SYSTEM] Evaluasi Sore ($dailyPct% Clear)"
-                "Malam" -> "[PERINGATAN PENALTI] Selesaikan Quest Sebelum 00:00!"
+                "Malam" -> if (dailyPct >= 100) "[SYSTEM] Semua Habits Selesai!" else "[PERINGATAN PENALTI] Selesaikan Quest Sebelum 00:00!"
                 else -> "[SYSTEM] Pengingat Daily Quest"
             }
         }
 
+        // Streak and HP are separate: only 100% Daily Quests prevents the daily HP penalty.
         val body = when {
-            lang.startsWith("en") -> if (dailyPct >= targetPct) {
-                "Daily target is safe ($dailyPct%). Keep up your momentum and streak!"
-            } else {
-                "Today's progress is only $dailyPct% ($pendingCount quests left). Reach at least $targetPct% to avoid HP penalty!"
+            lang.startsWith("en") -> when {
+                dailyPct >= 100 -> "Perfect clear (100%)! No daily HP penalty; keep your streak going!"
+                dailyPct >= targetPct -> "Streak target reached ($dailyPct% / $targetPct%). Finish all remaining quests to avoid an HP penalty."
+                else -> "Daily progress $dailyPct% ($pendingCount quests left). Streak target: $targetPct%. HP is safe only at 100%."
             }
-            lang.startsWith("ja") -> if (dailyPct >= targetPct) {
-                "本日の目標達成率は安全圏です ($dailyPct%)。この調子でストリークを維持しよう！"
-            } else {
-                "現在の達成率は $dailyPct% です（残り $pendingCount 件）。HPペナルティを防ぐため $targetPct% 以上を達成しよう！"
+            lang.startsWith("ja") -> when {
+                dailyPct >= 100 -> "全クエスト達成（100%）！本日のHPペナルティはありません。"
+                dailyPct >= targetPct -> "ストリーク目標達成（$dailyPct% / $targetPct%）。HP減少を防ぐには100%達成が必要です。"
+                else -> "現在の達成率は $dailyPct%（残り $pendingCount 件）。ストリーク目標は $targetPct%、HPを守るには100%達成が必要です。"
             }
-            else -> if (dailyPct >= targetPct) {
-                "Target harian sudah aman ($dailyPct%). Pertahankan momentum dan streak kamu!"
-            } else {
-                "Progress hari ini baru $dailyPct% (masih ada $pendingCount quest tersisa). Capai minimal $targetPct% agar terhindar dari penalti HP!"
+            else -> when {
+                dailyPct >= 100 -> "Perfect Clear 100%! Tidak ada penalti HP hari ini. Pertahankan Streak-mu!"
+                dailyPct >= targetPct -> "Target Streak aman ($dailyPct% / $targetPct%). Selesaikan semua Habits agar HP tidak berkurang."
+                else -> "Progress $dailyPct% (tersisa $pendingCount Quest). Target Streak $targetPct%; HP aman hanya jika Habits 100%."
             }
         }
 
