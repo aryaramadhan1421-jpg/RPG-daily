@@ -846,17 +846,41 @@ SYSTEM_QUOTES_CATALOG.push(
  {text:'The happiness of your life depends upon the quality of your thoughts.',author:'Marcus Aurelius (Meditations, traditional translation)',tag:'focus'},
  {text:'A journey of a thousand miles begins with a single step.',author:'Laozi (Tao Te Ching, translation)',tag:'system'}
 );
+// Oracle translations are indexed only for the original 14 catalogue entries.
+// Later quotations and new original lines use explicit three-language entries.
+const ORACLE_EXTRA_LOCALIZED = [
+    {"id": "Satu langkah kecil yang selesai lebih berarti daripada rencana besar yang terus ditunda.", "en": "One small completed step matters more than a grand plan endlessly postponed.", "ja": "終えた小さな一歩は、先延ばしにした大きな計画より価値がある。", "tag": "system", "author": "SYSTEM RPG · Original"},
+    {"id": "Konsistensi tidak menuntut sempurna; ia meminta kamu kembali mencoba.", "en": "Consistency does not demand perfection; it asks you to try again.", "ja": "継続に完璧さはいらない。もう一度挑戦すればいい。", "tag": "recovery", "author": "SYSTEM RPG · Original"},
+    {"id": "Fokus adalah keberanian untuk berkata tidak pada gangguan yang tidak penting.", "en": "Focus is the courage to say no to distractions that do not matter.", "ja": "集中とは、大切でない誘惑に「いいえ」と言う勇気。", "tag": "focus", "author": "SYSTEM RPG · Original"},
+    {"id": "Hari yang berat bukan akhir perjalanan Hunter.", "en": "A difficult day is not the end of a Hunter’s journey.", "ja": "つらい一日は、ハンターの旅の終わりではない。", "tag": "recovery", "author": "SYSTEM RPG · Original"},
+    {"id": "Bangun sistem yang tetap bisa dijalankan pada hari biasa, bukan hanya hari penuh semangat.", "en": "Build a system you can follow on ordinary days, not only motivated ones.", "ja": "やる気のある日だけでなく、普通の日にも続けられる仕組みを作ろう。", "tag": "system", "author": "SYSTEM RPG · Original"},
+    {"id": "Istirahat yang terencana adalah bagian dari disiplin.", "en": "Planned rest is part of discipline.", "ja": "計画的な休息も規律の一部だ。", "tag": "recovery", "author": "SYSTEM RPG · Original"},
+    {"id": "Selesaikan satu Quest, lalu biarkan kemajuan berikutnya mengikuti.", "en": "Finish one quest, then let the next progress follow.", "ja": "まず一つのクエストを終わらせよう。次の進歩はそこから始まる。", "tag": "focus", "author": "SYSTEM RPG · Original"},
+    {"id": "Jangan ukur seluruh perjalanan dari satu hari yang kurang berhasil.", "en": "Do not judge your whole journey by one difficult day.", "ja": "うまくいかなかった一日だけで、旅のすべてを判断しないで。", "tag": "recovery", "author": "SYSTEM RPG · Original"},
+    {"id": "Catat pelajaran hari ini, bukan hanya hasilnya.", "en": "Record today’s lesson, not just its outcome.", "ja": "今日の結果だけでなく、学びも記録しよう。", "tag": "system", "author": "SYSTEM RPG · Original"},
+    {"id": "Kemajuan yang bisa diulang lebih kuat daripada ledakan semangat sesaat.", "en": "Repeatable progress is stronger than a brief burst of motivation.", "ja": "繰り返せる進歩は、一瞬のやる気より強い。", "tag": "system", "author": "SYSTEM RPG · Original"},
+    {"id": "Keberanian kadang hanya berarti memulai selama lima menit.", "en": "Sometimes courage simply means starting for five minutes.", "ja": "勇気とは、まず五分だけ始めることかもしれない。", "tag": "focus", "author": "SYSTEM RPG · Original"},
+    {"id": "Kamu boleh memperlambat langkah tanpa menyerah pada tujuan.", "en": "You can slow your pace without giving up your goal.", "ja": "目標を諦めずに、歩みを緩めてもいい。", "tag": "recovery", "author": "SYSTEM RPG · Original"},
+ ];
+const ORACLE_ADDITIONAL_CLASSICS = [
+ {id:'Hidup yang tidak direnungkan tidak layak dijalani.',en:'The unexamined life is not worth living.',ja:'吟味されない人生は生きるに値しない。',author:'Socrates (Plato, Apology)',tag:'system'},
+ {id:'Tindakan nyata lebih baik daripada kata-kata indah.',en:'Well done is better than well said.',ja:'立派に語るより、立派に行うほうがよい。',author:'Benjamin Franklin',tag:'system'},
+ {id:'Bukan hidup kita yang singkat, melainkan banyak waktu yang kita sia-siakan.',en:'It is not that we have a short time to live, but that we waste a lot of it.',ja:'人生が短いのではない。多くの時間を浪費しているのだ。',author:'Seneca (translation)',tag:'focus'},
+ {id:'Orang yang belum mampu menguasai dirinya belum benar-benar bebas.',en:'No man is free who is not master of himself.',ja:'自分を律することができなければ、自由ではない。',author:'Epictetus (translation)',tag:'system'},
+ {id:'Hambatan yang menghadang tindakan justru bisa menjadi jalan untuk maju.',en:'The impediment to action advances action. What stands in the way becomes the way.',ja:'行動を妨げるものが、かえって行動を前に進める。障害こそ道になる。',author:'Marcus Aurelius (translation)',tag:'recovery'},
+ {id:'Untuk berkembang, terimalah kemungkinan dianggap belum tahu.',en:'If you want to improve, be content to be thought foolish and stupid.',ja:'成長したいなら、愚かだと思われることも受け入れなさい。',author:'Epictetus (translation)',tag:'system'},
+ {id:'Kualitas pikiran ikut menentukan kualitas hidupmu.',en:'The happiness of your life depends upon the quality of your thoughts.',ja:'人生の幸福は、思考の質に左右される。',author:'Marcus Aurelius (translation)',tag:'focus'},
+ {id:'Perjalanan seribu langkah dimulai dengan satu langkah pertama.',en:'A journey of a thousand miles begins with a single step.',ja:'千里の道も一歩から始まる。',author:'Laozi (translation)',tag:'system'}
+];
 function getAllQuotesPool() {
-    const custom = (gameState.customQuotes || []).map(q => ({
-        text: q.text,
-        author: q.author,
-        tag: 'custom'
-    }));
-    const base=SYSTEM_QUOTES_CATALOG.filter(q => q.author && !/SYSTEM RPG|Original Wisdom/i.test(q.author));
-    const lang=typeof getCurrentLang==='function'?getCurrentLang():(localStorage.getItem('system_rpg_lang')||'id');
-    const key=lang==='jp'?'ja':lang;
-    const translations=V6_CONTENT_LOCALES.oracle[key];
-    return [...custom,...base.map((q,i)=>({...q,text:translations?.[i]||q.text}))];
+    const custom = (gameState.customQuotes || []).map(q => ({text:q.text,author:q.author,tag:'custom'}));
+    const lang = typeof v6UiLang === 'function' ? v6UiLang() : (localStorage.getItem('system_rpg_lang') || 'id');
+    const key = lang === 'jp' ? 'ja' : lang;
+    const original = SYSTEM_QUOTES_CATALOG.slice(0,14);
+    const translations = V6_CONTENT_LOCALES.oracle[key];
+    const localizedOriginal = original.map((q,i)=>({...q,text:key==='id'?q.text:(translations?.[i] || q.text)}));
+    const localizedExtras = [...ORACLE_ADDITIONAL_CLASSICS,...ORACLE_EXTRA_LOCALIZED].map(q=>({text:q[key] || q.id,author:q.author,tag:q.tag}));
+    return [...custom,...localizedOriginal,...localizedExtras];
 }
 
 function inferQuestTimeSlot(quest) {
@@ -981,18 +1005,24 @@ function renderOracle() {
             recovery: 'IRON RESILIENCE',
             custom: 'PERSONAL DOCTRINE'
         };
-        tagEl.textContent = tagLabels[q.tag] || 'DAILY DOCTRINE';
+        const labels = {
+            id:{system:'PETUAH HARIAN',focus:'MODE FOKUS',recovery:'SEMANGAT BANGKIT',custom:'PETUAH PRIBADI'},
+            en:tagLabels,
+            ja:{system:'今日の教え',focus:'集中モード',recovery:'再起の言葉',custom:'自分の言葉'}
+        };
+        const lang = typeof v6UiLang === 'function' ? v6UiLang() : 'id';
+        tagEl.textContent = (labels[lang] || labels.id)[q.tag] || (labels[lang] || labels.id).system;
     }
 
     const todayStr = getCurrentGameDateKey();
     const claimedToday = gameState.lastOracleClaimDate === todayStr;
     if (claimBtn) {
         if (claimedToday) {
-            claimBtn.textContent = '✓ Petuah Diterima Hari Ini';
+            claimBtn.textContent = v6Text('✓ Petuah diterima hari ini','✓ Wisdom claimed today','✓ 今日の言葉を受け取りました');
             claimBtn.style.opacity = '0.6';
             claimBtn.disabled = true;
         } else {
-            claimBtn.textContent = '✨ Terima Petuah (+5 XP / +5 G)';
+            claimBtn.textContent = v6Text('✨ Terima petuah (+5 XP / +5 G)','✨ Claim wisdom (+5 XP / +5 G)','✨ 言葉を受け取る (+5 XP / +5 G)');
             claimBtn.style.opacity = '1';
             claimBtn.disabled = false;
         }
@@ -8164,32 +8194,53 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
 
     const TUT_DATA = {
         id: [
-            { tab: 'status', targets: ['#hp-bar', '#player-name-display'], icon: '⚔️', title: '1. Selamat Datang, Hunter!', desc: 'Lihat bagian atas layar: ini adalah profil Hunter, HP (Nyawa), XP, dan atribut STR/INT/WIS/CHR milikmu.', tip: 'Tips: Pantau Level, HP, dan Hunter Rank kamu di tab STATUS ini.' },
-            { tab: 'quests', targets: ['#quest-list', '#tab-content-quests'], icon: '📋', title: '2. Quest Board & Daily Habit', desc: 'Tab QUESTS terbuka di atas! Centang misi harianmu di sini. Selesaikan minimal 80% Daily Quest agar Streak aman.', tip: 'Tips: Kamu bisa menambah misi baru atau mengatur jadwal hari aktifnya.' },
-            { tab: 'dungeon', targets: ['#dungeon-timer-text', '#tab-content-dungeon'], icon: '⏳', title: '3. Dungeon Deep Focus', desc: 'Ini ruang DUNGEON untuk fokus belajar/kerja, lengkap dengan Grimoire PDF Reader & Anime Lofi Radio di bawahnya.', tip: 'Tips: Jangan menyerah sebelum timer habis agar tidak terkena penalti -10 HP!' },
-            { tab: 'shop', targets: ['#shop-items-container', '#tab-content-shop'], icon: '🛒', title: '4. System Shop & Armory', desc: 'Di tab SHOP ini kamu bisa menukar Gold dengan Potion pemulih HP, Relic pasif, Peti Misteri, atau hadiah dunia nyata.', tip: 'Tips: Tingkatkan atribut CHR untuk mendapatkan diskon otomatis di Shop.' },
-            { tab: 'treasury', targets: ['#tr-net-balance', '#tab-content-treasury'], icon: '💰', title: '5. Treasury Vault & Grafik', desc: 'Ini brankas keuanganmu! Catat pemasukan/pengeluaran, lihat Pie Chart kategori, dan gunakan kalkulator bawaan.', tip: 'Tips: Mencatat transaksi memberi bonus XP & atribut WIS (maks 3x/hari).' },
-            { tab: 'dungeon', targets: ['#dungeon-subtab-flashcard', '#dungeon-mode-flashcard'], icon: '🃏', title: 'Flashcard Arena & Review Terjadwal', desc: 'Buka mode Flashcard di DUNGEON, balik kartunya, lalu nilai: Tidak Tahu (10 menit), Lupa (1 hari), Ingat (3 hari+), Mudah (7 hari+).', tip: 'Review muncul saat jatuh tempo. Gunakan Latihan Bebas untuk mengacak seluruh deck.' },
-            { tab: 'status', targets: ['#btn-evaluate-day', '#player-rank-badge'], icon: '🌙', title: '6. Evaluasi Harian', desc: 'Kembali ke tab STATUS: di akhir hari, tekan tombol "Evaluasi & Lanjut Hari" untuk merekap progresmu ke hari berikutnya.', tip: 'Sistem siap. Selamat berjuang naik ke Rank tertinggi, Hunter!' }
+            {"tab": "status", "targets": ["#hp-bar", "#player-name-display"], "icon": "⚔️", "title": "Profil Hunter", "desc": "Pantau HP, EXP, Level, Rank, dan atribut STR/INT/WIS/CHR. HP dapat berubah karena hasil evaluasi dan aktivitas tertentu.", "tip": "Periksa status sebelum dan sesudah aktivitas."},
+            {"tab": "quests", "targets": ["#quest-list"], "icon": "📋", "title": "Quest Board & Target Streak", "desc": "Centang Quest yang selesai. Quest selesai otomatis pindah ke bawah. Target Streak tidak harus 80%: atur sendiri persentasenya di STATUS.", "tip": "Target saat ini: {threshold}%."},
+            {"tab": "quests", "targets": ["#quest-list"], "icon": "✋", "title": "Atur Urutan & Jadwal Quest", "desc": "Tekan dan tahan kartu Quest untuk mengubah urutan. Kamu juga bisa membuat, mengedit, dan memilih hari aktif Quest.", "tip": "Jangan menghapus data aplikasi untuk memperbaiki tampilan."},
+            {"tab": "status", "targets": ["#input-streak-threshold", "#v6-auto-day-description"], "icon": "🎯", "title": "Pengaturan Target Harian", "desc": "Atur ambang Streak sesuai kebutuhanmu. Pengaturan ini memengaruhi evaluasi otomatis saat pergantian tanggal.", "tip": "Target yang sedang digunakan: {threshold}%."},
+            {"tab": "status", "targets": ["#v6-auto-day-description", "#history-log-list"], "icon": "🌅", "title": "Pergantian Hari Otomatis", "desc": "Sistem mengevaluasi Quest secara otomatis ketika tanggal HP berganti dan aplikasi kembali aktif. Tidak ada tombol Evaluasi & Lanjut Hari yang perlu ditekan.", "tip": "Cek laporan evaluasi dan perubahan HP/Streak di History."},
+            {"tab": "status", "targets": ["#oracle-quote-text", "#btn-claim-oracle"], "icon": "🔮", "title": "Oracle & Petuah Harian", "desc": "Oracle menampilkan petuah sesuai bahasa aplikasi. Ganti kutipan untuk inspirasi baru dan klaim bonus harian satu kali.", "tip": "Kutipan buatan sendiri tetap tampil sesuai bahasa saat kamu menulisnya."},
+            {"tab": "dungeon", "targets": ["#dungeon-timer-text", "#tab-content-dungeon"], "icon": "⏳", "title": "Dungeon Focus & Audio", "desc": "Gunakan timer fokus untuk belajar atau bekerja. Di Dungeon juga tersedia PDF Reader dan Anime Lo-Fi untuk menemani sesi.", "tip": "Mengakhiri sesi lebih awal dapat memicu penalti HP."},
+            {"tab": "dungeon", "targets": ["#dungeon-subtab-flashcard"], "icon": "🃏", "title": "Flashcard & Review", "desc": "Belajar dengan Flashcard, pilihan jawaban, dan jadwal pengulangan. Buka mode Flashcard di Dungeon untuk membuat deck dan meninjau kartu jatuh tempo.", "tip": "Latihan bebas tersedia untuk mengulang kartu di luar jadwal."},
+            {"tab": "status", "targets": ["#v6-journal-entry"], "icon": "📓", "title": "Hunter Journal & History", "desc": "Tulis refleksi, suasana hati, dan rencana besok di Journal. History mencatat aktivitas dan laporan evaluasi harian.", "tip": "Journal opsional, tetapi berguna untuk melihat perkembangan."},
+            {"tab": "status", "targets": ["#v6-library-entry"], "icon": "📚", "title": "Knowledge Library", "desc": "Buka Library untuk membaca materi pengembangan diri dan menyimpan catatan belajar.", "tip": "Bahasa materi mengikuti ketersediaan terjemahan."},
+            {"tab": "shop", "targets": ["#shop-items-container"], "icon": "🛒", "title": "System Shop", "desc": "Tukar Gold dengan item pemulih HP, relic, atau hadiah yang tersedia di Shop.", "tip": "Periksa saldo Gold sebelum membeli."},
+            {"tab": "treasury", "targets": ["#tr-net-balance"], "icon": "💰", "title": "Treasury & Keuangan", "desc": "Catat pemasukan dan pengeluaran, pantau saldo, dan lihat ringkasan grafik.", "tip": "Transaksi bisa memberi bonus progres sesuai aturan sistem."},
+            {"tab": "status", "targets": ["#btn-font-settings"], "icon": "💾", "title": "Settings: Save & Load Game", "desc": "Buka Settings (ikon roda gigi) untuk Save Game ke slot, Load Game dari slot, dan ekspor backup JSON ke perangkat.", "tip": "Slot di aplikasi bisa hilang jika data aplikasi dihapus; simpan juga backup eksternal."},
+            {"tab": "status", "targets": ["#rem-time-pagi", "#v6-auto-day-description"], "icon": "🔔", "title": "Pengingat & Notifikasi", "desc": "Atur jadwal pengingat di STATUS. Notifikasi saat layar terkunci bergantung pada izin alarm/notifikasi dan pembatasan baterai Android.", "tip": "Jika notifikasi terlambat, periksa izin dan pengaturan baterai HP."},
         ],
         en: [
-            { tab: 'status', targets: ['#hp-bar', '#player-name-display'], icon: '⚔️', title: '1. Welcome, Hunter!', desc: 'Look above: this is your Hunter profile, HP, XP, and STR/INT/WIS/CHR attributes.', tip: 'Tip: Track your Level, HP, and Hunter Rank in the STATUS tab.' },
-            { tab: 'quests', targets: ['#quest-list', '#tab-content-quests'], icon: '📋', title: '2. Quest Board & Daily Habits', desc: 'The QUESTS tab is now open above! Check off your missions and complete at least 80% to keep your Streak safe.', tip: 'Tip: You can create custom quests and set specific active days.' },
-            { tab: 'dungeon', targets: ['#dungeon-timer-text', '#tab-content-dungeon'], icon: '⏳', title: '3. Dungeon Deep Focus', desc: 'This is the DUNGEON room for distraction-free focus sessions, complete with a PDF Reader and Anime Lofi Radio.', tip: 'Tip: Do not abort early or you will suffer a -10 HP penalty!' },
-            { tab: 'shop', targets: ['#shop-items-container', '#tab-content-shop'], icon: '🛒', title: '4. System Shop & Armory', desc: 'In the SHOP tab above, spend earned Gold on HP Potions, passive Relics, Mystery Chests, or real-world rewards.', tip: 'Tip: Level up CHR to unlock automatic Shop discounts.' },
-            { tab: 'treasury', targets: ['#tr-net-balance', '#tab-content-treasury'], icon: '💰', title: '5. Treasury Vault & Charts', desc: 'Your financial vault! Log income/expenses, inspect the category Pie Chart, and use the built-in calculator.', tip: 'Tip: Logging transactions grants bonus XP & WIS (up to 3x/day).' },
-            { tab: 'dungeon', targets: ['#dungeon-subtab-flashcard', '#dungeon-mode-flashcard'], icon: '🃏', title: 'Flashcard Arena & Spaced Repetition', desc: 'Open Flashcards inside DUNGEON. Flip a card and rate it: No Idea (10 min), Forgot (1 day), Remember (3+ days), Easy (7+ days).', tip: 'Due cards return automatically. Free Practice shuffles the whole deck.' },
-            { tab: 'status', targets: ['#btn-evaluate-day', '#player-rank-badge'], icon: '🌙', title: '6. Daily Evaluation', desc: 'Back on STATUS: after the real date changes, tap "Evaluate & Advance Day" to review your progress.', tip: 'System ready. Rise to the highest Rank, Hunter!' }
+            {"tab": "status", "targets": ["#hp-bar", "#player-name-display"], "icon": "⚔️", "title": "Hunter Profile", "desc": "Track HP, XP, Level, Rank, and STR/INT/WIS/CHR. HP can change after evaluations and certain activities.", "tip": "Check your status before and after activities."},
+            {"tab": "quests", "targets": ["#quest-list"], "icon": "📋", "title": "Quest Board & Streak Goal", "desc": "Check off completed quests; they move to the bottom. The Streak target is adjustable in STATUS, not fixed at 80%.", "tip": "Current target: {threshold}%."},
+            {"tab": "quests", "targets": ["#quest-list"], "icon": "✋", "title": "Reorder & Schedule Quests", "desc": "Long-press a quest card to reorder it. You can also add, edit, and set active weekdays for quests.", "tip": "Never clear app data just to fix the display."},
+            {"tab": "status", "targets": ["#input-streak-threshold", "#v6-auto-day-description"], "icon": "🎯", "title": "Daily Target Settings", "desc": "Set your own Streak threshold. It affects the automatic evaluation when the date changes.", "tip": "Active target: {threshold}%."},
+            {"tab": "status", "targets": ["#v6-auto-day-description", "#history-log-list"], "icon": "🌅", "title": "Automatic Daily Rollover", "desc": "The system evaluates quests automatically after the phone date changes and the app resumes. There is no manual Evaluate & Advance Day button.", "tip": "Review evaluations and HP/Streak changes in History."},
+            {"tab": "status", "targets": ["#oracle-quote-text", "#btn-claim-oracle"], "icon": "🔮", "title": "Oracle & Daily Wisdom", "desc": "Oracle shows wisdom in your app language. Shuffle quotes for inspiration and claim the daily bonus once.", "tip": "Custom quotes keep the language in which you wrote them."},
+            {"tab": "dungeon", "targets": ["#dungeon-timer-text", "#tab-content-dungeon"], "icon": "⏳", "title": "Dungeon Focus & Audio", "desc": "Use the focus timer for study or work. Dungeon also includes a PDF reader and Anime Lo-Fi audio.", "tip": "Ending a session early may cause an HP penalty."},
+            {"tab": "dungeon", "targets": ["#dungeon-subtab-flashcard"], "icon": "🃏", "title": "Flashcards & Review", "desc": "Study with flashcards, answer choices, and spaced review. Open Flashcards in Dungeon to create decks and review due cards.", "tip": "Free practice lets you review outside the schedule."},
+            {"tab": "status", "targets": ["#v6-journal-entry"], "icon": "📓", "title": "Hunter Journal & History", "desc": "Record reflections, mood, and tomorrow’s plan in Journal. History tracks activity and daily evaluations.", "tip": "Journal is optional but useful for tracking growth."},
+            {"tab": "status", "targets": ["#v6-library-entry"], "icon": "📚", "title": "Knowledge Library", "desc": "Open the Library to read learning material and keep study notes.", "tip": "Material language depends on available translations."},
+            {"tab": "shop", "targets": ["#shop-items-container"], "icon": "🛒", "title": "System Shop", "desc": "Spend Gold on HP recovery items, relics, and available rewards in Shop.", "tip": "Check your Gold before buying."},
+            {"tab": "treasury", "targets": ["#tr-net-balance"], "icon": "💰", "title": "Treasury & Finances", "desc": "Track income, expenses, balances, and charts.", "tip": "Transactions may grant progress bonuses under system rules."},
+            {"tab": "status", "targets": ["#btn-font-settings"], "icon": "💾", "title": "Settings: Save & Load Game", "desc": "Open Settings (gear icon) to save to slots, load slots, and export a JSON backup to your device.", "tip": "In-app slots can be lost if app data is cleared; keep an external backup too."},
+            {"tab": "status", "targets": ["#rem-time-pagi", "#v6-auto-day-description"], "icon": "🔔", "title": "Reminders & Notifications", "desc": "Set reminder times in STATUS. Locked-screen delivery depends on Android alarm/notification permissions and battery restrictions.", "tip": "If notifications are delayed, check permissions and battery settings."},
         ],
         ja: [
-            { tab: 'status', targets: ['#hp-bar', '#player-name-display'], icon: '⚔️', title: '1. ようこそ、ハンター！', desc: '上の画面があなたのステータスです。レベル、HP、XP、各能力値を確認できます。', tip: 'ヒント：STATUSタブでレベル、HP、ランクを確認できます。' },
-            { tab: 'quests', targets: ['#quest-list', '#tab-content-quests'], icon: '📋', title: '2. クエストボード', desc: 'QUESTSタブが表示されています！毎日のミッションを80%以上達成するとストリークが維持されます。', tip: 'ヒント：新しいクエストや曜日スケジュールも自由に作成できます。' },
-            { tab: 'dungeon', targets: ['#dungeon-timer-text', '#tab-content-dungeon'], icon: '⏳', title: '3. ダンジョン集中モード', desc: 'ここは集中タイマーのDUNGEONタブです。PDFリーダーやアニメLo-Fiラジオも利用できます。', tip: 'ヒント：途中で諦めるとHPが10減少するので注意！' },
-            { tab: 'shop', targets: ['#shop-items-container', '#tab-content-shop'], icon: '🛒', title: '4. システムショップ', desc: '上のSHOPタブで、獲得したゴールドをHPポーションやレリック、現実のご褒美と交換できます。', tip: 'ヒント：CHRを上げるとショップが割引されます。' },
-            { tab: 'treasury', targets: ['#tr-net-balance', '#tab-content-treasury'], icon: '💰', title: '5. トレジャリー（家計簿）', desc: '家計簿タブです！電卓やカテゴリ別円グラフで収入と支出をスマートに管理できます。', tip: 'ヒント：取引を記録するとボーナスXPとWISを獲得できます（1日3回まで）。' },
-            { tab: 'dungeon', targets: ['#dungeon-subtab-flashcard', '#dungeon-mode-flashcard'], icon: '🃏', title: 'フラッシュカードと間隔反復', desc: 'DUNGEONの単語カードを開き、答えを見て評価しましょう：わからない（10分）、忘れた（1日）、覚えた（3日以上）、簡単（7日以上）。', tip: '期限になったカードは自動で戻ります。自由練習では全カードがシャッフルされます。' },
-            { tab: 'status', targets: ['#btn-evaluate-day', '#player-rank-badge'], icon: '🌙', title: '6. 1日の評価', desc: 'STATUSタブに戻りました。実際の日付が変わった後、「評価して次の日へ」を押して進行状況を確認しましょう。', tip: 'システム準備完了。最高ランクを目指せ、ハンター！' }
-        ]
+            {"tab": "status", "targets": ["#hp-bar", "#player-name-display"], "icon": "⚔️", "title": "ハンターのプロフィール", "desc": "HP、経験値、レベル、ランク、能力値を確認。HPは評価などで変化します。", "tip": "活動の前後にステータスを確認しましょう。"},
+            {"tab": "quests", "targets": ["#quest-list"], "icon": "📋", "title": "クエストとストリーク目標", "desc": "完了したクエストは下に移動します。ストリークの目標は80%固定ではなく、STATUSで変更できます。", "tip": "現在の目標：{threshold}%。"},
+            {"tab": "quests", "targets": ["#quest-list"], "icon": "✋", "title": "クエストの並び替えと曜日設定", "desc": "クエストを長押しして並び替え。追加・編集・実行曜日の設定もできます。", "tip": "表示の問題でアプリデータを消さないでください。"},
+            {"tab": "status", "targets": ["#input-streak-threshold", "#v6-auto-day-description"], "icon": "🎯", "title": "日々の目標設定", "desc": "ストリーク達成率は自由に設定できます。日付変更時の自動評価に反映されます。", "tip": "設定中の目標：{threshold}%。"},
+            {"tab": "status", "targets": ["#v6-auto-day-description", "#history-log-list"], "icon": "🌅", "title": "日付変更時の自動処理", "desc": "日付が変わりアプリが再開すると自動評価されます。手動の評価ボタンはありません。", "tip": "履歴で評価とHP・ストリークの変化を確認しましょう。"},
+            {"tab": "status", "targets": ["#oracle-quote-text", "#btn-claim-oracle"], "icon": "🔮", "title": "オラクルと今日の言葉", "desc": "オラクルはアプリの言語で表示されます。言葉を切り替え、毎日の報酬を受け取りましょう。", "tip": "自作の言葉は入力した言語のまま表示されます。"},
+            {"tab": "dungeon", "targets": ["#dungeon-timer-text", "#tab-content-dungeon"], "icon": "⏳", "title": "ダンジョン集中モード", "desc": "集中タイマーで勉強や作業。PDFリーダーとアニメLo-Fiも利用できます。", "tip": "途中終了するとHPが減る場合があります。"},
+            {"tab": "dungeon", "targets": ["#dungeon-subtab-flashcard"], "icon": "🃏", "title": "フラッシュカードと復習", "desc": "選択式フラッシュカードと間隔反復。ダンジョンでデッキを作成し、復習できます。", "tip": "自由練習では予定外のカードも復習できます。"},
+            {"tab": "status", "targets": ["#v6-journal-entry"], "icon": "📓", "title": "日記と履歴", "desc": "日記に気分や振り返りを記録。履歴で活動と日次評価を確認できます。", "tip": "日記は任意ですが、成長の振り返りに役立ちます。"},
+            {"tab": "status", "targets": ["#v6-library-entry"], "icon": "📚", "title": "ナレッジライブラリ", "desc": "ライブラリで学習資料を読み、メモを残しましょう。", "tip": "資料の言語は翻訳の有無によります。"},
+            {"tab": "shop", "targets": ["#shop-items-container"], "icon": "🛒", "title": "システムショップ", "desc": "ゴールドでHP回復アイテムやレリックなどを交換できます。", "tip": "購入前にゴールド残高を確認しましょう。"},
+            {"tab": "treasury", "targets": ["#tr-net-balance"], "icon": "💰", "title": "家計簿", "desc": "収入・支出・残高とグラフを管理します。", "tip": "取引に応じてボーナスが付く場合があります。"},
+            {"tab": "status", "targets": ["#btn-font-settings"], "icon": "💾", "title": "設定：セーブとロード", "desc": "設定からスロットへの保存・読込、JSONバックアップの書き出しができます。", "tip": "アプリデータ削除でスロットが消えるため、外部バックアップも保存しましょう。"},
+            {"tab": "status", "targets": ["#rem-time-pagi", "#v6-auto-day-description"], "icon": "🔔", "title": "リマインダーと通知", "desc": "STATUSで通知時刻を設定。画面ロック中の通知はAndroidの権限や省電力設定に左右されます。", "tip": "通知が遅れる場合は権限と省電力設定を確認してください。"},
+        ],
     };
 
     function detectActiveLang() {
@@ -8243,11 +8294,12 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
             ja: { skip: 'スキップ', prev: '← 戻る', next: '次へ →', done: '完了 ✓' }
         }[lang] || { skip: 'Lewati', prev: '← Kembali', next: 'Lanjut →', done: 'Selesai ✓' };
 
+        box.querySelector('#sft-tour-heading').textContent = ({id:'💠 TUR INTERAKTIF SYSTEM',en:'💠 SYSTEM INTERACTIVE TOUR',ja:'💠 システムガイド'}[lang] || '💠 TUR INTERAKTIF SYSTEM');
         box.querySelector('#sft-counter').textContent = (tutStep + 1) + ' / ' + steps.length;
         box.querySelector('#sft-icon').textContent = item.icon;
         box.querySelector('#sft-title').textContent = item.title;
-        box.querySelector('#sft-desc').textContent = item.desc;
-        box.querySelector('#sft-tip').textContent = item.tip;
+        box.querySelector('#sft-desc').textContent = item.desc.replaceAll('{threshold}', String(typeof getStreakThresholdPct === 'function' ? getStreakThresholdPct() : 80));
+        box.querySelector('#sft-tip').textContent = item.tip.replaceAll('{threshold}', String(typeof getStreakThresholdPct === 'function' ? getStreakThresholdPct() : 80));
 
         box.querySelector('#sft-skip').textContent = uiText.skip;
         const prevBtn = box.querySelector('#sft-prev');
@@ -8298,7 +8350,7 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
                         <div style="display:flex;align-items:center;gap:8px;">
                             <span id="sft-icon" style="font-size:1.45rem;"></span>
                             <div>
-                                <div style="font-size:9px;letter-spacing:0.15em;color:#22d3ee;font-weight:700;">💠 SYSTEM INTERACTIVE TOUR</div>
+                                <div style="font-size:9px;letter-spacing:0.15em;color:#22d3ee;font-weight:700;"><span id="sft-tour-heading">💠 SYSTEM INTERACTIVE TOUR</span></div>
                                 <h3 id="sft-title" style="font-size:14px;font-weight:800;color:#fff;margin:1px 0 0 0;"></h3>
                             </div>
                         </div>
