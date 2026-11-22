@@ -1170,3 +1170,82 @@ header>div:first-child{flex-shrink:0}
 .v7cj-panel { margin-top: 12px; }
 .v7cj-tabs { margin-bottom: 0; }
 .v7cj-tabs button { touch-action: manipulation; }
+
+
+/* SYSTEM RPG Beta 18: HUD-only layout; currency and Streak logic unchanged. */
+header.hunter-hud {
+    display: grid;
+    grid-template-columns: minmax(73px, 1fr) auto auto;
+    align-items: center;
+    column-gap: 6px;
+    min-width: 0;
+    box-sizing: border-box;
+}
+header.hunter-hud .hunter-hud-brand {
+    min-width: 0;
+    grid-column: 1;
+    white-space: nowrap;
+}
+header.hunter-hud .hunter-hud-stats {
+    grid-column: 2;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 5px;
+}
+header.hunter-hud .hunter-hud-controls {
+    grid-column: 3;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+}
+header.hunter-hud .pill-gold,
+header.hunter-hud .pill-streak {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    min-width: 0;
+    white-space: nowrap;
+    padding: 0.25rem 0.42rem;
+    gap: 3px;
+}
+header.hunter-hud #header-gold,
+header.hunter-hud #header-streak,
+header.hunter-hud #header-shields {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+header.hunter-hud #btn-audio-toggle,
+header.hunter-hud #btn-font-settings {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    min-height: 32px;
+    max-width: none;
+    flex-shrink: 0;
+    padding: 0.25rem !important;
+}
+@media (max-width: 420px) {
+    header.hunter-hud {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-rows: auto auto;
+        grid-template-areas: "brand controls" "stats stats";
+        row-gap: 7px;
+        padding: 0.55rem 0.7rem;
+    }
+    header.hunter-hud .hunter-hud-brand { grid-area: brand; }
+    header.hunter-hud .hunter-hud-controls { grid-area: controls; justify-self: end; }
+    header.hunter-hud .hunter-hud-stats { grid-area: stats; justify-self: start; gap: 7px; }
+}
+@media (max-width: 340px) {
+    header.hunter-hud { padding-inline: 0.45rem; }
+    header.hunter-hud .hunter-hud-stats { gap: 4px; }
+    header.hunter-hud .pill-gold,
+    header.hunter-hud .pill-streak { padding-inline: 0.35rem; }
+}

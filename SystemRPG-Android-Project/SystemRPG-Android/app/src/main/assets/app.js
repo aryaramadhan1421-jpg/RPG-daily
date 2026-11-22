@@ -2294,7 +2294,25 @@ function renderStatus() {
     const rank = getPlayerRank(p.level);
     const mult = getStreakMultiplier();
 
-    document.getElementById('header-gold').textContent = p.gold;
+    const hudGoldEl = document.getElementById('header-gold');
+    if (hudGoldEl) {
+        const exactGold = Math.max(0, Math.floor(Number(p.gold) || 0));
+        const compactGold = (amount) => {
+            if (amount < 10000) return String(amount);
+            const units = [[1e12, 'T'], [1e9, 'B'], [1e6, 'M'], [1e3, 'K']];
+            const [divisor, symbol] = units.find(([value]) => amount >= value);
+            const whole = amount / divisor;
+            // Always round DOWN: never overstate the player's real Gold balance.
+            const roundedDown = whole < 10 ? Math.floor(whole * 10) / 10 : Math.floor(whole);
+            return String(roundedDown) + symbol;
+        };
+        hudGoldEl.textContent = compactGold(exactGold);
+        const hudGoldPill = hudGoldEl.closest('.pill-gold');
+        if (hudGoldPill) {
+            hudGoldPill.title = 'Gold: ' + exactGold.toLocaleString();
+            hudGoldPill.setAttribute('aria-label', 'Gold: ' + exactGold.toLocaleString());
+        }
+    }
     document.getElementById('header-streak').textContent = p.streak;
     const shieldWrap = document.getElementById('header-shield-wrap');
     const shieldCountEl = document.getElementById('header-shields');
