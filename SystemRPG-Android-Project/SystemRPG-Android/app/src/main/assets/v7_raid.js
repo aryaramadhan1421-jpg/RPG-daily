@@ -559,21 +559,51 @@ function renderAppearance() {
       <button type="button" class="v7-raid-btn" onclick="V7Raid.collapseAppearance()">${esc(t('Tutup Koleksi','Close Collection','コレクションを閉じる'))}</button></div>`;
 }
     function lore(b,i) {
-        const fragment=i===0 ? [
-            `Pertemuan pertama: ${b.name} muncul dari ${b.motif.id}.`,
-            `First encounter: ${b.name} emerges from ${b.motif.en}.`,
-            `初遭遇：${b.name}は${b.motif.ja}から姿を現した。`] : i===1 ? [
-            `Kemenangan pertama membuka jejak: ${b.epithet}. Tidak semua musuh dilahirkan jahat.`,
-            `First victory reveals a trace of ${b.epithet}. Not every enemy was born evil.`,
-            `初勝利。${b.epithet}の秘密が明らかになる。`] : i===2 ? [
-            `Tiga kemenangan: ${b.name} menjaga rahasia yang lebih tua daripada Dungeon.`,
-            `Three victories: ${b.name} guards a secret older than the Dungeon.`,
-            `三回の勝利。${b.name}は古い秘密を守っている。`] : [
-            `Lima kemenangan: kisah ${b.name} menjadi bagian dari misteri asal-usul SYSTEM.`,
-            `Five victories: ${b.name}'s story becomes part of the mystery behind the SYSTEM.`,
-            `五回の勝利。${b.name}の物語はSYSTEMの謎へと続く。`];
-        return t(...fragment);
+        const lang = typeof v6UiLang === 'function' ? v6UiLang() : 'id';
+        const chapters = window.V7Lore && window.V7Lore.chapters && window.V7Lore.chapters[b.id];
+        if (chapters && chapters[i]) return chapters[i][lang === 'en' ? 1 : lang === 'ja' ? 2 : 0];
+        return t('Fragmen cerita belum tersedia.','Story chapter is unavailable.','物語を読み込めません。');
     }
+    let openStoryBossId = null;
+    function closeBossStory() {
+        openStoryBossId = null;
+        const overlay=document.getElementById('v7-story-overlay');
+        if(overlay)overlay.remove();
+    }
+    function openBossStory(id) {
+        const b=ROSTER.find(x=>x.id===id);
+        if(!b || typeof document==='undefined')return false;
+        const v=state(),progress=bossProgress(b,v);
+        if(!progress.met)return false; // Never reveal an undiscovered Boss.
+        openStoryBossId=id;
+        const old=document.getElementById('v7-story-overlay');
+        if(old)old.remove();
+        const overlay=document.createElement('div');
+        overlay.id='v7-story-overlay';overlay.className='v7-story-overlay';
+        overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
+        overlay.setAttribute('aria-label',t('Kisah Boss','Boss Story','ボスの物語'));
+        const titles=[t('Pertemuan Pertama','First Encounter','初遭遇'),t('Sumpah yang Terungkap','First Victory','最初の勝利'),t('Ingatan yang Terkubur','Three Victories','三度の勝利'),t('Kebenaran Terakhir','Five Victories','五度の勝利')];
+        const open=[true,progress.victories>=1,progress.victories>=3,progress.victories>=5];
+        const chapters=titles.map((title,i)=>`<section class="v7-story-chapter ${open[i]?'':'v7-story-locked'}">
+          <div class="v7-story-chapter-title"><span>${i+1}. ${esc(title)}</span><span>${open[i]?'📖':'🔒'}</span></div>
+          ${open[i]?`<p>${esc(lore(b,i))}</p>`:`<p>${esc(t('Fragmen ini terbuka setelah','Unlock after','解放条件：'))} ${i===1?'1':i===2?'3':'5'} ${esc(t('kemenangan melawan Boss ini.','victories against this Boss.','回の勝利。'))}</p>`}
+          </section>`).join('');
+        overlay.innerHTML=`<div class="v7-story-reader" role="document">
+          <header class="v7-story-reader-head"><div><small>${esc(t('ABYSS CODEX · ARSIP KISAH','ABYSS CODEX · STORY ARCHIVE','深淵の図鑑 · 物語の記録'))}</small>
+            <h3>${esc(b.name)}</h3><span>${esc(b.epithet)}</span></div>
+            <button type="button" class="v7-story-close" aria-label="${esc(t('Tutup kisah','Close story','物語を閉じる'))}" onclick="V7Raid.closeBossStory()">✕</button></header>
+          <div class="v7-story-scroll"><img src="bosses/${esc(b.id)}.webp" alt="${esc(b.name)}" class="v7-story-cover" loading="lazy">
+          <p class="v7-story-intro">${esc(t('Kisah yang sudah terbuka dapat dibaca lagi kapan pun. Melewati intro tidak menghapusnya.','Unlocked chapters can be reread at any time. Skipping the intro never removes them.','解放した物語はいつでも読み返せます。登場演出をスキップしても消えません。'))}</p>
+          ${chapters}</div>
+          <footer><button type="button" class="v7-raid-btn" onclick="V7Raid.closeBossStory()">${esc(t('Tutup Buku','Close Book','本を閉じる'))}</button></footer>
+          </div>`;
+        document.body.appendChild(overlay);
+        overlay.querySelector('.v7-story-close')?.focus();
+        return true;
+    }
+    if (typeof document!=='undefined' && typeof document.addEventListener==='function') document.addEventListener('keydown',event=>{
+        if(event.key==='Escape' && openStoryBossId){closeBossStory();}
+    });
     function bossProgress(b,v) {
         const history=Object.values(v.archive).filter(r=>r&&r.bossId===b.id);
         const victories=history.filter(r=>r.won).length;
@@ -590,17 +620,18 @@ function renderAppearance() {
         const attacks=Object.keys(w.hits||{}).length;
         const introduction = !v.seenBosses.includes(b.id) ?
             `<div class="v7-raid-panel v7-intro"><div class="v7-muted">${esc(t('PERTEMUAN PERTAMA','FIRST ENCOUNTER','初遭遇'))} · ${esc(b.epithet)}</div>
-             <h3>⚔️ ${esc(b.name)}</h3><p>${esc(lore(b,0))}</p>
-             ${button(t('Lewati / Lanjutkan','Skip / Continue','スキップ'), 'V7Raid.dismissEncounter()')}</div>` : '';
+             <h3>⚔️ ${esc(b.name)}</h3><p>${esc(t('Sebuah kisah baru terbuka di Abyss Codex. Baca sekarang atau lanjutkan pertarungan; ceritanya tidak akan hilang.','A new story has unlocked in the Abyss Codex. Read it now or continue; it will remain available.','深淵の図鑑に新しい物語が解放されました。今読んでも、後で読んでも消えません。'))}</p>
+             <div class="v7-button-row">${button(t('📖 Baca Kisah','📖 Read Story','📖 物語を読む'), `V7Raid.openBossStory('${b.id}')`)}
+             ${button(t('Lewati Intro','Skip Intro','登場演出をスキップ'), 'V7Raid.dismissEncounter()')}</div></div>` : '';
         return introduction + `<div class="v7-boss-card ${normal?'v7-enraged':''}">
             <div class="v7-muted">${esc(w.week)} · ${esc(w.mode==='challenge'?t('CHALLENGE','CHALLENGE','チャレンジ'):t('NORMAL','NORMAL','通常'))} · ${esc(t('Boss dikunci saat minggu dimulai','Boss locked at week start','週の開始時に固定'))}</div>
             <div class="v7-battle-arena">
-              <div class="v7-arena-title"><strong>🐉 ${esc(b.name)}</strong><small>${esc(b.epithet)}</small></div>
+              <div class="v7-arena-title"><strong>🐉 ${esc(b.name)}</strong><small>${esc(b.epithet)}</small><button type="button" class="v7-boss-story-link" onclick="V7Raid.openBossStory('${b.id}')">📖 ${esc(t('Baca Lore','Read Lore','物語を読む'))}</button></div>
               <div class="v7-replay-stage" aria-label="${esc(t('Arena pertarungan Weekly Boss','Weekly Boss battle arena','週間ボスの戦闘アリーナ'))}">
                 <div class="v7-replay-hunter" id="v7-hunter-silhouette" aria-label="${esc(t('Hunter dengan satu Shadow Sword','Hunter with one Shadow Sword','シャドウソードを一本持つハンター'))}">
-                  <svg viewBox="0 0 92 120" aria-hidden="true"><circle cx="42" cy="27" r="13" fill="currentColor"/><path d="M27 48L60 48 70 76 55 91 22 82zM32 84L21 113 35 114 46 94 59 115 72 113 58 80" fill="currentColor"/><path class="v7-sword-blade" d="M59 56L88 11 82 4 50 52z" fill="#67e8f9"/><path d="M51 48l15 16" stroke="currentColor" stroke-width="6"/></svg>
+                  <svg viewBox="0 0 92 120" aria-hidden="true"><defs><linearGradient id="v7-hunter-armor" x1="0" x2="1"><stop stop-color="#111f35"/><stop offset=".48" stop-color="#2b3c56"/><stop offset="1" stop-color="#050a15"/></linearGradient><linearGradient id="v7-hunter-cloak" x1="0" x2="1"><stop stop-color="#16223a"/><stop offset="1" stop-color="#030712"/></linearGradient></defs><path d="M25 39Q16 52 12 88L3 117 34 105 50 108 82 120 73 70 63 40Z" fill="url(#v7-hunter-cloak)" stroke="#43536d" stroke-width="1.2"/><path d="M23 21Q23 2 43 4Q59 4 63 23L59 40 29 39Z" fill="#080d1b" stroke="#536680" stroke-width="1.5"/><path d="M34 26l22 0-6 7-11 0z" fill="#2b3b56"/><path d="M35 27l5 1-5 2zm15 1 5-1-1 3z" fill="#67e8f9" opacity=".8"/><path d="M26 41 58 39 66 72 54 83 25 80 20 65Z" fill="url(#v7-hunter-armor)" stroke="#5a7393" stroke-width="1.2"/><path d="M20 44l-8 12 17 4 9-17zm43 0 13 13-18 5-7-20z" fill="#1b2a45" stroke="#728da5" stroke-width="1"/><path d="M30 81 17 114 32 115 43 91 57 115 72 115 60 80Z" fill="#091226" stroke="#536a89" stroke-width="1"/><path d="M30 51l29 15M26 70l31 0" stroke="#67e8f9" stroke-opacity=".45" stroke-width="1.2"/><path class="v7-sword-blade" d="M61 57 89 6 84 1 50 52Z" fill="#67e8f9"/><path d="M49 50 65 65" stroke="#2a3550" stroke-width="6"/><path d="M46 47 67 68" stroke="#b5c9db" stroke-width="1.5"/></svg>
                 </div>
-                <div class="v7-replay-boss"><img src="bosses/${esc(b.id)}.webp" alt="${esc(b.name)}" loading="lazy"></div>
+                <div class="v7-boss-energy-field" aria-hidden="true"></div><div class="v7-replay-boss"><img src="bosses/${esc(b.id)}.webp" alt="${esc(b.name)}" loading="lazy"></div>
                 <div class="v7-replay-slash slash-one"></div><div class="v7-replay-slash slash-two"></div><div class="v7-replay-slash slash-three"></div>
                 <div class="v7-replay-impact" aria-hidden="true">✦</div>
                 <div class="v7-damage-float" id="v7-damage-float" aria-live="off"></div>
@@ -643,7 +674,7 @@ function renderAppearance() {
             const p=bossProgress(b,v),u=p.met;
             const locks=[u,p.victories>=1,p.victories>=3,p.victories>=5];
             return `<details class="v7-codex-row"><summary>${u?'📖':'🔒'} ${esc(u?b.name:'???')} <small>${u?`· ${p.victories} ${esc(t('kemenangan','wins','勝'))}`:'· '+esc(t('Belum ditemukan','Undiscovered','未発見'))}</small></summary>
-            ${u?`<p class="v7-muted">${esc(b.epithet)}</p><ol>${locks.map((yes,i)=>`<li>${yes?esc(lore(b,i)):'🔒 '+esc(t(`Fragmen ${i+1} terkunci`,`Fragment ${i+1} locked`,`断片 ${i+1} 未解放`))}</li>`).join('')}</ol>`:esc(t('Temui Boss ini dalam Weekly Raid untuk membuka Lore.','Encounter this boss to discover its lore.','ボスとの遭遇で解放。'))}</details>`;
+            ${u?`<p class="v7-muted">${esc(b.epithet)}</p><p class="v7-muted">📖 ${locks.filter(Boolean).length}/4 ${esc(t('fragmen terbuka','chapters unlocked','解放済みの断片'))}</p><button type="button" class="v7-raid-btn v7-read-story-btn" onclick="V7Raid.openBossStory('${b.id}')">${esc(t('📖 Baca Kisah Lengkap','📖 Read Story','📖 物語を読む'))}</button>`:esc(t('Temui Boss ini dalam Weekly Raid untuk membuka Lore.','Encounter this boss to discover its lore.','ボスとの遭遇で解放。'))}</details>`;
         }).join('');
         return `<div class="v7-raid-panel"><h3>📜 ${esc(t('KODEKS ABYSS','ABYSS CODEX','深淵の図鑑'))}</h3>${rows}</div>`;
     }
@@ -760,6 +791,7 @@ function renderExchange() {
           ${renderArchive()}${renderCodex()}`;
         renderShopExchange();
         applyCosmetics();
+        if(openStoryBossId)openBossStory(openStoryBossId);
     }
     function dismissEncounter() {
         const v=state(),id=v.active&&v.active.bossId;
@@ -768,7 +800,7 @@ function renderExchange() {
         if(saveState()===false){v.seenBosses.pop();return false;}
         render();return true;
     }
-    window.V7Raid={previewCosmetic,closeCosmeticPreview,state,advance,recordQuest,prepareSave,claim,setMode,unlock,equip,unequip,openAppearance,collapseAppearance,renderAppearance,syncStaticLabels,applyCosmetics,syncRankFrames,replay,replayVisual,skipBattle,cancelBattle,dismissEncounter,render,renderShopExchange,weekKey,
+    window.V7Raid={openBossStory,closeBossStory,previewCosmetic,closeCosmeticPreview,state,advance,recordQuest,prepareSave,claim,setMode,unlock,equip,unequip,openAppearance,collapseAppearance,renderAppearance,syncStaticLabels,applyCosmetics,syncRankFrames,replay,replayVisual,skipBattle,cancelBattle,dismissEncounter,render,renderShopExchange,weekKey,
         roster:ROSTER,exchange:EXCHANGE,rankFrames:RANK_FRAMES};
     // Run after the V6 boot sequence, not before its gameState initialization.
     const didChange=advance(keyOf(new Date()));

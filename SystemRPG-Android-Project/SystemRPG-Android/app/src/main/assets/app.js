@@ -928,11 +928,17 @@ function parseDateKey(dateStr) {
     return new Date(y, m - 1, d);
 }
 
+function historyDateLocale() {
+    const lang = typeof v6UiLang === 'function' ? v6UiLang() :
+        (typeof gameState !== 'undefined' && gameState.language) || 'id';
+    return lang === 'ja' ? 'ja-JP' : lang === 'en' ? 'en-US' : 'id-ID';
+}
 function formatReadableDate(dateStr) {
+    // Format from a local date, not a UTC parse that can shift the day in Jakarta.
     const d = parseDateKey(dateStr);
-    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-    return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    return new Intl.DateTimeFormat(historyDateLocale(), {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    }).format(d);
 }
 
 function getCurrentGameDateKey() {
@@ -2525,7 +2531,7 @@ function renderHistory() {
 
     heatmapEl.innerHTML = '';
     const baseDate = parseDateKey(activeDateStr);
-    const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    const dayFmt = new Intl.DateTimeFormat(historyDateLocale(), {weekday: 'short'});
 
     for (let i = 13; i >= 0; i--) {
         const d = new Date(baseDate);
@@ -2549,9 +2555,10 @@ function renderHistory() {
         cell.type = 'button';
         cell.onclick = () => selectHistoryDate(key);
         cell.style.cssText = `border-radius: 0.5rem; padding: 6px 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; ${cellBg} ${ringStyle}`;
-        cell.title = `${formatReadableDate(key)}: ${count} misi selesai`;
+        const missionsText = typeof v6Text === 'function' ? v6Text('misi selesai', 'missions completed', 'クエスト完了') : 'misi selesai';
+        cell.title = `${formatReadableDate(key)}: ${count} ${missionsText}`;
         cell.innerHTML = `
-            <span class="font-display" style="font-size: 9px; text-transform: uppercase; opacity: 0.85;">${dayNames[d.getDay()]}</span>
+            <span class="font-display" style="font-size: 9px; text-transform: uppercase; opacity: 0.85;">${dayFmt.format(d)}</span>
             <span class="font-display" style="font-size: 0.75rem; font-weight: 700; line-height: 1.2;">${d.getDate()}</span>
             <span style="font-size: 9px; font-weight: 700; margin-top: 2px;">${count > 0 ? count + 'x' : '-'}</span>
         `;

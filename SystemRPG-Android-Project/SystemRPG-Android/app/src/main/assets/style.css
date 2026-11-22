@@ -1076,3 +1076,34 @@ header>div:first-child{flex-shrink:0}
 @keyframes v7HunterAuraPulse{from{opacity:.46;transform:scale(.98)}to{opacity:.9;transform:scale(1.07)}}
 .v7-battle-arena .v7-replay-boss img{object-fit:cover;object-position:center 25%;border-radius:10px;mask-image:linear-gradient(to bottom,#000 78%,transparent 100%)}
 @media(prefers-reduced-motion:reduce){.v7-aura-wave,.v7-aura-particle,.v7-replay-hunter.v7-aura-equipped:before,.v7-replay-hunter.v7-aura-equipped:after{animation:none!important}}
+
+/* SYSTEM RPG Beta 13: Codex Story Reader, visual cohesion, lightweight Boss presence. */
+.v7-story-overlay{position:fixed;inset:0;z-index:110000;background:rgba(2,5,18,.92);backdrop-filter:blur(8px);padding:clamp(7px,2vw,18px);display:grid;place-items:center}
+.v7-story-reader{width:min(100%,560px);height:min(94dvh,820px);border:1px solid rgba(147,197,253,.48);border-radius:16px;background:linear-gradient(165deg,#111b33,#070b18);box-shadow:0 24px 72px rgba(0,0,0,.78);display:flex;flex-direction:column;overflow:hidden;color:#e2e8f0}
+.v7-story-reader-head{flex:none;display:flex;justify-content:space-between;align-items:start;padding:18px 18px 13px;border-bottom:1px solid rgba(147,197,253,.2)}
+.v7-story-reader-head small{font-size:9px;letter-spacing:.13em;color:#93c5fd}.v7-story-reader-head h3{font-size:19px;font-weight:900;color:#f5f3ff;margin:5px 0 3px}.v7-story-reader-head span{font-size:11px;color:#a5b4fc}
+.v7-story-close{background:#1e293b;color:#e2e8f0;border:1px solid #64748b;border-radius:50%;width:32px;height:32px;flex:none;cursor:pointer}
+.v7-story-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 18px 15px;scrollbar-color:#64748b #111827}
+.v7-story-cover{display:block;width:100%;height:180px;object-fit:cover;object-position:center 32%;border-radius:12px;margin:16px 0 11px;box-shadow:0 0 16px rgba(139,92,246,.25)}
+.v7-story-intro{font-size:11px;color:#94a3b8;margin-bottom:12px;line-height:1.6}
+.v7-story-chapter{padding:14px 13px;margin:10px 0;border:1px solid rgba(99,102,241,.3);border-radius:12px;background:linear-gradient(135deg,rgba(45,29,78,.29),rgba(11,22,42,.65))}
+.v7-story-chapter-title{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#ddd6fe;font-weight:800;gap:10px;margin-bottom:8px}
+.v7-story-chapter p{font-size:12px;line-height:1.85;color:#d9e1ec;white-space:normal;margin:0}
+.v7-story-locked{opacity:.7;background:#0b1120}.v7-story-locked p{color:#94a3b8;font-size:11px}
+.v7-story-reader footer{display:flex;justify-content:flex-end;padding:10px 18px 15px;border-top:1px solid rgba(147,197,253,.2)}
+.v7-boss-story-link{align-self:start;padding:5px 9px;font-size:11px;color:#a5f3fc;border:1px solid rgba(34,211,238,.4);border-radius:7px;background:rgba(5,31,48,.7);cursor:pointer;font-weight:700}
+.v7-read-story-btn{margin-top:5px;font-size:11px}.v7-intro .v7-button-row{margin-top:9px;flex-wrap:wrap}
+/* Still images remain intact; idle and impact effects are entirely presentation-only. */
+.v7-battle-arena .v7-replay-stage{background:radial-gradient(ellipse at 73% 42%,rgba(75,30,133,.36),transparent 65%),linear-gradient(160deg,#080d23,#030713)}
+.v7-boss-energy-field{position:absolute;z-index:1;right:3%;top:11%;width:62%;height:70%;border-radius:50%;border:1px solid rgba(167,139,250,.35);box-shadow:0 0 35px rgba(124,58,237,.2),inset 0 0 32px rgba(124,58,237,.12);background:radial-gradient(ellipse,rgba(168,85,247,.17),transparent 67%);animation:v7BossEnergy 5.5s ease-in-out infinite alternate;pointer-events:none}
+.v7-battle-arena .v7-replay-boss{z-index:2}.v7-battle-arena .v7-replay-boss img{animation:v7BossHover 4.2s ease-in-out infinite alternate;filter:drop-shadow(0 0 14px rgba(129,140,248,.28))}
+.v7-battle-arena .v7-replay-boss:after{content:'✧';position:absolute;right:1%;top:5%;font-size:24px;color:#a78bfa;opacity:.6;text-shadow:0 0 14px #8b5cf6;animation:v7BossSpark 3.5s ease-in-out infinite alternate;pointer-events:none}
+.v7-enraged .v7-boss-energy-field{border-color:rgba(251,113,133,.58);box-shadow:0 0 35px rgba(225,29,72,.23),inset 0 0 25px rgba(225,29,72,.18);background:radial-gradient(ellipse,rgba(225,29,72,.17),transparent 68%)}
+.v7-replay-active .v7-boss-energy-field{animation:v7BossImpact 1.5s ease-in-out both}
+.v7-replay-active .v7-replay-boss img{animation:none!important}
+@keyframes v7BossEnergy{from{opacity:.4;transform:scale(.91) rotate(-4deg)}to{opacity:.84;transform:scale(1.04) rotate(4deg)}}
+@keyframes v7BossHover{from{transform:translateY(4px) scale(.99)}to{transform:translateY(-6px) scale(1.015)}}
+@keyframes v7BossSpark{from{opacity:.12;transform:translate(2px,6px)}to{opacity:.85;transform:translate(-7px,-12px)}}
+@keyframes v7BossImpact{0%,27%,91%,100%{filter:brightness(1);opacity:.5}34%,55%,76%{filter:brightness(2);opacity:.95}}
+.v7-replay-hunter svg{filter:drop-shadow(0 1px 4px rgba(34,211,238,.36));overflow:visible}
+@media(prefers-reduced-motion:reduce){.v7-boss-energy-field,.v7-battle-arena .v7-replay-boss img,.v7-battle-arena .v7-replay-boss:after{animation:none!important}}
