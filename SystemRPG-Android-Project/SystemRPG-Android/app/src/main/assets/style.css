@@ -1249,3 +1249,29 @@ header.hunter-hud #btn-font-settings {
     header.hunter-hud .pill-gold,
     header.hunter-hud .pill-streak { padding-inline: 0.35rem; }
 }
+
+/* Beta 19: tutorial stays anchored at the bottom; add temporary scroll space
+   so even the final Knowledge Library control can move above the guide. */
+body.sysrpg-tutorial-active main::after {
+    content: "";
+    display: block;
+    height: calc(min(47dvh, 310px) + 80px);
+    pointer-events: none;
+}
+#sysrpg-force-tutorial { align-items: flex-end !important; }
+#sysrpg-force-tutorial > div {
+    max-height: min(47dvh, 310px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    margin-bottom: max(0.35rem, env(safe-area-inset-bottom));
+}
+/* Do not crop the Boss portrait inside the Abyss Codex story reader. */
+.v7-story-cover {
+    height: clamp(205px, 37dvh, 330px);
+    max-width: 100%;
+    object-fit: contain;
+    object-position: center center;
+    background: radial-gradient(ellipse, rgba(57,45,98,.35), #080f21);
+    border: 1px solid rgba(148,163,184,.25);
+    padding: 3px;
+}

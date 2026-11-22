@@ -4991,9 +4991,9 @@ function confirmResetData() {
 // ==========================================
 // 9. NAVIGATION & VISUAL HELPERS
 // ==========================================
-function switchTab(tabName) {
+function switchTab(tabName, silentTutorial = false) {
     if(window.V7Raid && window.V7Raid.cancelBattle)window.V7Raid.cancelBattle();
-    SoundFX.playClick();
+    if (!silentTutorial) SoundFX.playClick();
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
     document.getElementById(`tab-${tabName}`).classList.remove('hidden');
 
@@ -7201,64 +7201,8 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
     // ==========================================
 // TUTORIAL & GUIDE BUTTON CLICK SOUND EFFECT
 // ==========================================
-(function initTutorialClickSFX() {
-    function playTutorialUISound(type = 'tap') {
-        try {
-            if (typeof SoundFX !== 'undefined' && typeof SoundFX.play === 'function') {
-                SoundFX.play(type);
-                return;
-            }
-            const AudioCtx = window.AudioContext || window.webkitAudioContext;
-            if (!AudioCtx) return;
-            if (!window._tutAudioCtx) window._tutAudioCtx = new AudioCtx();
-            const ctx = window._tutAudioCtx;
-            if (ctx.state === 'suspended') ctx.resume();
-
-            const now = ctx.currentTime;
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-
-            if (type === 'complete') {
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(523.25, now);
-                osc.frequency.setValueAtTime(783.99, now + 0.07);
-                gain.gain.setValueAtTime(0.14, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.23);
-            } else {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(660, now);
-                osc.frequency.exponentialRampToValueAtTime(980, now + 0.055);
-                gain.gain.setValueAtTime(0.20, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.085);
-            }
-        } catch (e) {}
-    }
-
-    document.addEventListener('click', (e) => {
-        const btn = e.target.closest('button, [role="button"]');
-        if (!btn) return;
-
-        const isTutorialElement =
-            btn.closest('[id*="tutorial" i], [class*="tutorial" i], [id*="guide" i], [class*="guide" i], [id*="onboarding" i]') ||
-            (btn.id && /tutorial|guide|onboarding/i.test(btn.id)) ||
-            (btn.getAttribute('onclick') && /tutorial|guide/i.test(btn.getAttribute('onclick')));
-
-        if (!isTutorialElement) return;
-
-        const label = (btn.textContent || '').trim().toLowerCase();
-        const isFinishBtn = /selesai|finish|mulai|start|tutup|close|mengerti|got it|完了|閉じる/.test(label);
-
-        playTutorialUISound(isFinishBtn ? 'complete' : 'tap');
-    }, true);
-})();
+// Beta 19: tutorial navigation uses the existing single UI click sound.
+// The duplicate delegated click handler was intentionally removed.
 
 function finishFingerprintUnlock() {
     const pad = document.getElementById('btn-fingerprint-auth');
@@ -8350,37 +8294,12 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
     }
 
     function playTutorialSound(type) {
+        // One click per tutorial action; respect the existing audio mute switch.
         try {
-            if (typeof SoundFX !== 'undefined' && SoundFX.muted) return;
-            const AudioCtx = window.AudioContext || window.webkitAudioContext;
-            if (!AudioCtx) return;
-            if (!window._tutAudioCtx) window._tutAudioCtx = new AudioCtx();
-            const ctx = window._tutAudioCtx;
-            if (ctx.state === 'suspended') ctx.resume();
-            const now = ctx.currentTime;
-
-            const tones = type === 'finish'
-                ? [523.25, 659.25, 783.99, 1046.50]
-                : type === 'open'
-                ? [440, 587.33]
-                : type === 'back'
-                ? [420, 340]
-                : [520, 660];
-
-            tones.forEach((freq, i) => {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                const start = now + i * 0.055;
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, start);
-                gain.gain.setValueAtTime(0.08, start);
-                gain.gain.exponentialRampToValueAtTime(0.001, start + 0.13);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(start);
-                osc.stop(start + 0.14);
-            });
-        } catch (e) {}
+            if (typeof SoundFX !== 'undefined' && typeof SoundFX.playClick === 'function') {
+                SoundFX.playClick();
+            }
+        } catch (_) {}
     }
 
     function clearTutorialSpotlight() {
@@ -8394,57 +8313,73 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
         }
     }
 
-    function switchAndHighlightFeature(tabName, targetSelectors, dungeonSubmode) {
-        clearTutorialSpotlight();
+    let tutorialSpotlightRequest = 0;
+    function tutorialScrollTo(el) {
+        const root = document.getElementById('sysrpg-force-tutorial');
+        const card = root && root.firstElementChild;
+        if (!root || !card || !el) return;
+        // Keep the guide card anchored to the bottom throughout the tour.
+        root.style.alignItems = 'flex-end';
+        const rect = el.getBoundingClientRect();
+        const cardRect = card.getBoundingClientRect();
+        const viewTop = 64;
+        const viewBottom = Math.max(viewTop + 55, cardRect.top - 16);
+        // Large items (Quest board) are positioned by their heading, not their end.
+        const desiredY = Math.max(viewTop, viewTop + (viewBottom - viewTop) * 0.22);
+        const delta = rect.top - desiredY;
+        if (Math.abs(delta) < 10) return;
+        let scroller = el.parentElement;
+        while (scroller && scroller !== document.body && scroller !== document.documentElement) {
+            const computed = getComputedStyle(scroller);
+            if (/(auto|scroll)/.test(computed.overflowY) && scroller.scrollHeight > scroller.clientHeight + 4) break;
+            scroller = scroller.parentElement;
+        }
+        if (!scroller || scroller === document.body || scroller === document.documentElement) scroller = window;
+        const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        try { scroller.scrollBy({top:delta,behavior:reduce?'instant':'smooth'}); }
+        catch (_) { if (scroller === window) window.scrollBy(0,delta); else scroller.scrollTop += delta; }
+    }
 
+    function switchAndHighlightFeature(tabName, targetSelectors, dungeonSubmode) {
+        const request = ++tutorialSpotlightRequest;
+        clearTutorialSpotlight();
         if (tabName) {
             if (typeof switchTab === 'function') {
-                try { switchTab(tabName); } catch (e) {}
+                try { switchTab(tabName, true); } catch (_) {}
             } else {
                 const tabBtn = document.querySelector(`[data-tab="${tabName}"], #tab-${tabName}, button[onclick*="'${tabName}'"]`);
                 if (tabBtn) tabBtn.click();
             }
         }
-
-        // Library is inside Dungeon > Flashcard, never in Status.
-        // Select the real subtab before searching for a visible tutorial target.
+        // Change Dungeon submode before looking for the actual target.
         if (tabName === 'dungeon' && dungeonSubmode && typeof switchDungeonSubMode === 'function') {
-            try { switchDungeonSubMode(dungeonSubmode); } catch (_) {}
+            try { switchDungeonSubMode(dungeonSubmode, true); } catch (_) {}
         }
         setTimeout(() => {
-            if (!Array.isArray(targetSelectors)) return;
+            if (request !== tutorialSpotlightRequest || !tutorialIsOpen || !Array.isArray(targetSelectors)) return;
             for (const sel of targetSelectors) {
-                const el = document.querySelector(sel);
-                if (el && el.offsetParent !== null) {
-                    el.dataset.prevOutline = el.style.outline || '';
-                    el.dataset.prevOutlineOffset = el.style.outlineOffset || '';
-                    el.dataset.prevShadow = el.style.boxShadow || '';
-                    el.dataset.prevPos = el.style.position || '';
-                    el.dataset.prevZ = el.style.zIndex || '';
-                    el.style.outline = '2px solid #22d3ee';
-                    el.style.outlineOffset = '3px';
-                    el.style.boxShadow = '0 0 24px rgba(34, 211, 238, 0.55)';
-                    if (getComputedStyle(el).position === 'static') {
-                        el.style.position = 'relative';
-                    }
-                    el.style.zIndex = '999991';
-                    highlightedEl = el;
-                    // Use predictable scrolling; the bottom tutorial card may cover
-                    // end-of-section items such as Knowledge Library.
-                    el.scrollIntoView({ behavior: 'auto', block: 'center' });
-                    const tutorialRoot = document.getElementById('sysrpg-force-tutorial');
-                    const tutorialCard = tutorialRoot && tutorialRoot.firstElementChild;
-                    if (tutorialRoot && tutorialCard) {
-                        tutorialRoot.style.alignItems = 'flex-end';
-                        const featureBox = el.getBoundingClientRect();
-                        const cardBox = tutorialCard.getBoundingClientRect();
-                        const overlaps = featureBox.top < cardBox.bottom && featureBox.bottom > cardBox.top;
-                        if (overlaps) tutorialRoot.style.alignItems = 'flex-start';
-                    }
-                    break;
-                }
+                let el;
+                try { el = document.querySelector(sel); } catch (_) { continue; }
+                if (!el || el.offsetParent === null) continue;
+                el.dataset.prevOutline = el.style.outline || '';
+                el.dataset.prevOutlineOffset = el.style.outlineOffset || '';
+                el.dataset.prevShadow = el.style.boxShadow || '';
+                el.dataset.prevPos = el.style.position || '';
+                el.dataset.prevZ = el.style.zIndex || '';
+                el.style.outline = '2px solid #22d3ee';
+                el.style.outlineOffset = '3px';
+                el.style.boxShadow = '0 0 24px rgba(34,211,238,.55)';
+                if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+                el.style.zIndex = '999991';
+                highlightedEl = el;
+                tutorialScrollTo(el);
+                // Recheck after smooth scrolling or asynchronous tab rendering.
+                setTimeout(() => {
+                    if (request === tutorialSpotlightRequest && highlightedEl === el && tutorialIsOpen) tutorialScrollTo(el);
+                }, 440);
+                break;
             }
-        }, 80);
+        }, 135);
     }
 
     const TUT_DATA = {
@@ -8464,7 +8399,7 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
             {"tab": "dungeon", "submode": "weekly", "targets": ["#dungeon-subtab-weekly", "#v7-raid-content"], "icon": "🐉", "title": "Weekly Boss & Adaptive Raid", "desc": "Setiap Daily Quest memberi damage otomatis hanya sekali per tanggal. Potensi maksimum 100 damage per hari aktif; Normal Clear 40% dan Challenge Clear 60%.", "tip": "Buka Dungeon → Weekly Boss untuk melihat progres. Boss tidak menyerang HP Hunter."} ,
             {"tab": "dungeon", "submode": "weekly", "targets": ["#v7-visual-replay", "#v7-watch-battle"], "icon": "⚔️", "title": "Saksikan Pertarungan & Replay", "desc": "Saksikan serangan yang menunggu untuk melihat HP Boss berkurang saat tebasan. Battle Replay boleh ditonton berkali-kali tanpa damage atau hadiah tambahan.", "tip": "Centang ulang Quest yang sama tidak membuat serangan baru."} ,
             {"tab": "dungeon", "submode": "weekly", "targets": [".v7-codex-row", "#v7-raid-content"], "icon": "📖", "title": "Abyss Codex & Boss Lore", "desc": "Baca fragmen cerita Boss yang terbuka lewat pertemuan, kemenangan pertama, kemenangan ketiga, dan kelima. Kisah tetap bisa dibaca setelah melewati intro.", "tip": "Cerita dan Raid Archive tersedia di menu Weekly Boss."} ,
-            {"tab": "shop", "targets": ["#shop-items-container"], "icon": "🛒", "title": "System Shop", "desc": "Belanjakan Gold untuk Potion, Elixir, Streak Freeze, dan hadiah pribadi. Harga dasar item Survival terkunci.", "tip": "Periksa saldo Gold sebelum membeli."} ,
+            {"tab": "shop", "targets": ["#shop-list"], "icon": "🛒", "title": "System Shop", "desc": "Belanjakan Gold untuk Potion, Elixir, Streak Freeze, dan hadiah pribadi. Harga dasar item Survival terkunci.", "tip": "Periksa saldo Gold sebelum membeli."} ,
             {"tab": "shop", "targets": ["#v7-shop-exchange", "#v7-appearance-details"], "icon": "💠", "title": "Raid Cosmetics & Hunter Appearance", "desc": "Gunakan Raid Crystals untuk membeli Aura atau Portrait Frame alternatif. Frame Rank terbuka gratis saat naik Rank. Preview barang sebelum membeli, lalu atur Frame dan Aura di Shop.", "tip": "Aura dan Frame hanya tampilan, bukan peningkat damage atau atribut."} ,
             {"tab": "treasury", "targets": ["#tr-net-balance"], "icon": "💰", "title": "Treasury & Keuangan", "desc": "Catat pemasukan dan pengeluaran, pantau saldo, dan lihat ringkasan grafik.", "tip": "Transaksi bisa memberi bonus progres sesuai aturan sistem."} ,
             {"tab": "status", "targets": ["#btn-font-settings"], "icon": "💾", "title": "Settings: Save & Load Game", "desc": "Buka Settings (ikon roda gigi) untuk Save Game ke slot, Load Game dari slot, dan ekspor backup JSON ke perangkat.", "tip": "Slot di aplikasi bisa hilang jika data aplikasi dihapus; simpan juga backup eksternal."} ,
@@ -8486,7 +8421,7 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
             {"tab": "dungeon", "submode": "weekly", "targets": ["#dungeon-subtab-weekly", "#v7-raid-content"], "icon": "🐉", "title": "Weekly Boss & Adaptive Raid", "desc": "Each Daily Quest automatically deals damage only once per date. Every active day offers up to 100 damage; Normal Clear needs 40% and Challenge Clear 60%.", "tip": "Open Dungeon → Weekly Boss to view progress. The Boss never attacks Hunter HP."} ,
             {"tab": "dungeon", "submode": "weekly", "targets": ["#v7-visual-replay", "#v7-watch-battle"], "icon": "⚔️", "title": "Watch Battle & Replay", "desc": "Watch queued attacks as the visible Boss HP drops at each strike. Battle Replay can be enjoyed unlimited times without awarding extra damage or rewards.", "tip": "Rechecking the same Quest never gives a second attack."} ,
             {"tab": "dungeon", "submode": "weekly", "targets": [".v7-codex-row", "#v7-raid-content"], "icon": "📖", "title": "Abyss Codex & Boss Lore", "desc": "Read story chapters unlocked by encounters and your first, third, and fifth victories. Lore stays available even if the intro is skipped.", "tip": "The story and Raid Archive are available from Weekly Boss."} ,
-            {"tab": "shop", "targets": ["#shop-items-container"], "icon": "🛒", "title": "System Shop", "desc": "Spend Gold on Potions, Elixir, Streak Freeze, and personal rewards. Survival item base prices cannot be edited.", "tip": "Check your Gold before buying."} ,
+            {"tab": "shop", "targets": ["#shop-list"], "icon": "🛒", "title": "System Shop", "desc": "Spend Gold on Potions, Elixir, Streak Freeze, and personal rewards. Survival item base prices cannot be edited.", "tip": "Check your Gold before buying."} ,
             {"tab": "shop", "targets": ["#v7-shop-exchange", "#v7-appearance-details"], "icon": "💠", "title": "Raid Cosmetics & Hunter Appearance", "desc": "Spend Raid Crystals on Auras and optional Portrait Frames. Earn Rank Frames by ranking up. Preview before buying, then equip Frame and Aura in Shop.", "tip": "Frames and Auras have no stat or damage bonuses."} ,
             {"tab": "treasury", "targets": ["#tr-net-balance"], "icon": "💰", "title": "Treasury & Finances", "desc": "Track income, expenses, balances, and charts.", "tip": "Transactions may grant progress bonuses under system rules."} ,
             {"tab": "status", "targets": ["#btn-font-settings"], "icon": "💾", "title": "Settings: Save & Load Game", "desc": "Open Settings (gear icon) to save to slots, load slots, and export a JSON backup to your device.", "tip": "In-app slots can be lost if app data is cleared; keep an external backup too."} ,
@@ -8508,13 +8443,20 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
             {"tab": "dungeon", "submode": "weekly", "targets": ["#dungeon-subtab-weekly", "#v7-raid-content"], "icon": "🐉", "title": "ウィークリーボス", "desc": "デイリークエストの攻撃は1日1回だけ自動記録。活動日ごとに最大100ダメージ、通常クリアは40%、チャレンジは60%。", "tip": "ダンジョンの週間ボスで進捗を確認。ボスはハンターのHPを減らしません。"} ,
             {"tab": "dungeon", "submode": "weekly", "targets": ["#v7-visual-replay", "#v7-watch-battle"], "icon": "⚔️", "title": "バトルとリプレイ", "desc": "未再生の攻撃を表示すると、命中時にボスHPの表示が減少します。リプレイは何度でも視聴できますが、追加ダメージや報酬はありません。", "tip": "同じクエストの再チェックでは攻撃は増えません。"} ,
             {"tab": "dungeon", "submode": "weekly", "targets": [".v7-codex-row", "#v7-raid-content"], "icon": "📖", "title": "深淵の図鑑と物語", "desc": "遭遇、初勝利、3勝目、5勝目で物語が解放されます。イントロをスキップしても後で読み返せます。", "tip": "週刊ボスの画面から物語とレイド履歴を開けます。"} ,
-            {"tab": "shop", "targets": ["#shop-items-container"], "icon": "🛒", "title": "システムショップ", "desc": "ゴールドでポーション、エリクサー、ストリーク保護やご褒美を購入。回復アイテムの基本価格は固定です。", "tip": "購入前にゴールド残高を確認しましょう。"} ,
+            {"tab": "shop", "targets": ["#shop-list"], "icon": "🛒", "title": "システムショップ", "desc": "ゴールドでポーション、エリクサー、ストリーク保護やご褒美を購入。回復アイテムの基本価格は固定です。", "tip": "購入前にゴールド残高を確認しましょう。"} ,
             {"tab": "shop", "targets": ["#v7-shop-exchange", "#v7-appearance-details"], "icon": "💠", "title": "レイド装飾とハンターの外見", "desc": "レイドクリスタルでオーラや別のフレームを購入。ランクフレームはランクアップで入手。購入前にプレビューでき、ショップで装備できます。", "tip": "装飾品に能力値やダメージの効果はありません。"} ,
             {"tab": "treasury", "targets": ["#tr-net-balance"], "icon": "💰", "title": "家計簿", "desc": "収入・支出・残高とグラフを管理します。", "tip": "取引に応じてボーナスが付く場合があります。"} ,
             {"tab": "status", "targets": ["#btn-font-settings"], "icon": "💾", "title": "設定：セーブとロード", "desc": "設定からスロットへの保存・読込、JSONバックアップの書き出しができます。", "tip": "アプリデータ削除でスロットが消えるため、外部バックアップも保存しましょう。"} ,
             {"tab": "status", "targets": ["#rem-time-pagi", "#v6-auto-day-description"], "icon": "🔔", "title": "リマインダーと通知", "desc": "STATUSで通知時刻を設定。画面ロック中の通知はAndroidの権限や省電力設定に左右されます。", "tip": "通知が遅れる場合は権限と省電力設定を確認してください。"} ,
         ],
     };
+
+    // Beta 19: walkthrough moves through each page as a coherent section.
+    // Indexes refer to the 20 pre-existing translated steps; no steps were deleted.
+    const TUT_PAGE_ORDER = [18,5,0,1,4,9,10,19, 2,3, 6,7,8,11,12,13,14, 15,16, 17];
+    for (const lang of ['id','en','ja']) {
+        TUT_DATA[lang] = TUT_PAGE_ORDER.map(index => TUT_DATA[lang][index]);
+    }
 
     function detectActiveLang() {
         if (document.getElementById('lang-btn-ja')?.style.borderColor.includes('6, 182, 212') ||
@@ -8590,14 +8532,16 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
     }
 
     function closeTutorialTour(playDoneSound) {
+        tutorialSpotlightRequest++;
         playTutorialSound(playDoneSound ? 'finish' : 'back');
         clearTutorialSpotlight();
+        document.body.classList.remove('sysrpg-tutorial-active');
         try { localStorage.setItem(window.TUTORIAL_STORAGE_KEY, 'true'); } catch (_e) {}
         tutorialIsOpen = false;
         const box = document.getElementById('sysrpg-force-tutorial');
         if (box) box.remove();
         if (typeof switchTab === 'function') {
-            try { switchTab('status'); } catch (e) {}
+            try { switchTab('status', true); } catch (e) {}
         }
     }
 
@@ -8607,6 +8551,7 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
         if (typeof startIndex !== 'number') startIndex = 0;
         tutorialIsOpen = true;
         tutorialLaunchScheduled = true;
+        document.body.classList.add('sysrpg-tutorial-active');
         playTutorialSound('open');
 
         const fontModal = document.getElementById('font-settings-modal');
@@ -8992,9 +8937,9 @@ function applyFlashcardLanguage() {
     }
 }
 
-function switchDungeonSubMode(mode) {
+function switchDungeonSubMode(mode, silentTutorial = false) {
     if(window.V7Raid && window.V7Raid.cancelBattle)window.V7Raid.cancelBattle();
-    if (typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
+    if (!silentTutorial && typeof SoundFX !== 'undefined' && SoundFX.playClick) SoundFX.playClick();
     const focusPane = document.getElementById('dungeon-mode-focus');
     const fcPane = document.getElementById('dungeon-mode-flashcard');
     const btnFocus = document.getElementById('dungeon-subtab-focus');
