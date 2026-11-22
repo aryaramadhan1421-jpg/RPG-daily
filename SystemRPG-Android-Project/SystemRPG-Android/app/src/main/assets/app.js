@@ -6478,7 +6478,8 @@ const RPG_LOFI_LIBRARY = Object.freeze({
     'rainy-window':'rainy-window.ogg', 'sakura-evening':'sakura-evening.ogg',
     'neon-station':'neon-station.ogg', 'quiet-library':'quiet-library.ogg',
     'midnight-rain':'midnight-rain.ogg', 'lantern-street':'lantern-street.ogg',
-    'snowfall-dream':'snowfall-dream.ogg', 'dawn-over-campus':'dawn-over-campus.ogg'
+    'snowfall-dream':'snowfall-dream.ogg', 'dawn-over-campus':'dawn-over-campus.ogg',
+    'spring-original':'spring-original.ogg', 'spring-lantern-walk':'spring-lantern-walk.ogg'
 });
 function selectRpgLofiTrack(value) {
     const wasPlaying = lofiIsPlaying;
@@ -9594,7 +9595,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (picker) {
         let lastTrack = 'moonlit';
         try { lastTrack = localStorage.getItem('system_rpg_lofi_track_v2') || 'moonlit'; } catch (_e) {}
-        if (!['moonlit', 'night', 'synth'].includes(lastTrack)) lastTrack = 'moonlit';
+        if (!Object.hasOwn(RPG_LOFI_LIBRARY, lastTrack) && lastTrack !== 'synth') lastTrack = 'moonlit';
         picker.value = lastTrack;
         selectRpgLofiTrack(lastTrack);
     }
