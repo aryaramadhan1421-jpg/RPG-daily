@@ -2045,7 +2045,13 @@
     </div>
 
     <!-- ==================== JAVASCRIPT LOGIC ==================== -->
-<div id="v6-overlay" class="hidden" role="dialog" aria-modal="true" aria-label="Hunter Archive"><div class="v6-panel"><header class="v6-panel-header"><button type="button" onclick="V6.close()" aria-label="Kembali">← Kembali</button><strong id="v6-heading">HUNTER ARCHIVE</strong></header><div id="v6-body"></div></div></div>
+<div id="v6-overlay" class="hidden" role="dialog" aria-modal="true" aria-label="Hunter Archive"><div class="v6-panel"><header class="v6-panel-header"><button type="button" onclick="V6.close()" aria-label="Kembali">← Kembali</button><strong id="v6-heading">HUNTER ARCHIVE</strong><div id="v6-mini-hud" class="v6-mini-hud" aria-label="SYSTEM RPG HUD">
+<span title="Gold">🪙 <b id="v6-archive-gold">0</b></span>
+<span title="Streak">🔥 <b id="v6-archive-streak">0</b></span>
+<span id="v6-archive-shield" class="hidden" title="Streak Freeze">🛡️ <b id="v6-archive-shields">0</b></span>
+<button type="button" id="v6-archive-audio" onclick="toggleV6ArchiveAudio()" aria-label="Sound">🔊</button>
+<button type="button" id="v6-archive-settings" onclick="openV6ArchiveSettings()" aria-label="Settings">⚙️</button>
+</div></header><div id="v6-body"></div></div></div>
     <div id="hunter-health-guide-modal" class="hidden hunter-guide-backdrop" role="dialog" aria-modal="true" aria-labelledby="hunter-health-guide-heading">
         <div class="hunter-guide-card"><div class="hunter-guide-top"><strong id="hunter-health-guide-heading">HUNTER SURVIVAL GUIDE</strong><button type="button" onclick="closeHunterHealthGuide()" aria-label="Close guide">✕</button></div><div id="hunter-health-guide-content"></div><button type="button" onclick="closeHunterHealthGuide()" id="hunter-health-close">Tutup</button></div>
     </div>

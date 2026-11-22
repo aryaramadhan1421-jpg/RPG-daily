@@ -1275,3 +1275,14 @@ body.sysrpg-tutorial-active main::after {
     border: 1px solid rgba(148,163,184,.25);
     padding: 3px;
 }
+
+/* Beta22: compact HUD visible in the offline Library/Journal reader. */
+#v6-overlay .v6-panel-header{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;min-height:56px;padding:9px 0;}
+#v6-overlay .v6-panel-header>strong{flex:1 1 90px;min-width:0;font-size:clamp(10px,3vw,14px);}
+#v6-overlay .v6-mini-hud{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;max-width:100%;margin-left:auto;}
+#v6-overlay .v6-mini-hud>span{display:inline-flex;gap:2px;align-items:center;white-space:nowrap;font-size:11px;font-weight:700;}
+#v6-overlay .v6-mini-hud>span.hidden{display:none!important;}
+#v6-overlay .v6-mini-hud button{min-width:29px;min-height:31px;padding:4px 5px;font-size:15px;}
+@media(max-width:400px){#v6-overlay .v6-panel-header>strong{order:3;flex:1 1 100%;font-size:12px;}
+#v6-overlay .v6-mini-hud{gap:3px;}#v6-overlay .v6-mini-hud>span{font-size:10px;}
+#v6-overlay .v6-panel-header{justify-content:space-between;}}

@@ -756,7 +756,7 @@ function renderExchange() {
               💠 ${item.cost}</button>`;
         return `<div class="system-card v7-exchange-row v7-shop-item">
             <div class="v7-shop-icon" aria-hidden="true">${item.kind==='frames'?'🖼️':'✨'}</div>
-            <div class="v7-shop-copy"><b>${esc(item.name)}</b><small>${item.challengeOnly?esc(t('Hadiah Challenge · Tidak dijual','Challenge reward · Not for sale','チャレンジ報酬')):item.kind==='frames'?esc(t('Bingkai avatar & Awakening','Avatar & Awakening frame','フレーム')):esc(t('Efek Hunter & Shadow Sword','Hunter & Shadow Sword aura','オーラ'))}</small><button type="button" class="v7-shop-preview-btn" onclick="V7Raid.previewCosmetic('${item.id}')">👁 ${esc(t('Lihat Preview','Preview item','プレビュー'))}</button></div>
+            <div class="v7-shop-copy"><b>${esc(item.name)}</b><small>${item.challengeOnly?esc(t('Challenge Clear pertama → klaim hadiah setelah minggu berakhir','First Challenge Clear → claim reward after week ends','初回チャレンジ達成→週終了後に報酬を受け取る')):item.kind==='frames'?esc(t('Bingkai avatar & Awakening','Avatar & Awakening frame','フレーム')):esc(t('Efek Hunter & Shadow Sword','Hunter & Shadow Sword aura','オーラ'))}</small><button type="button" class="v7-shop-preview-btn" onclick="V7Raid.previewCosmetic('${item.id}')">👁 ${esc(t('Lihat Preview','Preview item','プレビュー'))}</button></div>
             <div class="v7-shop-action">${action}</div>
         </div>`;
     }).join('');

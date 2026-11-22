@@ -3194,6 +3194,20 @@ document.addEventListener('click',event=>{
     }
 },true);
 
+function orderQuestsForDisplay(quests, timeFilter) {
+    const slotOrder = {Pagi:0, Siang:1, Sore:2, Malam:3, Fleksibel:4};
+    return quests.map((quest,originalIndex)=>({quest,originalIndex})).sort((a,b)=>{
+        // All Times must stay chronological even if a morning habit is done.
+        if (timeFilter === 'ALL') {
+            const as = slotOrder[inferQuestTimeSlot(a.quest)] ?? 5;
+            const bs = slotOrder[inferQuestTimeSlot(b.quest)] ?? 5;
+            if (as !== bs) return as-bs;
+        }
+        if (a.quest.completed !== b.quest.completed) return a.quest.completed ? 1 : -1;
+        return a.originalIndex-b.originalIndex;
+    }).map(entry=>entry.quest);
+}
+
 function renderQuests() {
     const container = document.getElementById('quest-list');
     container.innerHTML = '';
@@ -3245,12 +3259,10 @@ function renderQuests() {
         const matchDay = currentQuestDayFilter === 'ALL' || isQuestActiveOnDate(q, getCurrentGameDateKey());
         return matchCat && matchTime && matchStatus && matchSearch && matchDay;
     });
-    // IMPORTANT: the auto-bottom effect is ONLY a view. Never sort/mutate the
-    // manual order in gameState.quests; it must survive midnight rollover.
-    const filtered = [
-        ...matchingQuests.filter(q => !q.completed),
-        ...matchingQuests.filter(q => q.completed)
-    ];
+    // Display-only sorting: status first (completed temporarily below), then
+    // chronological time slots when All Times is selected. Within a slot the
+    // stored manual/preset order is the tie-breaker. NEVER mutate gameState.quests.
+    const filtered = orderQuestsForDisplay(matchingQuests, currentTimeSlotFilter);
 
     if (filtered.length === 0) {
         container.innerHTML = `
@@ -3980,7 +3992,7 @@ function renderShop() {
                 </div>
             </div>
             <div class="flex items-center gap-1 shrink-0">
-                <button onclick="buyShopItem('${item.id}')" ${!canAfford ? 'disabled' : ''} class="font-display"
+                <button onclick="buyShopItem('${item.id}')" ${isShieldMaxed ? 'disabled' : ''} class="font-display"
                     style="padding: 0.5rem 0.65rem; border-radius: 0.75rem; font-weight: 700; font-size: 0.75rem; display: flex; flex-direction: column; align-items: center; ${buyBtnStyle}">
                     ${isShieldMaxed
                         ? `<span>${v6Text('MAKS','MAX','上限')}</span><span style="font-size: 9px; opacity: 0.8;">2 / 2</span>`
@@ -4138,7 +4150,13 @@ function buyShopItem(id) {
 
     const MAX_STREAK_SHIELDS = 2;
     const finalCost = getDiscountedShopCost(item.cost);
-    if (gameState.player.gold < finalCost) return;
+    if (gameState.player.gold < finalCost) {
+        SoundFX.playDamage();
+        spawnFloatingReward(v6Text(`⚠️ Gold tidak cukup! Butuh ${finalCost} Gold.`,
+            `⚠️ Not enough Gold! Need ${finalCost} Gold.`,
+            `⚠️ ゴールドが足りません！必要：${finalCost}ゴールド`));
+        return;
+    }
 
     if (item.type === 'shield' && (gameState.player.shields || 0) >= MAX_STREAK_SHIELDS) {
         SoundFX.playDamage();
@@ -9479,6 +9497,52 @@ setInterval(() => {
     // Check five web-only reminders every 20 seconds (Android alarms are independent).
     setInterval(checkScheduledReminderTick, 20000);
 })();
+// Beta22: make dynamic Chronicle, Library, Journal and Survival Guide buttons
+// audible. Use a scoped delegate only; the global controls already call playClick.
+document.addEventListener('click', function(event) {
+    const btn=event.target.closest('button');
+    if(!btn || btn.disabled) return;
+    if(btn.matches('#v6-archive-settings, #v6-archive-audio')) return; // Own audio path.
+    if(btn.closest('#v6-overlay, #v6-journal-entry, #v6-library-entry, #hunter-health-guide-modal, #v7cj') ||
+       btn.matches('[data-health-i18n="open"]')) {
+        if(typeof SoundFX!=='undefined' && typeof SoundFX.playClick==='function') SoundFX.playClick();
+    }
+}, false);
+
+// Mini-HUD inside full-screen Library/Journal. Never duplicates the underlying
+// controls or creates a new currency balance; it only mirrors saved gameState.
+function updateV6ArchiveHud() {
+    const hud=document.getElementById('v6-mini-hud');
+    if(!hud || typeof gameState==='undefined' || !gameState.player) return;
+    const p=gameState.player;
+    const val=Math.max(0,Math.floor(Number(p.gold)||0));
+    const gold=document.getElementById('v6-archive-gold');
+    if(gold) {gold.textContent=val>=1e6?(Math.floor(val/1e5)/10)+'M':val>=1e4?(Math.floor(val/1e2)/10)+'K':String(val);gold.title=String(val);}
+    const streak=document.getElementById('v6-archive-streak');
+    if(streak) streak.textContent=String(Math.max(0,Number(p.streak)||0));
+    const shield=document.getElementById('v6-archive-shield');
+    const shields=document.getElementById('v6-archive-shields');
+    const count=Math.max(0,Number(p.shields)||0);
+    if(shield) shield.classList.toggle('hidden',count<=0);
+    if(shields) shields.textContent=String(count);
+    const muted=typeof SoundFX!=='undefined'&&SoundFX.muted;
+    const audio=document.getElementById('v6-archive-audio');
+    if(audio) audio.textContent=muted?'🔇':'🔊';
+    const settings=document.getElementById('v6-archive-settings');
+    if(settings) settings.title=v6Text('Pengaturan','Settings','設定');
+}
+function openV6ArchiveSettings() {
+    // The reading overlay covers the normal header (z-index:9000), so its
+    // Settings modal must be stacked above it without closing the current book.
+    const modal=document.getElementById('font-settings-modal');
+    if(modal) modal.style.zIndex='9100';
+    openFontSettingsModal(); // Existing audio and settings state, no clone.
+}
+function toggleV6ArchiveAudio() {
+    toggleAudio();
+    updateV6ArchiveHud();
+}
+
 // SYSTEM RPG V6 Refined additions. Separate namespaces preserve legacy save data.
 
 const V6 = (() => {
@@ -9529,7 +9593,7 @@ const V6 = (() => {
  }
  const body=()=>document.getElementById('v6-body');
  const date=()=>typeof getCurrentGameDateKey==='function'?getCurrentGameDateKey():new Date().toISOString().slice(0,10);
- function show(title){document.getElementById('v6-heading').textContent=title;document.getElementById('v6-overlay').classList.remove('hidden');document.body.style.overflow='hidden';setTimeout(localizeOverlay,0);document.getElementById('v6-overlay').scrollTop=0;}
+ function show(title){document.getElementById('v6-heading').textContent=title;document.getElementById('v6-overlay').classList.remove('hidden');document.body.style.overflow='hidden';updateV6ArchiveHud();setTimeout(localizeOverlay,0);document.getElementById('v6-overlay').scrollTop=0;}
  function close(){if(journalDate && !confirmDiscard())return; journalDate=null;document.getElementById('v6-overlay').classList.add('hidden');document.body.style.overflow='';}
  const moods=[['Very Happy','🤩'],['Happy','😊'],['Neutral','😐'],['Sad','😔'],['Stressed','😣']];
  let journalDirty=false;
