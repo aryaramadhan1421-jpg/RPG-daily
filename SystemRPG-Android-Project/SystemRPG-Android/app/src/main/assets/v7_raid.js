@@ -294,7 +294,7 @@ function renderVictory(w,p) {
     return `<div class="v7-victory-card ${challenge?'v7-victory-challenge':''}" role="status" aria-live="polite">
       <div class="v7-victory-kicker">🏆 ${esc(t('HASIL RAID MINGGUAN','WEEKLY RAID RESULT','週間レイド結果'))}</div>
       <h3>${esc(label)}</h3>
-      <div class="v7-victory-boss">${b?`<img src="bosses/${esc(b.id)}.svg" alt="" loading="lazy">`:''}<span>${esc(b?b.name:'Boss')}<small>${esc(desc)}</small></span></div>
+      <div class="v7-victory-boss">${b?`<img src="bosses/${esc(b.id)}.webp" alt="" loading="lazy">`:''}<span>${esc(b?b.name:'Boss')}<small>${esc(desc)}</small></span></div>
       <div class="v7-victory-rewards">
         <div><strong>🪙 +${gold}</strong><small>Gold</small></div>
         <div><strong>💠 +${crystals}</strong><small>${esc(t('Kristal Raid','Raid Crystals','レイドクリスタル'))}</small></div>
@@ -547,7 +547,7 @@ function renderAppearance() {
           const owned=v.cosmetics.owned.frames.includes(item.id);
           return `<div class="v7-rank-frame-card ${owned?'v7-rank-frame-owned':'v7-rank-frame-locked'}" style="--v7-choice-color:${item.css}">
             <span class="v7-frame-mini" aria-hidden="true">${esc(item.sigil)}</span>
-            <strong>${esc(item.name)}</strong><small>${esc(item.rankLabel)}</small>
+            <strong>${esc(item.name)}</strong><small>${esc(item.rankLabel)}</small><button type="button" class="v7-rank-preview-btn" onclick="V7Raid.previewCosmetic('${item.id}')">${esc(t('Lihat','View','見る'))}</button>
             <span>${owned?'✓ '+esc(t('Terbuka','Unlocked','解放済')):'🔒 '+esc(t('Terkunci','Locked','未解放'))}</span>
           </div>`;
       }).join('')}</div>
@@ -600,7 +600,7 @@ function renderAppearance() {
                 <div class="v7-replay-hunter" id="v7-hunter-silhouette" aria-label="${esc(t('Hunter dengan satu Shadow Sword','Hunter with one Shadow Sword','シャドウソードを一本持つハンター'))}">
                   <svg viewBox="0 0 92 120" aria-hidden="true"><circle cx="42" cy="27" r="13" fill="currentColor"/><path d="M27 48L60 48 70 76 55 91 22 82zM32 84L21 113 35 114 46 94 59 115 72 113 58 80" fill="currentColor"/><path class="v7-sword-blade" d="M59 56L88 11 82 4 50 52z" fill="#67e8f9"/><path d="M51 48l15 16" stroke="currentColor" stroke-width="6"/></svg>
                 </div>
-                <div class="v7-replay-boss"><img src="bosses/${esc(b.id)}.svg" alt="${esc(b.name)}" loading="lazy"></div>
+                <div class="v7-replay-boss"><img src="bosses/${esc(b.id)}.webp" alt="${esc(b.name)}" loading="lazy"></div>
                 <div class="v7-replay-slash slash-one"></div><div class="v7-replay-slash slash-two"></div><div class="v7-replay-slash slash-three"></div>
                 <div class="v7-replay-impact" aria-hidden="true">✦</div>
                 <div class="v7-damage-float" id="v7-damage-float" aria-live="off"></div>
@@ -665,6 +665,36 @@ function renderArchive() {
     }).join('');
     return `<div class="v7-raid-panel"><h3>🏆 ${esc(t('ARSIP RAID','RAID ARCHIVE','レイド履歴'))}</h3><p class="v7-muted">${esc(t('Hadiah dibayarkan sekali saat diklaim setelah minggu berakhir.','Rewards are paid once when claimed after the week ends.','報酬は週の終了後に一度だけ受取可能。'))}</p>${summary||`<p class="v7-muted">${esc(t('Belum ada minggu yang berakhir.','No completed weeks yet.','記録はありません。'))}</p>`}</div>`;
 }
+    // Preview is read-only: does not equip, spend Raid Crystals or modify save data.
+    function closeCosmeticPreview() {
+        const overlay=document.getElementById('v7-cosmetic-preview-overlay');
+        if(overlay) overlay.remove();
+    }
+    function previewCosmetic(id) {
+        const item=getCosmetic(id);
+        if(!item || typeof document==='undefined')return false;
+        closeCosmeticPreview();
+        const color=item.css||'#67e8f9';
+        const isAura=item.kind==='auras';
+        const illustration=isAura?`<div class="v7-cosmetic-sample v7-sample-aura" style="--v7-preview-color:${color}">
+          <span class="v7-aura-wave"></span><span class="v7-aura-wave second"></span>
+          <span class="v7-preview-hunter"><i class="v7-preview-hood"></i><i class="v7-preview-body"></i><i class="v7-preview-blade"></i></span>
+          <span class="v7-aura-particle p1">✦</span><span class="v7-aura-particle p2">✧</span><span class="v7-aura-particle p3">✦</span>
+        </div>`:`<div class="v7-cosmetic-sample v7-sample-frame" style="--v7-preview-color:${color}">
+          <span class="v7-frame-preview-frame"><span class="v7-frame-preview-hunter">◈</span></span>
+        </div>`;
+        const overlay=document.createElement('div');overlay.id='v7-cosmetic-preview-overlay';overlay.className='v7-cosmetic-overlay';
+        overlay.innerHTML=`<div class="v7-cosmetic-modal" role="dialog" aria-modal="true" aria-labelledby="v7-cosmetic-modal-heading">
+          <div class="v7-cosmetic-modal-top"><h3 id="v7-cosmetic-modal-heading">${esc(item.name)}</h3>
+          <button type="button" class="v7-raid-btn" onclick="V7Raid.closeCosmeticPreview()" aria-label="${esc(t('Tutup','Close','閉じる'))}">✕</button></div>
+          ${illustration}<p class="v7-muted">${esc(isAura?t('Aura mengelilingi Hunter dan mewarnai Shadow Sword ketika bertarung.','The aura surrounds your Hunter and colors the Shadow Sword in battle.','オーラは戦闘中のハンターを包み、シャドウソードの色を変えます。'):t('Frame menghiasi avatar Hunter di Status dan layar Awakening.','This frame decorates the Hunter avatar in Status and Awakening.','フレームはステータスと覚醒画面のハンター像を飾ります。'))}</p>
+          <p class="v7-muted">${esc(t('Pratinjau saja — tidak membeli atau memasang item.','Preview only — no purchase or equipment changes.','プレビューのみ。購入や装備の変更はありません。'))}</p>
+          <button type="button" class="v7-raid-btn" onclick="V7Raid.closeCosmeticPreview()">${esc(t('Kembali ke Shop','Back to Shop','ショップへ戻る'))}</button>
+        </div>`;
+        overlay.addEventListener('click',e=>{if(e.target===overlay)closeCosmeticPreview();});
+        document.body.appendChild(overlay);
+        return true;
+    }
 function renderExchange() {
     const v=state();
     const term=(document.getElementById('shop-search-input')?.value||'').toLocaleLowerCase().trim();
@@ -680,7 +710,7 @@ function renderExchange() {
               💠 ${item.cost}</button>`;
         return `<div class="system-card v7-exchange-row v7-shop-item">
             <div class="v7-shop-icon" aria-hidden="true">${item.kind==='frames'?'🖼️':'✨'}</div>
-            <div class="v7-shop-copy"><b>${esc(item.name)}</b><small>${item.challengeOnly?esc(t('Hadiah Challenge · Tidak dijual','Challenge reward · Not for sale','チャレンジ報酬')):item.kind==='frames'?esc(t('Bingkai avatar & Awakening','Avatar & Awakening frame','フレーム')):esc(t('Efek Hunter & Shadow Sword','Hunter & Shadow Sword aura','オーラ'))}</small></div>
+            <div class="v7-shop-copy"><b>${esc(item.name)}</b><small>${item.challengeOnly?esc(t('Hadiah Challenge · Tidak dijual','Challenge reward · Not for sale','チャレンジ報酬')):item.kind==='frames'?esc(t('Bingkai avatar & Awakening','Avatar & Awakening frame','フレーム')):esc(t('Efek Hunter & Shadow Sword','Hunter & Shadow Sword aura','オーラ'))}</small><button type="button" class="v7-shop-preview-btn" onclick="V7Raid.previewCosmetic('${item.id}')">👁 ${esc(t('Lihat Preview','Preview item','プレビュー'))}</button></div>
             <div class="v7-shop-action">${action}</div>
         </div>`;
     }).join('');
@@ -738,7 +768,7 @@ function renderExchange() {
         if(saveState()===false){v.seenBosses.pop();return false;}
         render();return true;
     }
-    window.V7Raid={state,advance,recordQuest,prepareSave,claim,setMode,unlock,equip,unequip,openAppearance,collapseAppearance,renderAppearance,syncStaticLabels,applyCosmetics,syncRankFrames,replay,replayVisual,skipBattle,cancelBattle,dismissEncounter,render,renderShopExchange,weekKey,
+    window.V7Raid={previewCosmetic,closeCosmeticPreview,state,advance,recordQuest,prepareSave,claim,setMode,unlock,equip,unequip,openAppearance,collapseAppearance,renderAppearance,syncStaticLabels,applyCosmetics,syncRankFrames,replay,replayVisual,skipBattle,cancelBattle,dismissEncounter,render,renderShopExchange,weekKey,
         roster:ROSTER,exchange:EXCHANGE,rankFrames:RANK_FRAMES};
     // Run after the V6 boot sequence, not before its gameState initialization.
     const didChange=advance(keyOf(new Date()));

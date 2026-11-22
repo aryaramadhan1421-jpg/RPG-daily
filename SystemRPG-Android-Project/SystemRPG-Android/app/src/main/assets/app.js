@@ -11,11 +11,24 @@ const SoundFX = {
     ambientMode: 'none', // 'none' | 'synth' | 'rain'
     ambientNodes: [],
     ambientGain: null,
+    sfxOutput: null,
 
     init() {
         if (!this.ctx) {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             this.ctx = new AudioContext();
+            // Modest boost with dynamics protection, independent of music volume.
+            const compressor = this.ctx.createDynamicsCompressor();
+            compressor.threshold.value = -18;
+            compressor.knee.value = 15;
+            compressor.ratio.value = 3;
+            compressor.attack.value = 0.005;
+            compressor.release.value = 0.12;
+            const outputGain = this.ctx.createGain();
+            outputGain.gain.value = 1.55;
+            compressor.connect(outputGain);
+            outputGain.connect(this.ctx.destination);
+            this.sfxOutput = compressor;
         }
         if (this.ctx.state === 'suspended') {
             this.ctx.resume();
@@ -58,7 +71,7 @@ const SoundFX = {
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
 
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.sfxOutput);
         osc.start(now);
         osc.stop(now + 0.05);
     },
@@ -78,7 +91,7 @@ const SoundFX = {
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
 
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.sfxOutput);
         osc.start(now);
         osc.stop(now + 0.13);
     },
@@ -99,7 +112,7 @@ const SoundFX = {
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
 
             osc.connect(gain);
-            gain.connect(this.ctx.destination);
+            gain.connect(this.sfxOutput);
             osc.start(now);
             osc.stop(now + 0.23);
         });
@@ -131,7 +144,7 @@ const SoundFX = {
 
             osc.connect(filter);
             filter.connect(gain);
-            gain.connect(this.ctx.destination);
+            gain.connect(this.sfxOutput);
             osc.start(now);
             osc.stop(now + n.d + 0.02);
         });
@@ -151,7 +164,7 @@ const SoundFX = {
             gain.gain.setValueAtTime(0.14, now);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
             osc.connect(gain);
-            gain.connect(this.ctx.destination);
+            gain.connect(this.sfxOutput);
             osc.start(now);
             osc.stop(now + 0.26);
         });
@@ -172,7 +185,7 @@ const SoundFX = {
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
 
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.sfxOutput);
         osc.start(now);
         osc.stop(now + 0.31);
     },
@@ -192,7 +205,7 @@ const SoundFX = {
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
 
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.sfxOutput);
         osc.start(now);
         osc.stop(now + 0.31);
     },
@@ -205,7 +218,7 @@ const SoundFX = {
 
         const masterGain = this.ctx.createGain();
         masterGain.gain.setValueAtTime(0.001, this.ctx.currentTime);
-        masterGain.gain.linearRampToValueAtTime(mode === 'synth' ? 0.24 : 0.22, this.ctx.currentTime + 1.0);
+        masterGain.gain.linearRampToValueAtTime(mode === 'synth' ? 0.38 : 0.28, this.ctx.currentTime + 1.0);
         masterGain.connect(this.ctx.destination);
         this.ambientGain = masterGain;
 
@@ -6297,17 +6310,24 @@ let lofiRemainingSec = 3600;
 let lofiStep = 0;
 let lofiUseLocalFile = false;
 let rpgLofiTrack = 'moonlit';
+const RPG_LOFI_LIBRARY = Object.freeze({
+    moonlit:'moonlit-study.ogg', night:'night-quest.ogg',
+    'rainy-window':'rainy-window.ogg', 'sakura-evening':'sakura-evening.ogg',
+    'neon-station':'neon-station.ogg', 'quiet-library':'quiet-library.ogg',
+    'midnight-rain':'midnight-rain.ogg', 'lantern-street':'lantern-street.ogg',
+    'snowfall-dream':'snowfall-dream.ogg', 'dawn-over-campus':'dawn-over-campus.ogg'
+});
 function selectRpgLofiTrack(value) {
     const wasPlaying = lofiIsPlaying;
     if (wasPlaying) stopAnimeLofi1Hour();
-    rpgLofiTrack = ['moonlit','night','synth','custom'].includes(value) ? value : 'moonlit';
+    rpgLofiTrack = (Object.hasOwn(RPG_LOFI_LIBRARY,value)||value==='synth'||value==='custom') ? value : 'moonlit';
     try { if (rpgLofiTrack !== 'custom') localStorage.setItem('system_rpg_lofi_track_v2', rpgLofiTrack); } catch (_e) {}
     const picker = document.getElementById('rpg-lofi-track');
     if (picker) picker.value = rpgLofiTrack;
     const audio = document.getElementById('lofi-local-audio-player');
     if (audio && audio.src.startsWith('blob:') && rpgLofiTrack !== 'custom') URL.revokeObjectURL(audio.src);
-    if (rpgLofiTrack === 'moonlit' || rpgLofiTrack === 'night') {
-        if (audio) audio.src = rpgLofiTrack === 'moonlit' ? 'moonlit-study.ogg' : 'night-quest.ogg';
+    if (Object.hasOwn(RPG_LOFI_LIBRARY,rpgLofiTrack)) {
+        if (audio) audio.src = RPG_LOFI_LIBRARY[rpgLofiTrack];
         lofiUseLocalFile = true;
     } else if (rpgLofiTrack === 'synth') {
         lofiUseLocalFile = false;
@@ -6320,7 +6340,7 @@ function selectRpgLofiTrack(value) {
 
 
 function cycleRpgLofiTrack(direction) {
-    const tracks = ['moonlit', 'night', 'synth'];
+    const tracks = [...Object.keys(RPG_LOFI_LIBRARY), 'synth'];
     const i = tracks.indexOf(rpgLofiTrack);
     const next = tracks[(Math.max(0, i) + (direction < 0 ? tracks.length - 1 : 1)) % tracks.length];
     selectRpgLofiTrack(next);
@@ -6354,7 +6374,7 @@ function updateLofiVolume(val) {
 
     const vol = num / 100;
     if (lofiMasterGain && lofiCtx) {
-        lofiMasterGain.gain.setTargetAtTime(vol * 0.48, lofiCtx.currentTime, 0.05);
+        lofiMasterGain.gain.setTargetAtTime(vol * 0.76, lofiCtx.currentTime, 0.05);
     }
     const localAudio = document.getElementById('lofi-local-audio-player');
     if (localAudio) {
@@ -6632,7 +6652,10 @@ function toggleAnimeLofi1Hour() {
         const localAudio = document.getElementById('lofi-local-audio-player');
         if (localAudio) {
             localAudio.play();
-            if (status) status.textContent = 'Memutar Lagu Lofi dari HP • Timer 1 Jam Aktif';
+            if (status) {
+                const label = document.getElementById('rpg-lofi-track')?.selectedOptions?.[0]?.textContent || rpgLofiTrack;
+                status.textContent = rpgLofiTrack==='custom' ? `Memutar Lagu dari HP • Timer 1 Jam Aktif` : `♪ ${label} • Offline Lofi`;
+            }
         }
     } else {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -6641,7 +6664,7 @@ function toggleAnimeLofi1Hour() {
             lofiMasterGain = lofiCtx.createGain();
             const slider = document.getElementById('lofi-volume-slider');
             const vol = slider ? Number(slider.value) / 100 : 0.55;
-            lofiMasterGain.gain.setValueAtTime(vol * 0.48, lofiCtx.currentTime);
+            lofiMasterGain.gain.setValueAtTime(vol * 0.76, lofiCtx.currentTime);
             lofiMasterGain.connect(lofiCtx.destination);
         }
         if (lofiCtx.state === 'suspended') lofiCtx.resume();
@@ -6803,7 +6826,7 @@ let rpgSplashAudio = null;
 function startAutoSplashFantasyBGM() {
     if (isSplashUnlocking || isSplashBgmPlaying) return;
     if (!rpgSplashAudio) {
-        rpgSplashAudio = new Audio('awakening-cinematic.ogg');
+        rpgSplashAudio = new Audio('awakening-cinematic-loud.ogg');
         rpgSplashAudio.loop = true;
         rpgSplashAudio.preload = 'auto';
         rpgSplashAudio.volume = 0.9;
@@ -6825,11 +6848,11 @@ function awakeningHaptic(kind) {
         if (localStorage.getItem('system_rpg_haptic_enabled') === 'false') return;
         const bridge = window.AndroidBridge;
         if (bridge && typeof bridge.hapticFeedback === 'function') {
-            bridge.hapticFeedback(kind === 'success' ? 'levelup' : 'tap');
+            bridge.hapticFeedback(kind === 'success' ? 'levelup' : kind === 'touch' ? 'fingerprint-touch' : 'fingerprint-scan');
             return;
         }
         if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
-            navigator.vibrate(kind === 'success' ? [60, 45, 110, 55, 160] : 35);
+            navigator.vibrate(kind === 'success' ? [60, 45, 110, 55, 160] : kind === 'touch' ? 85 : 45);
         }
     } catch (_) {}
 }
@@ -6889,7 +6912,7 @@ function playFingerprintUnlockSound() {
             osc.frequency.setValueAtTime(freq, now + idx * 0.07);
 
             gain.gain.setValueAtTime(0.001, now + idx * 0.07);
-            gain.gain.linearRampToValueAtTime(0.22, now + idx * 0.07 + 0.02);
+            gain.gain.linearRampToValueAtTime(0.28, now + idx * 0.07 + 0.02);
             gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.07 + 0.32);
 
             osc.connect(gain);
@@ -6962,14 +6985,14 @@ function startFingerprintHold(event) {
         true
     );
 
-    awakeningHaptic('tap');
+    awakeningHaptic('touch');
     fpVibrateInterval = setInterval(() => {
         if (isSplashUnlocking) {
             clearFingerprintHoldTimers();
             return;
         }
-        awakeningHaptic('tap');
-    }, 420);
+        awakeningHaptic('scan');
+    }, 380);
 
     fpHoldTimer = setTimeout(() => {
         unlockSystemSplashScreen();
@@ -7051,7 +7074,7 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(660, now);
                 osc.frequency.exponentialRampToValueAtTime(980, now + 0.055);
-                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.setValueAtTime(0.20, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
                 osc.connect(gain);
                 gain.connect(ctx.destination);

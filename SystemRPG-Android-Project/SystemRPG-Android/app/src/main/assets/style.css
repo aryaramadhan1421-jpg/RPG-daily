@@ -1052,3 +1052,27 @@ header>div:first-child{flex-shrink:0}
 .v7-appearance-details .v7-appearance-label{transition:transform .2s ease;}
 .v7-appearance-details[open] .v7-appearance-label{background:#332052;color:#e9d5ff;}
 @media(max-width:390px){.v7-appearance-details{padding:12px 10px}.v7-appearance-heading h3{font-size:12px}}
+
+/* SYSTEM RPG Beta 12 — zero-cost item previews and stronger visual aura. */
+.v7-shop-preview-btn,.v7-rank-preview-btn{background:transparent;border:0;color:#7dd3fc;text-decoration:underline;text-underline-offset:2px;cursor:pointer;font-size:10px;text-align:left;width:max-content;padding:2px 0;font-weight:800}
+.v7-cosmetic-overlay{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;background:rgba(0,3,15,.88);padding:17px;backdrop-filter:blur(7px)}
+.v7-cosmetic-modal{width:min(96vw,440px);max-height:92vh;overflow:auto;display:grid;gap:12px;padding:18px;border:1px solid rgba(167,139,250,.65);border-radius:18px;background:linear-gradient(155deg,#11192e,#070b18);box-shadow:0 20px 70px rgba(0,0,0,.8);color:#e2e8f0}
+.v7-cosmetic-modal-top{display:flex;align-items:center;justify-content:space-between;gap:12px}.v7-cosmetic-modal-top h3{font-size:16px;color:#f5f3ff;font-weight:900}
+.v7-cosmetic-sample{position:relative;display:grid;place-items:center;min-height:236px;overflow:hidden;border-radius:14px;border:1px solid color-mix(in srgb,var(--v7-preview-color) 50%,#111827);background:radial-gradient(ellipse at 50% 54%,color-mix(in srgb,var(--v7-preview-color) 18%,transparent),transparent 65%),linear-gradient(#080e23,#040613)}
+.v7-frame-preview-frame{position:relative;display:grid;place-items:center;width:132px;height:150px;border:5px double var(--v7-preview-color);border-radius:21px;box-shadow:0 0 0 6px #091228,0 0 35px var(--v7-preview-color),inset 0 0 24px var(--v7-preview-color);background:radial-gradient(circle,#263347,#071021)}
+.v7-frame-preview-frame:before,.v7-frame-preview-frame:after{content:'✦';position:absolute;color:var(--v7-preview-color);font-size:34px;text-shadow:0 0 17px currentColor}.v7-frame-preview-frame:before{top:-23px;left:-19px}.v7-frame-preview-frame:after{bottom:-25px;right:-19px}
+.v7-frame-preview-hunter{font-size:76px;color:#dbeafe;text-shadow:0 0 20px var(--v7-preview-color)}
+.v7-preview-hunter{position:absolute;left:44%;bottom:18px;width:82px;height:150px;filter:drop-shadow(0 0 12px var(--v7-preview-color))}
+.v7-preview-hood{position:absolute;left:21px;top:0;width:44px;height:46px;background:linear-gradient(120deg,#293852,#020610);border-radius:45% 45% 28% 28%;border:2px solid #60738e}
+.v7-preview-body{position:absolute;left:5px;top:37px;width:75px;height:105px;background:linear-gradient(100deg,#1b2b48,#050813);clip-path:polygon(32% 0,70% 0,100% 100%,0 100%);border-radius:13px}
+.v7-preview-blade{position:absolute;left:72px;top:17px;width:7px;height:118px;transform:rotate(32deg);border-radius:100% 100% 4px 4px;background:linear-gradient(90deg,#fff,var(--v7-preview-color),#08112a);box-shadow:0 0 15px var(--v7-preview-color),0 0 30px var(--v7-preview-color)}
+.v7-aura-wave{position:absolute;left:50%;top:52%;width:155px;height:205px;transform:translate(-50%,-50%);border-radius:50%;box-shadow:0 0 14px 4px var(--v7-preview-color),inset 0 0 28px var(--v7-preview-color);border:2px solid var(--v7-preview-color);opacity:.62;animation:v7AuraFloat 2.6s ease-in-out infinite alternate}
+.v7-aura-wave.second{width:190px;height:221px;opacity:.23;animation-delay:.7s}
+.v7-aura-particle{position:absolute;color:var(--v7-preview-color);text-shadow:0 0 12px var(--v7-preview-color);animation:v7AuraFloat 2.5s ease-in-out infinite alternate}.v7-aura-particle.p1{top:24%;left:21%;font-size:23px}.v7-aura-particle.p2{bottom:25%;right:18%;font-size:27px;animation-delay:.5s}.v7-aura-particle.p3{top:17%;right:30%;font-size:18px;animation-delay:1s}
+@keyframes v7AuraFloat{from{transform:translate(-50%,-50%) scale(.94);opacity:.45}to{transform:translate(-50%,-50%) scale(1.05);opacity:.76}}
+.v7-aura-particle{animation-name:v7AuraSpark}@keyframes v7AuraSpark{from{transform:translateY(8px);opacity:.25}to{transform:translateY(-8px);opacity:1}}
+.v7-replay-hunter.v7-aura-equipped:before{content:'';position:absolute;inset:-9px -5px;z-index:-1;border-radius:50% 50% 38% 38%;box-shadow:0 0 13px var(--v7-aura-color),inset 0 0 20px color-mix(in srgb,var(--v7-aura-color) 40%,transparent);border:1px solid color-mix(in srgb,var(--v7-aura-color) 35%,transparent);animation:v7HunterAuraPulse 2.2s ease-in-out infinite alternate;pointer-events:none}
+.v7-replay-hunter.v7-aura-equipped:after{content:'✦';position:absolute;top:9%;right:-5%;font-size:15px;color:var(--v7-aura-color);text-shadow:0 0 10px currentColor;animation:v7AuraSpark 1.8s ease-in-out infinite alternate;pointer-events:none}
+@keyframes v7HunterAuraPulse{from{opacity:.46;transform:scale(.98)}to{opacity:.9;transform:scale(1.07)}}
+.v7-battle-arena .v7-replay-boss img{object-fit:cover;object-position:center 25%;border-radius:10px;mask-image:linear-gradient(to bottom,#000 78%,transparent 100%)}
+@media(prefers-reduced-motion:reduce){.v7-aura-wave,.v7-aura-particle,.v7-replay-hunter.v7-aura-equipped:before,.v7-replay-hunter.v7-aura-equipped:after{animation:none!important}}
