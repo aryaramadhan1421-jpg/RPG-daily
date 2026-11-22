@@ -186,10 +186,18 @@
         const won=w.maxDamage>0&&w.damage>=w.normalTarget;
         const challenge=won&&w.mode==='challenge'&&w.damage>=w.challengeTarget;
         // Reward stays pending until user claims it. No changes to Hunter HP/streak.
+        const dayDamage={};
+        for(const [hitKey,raw] of Object.entries(w.hits||{})) {
+            const day=hitKey.split('|')[0];
+            if(!/^\d{4}-\d{2}-\d{2}$/.test(day))continue;
+            dayDamage[day]=Math.round(((dayDamage[day]||0)+Math.max(0,Number(raw)||0))*100)/100;
+        }
         v.archive[w.week]={week:w.week,bossId:w.bossId,mode:w.mode,damage:w.damage,
             maxDamage:w.maxDamage,normalTarget:w.normalTarget,won,challenge,claimed:!won,
             gold:won?120:0,crystals:won?(challenge?10:6):0,
-            hits:Object.keys(w.hits||{}).length};
+            hits:Object.keys(w.hits||{}).length,
+            // Snapshot purely for historical statistics; never used in rewards.
+            dayDamage,daysContributed:Object.keys(dayDamage).filter(k=>dayDamage[k]>0).length};
         w.closed=true;
         return true;
     }
@@ -704,6 +712,11 @@ function renderArchive() {
             <div class="v7-archive-summary"><strong>${esc(r.week)} · ${esc(boss?boss.name:'Boss')}</strong>
               <small>${r.damage}/${r.maxDamage} ${esc(t('DMG','DMG','ダメージ'))} · ${esc(status)}</small>
               ${r.won?`<small>🪙 +${r.gold} Gold · 💠 +${r.crystals} ${esc(t('Kristal Raid','Raid Crystals','レイドクリスタル'))} ${r.challenge?' · ✨ '+esc(t('Eclipse Aura (kemenangan pertama)','Eclipse Aura (first clear)','エクリプスオーラ（初回）')):''}</small>`:''}
+              <details class="v7-battle-summary"><summary>📊 ${esc(t('Rincian Pertarungan','Battle Summary','戦闘サマリー'))}</summary>
+                <p>${esc(t('Quest berkontribusi','Contributing Quests','貢献クエスト'))}: <b>${Number(r.hits)||0}</b> · ${esc(t('Damage tercatat','Recorded Damage','記録ダメージ'))}: <b>${Number(r.damage)||0}</b></p>
+                <p>${esc(t('Hari berkontribusi','Contributing Days','貢献日数'))}: <b>${Number.isFinite(Number(r.daysContributed))?Number(r.daysContributed):'—'}</b> · ${esc(t('Hadiah','Reward','報酬'))}: ${r.claimed?esc(t('Diklaim','Claimed','受取済み')):r.won?esc(t('Belum diklaim','Unclaimed','未受取')):esc(t('Tidak tersedia','Not available','なし'))}</p>
+                ${r.dayDamage&&typeof r.dayDamage==='object'?`<ul>${Object.entries(r.dayDamage).sort((a,b)=>a[0].localeCompare(b[0])).map(([day,amount])=>`<li>${esc(day)} · ${Number(amount)||0} DMG</li>`).join('')}</ul>`:`<p class="v7-muted">${esc(t('Rincian harian tidak tersedia untuk Raid lama.','Daily breakdown unavailable for older raids.','古いレイドには日別データがありません。'))}</p>`}
+              </details>
             </div>
             ${r.won&&!r.claimed?button(t('🎁 Klaim','🎁 Claim','🎁 受け取る'),`V7Raid.claim('${esc(r.week)}')`,'v7-claim-btn'):
              `<span class="v7-archive-status">${r.claimed&&r.won?esc(t('✓ Diklaim','✓ Claimed','受取済み')):'—'}</span>`}

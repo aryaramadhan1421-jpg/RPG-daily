@@ -620,12 +620,13 @@
 
         <!-- ==================== TAB 2: QUESTS ==================== -->
         <section id="tab-quests" class="tab-content hidden space-y-4">
-            <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center justify-between gap-2 v7-quest-board-header">
                 <div>
                     <h2 class="font-display" style="font-weight: 700; font-size: 1.25rem; color: #fff;">QUEST BOARD</h2>
                     <p style="font-size: 0.75rem; color: var(--text-muted);">Centang misi selesai (klik ulang untuk batalkan/undo)</p>
                 </div>
-                <div class="flex items-center gap-1-5 shrink-0">
+                <div class="flex items-center gap-1-5 shrink-0 v7-quest-board-actions">
+                    <div id="v7-quest-manager" class="v7-quest-manager"></div>
                     <button type="button" onclick="restoreDefaultHabits()" class="font-display flex items-center gap-1" style="background: var(--bg-slate-900); color: #67e8f9; border: 1px solid rgba(6,182,212,0.4); font-weight: 700; font-size: 0.75rem; padding: 0.5rem 0.625rem; border-radius: 0.75rem;" title="Muat Ulang Paket Default Daily Habit">
                         <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
                         Preset Habit
@@ -636,6 +637,9 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Safe bulk editor: hidden until Kelola is pressed. -->
+            <div id="v7-quest-manager-panel" class="v7-quest-manager-panel" hidden></div>
 
             <!-- Penalty Zone Banner (Muncul otomatis saat Penalty Quest aktif) -->
             <div id="penalty-quest-banner"></div>
@@ -2055,6 +2059,8 @@
     <div id="hunter-health-guide-modal" class="hidden hunter-guide-backdrop" role="dialog" aria-modal="true" aria-labelledby="hunter-health-guide-heading">
         <div class="hunter-guide-card"><div class="hunter-guide-top"><strong id="hunter-health-guide-heading">HUNTER SURVIVAL GUIDE</strong><button type="button" onclick="closeHunterHealthGuide()" aria-label="Close guide">✕</button></div><div id="hunter-health-guide-content"></div><button type="button" onclick="closeHunterHealthGuide()" id="hunter-health-close">Tutup</button></div>
     </div>
+    <!-- Safe bulk-quest scheduling must load BEFORE app.js runs day rollover. -->
+    <script src="v7_quality.js"></script>
     <script src="app.js"></script>
     <script src="v7_lore.js"></script>
     <script src="v7_raid.js"></script>

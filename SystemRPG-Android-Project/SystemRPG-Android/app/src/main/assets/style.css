@@ -1286,3 +1286,56 @@ body.sysrpg-tutorial-active main::after {
 @media(max-width:400px){#v6-overlay .v6-panel-header>strong{order:3;flex:1 1 100%;font-size:12px;}
 #v6-overlay .v6-mini-hud{gap:3px;}#v6-overlay .v6-mini-hud>span{font-size:10px;}
 #v6-overlay .v6-panel-header{justify-content:space-between;}}
+
+/* Beta 23: Quest bulk edit and read-only raid reports */
+.v7-quest-manager{margin:8px 0 14px;color:#cbd5e1;font-size:12px}
+.v7-bulk-toggle,.v7-bulk-panel button,.v7-bulk-pending button{background:#15253b;border:1px solid #35516d;color:#a5f3fc;border-radius:9px;padding:9px 12px;cursor:pointer;font-size:12px}
+.v7-bulk-panel{margin-top:8px;padding:12px;background:rgba(8,18,34,.9);border:1px solid #334155;border-radius:12px}
+.v7-bulk-panel p{font-size:11px;color:#94a3b8;margin-bottom:10px}
+.v7-bulk-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.v7-bulk-row select{background:#0f172a;border:1px solid #475569;border-radius:8px;color:#e2e8f0;padding:9px;min-width:110px;flex:1}
+.v7-bulk-panel .v7-bulk-danger{color:#fda4af;border-color:#be123c}
+.v7-bulk-pending{background:rgba(251,191,36,.10);padding:8px;border-radius:10px;color:#fcd34d;font-size:11px;margin-top:7px}
+#quest-list .v7-manage-active{position:relative}
+#quest-list .v7-manage-active > :not(.v7-select-quest){pointer-events:none;opacity:.75}
+#quest-list .v7-select-quest{display:flex;align-items:center;justify-content:center;min-width:38px;flex-shrink:0;position:relative;z-index:1;cursor:pointer}
+#quest-list .v7-select-quest input{width:19px;height:19px;accent-color:#22d3ee}
+.v7-battle-summary{margin-top:8px;padding:8px;border:1px solid #334155;border-radius:9px;color:#cbd5e1;font-size:11px}
+.v7-battle-summary summary{color:#67e8f9;font-weight:700;cursor:pointer}
+.v7-battle-summary p{margin:7px 0 3px}
+.v7-battle-summary ul{margin:6px 0 0;padding-left:17px;max-height:130px;overflow:auto}
+.v7-library-markbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+.v7-library-mark-jump{background:#0f172a;color:#e2e8f0;border:1px solid #475569;border-radius:9px;padding:9px;min-width:130px;max-width:100%}
+.v7-library-continue{border-color:rgba(34,211,238,.5)!important}
+
+.v7-bulk-custom{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.v7-bulk-custom[hidden]{display:none}
+.v7-bulk-custom label{display:flex;align-items:center;gap:4px;border-radius:7px;border:1px solid #475569;padding:5px 7px;color:#cbd5e1;font-size:11px}
+
+/* Beta 24: compact Quest Board manager, no standalone button after filters. */
+.v7-quest-board-header{align-items:flex-start}
+.v7-quest-board-actions{flex-wrap:wrap;justify-content:flex-end;gap:6px}
+.v7-quest-manager{margin:0;display:inline-flex;align-items:center}
+.v7-quest-manager .v7-bulk-toggle{white-space:nowrap;padding:8px 10px;min-height:36px;font-weight:700;background:rgba(34,211,238,.07);border-color:rgba(34,211,238,.33)}
+.v7-quest-manager .v7-bulk-toggle[aria-expanded="true"]{background:rgba(34,211,238,.19);border-color:#22d3ee}
+.v7-quest-manager-panel[hidden]{display:none!important}
+.v7-quest-manager-panel{margin:4px 0 12px;color:#cbd5e1;font-size:12px;max-height:65vh;overflow-y:auto}
+.v7-quest-manager-panel .v7-bulk-panel{margin-top:0}
+.v7-quest-manager-panel .v7-bulk-row button,.v7-quest-manager-panel .v7-bulk-pending button{background:#15253b;border:1px solid #35516d;color:#a5f3fc;border-radius:9px;padding:9px 12px;cursor:pointer;font-size:12px}
+.v7-bulk-helper{margin:6px 0 10px!important;color:#94a3b8}
+@media(max-width:520px){
+ .v7-quest-board-header{flex-direction:column;align-items:stretch}
+ .v7-quest-board-actions{width:100%;justify-content:flex-end}
+ .v7-quest-board-actions>button,.v7-quest-board-actions>.v7-quest-manager{flex:0 1 auto}
+ .v7-quest-board-actions>button{padding:7px 9px!important;font-size:11px!important}
+}
+/* In-app messages avoid browser's 'This page says' popup for non-destructive notices. */
+.v7-ui-toast{position:fixed;z-index:12000;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);max-width:min(92vw,480px);padding:12px 17px;border:1px solid rgba(34,211,238,.55);border-radius:12px;background:#082235;color:#e0f2fe;box-shadow:0 12px 34px #000b;font-size:13px;line-height:1.5;pointer-events:none;text-align:center}
+.v7-quest-dialog-backdrop{position:fixed;inset:0;z-index:15000;background:#020617d9;display:flex;align-items:center;justify-content:center;padding:16px}
+.v7-quest-dialog{width:min(100%,420px);background:#0c1a30;border:1px solid #297a91;border-radius:16px;padding:18px;color:#e2e8f0;box-shadow:0 20px 60px #000b}
+.v7-quest-dialog p{margin:8px 0 16px;white-space:pre-wrap;line-height:1.55;font-size:13px}
+.v7-quest-dialog input{width:100%;border:1px solid #35516d;background:#020617;border-radius:9px;color:#e2e8f0;padding:10px;margin-bottom:12px}
+.v7-quest-dialog-actions{display:flex;justify-content:flex-end;gap:10px}
+.v7-quest-dialog-actions button{border-radius:9px;padding:9px 13px;background:#14344a;border:1px solid #2a6579;color:#d7f7ff}
+.v7-quest-dialog-actions button:last-child{background:#0e7490;color:white}
+.v7-quest-dialog-actions button:disabled{opacity:.4;cursor:not-allowed}

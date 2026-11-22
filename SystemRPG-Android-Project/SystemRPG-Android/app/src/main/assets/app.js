@@ -1398,7 +1398,8 @@ function checkRealDayRollover() {
         const key = date.toISOString().slice(0,10);
         if (gameState.history.evaluations[key]) continue;
         const snap = gameState.dailyScheduleSnapshots && gameState.dailyScheduleSnapshots[key];
-        const quests = gameState.quests.filter(q => q.category === 'Daily Quest' && isQuestActiveOnDate(q,key));
+        const schedule = (window.V7Quality && window.V7Quality.questsForDate) ? window.V7Quality.questsForDate(key) : gameState.quests;
+        const quests = schedule.filter(q => q.category === 'Daily Quest' && isQuestActiveOnDate(q,key));
         const total = snap && Array.isArray(snap.questIds) ? snap.questIds.length : quests.length;
         const done = snap && Array.isArray(snap.completedIds) ?
             snap.completedIds.filter(id => snap.questIds.includes(id)).length :
@@ -1439,6 +1440,9 @@ function checkRealDayRollover() {
         gameState.history.evaluations[key] = {dateStr:key, doneCount:done, totalDaily:total, pct, thresholdPct:threshold, streakStatus:status, evaluatedAt:new Date().toISOString(), automatic:true, estimated};
         settled++;
     }
+    // Apply confirmed bulk Quest changes only AFTER evaluating the old day,
+    // but BEFORE creating the new weekly/day plan. Daily snapshots stay intact.
+    if (window.V7Quality && window.V7Quality.applyPendingQuestOps) window.V7Quality.applyPendingQuestOps(today);
     // Finalize the previous raid after all pending Daily Evaluations.
     if (window.V7Raid) window.V7Raid.advance(today);
     // Chronicle archives are derived from settled evaluations and stored in
@@ -3062,6 +3066,7 @@ function questSortClearTimer() {
     questSort.timer = null;
 }
 function questSortStart(event) {
+    if (window.V7Quality && window.V7Quality.isManaging()) return;
     if (event.button !== undefined && event.button !== 0) return;
     if (questSort.active || questSort.timer) return;
     if (event.target.closest('button, input, textarea, select, a, [contenteditable="true"]')) return;
@@ -3369,6 +3374,7 @@ function renderQuests() {
         `;
         container.appendChild(card);
     });
+    if (window.V7Quality && window.V7Quality.decorateQuestCards) window.V7Quality.decorateQuestCards();
     renderArmory();
     renderRedeemHistory();
 }
@@ -9547,8 +9553,20 @@ function toggleV6ArchiveAudio() {
 
 const V6 = (() => {
  const JKEY='system_rpg_v6_journal', LKEY='system_rpg_v6_library';
+ function v6Notice(message){
+  let n=document.getElementById('v7-ui-toast');
+  if(!n){n=document.createElement('div');n.id='v7-ui-toast';n.className='v7-ui-toast';n.setAttribute('role','status');n.setAttribute('aria-live','polite');document.body.appendChild(n);}
+  n.textContent=message;clearTimeout(v6Notice.timer);v6Notice.timer=setTimeout(()=>n.remove(),3700);
+ }
+ function v6CategoryLabel(cat){const m={
+  'Self Development':['Pengembangan Diri','Self Development','自己成長'],
+  'Habits':['Kebiasaan','Habits','習慣'], 'Productivity':['Produktivitas','Productivity','生産性'],
+  'Philosophy':['Filsafat','Philosophy','哲学'], 'Psychology':['Psikologi','Psychology','心理学'],
+  'Finance':['Keuangan','Finance','お金']};const x=m[cat];return x?v7LibraryT(x[0],x[1],x[2]):cat;}
+
+ function v7LibraryT(id,en,ja){const lang=v6UiLang();return lang==='en'?en:lang==='ja'?ja:id;}
  const read=(k,fallback)=>{try{const x=JSON.parse(localStorage.getItem(k));return x&&typeof x==='object'?x:fallback;}catch(e){return fallback;}};
- const write=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true;}catch(e){alert('Penyimpanan gagal. Periksa ruang browser atau izin penyimpanan.');return false;}};
+ const write=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true;}catch(e){v6Notice(v7LibraryT('Penyimpanan gagal. Periksa ruang penyimpanan atau izin aplikasi.','Could not save. Check storage space or permissions.','保存できませんでした。空き容量またはアプリの権限を確認してください。'));return false;}};
  const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const articles=[
  ['7-habits','The 7 Habits of Highly Effective People','Self Development','Membangun karakter melalui pilihan sadar.','7 menit','Efektivitas jangka panjang dimulai dari karakter, bukan trik untuk terlihat sibuk. Kebiasaan proaktif mengajak kita memusatkan energi pada tindakan yang bisa kita kendalikan, alih-alih terus menyalahkan keadaan.','Memulai dengan tujuan akhir berarti membayangkan nilai dan kontribusi yang ingin kita tinggalkan. Dari gambaran itu, kita dapat menyusun prioritas yang konsisten, bukan sekadar merespons hal yang mendesak.','Hubungan yang sehat memerlukan upaya memahami sudut pandang orang lain, mencari manfaat bersama, dan bekerja sama tanpa menghapus perbedaan.','Pilih satu keputusan hari ini yang selaras dengan nilai jangka panjangmu.'],
@@ -9624,22 +9642,35 @@ const V6 = (() => {
   renderJournal();document.getElementById('v6-save-status').textContent='✓ Journal saved'+reward;
   if(typeof renderHistory==='function')renderHistory();
  }
- function openLibrary(){articleId=null;filter='All';renderLibrary();show('KNOWLEDGE LIBRARY');requestAnimationFrame(()=>{const overlay=document.getElementById('v6-overlay');if(overlay)overlay.scrollTop=0;const content=document.getElementById('v6-body');if(content)content.scrollTop=0;});}
+ function openLibrary(){articleId=null;filter='All';renderLibrary();show(v7LibraryT('KNOWLEDGE LIBRARY','KNOWLEDGE LIBRARY','知識ライブラリー'));requestAnimationFrame(()=>{const overlay=document.getElementById('v6-overlay');if(overlay)overlay.scrollTop=0;const content=document.getElementById('v6-body');if(content)content.scrollTop=0;});}
  function renderLibrary(){
   const progress=read(LKEY,{}),cats=['All',...new Set(articles.map(a=>a[2]))];
-  body().innerHTML=`<div class="v6-card"><h3>📚 Knowledge Archive</h3><p>10 bacaan orisinal · 8 bab per artikel. Baca bertahap, simpan bookmark dan catatan, lanjutkan dari bab terakhir.</p><div class="v6-toolbar"><select id="v6-category">${cats.map(x=>`<option ${x===filter?'selected':''}>${esc(x)}</option>`).join('')}</select></div></div>${articles.filter(a=>filter==='All'||a[2]===filter).map(a=>{const p=progress[a[0]]||{};const n=CHAPTERS[a[0]].length;const ml=v6UiLang(),desc=ml==='id'?a[3]:(V6_CONTENT_LOCALES.metadata[a[0]]?.[ml==='ja'?1:0]||a[3]);return `<div class="v6-card"><h3>${esc(a[1])} ${p.read?'✓':''}</h3><p class="v6-muted">${esc(a[2])} · ${n} bab · ${p.bookmark?'★ Bookmark':'☆ Bookmark'}</p><p>${esc(desc)}</p><div class="v6-progress"><span style="width:${Math.min(100,Math.max(0,(Number(p.chapter)||0)/n*100))}%"></span></div><p class="v6-muted">${Math.min(n,Number(p.chapter)||0)} / ${n} bab selesai</p><button class="v6-action" onclick="V6.openArticle('${a[0]}')">${p.chapter?'Lanjutkan membaca':'Mulai membaca'} →</button></div>`}).join('')}`;
+  const recentlyRead=articles.map(a=>({a,p:progress[a[0]]||{}})).filter(x=>x.p.updatedAt)
+    .sort((x,y)=>String(y.p.updatedAt).localeCompare(String(x.p.updatedAt)))[0];
+  const continueBox=recentlyRead ? `<div class="v6-card v7-library-continue"><strong>📖 ${esc(v7LibraryT('Lanjutkan Bacaan Terakhir','Continue Last Reading','前回の続きから読む'))}</strong><p>${esc(recentlyRead.a[1])}</p><p class="v6-muted">${esc(v7LibraryT('Bab terakhir','Last chapter','最後の章'))}: ${Math.max(1,Number(recentlyRead.p.currentChapter||0)+1)}</p><button type="button" class="v6-action" onclick="V6.openArticle('${recentlyRead.a[0]}')">${esc(v7LibraryT('Lanjutkan Membaca →','Resume Reading →','続きを読む →'))}</button></div>` : '';
+
+  body().innerHTML=continueBox+`<div class="v6-card"><h3>📚 ${esc(v7LibraryT('Arsip Pengetahuan','Knowledge Archive','知識アーカイブ'))}</h3><p>${esc(v7LibraryT(`${articles.length} bacaan orisinal · 8 bab per bacaan. Baca bertahap, simpan penanda dan catatan, lalu lanjutkan dari bab terakhir.`, `${articles.length} original readings · 8 chapters each. Read at your own pace, save bookmarks and notes, and resume where you left off.`, `オリジナル記事${articles.length}件・各8章。自分のペースで読み、しおりやメモを保存して続きから再開できます。`))}</p><div class="v6-toolbar"><select id="v6-category">${cats.map(x=>`<option value="${esc(x)}" ${x===filter?'selected':''}>${esc(x==='All'?v7LibraryT('Semua Kategori','All Categories','すべてのカテゴリ'):v6CategoryLabel(x))}</option>`).join('')}</select></div></div>${articles.filter(a=>filter==='All'||a[2]===filter).map(a=>{const p=progress[a[0]]||{};const n=CHAPTERS[a[0]].length;const ml=v6UiLang(),desc=ml==='id'?a[3]:(V6_CONTENT_LOCALES.metadata[a[0]]?.[ml==='ja'?1:0]||a[3]);return `<div class="v6-card"><h3>${esc(a[1])} ${p.read?'✓':''}</h3><p class="v6-muted">${esc(v6CategoryLabel(a[2]))} · ${n} ${esc(v7LibraryT('bab','chapters','章'))} · ${p.bookmark?'★':'☆'} ${esc(v7LibraryT('Penanda','Bookmark','しおり'))}</p><p>${esc(desc)}</p><div class="v6-progress"><span style="width:${Math.min(100,Math.max(0,(Number(p.chapter)||0)/n*100))}%"></span></div><p class="v6-muted">${Math.min(n,Number(p.chapter)||0)} / ${n} ${esc(v7LibraryT('bab selesai','chapters completed','章を読了'))}</p><button class="v6-action" onclick="V6.openArticle('${a[0]}')">${esc(p.chapter?v7LibraryT('Lanjutkan Membaca','Continue Reading','続きを読む'):v7LibraryT('Mulai Membaca','Start Reading','読み始める'))} →</button></div>`}).join('')}`;
   localizeOverlay();
   document.getElementById('v6-category').onchange=e=>{filter=e.target.value;renderLibrary()};
  }
- function openArticle(id){
-  const a=articles.find(x=>x[0]===id);if(!a)return;articleId=id;const p=read(LKEY,{})[id]||{},chapters=(V6_CONTENT_LOCALES.chapters[id]?.[v6UiLang()]||CHAPTERS[id]),idx=Math.min(chapters.length-1,Math.max(0,Number(p.currentChapter)||0)),c=chapters[idx];
-  body().innerHTML=`<div class="v6-card v6-article"><button class="v6-action" id="v6-back">← Library</button><p class="v6-muted">${esc(a[2])} · BAB ${idx+1} / ${chapters.length}</p><h3>${esc(a[1])}</h3><div class="v6-progress"><span style="width:${Math.round((Number(p.chapter)||0)/chapters.length*100)}%"></span></div><h4>${esc(c.title)}</h4>${c.paragraphs.map(x=>`<p>${esc(x)}</p>`).join('')}<div class="v6-toolbar v6-reader-nav"><button id="v6-prev" ${idx===0?'disabled':''}>← Bab sebelumnya</button><button id="v6-next">${idx===chapters.length-1?'✓ Selesaikan artikel':'Bab berikutnya →'}</button></div><p class="v6-muted">Progress ${Math.min(chapters.length,Number(p.chapter)||0)} / ${chapters.length} bab · Reward hanya saat pertama selesai</p><label class="v6-field">Personal Notes<textarea id="v6-notes" placeholder="Catat hal yang kamu pelajari...">${esc(p.notes||'')}</textarea></label><button id="v6-bookmark" class="v6-action">${p.bookmark?'★ Bookmarked':'☆ Bookmark'}</button></div>`;
+ function openArticle(id,chapterOverride){
+  const a=articles.find(x=>x[0]===id);if(!a)return;articleId=id;const p=read(LKEY,{})[id]||{},chapters=(V6_CONTENT_LOCALES.chapters[id]?.[v6UiLang()]||CHAPTERS[id]),idx=Math.min(chapters.length-1,Math.max(0,Number(chapterOverride == null ? p.currentChapter : chapterOverride)||0)),c=chapters[idx];
+  const chapterMarks=Array.isArray(p.chapterMarks)?p.chapterMarks.filter(n=>Number.isInteger(n)&&n>=0&&n<chapters.length):[];
+  const markSelector=chapterMarks.length?`<select id="v7-library-mark-jump" class="v7-library-mark-jump"><option value="">${esc(v7LibraryT('Lompat ke bookmark bab','Jump to chapter bookmark','しおりへ移動'))}</option>${chapterMarks.map(n=>`<option value="${n}">${esc(v7LibraryT('Bab','Chapter','章'))} ${n+1}</option>`).join('')}</select>`:'';
+  body().innerHTML=`<div class="v6-card v6-article"><button class="v6-action" id="v6-back">← ${esc(v7LibraryT('Kembali ke Library','Back to Library','ライブラリーに戻る'))}</button><p class="v6-muted">${esc(v6CategoryLabel(a[2]))} · ${esc(v7LibraryT('BAB','CHAPTER','第'))} ${idx+1} / ${chapters.length}</p><h3>${esc(a[1])}</h3><div class="v6-progress"><span style="width:${Math.round((Number(p.chapter)||0)/chapters.length*100)}%"></span></div><h4>${esc(c.title)}</h4>${c.paragraphs.map(x=>`<p>${esc(x)}</p>`).join('')}<div class="v6-toolbar v6-reader-nav"><button id="v6-prev" ${idx===0?'disabled':''}>← ${esc(v7LibraryT('Bab sebelumnya','Previous Chapter','前の章'))}</button><button id="v6-next">${esc(idx===chapters.length-1?v7LibraryT('✓ Selesaikan bacaan','✓ Finish Reading','✓ 読了する'):v7LibraryT('Bab berikutnya →','Next Chapter →','次の章 →'))}</button></div><p class="v6-muted">${esc(v7LibraryT('Progres','Progress','進捗'))} ${Math.min(chapters.length,Number(p.chapter)||0)} / ${chapters.length} ${esc(v7LibraryT('bab · Hadiah hanya saat penyelesaian pertama','chapters · Rewards only on the first completion','章 · 報酬は初回読了時のみ'))}</p><label class="v6-field">${esc(v7LibraryT('Catatan Pribadi','Personal Notes','個人メモ'))}<textarea id="v6-notes" placeholder="${esc(v7LibraryT('Catat hal yang kamu pelajari...','Write down what you learned...','学んだことをメモしましょう...'))}">${esc(p.notes||'')}</textarea></label><button id="v6-bookmark" class="v6-action">${esc(p.bookmark?v7LibraryT('★ Ditandai','★ Bookmarked','★ しおり済み'):v7LibraryT('☆ Tandai Bacaan','☆ Bookmark','☆ しおり'))}</button><div class="v7-library-markbar"><button id="v7-bookmark-chapter" class="v6-action">${chapterMarks.includes(idx)?'★':'☆'} ${esc(v7LibraryT('Tandai bab ini','Bookmark this chapter','この章を保存'))}</button>${markSelector}</div><p class="v6-muted">${esc(v7LibraryT('Posisi membaca tersimpan per buku. Bookmark bab tidak memberi reward tambahan.','Reading position is saved per book. Chapter bookmarks grant no extra rewards.','読書位置は本ごとに保存。しおりによる追加報酬はありません。'))}</p></div>`;
   localizeOverlay();
   document.getElementById('v6-back').onclick=renderLibrary;
   document.getElementById('v6-prev').onclick=()=>{updateArticle({currentChapter:idx-1});openArticle(id);document.getElementById('v6-overlay').scrollTop=0;};
-  document.getElementById('v6-next').onclick=()=>{const next=Math.max(Number(p.chapter)||0,idx+1);updateArticle({chapter:next,currentChapter:Math.min(chapters.length-1,idx+1),percent:Math.round(next/chapters.length*100)});if(idx===chapters.length-1){const latest=read(LKEY,{})[id]||{};if(!latest.read){updateArticle({read:true});const key=date(),ledger=read('system_rpg_v6_read_rewards',{}),today=ledger[key]||[];if(!today.includes(id)&&today.length<2){today.push(id);ledger[key]=today;if(write('system_rpg_v6_read_rewards',ledger)){addRewards(5,0,'INT',5,true);saveState();spawnFloatingReward('📖 +5 EXP & +5 INT XP');}}}alert('📚 Artikel selesai! Catatan dan progresmu telah tersimpan.');renderLibrary();}else{openArticle(id);document.getElementById('v6-overlay').scrollTop=0;}};
+  document.getElementById('v6-next').onclick=()=>{const next=Math.max(Number(p.chapter)||0,idx+1);updateArticle({chapter:next,currentChapter:Math.min(chapters.length-1,idx+1),percent:Math.round(next/chapters.length*100)});if(idx===chapters.length-1){const latest=read(LKEY,{})[id]||{};if(!latest.read){updateArticle({read:true});const key=date(),ledger=read('system_rpg_v6_read_rewards',{}),today=ledger[key]||[];if(!today.includes(id)&&today.length<2){today.push(id);ledger[key]=today;if(write('system_rpg_v6_read_rewards',ledger)){addRewards(5,0,'INT',5,true);saveState();spawnFloatingReward('📖 +5 EXP & +5 INT XP');}}}renderLibrary();v6Notice(v7LibraryT('📚 Bacaan selesai! Catatan dan progres tersimpan.','📚 Reading completed! Your notes and progress were saved.','📚 読了しました！メモと進捗を保存しました。'));}else{openArticle(id);document.getElementById('v6-overlay').scrollTop=0;}};
   document.getElementById('v6-notes').onchange=e=>updateArticle({notes:e.target.value});
-  document.getElementById('v6-bookmark').onclick=()=>{updateArticle({bookmark:!read(LKEY,{})[id]?.bookmark});openArticle(id)};
+  document.getElementById('v6-bookmark').onclick=()=>{updateArticle({bookmark:!read(LKEY,{})[id]?.bookmark});openArticle(id,idx)};
+  document.getElementById('v7-bookmark-chapter').onclick=()=>{
+   const all=read(LKEY,{}), current=all[id]||{},marks=new Set(Array.isArray(current.chapterMarks)?current.chapterMarks:[]);
+   if(marks.has(idx))marks.delete(idx);else marks.add(idx);
+   updateArticle({chapterMarks:[...marks].sort((a,b)=>a-b),currentChapter:idx});openArticle(id,idx);
+  };
+  const jump=document.getElementById('v7-library-mark-jump');
+  if(jump)jump.onchange=e=>{if(e.target.value!==''){const at=Number(e.target.value);updateArticle({currentChapter:at});openArticle(id,at);}};
  }
  function updateArticle(patch){const all=read(LKEY,{});all[articleId]={...all[articleId],...patch,updatedAt:new Date().toISOString()};write(LKEY,all);}
  return {openJournal,openJournalAt,openLibrary,openArticle,close,refreshLanguage:()=>{if(document.getElementById('v6-overlay')?.classList.contains('hidden'))return;if(articleId){openArticle(articleId);}else if(document.getElementById('v6-category')){renderLibrary();}else{localizeOverlay();}}};
@@ -9649,7 +9680,7 @@ window.addEventListener('system-language-changed',()=>{if(typeof renderShop==='f
 
 window.addEventListener('system-language-changed',()=>{if(typeof V6!=='undefined'&&V6.refreshLanguage)V6.refreshLanguage();});
 
-function v6RefreshEntryLabels(){const l=v6UiLang();const entries=[['v6-journal-entry','HUNTER JOURNAL','Mood · Reflection · Tomorrow’s Goal','Buka Journal →','Open Journal →','日記を開く →'],['v6-library-entry','KNOWLEDGE LIBRARY','The Hunter’s Knowledge Archive · Artikel & Catatan','Buka Library →','Open Library →','ライブラリーを開く →']];for(const [id,title,sub,idBtn,enBtn,jaBtn] of entries){const e=document.getElementById(id);if(!e)continue;const btn=e.querySelector('button');if(btn)btn.textContent=l==='en'?enBtn:l==='ja'?jaBtn:idBtn;}}
+function v6RefreshEntryLabels(){const l=v6UiLang();const entries=[['v6-journal-entry','HUNTER JOURNAL','Mood · Reflection · Tomorrow’s Goal','Buka Journal →','Open Journal →','日記を開く →'],['v6-library-entry','KNOWLEDGE LIBRARY','The Hunter’s Knowledge Archive · Artikel & Catatan','Buka Library →','Open Library →','ライブラリーを開く →']];for(const [id,title,sub,idBtn,enBtn,jaBtn] of entries){const e=document.getElementById(id);if(!e)continue;const btn=e.querySelector('button');if(btn)btn.textContent=l==='en'?enBtn:l==='ja'?jaBtn:idBtn;const sub=e.querySelector('p');if(sub){sub.textContent=id==='v6-library-entry'?(l==='en'?'Hunter Knowledge Archive · Articles & Notes':l==='ja'?'ハンターの知識アーカイブ · 記事とメモ':'Arsip Pengetahuan Hunter · Artikel & Catatan'):(l==='en'?'Mood · Reflection · Tomorrow’s Goal':l==='ja'?'気分・振り返り・明日の目標':'Suasana Hati · Refleksi · Target Besok');}}}
 window.addEventListener('system-language-changed',v6RefreshEntryLabels);
 setTimeout(v6RefreshEntryLabels,0);
 
