@@ -361,6 +361,8 @@ function paintVictory(w,p) {
         // The HP bar changes at impact, not on Quest completion or on button press.
         scheduleBattle(()=>{
             if(activeBattle!==session || document.hidden || !stage.isConnected){cancelBattle();return;}
+            // Capture display progress for audio cues only. Raid math stays untouched.
+            const beforeSoundProgress = battleProgress(session.week);
             if(!session.visualOnly && !commitSeenHits(session.week,frame.map(h=>h.key))){
                 cancelBattle();render();return; // no lost or duplicate damage on save failure
             }
@@ -369,6 +371,15 @@ function paintVictory(w,p) {
             if(!session.visualOnly)paintBattleHP(session.week);
             // SFX plays at the precise frame of visual HP impact; replay is still free.
             try { if(typeof SoundFX!=='undefined' && SoundFX.playBattleAttack) SoundFX.playBattleAttack(session.step%ATTACKS.length,'impact'); } catch (_) {}
+            // Sound does NOT mutate game progress and is also available in free Replay.
+            try {
+                if(typeof SoundFX!=='undefined' && SoundFX.playBossReaction) {
+                    const afterSoundProgress = session.visualOnly ? null : battleProgress(session.week);
+                    const target = session.week.mode==='challenge' ? session.week.challengeTarget : session.week.normalTarget;
+                    const crossedVictory = afterSoundProgress && beforeSoundProgress.displayedDamage < target && afterSoundProgress.displayedDamage >= target;
+                    SoundFX.playBossReaction(session.week.bossId, crossedVictory ? 'defeat' : 'hit');
+                }
+            } catch (_) {}
             session.step++;
             scheduleBattle(()=>playBattleFrame(session),session.reduced?110:760);
         },session.reduced?0:440);

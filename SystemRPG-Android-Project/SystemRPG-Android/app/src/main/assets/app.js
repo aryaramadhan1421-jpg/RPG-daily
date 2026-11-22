@@ -85,56 +85,93 @@ const SoundFX = {
         } catch (_) {} // Sound must never interfere with saving or Quest progress.
     },
 
-    playBattleAttack(moveIndex, phase) {
-        if (this.muted || this.battleVolume <= 0) return;
+    // Original offline sword and Boss sounds. Playing them NEVER writes gameState.
+    _combatClips: null,
+    primeCombatClips() {
+        if (this._combatClips || typeof Audio !== 'function') return;
+        this._combatClips = Object.create(null);
+        const names = [
+            'sword-shadow-swing','sword-shadow-impact',
+            'sword-phantom-swing','sword-phantom-impact',
+            'sword-abyss-swing','sword-abyss-impact',
+            'boss-beast-hit','boss-beast-defeat','boss-stone-hit','boss-stone-defeat',
+            'boss-armor-hit','boss-armor-defeat','boss-arcane-hit','boss-arcane-defeat'
+        ];
+        for (const name of names) {
+            try {
+                const clip = new Audio('sfx/' + name + '.ogg');
+                clip.preload = 'auto';
+                clip.load();
+                this._combatClips[name] = clip;
+            } catch (_) { /* Audio remains optional. */ }
+        }
+    },
+    _playCombatClip(name, volume = 0.8, rate = 1) {
+        if (this.muted || this.battleVolume <= 0) return false;
+        try {
+            this.primeCombatClips();
+            const template = this._combatClips && this._combatClips[name];
+            if (!template || template.readyState < 2) return false;
+            const clip = template.cloneNode(true);
+            clip.volume = Math.max(0, Math.min(1, volume * this.battleVolume));
+            clip.playbackRate = Math.max(0.55, Math.min(1.6, rate));
+            const result = clip.play();
+            if (result && typeof result.catch === 'function') result.catch(() => {});
+            return true;
+        } catch (_) { return false; }
+    },
+    // Fallback when local audio is still loading or the device cannot decode OGG.
+    _battleToneFallback(impact = false) {
         try {
             this.init();
-            const now = this.ctx.currentTime;
-            const move = ((Number(moveIndex) || 0) % 3 + 3) % 3;
-            const impact = phase === 'impact';
-            const voice = [
-                {wind:[1400,480,0.13], hit:[260,90,0.20]},  // Shadow Slash
-                {wind:[1850,720,0.10], hit:[480,150,0.18]}, // Phantom Strike
-                {wind:[440,930,0.24], hit:[145,55,0.34]}    // Abyss Breaker
-            ][move];
-            const [startHz, endHz, duration] = impact ? voice.hit : voice.wind;
-            const strength = this.battleVolume * (impact ? 0.23 : 0.13);
-            const osc = this.ctx.createOscillator();
-            const envelope = this.ctx.createGain();
-            const filter = this.ctx.createBiquadFilter();
+            const ctx = this.ctx, now = ctx.currentTime;
+            const osc = ctx.createOscillator(), gain = ctx.createGain();
             osc.type = impact ? 'triangle' : 'sawtooth';
-            osc.frequency.setValueAtTime(startHz, now);
-            osc.frequency.exponentialRampToValueAtTime(endHz, now + duration);
-            filter.type = 'lowpass';
-            filter.frequency.value = impact ? 2700 : 3800;
-            envelope.gain.setValueAtTime(0.0001, now);
-            envelope.gain.linearRampToValueAtTime(strength, now + (impact ? 0.008 : 0.025));
-            envelope.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-            osc.connect(filter); filter.connect(envelope); envelope.connect(this.sfxOutput);
-            osc.start(now); osc.stop(now + duration + 0.015);
-            // Small filtered noise burst for sword whoosh and a crisp blade impact.
-            const noiseDuration = impact ? 0.105 : 0.15;
-            if (!this.battleNoise || this.battleNoise.sampleRate !== this.ctx.sampleRate) {
-                const length = Math.ceil(this.ctx.sampleRate * 0.22);
-                const buffer = this.ctx.createBuffer(1, length, this.ctx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i=0;i<length;i++) data[i] = (Math.random()*2-1)*0.45;
-                this.battleNoise = buffer;
-            }
-            const noise = this.ctx.createBufferSource();
-            const noiseFilter = this.ctx.createBiquadFilter();
-            const noiseGain = this.ctx.createGain();
-            noise.buffer = this.battleNoise;
-            noiseFilter.type = 'bandpass';
-            noiseFilter.frequency.setValueAtTime(impact ? 1450 : 2400, now);
-            noiseFilter.frequency.exponentialRampToValueAtTime(impact ? 650 : 950, now + noiseDuration);
-            noiseFilter.Q.value = 0.75;
-            noiseGain.gain.setValueAtTime(0.0001,now);
-            noiseGain.gain.linearRampToValueAtTime(this.battleVolume*(impact ? 0.23 : 0.17),now+0.012);
-            noiseGain.gain.exponentialRampToValueAtTime(0.0001,now+noiseDuration);
-            noise.connect(noiseFilter);noiseFilter.connect(noiseGain);noiseGain.connect(this.sfxOutput);
-            noise.start(now); noise.stop(now+noiseDuration+0.01);
-        } catch (_) {} // Battle effects are cosmetic and must never change damage.
+            osc.frequency.setValueAtTime(impact ? 1650 : 2600, now);
+            osc.frequency.exponentialRampToValueAtTime(impact ? 800 : 720, now + (impact ? .19 : .14));
+            gain.gain.setValueAtTime(.14 * this.battleVolume, now);
+            gain.gain.exponentialRampToValueAtTime(.001, now + (impact ? .24 : .19));
+            osc.connect(gain);gain.connect(this.sfxOutput);
+            osc.start(now);osc.stop(now + (impact ? .25 : .20));
+        } catch (_) {}
+    },
+    playBattleAttack(moveIndex, phase) {
+        if (this.muted || this.battleVolume <= 0) return;
+        const move = ((Number(moveIndex) || 0) % 3 + 3) % 3;
+        const kind = ['shadow','phantom','abyss'][move];
+        const impact = phase === 'impact';
+        if (!this._playCombatClip('sword-' + kind + (impact ? '-impact' : '-swing'), impact ? .74 : .68)) {
+            this._battleToneFallback(impact);
+        }
+    },
+    playBossReaction(bossId, phase = 'hit') {
+        if (this.muted || this.battleVolume <= 0) return;
+        const voices = {
+            fenrir: ['beast',.98], golem:['stone',.86],
+            hollow:['armor',1.02], raven:['arcane',1.28],
+            dragon:['beast',.64], warden:['armor',.76],
+            queen:['arcane',.98], seraph:['arcane',1.43],
+            void:['beast',.57], architect:['arcane',.76]
+        };
+        const [family,rate] = voices[String(bossId)] || ['armor',1];
+        const kind = phase === 'defeat' ? 'defeat' : 'hit';
+        if (!this._playCombatClip('boss-' + family + '-' + kind, kind==='defeat'?.85:.43, rate)) {
+            // Short synthesized fallback if the offline audio asset is still loading.
+            try {
+                this.init();
+                const ctx=this.ctx, now=ctx.currentTime;
+                const osc=ctx.createOscillator(),gain=ctx.createGain();
+                const base=family==='beast'?105:family==='stone'?130:family==='armor'?450:650;
+                const duration=kind==='defeat'?.55:.20;
+                osc.type=family==='armor'||family==='arcane'?'triangle':'sawtooth';
+                osc.frequency.setValueAtTime(base*rate,now);
+                osc.frequency.exponentialRampToValueAtTime(Math.max(40,base*rate*.48),now+duration);
+                gain.gain.setValueAtTime((kind==='defeat'?.18:.10)*this.battleVolume,now);
+                gain.gain.exponentialRampToValueAtTime(.001,now+duration);
+                osc.connect(gain);gain.connect(this.sfxOutput);
+                osc.start(now);osc.stop(now+duration+.01);
+            } catch (_) {}
+        }
     },
 
     playUndo() {
@@ -8274,6 +8311,8 @@ function finishFingerprintUnlock() {
     }
 })();
 
+try { if (typeof SoundFX !== 'undefined') SoundFX.primeCombatClips(); } catch (_) {}
+
 const TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
 
 // =========================================================
@@ -8337,7 +8376,7 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
         }
     }
 
-    function switchAndHighlightFeature(tabName, targetSelectors) {
+    function switchAndHighlightFeature(tabName, targetSelectors, dungeonSubmode) {
         clearTutorialSpotlight();
 
         if (tabName) {
@@ -8349,6 +8388,11 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
             }
         }
 
+        // Library is inside Dungeon > Flashcard, never in Status.
+        // Select the real subtab before searching for a visible tutorial target.
+        if (tabName === 'dungeon' && dungeonSubmode && typeof switchDungeonSubMode === 'function') {
+            try { switchDungeonSubMode(dungeonSubmode); } catch (_) {}
+        }
         setTimeout(() => {
             if (!Array.isArray(targetSelectors)) return;
             for (const sel of targetSelectors) {
@@ -8367,7 +8411,18 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
                     }
                     el.style.zIndex = '999991';
                     highlightedEl = el;
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Use predictable scrolling; the bottom tutorial card may cover
+                    // end-of-section items such as Knowledge Library.
+                    el.scrollIntoView({ behavior: 'auto', block: 'center' });
+                    const tutorialRoot = document.getElementById('sysrpg-force-tutorial');
+                    const tutorialCard = tutorialRoot && tutorialRoot.firstElementChild;
+                    if (tutorialRoot && tutorialCard) {
+                        tutorialRoot.style.alignItems = 'flex-end';
+                        const featureBox = el.getBoundingClientRect();
+                        const cardBox = tutorialCard.getBoundingClientRect();
+                        const overlaps = featureBox.top < cardBox.bottom && featureBox.bottom > cardBox.top;
+                        if (overlaps) tutorialRoot.style.alignItems = 'flex-start';
+                    }
                     break;
                 }
             }
@@ -8376,52 +8431,70 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
 
     const TUT_DATA = {
         id: [
-            {"tab": "status", "targets": ["#hp-bar", "#player-name-display"], "icon": "⚔️", "title": "Profil Hunter", "desc": "Pantau HP, EXP, Level, Rank, dan atribut STR/INT/WIS/CHR. HP dapat berubah karena hasil evaluasi dan aktivitas tertentu.", "tip": "Periksa status sebelum dan sesudah aktivitas."},
-            {"tab": "quests", "targets": ["#quest-list"], "icon": "📋", "title": "Quest Board & Target Streak", "desc": "Centang Quest yang selesai. Quest selesai otomatis pindah ke bawah. Target Streak tidak harus 80%: atur sendiri persentasenya di STATUS.", "tip": "Target saat ini: {threshold}%."},
-            {"tab": "quests", "targets": ["#quest-list"], "icon": "✋", "title": "Atur Urutan & Jadwal Quest", "desc": "Tekan dan tahan kartu Quest untuk mengubah urutan. Kamu juga bisa membuat, mengedit, dan memilih hari aktif Quest.", "tip": "Jangan menghapus data aplikasi untuk memperbaiki tampilan."},
-            {"tab": "status", "targets": ["#input-streak-threshold", "#v6-auto-day-description"], "icon": "🎯", "title": "Pengaturan Target Harian", "desc": "Atur ambang Streak sesuai kebutuhanmu. Pengaturan ini memengaruhi evaluasi otomatis saat pergantian tanggal.", "tip": "Target yang sedang digunakan: {threshold}%."},
-            {"tab": "status", "targets": ["#v6-auto-day-description", "#history-log-list"], "icon": "🌅", "title": "Pergantian Hari Otomatis", "desc": "Sistem mengevaluasi Quest secara otomatis ketika tanggal HP berganti dan aplikasi kembali aktif. Tidak ada tombol Evaluasi & Lanjut Hari yang perlu ditekan.", "tip": "Cek laporan evaluasi dan perubahan HP/Streak di History."},
-            {"tab": "status", "targets": ["#oracle-quote-text", "#btn-claim-oracle"], "icon": "🔮", "title": "Oracle & Petuah Harian", "desc": "Oracle menampilkan petuah sesuai bahasa aplikasi. Ganti kutipan untuk inspirasi baru dan klaim bonus harian satu kali.", "tip": "Kutipan buatan sendiri tetap tampil sesuai bahasa saat kamu menulisnya."},
-            {"tab": "dungeon", "targets": ["#dungeon-timer-text", "#tab-content-dungeon"], "icon": "⏳", "title": "Dungeon Focus & Audio", "desc": "Gunakan timer fokus untuk belajar atau bekerja. Di Dungeon juga tersedia PDF Reader dan Anime Lo-Fi untuk menemani sesi.", "tip": "Mengakhiri sesi lebih awal dapat memicu penalti HP."},
-            {"tab": "dungeon", "targets": ["#dungeon-subtab-flashcard"], "icon": "🃏", "title": "Flashcard & Review", "desc": "Belajar dengan Flashcard, pilihan jawaban, dan jadwal pengulangan. Buka mode Flashcard di Dungeon untuk membuat deck dan meninjau kartu jatuh tempo.", "tip": "Latihan bebas tersedia untuk mengulang kartu di luar jadwal."},
-            {"tab": "status", "targets": ["#v6-journal-entry"], "icon": "📓", "title": "Hunter Journal & History", "desc": "Tulis refleksi, suasana hati, dan rencana besok di Journal. History mencatat aktivitas dan laporan evaluasi harian.", "tip": "Journal opsional, tetapi berguna untuk melihat perkembangan."},
-            {"tab": "status", "targets": ["#v6-library-entry"], "icon": "📚", "title": "Knowledge Library", "desc": "Buka Library untuk membaca materi pengembangan diri dan menyimpan catatan belajar.", "tip": "Bahasa materi mengikuti ketersediaan terjemahan."},
-            {"tab": "shop", "targets": ["#shop-items-container"], "icon": "🛒", "title": "System Shop", "desc": "Tukar Gold dengan item pemulih HP, relic, atau hadiah yang tersedia di Shop.", "tip": "Periksa saldo Gold sebelum membeli."},
-            {"tab": "treasury", "targets": ["#tr-net-balance"], "icon": "💰", "title": "Treasury & Keuangan", "desc": "Catat pemasukan dan pengeluaran, pantau saldo, dan lihat ringkasan grafik.", "tip": "Transaksi bisa memberi bonus progres sesuai aturan sistem."},
-            {"tab": "status", "targets": ["#btn-font-settings"], "icon": "💾", "title": "Settings: Save & Load Game", "desc": "Buka Settings (ikon roda gigi) untuk Save Game ke slot, Load Game dari slot, dan ekspor backup JSON ke perangkat.", "tip": "Slot di aplikasi bisa hilang jika data aplikasi dihapus; simpan juga backup eksternal."},
-            {"tab": "status", "targets": ["#rem-time-pagi", "#v6-auto-day-description"], "icon": "🔔", "title": "Pengingat & Notifikasi", "desc": "Atur jadwal pengingat di STATUS. Notifikasi saat layar terkunci bergantung pada izin alarm/notifikasi dan pembatasan baterai Android.", "tip": "Jika notifikasi terlambat, periksa izin dan pengaturan baterai HP."},
+            {"tab": "status", "targets": ["#hp-bar", "#player-name-display"], "icon": "⚔️", "title": "Profil Hunter", "desc": "Pantau HP, EXP, Level, Rank, dan atribut STR/INT/WIS/CHR. HP dapat berubah karena hasil evaluasi dan aktivitas tertentu.", "tip": "Periksa status sebelum dan sesudah aktivitas."} ,
+            {"tab": "status", "targets": ["#hp-bar", "#player-name-display"], "icon": "❤️", "title": "HP dan Streak Berbeda", "desc": "HP tidak mengikuti target Streak. Habits 100% = tanpa penalti. Jika kurang: 90–99% = −5, 80–89% = −10, 70–79% = −15, 50–69% = −20, 0–49% = −25 HP dasar (dapat dipengaruhi WIS).", "tip": "Target Streak yang bisa diatur hanya menentukan apakah Streak bertahan."} ,
+            {"tab": "quests", "targets": ["#quest-list"], "icon": "📋", "title": "Quest Board & Target Streak", "desc": "Centang Quest yang selesai. Quest selesai otomatis pindah ke bawah. Target Streak tidak harus 80%: atur sendiri persentasenya di STATUS.", "tip": "Target saat ini: {threshold}%."} ,
+            {"tab": "quests", "targets": ["#quest-list"], "icon": "✋", "title": "Atur Urutan & Jadwal Quest", "desc": "Tekan dan tahan kartu Quest untuk mengubah urutan. Kamu juga bisa membuat, mengedit, dan memilih hari aktif Quest.", "tip": "Jangan menghapus data aplikasi untuk memperbaiki tampilan."} ,
+            {"tab": "status", "targets": ["#input-streak-threshold", "#hp-bar"], "icon": "🎯", "title": "Target Streak Fleksibel", "desc": "Atur persentase penyelesaian untuk mempertahankan Streak. Target ini tidak mengubah penalti HP harian.", "tip": "Target Streak saat ini: {threshold}%."} ,
+            {"tab": "status", "targets": ["#oracle-quote-text", "#btn-claim-oracle"], "icon": "🔮", "title": "Oracle & Petuah Harian", "desc": "Oracle menampilkan petuah sesuai bahasa aplikasi. Ganti kutipan untuk inspirasi baru dan klaim bonus harian satu kali.", "tip": "Kutipan buatan sendiri tetap tampil sesuai bahasa saat kamu menulisnya."} ,
+            {"tab": "dungeon", "targets": ["#dungeon-timer-text", "#tab-content-dungeon"], "icon": "⏳", "title": "Dungeon Focus & Audio", "desc": "Gunakan timer fokus untuk belajar atau bekerja. Di Dungeon juga tersedia PDF Reader dan Anime Lo-Fi untuk menemani sesi.", "tip": "Mengakhiri sesi lebih awal dapat memicu penalti HP.", "submode": "focus"} ,
+            {"tab": "dungeon", "submode": "focus", "targets": ["#rpg-lofi-track", "#dungeon-mode-focus"], "icon": "🎧", "title": "Anime Lo-Fi & Focus", "desc": "Pilih soundtrack offline atau Classic Synth di Dungeon untuk menemani sesi fokus. Semua musik dapat dimainkan tanpa internet.", "tip": "Pilih lagu yang paling nyaman untuk belajar."} ,
+            {"tab": "dungeon", "targets": ["#dungeon-subtab-flashcard"], "icon": "🃏", "title": "Flashcard & Review", "desc": "Belajar dengan Flashcard, pilihan jawaban, dan jadwal pengulangan. Buka mode Flashcard di Dungeon untuk membuat deck dan meninjau kartu jatuh tempo.", "tip": "Latihan bebas tersedia untuk mengulang kartu di luar jadwal.", "submode": "flashcard"} ,
+            {"tab": "status", "targets": ["#v6-journal-entry", "#history-log-list"], "icon": "📓", "title": "Hunter Journal & History", "desc": "Tulis refleksi, suasana hati, dan rencana besok di Journal. History mencatat aktivitas dan laporan evaluasi harian.", "tip": "Journal opsional, tetapi berguna untuk melihat perkembangan."} ,
+            {"tab": "status", "targets": ["#v7cj-tab-insights", "#v7cj"], "icon": "📊", "title": "Weekly Insights & Hunter Chronicle", "desc": "Buka tombol Insight Mingguan untuk statistik Habits, atau Hunter Chronicle untuk kisah mingguan. Keduanya membaca History, tidak mengubah HP, Streak, atau Raid.", "tip": "Jika riwayat belum lengkap, aplikasi menandai data tidak tersedia."} ,
+            {"tab": "dungeon", "targets": ["#v6-library-entry"], "icon": "📚", "title": "Knowledge Library", "desc": "Buka Library untuk membaca materi pengembangan diri dan menyimpan catatan belajar.", "tip": "Bahasa materi mengikuti ketersediaan terjemahan.", "submode": "flashcard"} ,
+            {"tab": "dungeon", "submode": "weekly", "targets": ["#dungeon-subtab-weekly", "#v7-raid-content"], "icon": "🐉", "title": "Weekly Boss & Adaptive Raid", "desc": "Setiap Daily Quest memberi damage otomatis hanya sekali per tanggal. Potensi maksimum 100 damage per hari aktif; Normal Clear 40% dan Challenge Clear 60%.", "tip": "Buka Dungeon → Weekly Boss untuk melihat progres. Boss tidak menyerang HP Hunter."} ,
+            {"tab": "dungeon", "submode": "weekly", "targets": ["#v7-visual-replay", "#v7-watch-battle"], "icon": "⚔️", "title": "Saksikan Pertarungan & Replay", "desc": "Saksikan serangan yang menunggu untuk melihat HP Boss berkurang saat tebasan. Battle Replay boleh ditonton berkali-kali tanpa damage atau hadiah tambahan.", "tip": "Centang ulang Quest yang sama tidak membuat serangan baru."} ,
+            {"tab": "dungeon", "submode": "weekly", "targets": [".v7-codex-row", "#v7-raid-content"], "icon": "📖", "title": "Abyss Codex & Boss Lore", "desc": "Baca fragmen cerita Boss yang terbuka lewat pertemuan, kemenangan pertama, kemenangan ketiga, dan kelima. Kisah tetap bisa dibaca setelah melewati intro.", "tip": "Cerita dan Raid Archive tersedia di menu Weekly Boss."} ,
+            {"tab": "shop", "targets": ["#shop-items-container"], "icon": "🛒", "title": "System Shop", "desc": "Belanjakan Gold untuk Potion, Elixir, Streak Freeze, dan hadiah pribadi. Harga dasar item Survival terkunci.", "tip": "Periksa saldo Gold sebelum membeli."} ,
+            {"tab": "shop", "targets": ["#v7-shop-exchange", "#v7-appearance-details"], "icon": "💠", "title": "Raid Cosmetics & Hunter Appearance", "desc": "Gunakan Raid Crystals untuk membeli Aura atau Portrait Frame alternatif. Frame Rank terbuka gratis saat naik Rank. Preview barang sebelum membeli, lalu atur Frame dan Aura di Shop.", "tip": "Aura dan Frame hanya tampilan, bukan peningkat damage atau atribut."} ,
+            {"tab": "treasury", "targets": ["#tr-net-balance"], "icon": "💰", "title": "Treasury & Keuangan", "desc": "Catat pemasukan dan pengeluaran, pantau saldo, dan lihat ringkasan grafik.", "tip": "Transaksi bisa memberi bonus progres sesuai aturan sistem."} ,
+            {"tab": "status", "targets": ["#btn-font-settings"], "icon": "💾", "title": "Settings: Save & Load Game", "desc": "Buka Settings (ikon roda gigi) untuk Save Game ke slot, Load Game dari slot, dan ekspor backup JSON ke perangkat.", "tip": "Slot di aplikasi bisa hilang jika data aplikasi dihapus; simpan juga backup eksternal."} ,
+            {"tab": "status", "targets": ["#rem-time-pagi", "#v6-auto-day-description"], "icon": "🔔", "title": "Pengingat & Notifikasi", "desc": "Atur jadwal pengingat di STATUS. Notifikasi saat layar terkunci bergantung pada izin alarm/notifikasi dan pembatasan baterai Android.", "tip": "Jika notifikasi terlambat, periksa izin dan pengaturan baterai HP."} ,
         ],
         en: [
-            {"tab": "status", "targets": ["#hp-bar", "#player-name-display"], "icon": "⚔️", "title": "Hunter Profile", "desc": "Track HP, XP, Level, Rank, and STR/INT/WIS/CHR. HP can change after evaluations and certain activities.", "tip": "Check your status before and after activities."},
-            {"tab": "quests", "targets": ["#quest-list"], "icon": "📋", "title": "Quest Board & Streak Goal", "desc": "Check off completed quests; they move to the bottom. The Streak target is adjustable in STATUS, not fixed at 80%.", "tip": "Current target: {threshold}%."},
-            {"tab": "quests", "targets": ["#quest-list"], "icon": "✋", "title": "Reorder & Schedule Quests", "desc": "Long-press a quest card to reorder it. You can also add, edit, and set active weekdays for quests.", "tip": "Never clear app data just to fix the display."},
-            {"tab": "status", "targets": ["#input-streak-threshold", "#v6-auto-day-description"], "icon": "🎯", "title": "Daily Target Settings", "desc": "Set your own Streak threshold. It affects the automatic evaluation when the date changes.", "tip": "Active target: {threshold}%."},
-            {"tab": "status", "targets": ["#v6-auto-day-description", "#history-log-list"], "icon": "🌅", "title": "Automatic Daily Rollover", "desc": "The system evaluates quests automatically after the phone date changes and the app resumes. There is no manual Evaluate & Advance Day button.", "tip": "Review evaluations and HP/Streak changes in History."},
-            {"tab": "status", "targets": ["#oracle-quote-text", "#btn-claim-oracle"], "icon": "🔮", "title": "Oracle & Daily Wisdom", "desc": "Oracle shows wisdom in your app language. Shuffle quotes for inspiration and claim the daily bonus once.", "tip": "Custom quotes keep the language in which you wrote them."},
-            {"tab": "dungeon", "targets": ["#dungeon-timer-text", "#tab-content-dungeon"], "icon": "⏳", "title": "Dungeon Focus & Audio", "desc": "Use the focus timer for study or work. Dungeon also includes a PDF reader and Anime Lo-Fi audio.", "tip": "Ending a session early may cause an HP penalty."},
-            {"tab": "dungeon", "targets": ["#dungeon-subtab-flashcard"], "icon": "🃏", "title": "Flashcards & Review", "desc": "Study with flashcards, answer choices, and spaced review. Open Flashcards in Dungeon to create decks and review due cards.", "tip": "Free practice lets you review outside the schedule."},
-            {"tab": "status", "targets": ["#v6-journal-entry"], "icon": "📓", "title": "Hunter Journal & History", "desc": "Record reflections, mood, and tomorrow’s plan in Journal. History tracks activity and daily evaluations.", "tip": "Journal is optional but useful for tracking growth."},
-            {"tab": "status", "targets": ["#v6-library-entry"], "icon": "📚", "title": "Knowledge Library", "desc": "Open the Library to read learning material and keep study notes.", "tip": "Material language depends on available translations."},
-            {"tab": "shop", "targets": ["#shop-items-container"], "icon": "🛒", "title": "System Shop", "desc": "Spend Gold on HP recovery items, relics, and available rewards in Shop.", "tip": "Check your Gold before buying."},
-            {"tab": "treasury", "targets": ["#tr-net-balance"], "icon": "💰", "title": "Treasury & Finances", "desc": "Track income, expenses, balances, and charts.", "tip": "Transactions may grant progress bonuses under system rules."},
-            {"tab": "status", "targets": ["#btn-font-settings"], "icon": "💾", "title": "Settings: Save & Load Game", "desc": "Open Settings (gear icon) to save to slots, load slots, and export a JSON backup to your device.", "tip": "In-app slots can be lost if app data is cleared; keep an external backup too."},
-            {"tab": "status", "targets": ["#rem-time-pagi", "#v6-auto-day-description"], "icon": "🔔", "title": "Reminders & Notifications", "desc": "Set reminder times in STATUS. Locked-screen delivery depends on Android alarm/notification permissions and battery restrictions.", "tip": "If notifications are delayed, check permissions and battery settings."},
+            {"tab": "status", "targets": ["#hp-bar", "#player-name-display"], "icon": "⚔️", "title": "Hunter Profile", "desc": "Track HP, XP, Level, Rank, and STR/INT/WIS/CHR. HP can change after evaluations and certain activities.", "tip": "Check your status before and after activities."} ,
+            {"tab": "status", "targets": ["#hp-bar", "#player-name-display"], "icon": "❤️", "title": "HP and Streak Are Different", "desc": "HP loss does not depend on your Streak target. 100% Habits = no penalty. Below 100%: 90–99% = −5, 80–89% = −10, 70–79% = −15, 50–69% = −20, 0–49% = −25 base HP (WIS may reduce damage).", "tip": "Your adjustable Streak threshold only determines whether the Streak continues."} ,
+            {"tab": "quests", "targets": ["#quest-list"], "icon": "📋", "title": "Quest Board & Streak Goal", "desc": "Check off completed quests; they move to the bottom. The Streak target is adjustable in STATUS, not fixed at 80%.", "tip": "Current target: {threshold}%."} ,
+            {"tab": "quests", "targets": ["#quest-list"], "icon": "✋", "title": "Reorder & Schedule Quests", "desc": "Long-press a quest card to reorder it. You can also add, edit, and set active weekdays for quests.", "tip": "Never clear app data just to fix the display."} ,
+            {"tab": "status", "targets": ["#input-streak-threshold", "#hp-bar"], "icon": "🎯", "title": "Flexible Streak Target", "desc": "Choose the completion percentage required to maintain your Streak. This target does not change daily HP penalties.", "tip": "Current Streak target: {threshold}%."} ,
+            {"tab": "status", "targets": ["#oracle-quote-text", "#btn-claim-oracle"], "icon": "🔮", "title": "Oracle & Daily Wisdom", "desc": "Oracle shows wisdom in your app language. Shuffle quotes for inspiration and claim the daily bonus once.", "tip": "Custom quotes keep the language in which you wrote them."} ,
+            {"tab": "dungeon", "targets": ["#dungeon-timer-text", "#tab-content-dungeon"], "icon": "⏳", "title": "Dungeon Focus & Audio", "desc": "Use the focus timer for study or work. Dungeon also includes a PDF reader and Anime Lo-Fi audio.", "tip": "Ending a session early may cause an HP penalty.", "submode": "focus"} ,
+            {"tab": "dungeon", "submode": "focus", "targets": ["#rpg-lofi-track", "#dungeon-mode-focus"], "icon": "🎧", "title": "Anime Lo-Fi & Focus", "desc": "Choose offline soundtracks or Classic Synth in Dungeon while focusing. No internet connection is required.", "tip": "Find a comfortable soundtrack for your sessions."} ,
+            {"tab": "dungeon", "targets": ["#dungeon-subtab-flashcard"], "icon": "🃏", "title": "Flashcards & Review", "desc": "Study with flashcards, answer choices, and spaced review. Open Flashcards in Dungeon to create decks and review due cards.", "tip": "Free practice lets you review outside the schedule.", "submode": "flashcard"} ,
+            {"tab": "status", "targets": ["#v6-journal-entry", "#history-log-list"], "icon": "📓", "title": "Hunter Journal & History", "desc": "Record reflections, mood, and tomorrow’s plan in Journal. History tracks activity and daily evaluations.", "tip": "Journal is optional but useful for tracking growth."} ,
+            {"tab": "status", "targets": ["#v7cj-tab-insights", "#v7cj"], "icon": "📊", "title": "Weekly Insights & Hunter Chronicle", "desc": "Use Weekly Insights for Habit trends and Hunter Chronicle for weekly stories. Both read History without changing HP, Streak, or Raid.", "tip": "Incomplete records are marked as unavailable rather than guessed."} ,
+            {"tab": "dungeon", "targets": ["#v6-library-entry"], "icon": "📚", "title": "Knowledge Library", "desc": "Open the Library to read learning material and keep study notes.", "tip": "Material language depends on available translations.", "submode": "flashcard"} ,
+            {"tab": "dungeon", "submode": "weekly", "targets": ["#dungeon-subtab-weekly", "#v7-raid-content"], "icon": "🐉", "title": "Weekly Boss & Adaptive Raid", "desc": "Each Daily Quest automatically deals damage only once per date. Every active day offers up to 100 damage; Normal Clear needs 40% and Challenge Clear 60%.", "tip": "Open Dungeon → Weekly Boss to view progress. The Boss never attacks Hunter HP."} ,
+            {"tab": "dungeon", "submode": "weekly", "targets": ["#v7-visual-replay", "#v7-watch-battle"], "icon": "⚔️", "title": "Watch Battle & Replay", "desc": "Watch queued attacks as the visible Boss HP drops at each strike. Battle Replay can be enjoyed unlimited times without awarding extra damage or rewards.", "tip": "Rechecking the same Quest never gives a second attack."} ,
+            {"tab": "dungeon", "submode": "weekly", "targets": [".v7-codex-row", "#v7-raid-content"], "icon": "📖", "title": "Abyss Codex & Boss Lore", "desc": "Read story chapters unlocked by encounters and your first, third, and fifth victories. Lore stays available even if the intro is skipped.", "tip": "The story and Raid Archive are available from Weekly Boss."} ,
+            {"tab": "shop", "targets": ["#shop-items-container"], "icon": "🛒", "title": "System Shop", "desc": "Spend Gold on Potions, Elixir, Streak Freeze, and personal rewards. Survival item base prices cannot be edited.", "tip": "Check your Gold before buying."} ,
+            {"tab": "shop", "targets": ["#v7-shop-exchange", "#v7-appearance-details"], "icon": "💠", "title": "Raid Cosmetics & Hunter Appearance", "desc": "Spend Raid Crystals on Auras and optional Portrait Frames. Earn Rank Frames by ranking up. Preview before buying, then equip Frame and Aura in Shop.", "tip": "Frames and Auras have no stat or damage bonuses."} ,
+            {"tab": "treasury", "targets": ["#tr-net-balance"], "icon": "💰", "title": "Treasury & Finances", "desc": "Track income, expenses, balances, and charts.", "tip": "Transactions may grant progress bonuses under system rules."} ,
+            {"tab": "status", "targets": ["#btn-font-settings"], "icon": "💾", "title": "Settings: Save & Load Game", "desc": "Open Settings (gear icon) to save to slots, load slots, and export a JSON backup to your device.", "tip": "In-app slots can be lost if app data is cleared; keep an external backup too."} ,
+            {"tab": "status", "targets": ["#rem-time-pagi", "#v6-auto-day-description"], "icon": "🔔", "title": "Reminders & Notifications", "desc": "Set reminder times in STATUS. Locked-screen delivery depends on Android alarm/notification permissions and battery restrictions.", "tip": "If notifications are delayed, check permissions and battery settings."} ,
         ],
         ja: [
-            {"tab": "status", "targets": ["#hp-bar", "#player-name-display"], "icon": "⚔️", "title": "ハンターのプロフィール", "desc": "HP、経験値、レベル、ランク、能力値を確認。HPは評価などで変化します。", "tip": "活動の前後にステータスを確認しましょう。"},
-            {"tab": "quests", "targets": ["#quest-list"], "icon": "📋", "title": "クエストとストリーク目標", "desc": "完了したクエストは下に移動します。ストリークの目標は80%固定ではなく、STATUSで変更できます。", "tip": "現在の目標：{threshold}%。"},
-            {"tab": "quests", "targets": ["#quest-list"], "icon": "✋", "title": "クエストの並び替えと曜日設定", "desc": "クエストを長押しして並び替え。追加・編集・実行曜日の設定もできます。", "tip": "表示の問題でアプリデータを消さないでください。"},
-            {"tab": "status", "targets": ["#input-streak-threshold", "#v6-auto-day-description"], "icon": "🎯", "title": "日々の目標設定", "desc": "ストリーク達成率は自由に設定できます。日付変更時の自動評価に反映されます。", "tip": "設定中の目標：{threshold}%。"},
-            {"tab": "status", "targets": ["#v6-auto-day-description", "#history-log-list"], "icon": "🌅", "title": "日付変更時の自動処理", "desc": "日付が変わりアプリが再開すると自動評価されます。手動の評価ボタンはありません。", "tip": "履歴で評価とHP・ストリークの変化を確認しましょう。"},
-            {"tab": "status", "targets": ["#oracle-quote-text", "#btn-claim-oracle"], "icon": "🔮", "title": "オラクルと今日の言葉", "desc": "オラクルはアプリの言語で表示されます。言葉を切り替え、毎日の報酬を受け取りましょう。", "tip": "自作の言葉は入力した言語のまま表示されます。"},
-            {"tab": "dungeon", "targets": ["#dungeon-timer-text", "#tab-content-dungeon"], "icon": "⏳", "title": "ダンジョン集中モード", "desc": "集中タイマーで勉強や作業。PDFリーダーとアニメLo-Fiも利用できます。", "tip": "途中終了するとHPが減る場合があります。"},
-            {"tab": "dungeon", "targets": ["#dungeon-subtab-flashcard"], "icon": "🃏", "title": "フラッシュカードと復習", "desc": "選択式フラッシュカードと間隔反復。ダンジョンでデッキを作成し、復習できます。", "tip": "自由練習では予定外のカードも復習できます。"},
-            {"tab": "status", "targets": ["#v6-journal-entry"], "icon": "📓", "title": "日記と履歴", "desc": "日記に気分や振り返りを記録。履歴で活動と日次評価を確認できます。", "tip": "日記は任意ですが、成長の振り返りに役立ちます。"},
-            {"tab": "status", "targets": ["#v6-library-entry"], "icon": "📚", "title": "ナレッジライブラリ", "desc": "ライブラリで学習資料を読み、メモを残しましょう。", "tip": "資料の言語は翻訳の有無によります。"},
-            {"tab": "shop", "targets": ["#shop-items-container"], "icon": "🛒", "title": "システムショップ", "desc": "ゴールドでHP回復アイテムやレリックなどを交換できます。", "tip": "購入前にゴールド残高を確認しましょう。"},
-            {"tab": "treasury", "targets": ["#tr-net-balance"], "icon": "💰", "title": "家計簿", "desc": "収入・支出・残高とグラフを管理します。", "tip": "取引に応じてボーナスが付く場合があります。"},
-            {"tab": "status", "targets": ["#btn-font-settings"], "icon": "💾", "title": "設定：セーブとロード", "desc": "設定からスロットへの保存・読込、JSONバックアップの書き出しができます。", "tip": "アプリデータ削除でスロットが消えるため、外部バックアップも保存しましょう。"},
-            {"tab": "status", "targets": ["#rem-time-pagi", "#v6-auto-day-description"], "icon": "🔔", "title": "リマインダーと通知", "desc": "STATUSで通知時刻を設定。画面ロック中の通知はAndroidの権限や省電力設定に左右されます。", "tip": "通知が遅れる場合は権限と省電力設定を確認してください。"},
+            {"tab": "status", "targets": ["#hp-bar", "#player-name-display"], "icon": "⚔️", "title": "ハンターのプロフィール", "desc": "HP、経験値、レベル、ランク、能力値を確認。HPは評価などで変化します。", "tip": "活動の前後にステータスを確認しましょう。"} ,
+            {"tab": "status", "targets": ["#hp-bar", "#player-name-display"], "icon": "❤️", "title": "HPとストリークの違い", "desc": "HPの減少はストリーク目標と別です。習慣100%なら減少なし。90～99%：−5、80～89%：−10、70～79%：−15、50～69%：−20、0～49%：−25基本HP（WISで軽減可能）。", "tip": "変更できるストリーク目標は連続記録の維持だけに関係します。"} ,
+            {"tab": "quests", "targets": ["#quest-list"], "icon": "📋", "title": "クエストとストリーク目標", "desc": "完了したクエストは下に移動します。ストリークの目標は80%固定ではなく、STATUSで変更できます。", "tip": "現在の目標：{threshold}%。"} ,
+            {"tab": "quests", "targets": ["#quest-list"], "icon": "✋", "title": "クエストの並び替えと曜日設定", "desc": "クエストを長押しして並び替え。追加・編集・実行曜日の設定もできます。", "tip": "表示の問題でアプリデータを消さないでください。"} ,
+            {"tab": "status", "targets": ["#input-streak-threshold", "#hp-bar"], "icon": "🎯", "title": "ストリーク目標", "desc": "ストリークを維持するための達成率を変更できます。この目標はHP減少量には影響しません。", "tip": "現在のストリーク目標：{threshold}%。"} ,
+            {"tab": "status", "targets": ["#oracle-quote-text", "#btn-claim-oracle"], "icon": "🔮", "title": "オラクルと今日の言葉", "desc": "オラクルはアプリの言語で表示されます。言葉を切り替え、毎日の報酬を受け取りましょう。", "tip": "自作の言葉は入力した言語のまま表示されます。"} ,
+            {"tab": "dungeon", "targets": ["#dungeon-timer-text", "#tab-content-dungeon"], "icon": "⏳", "title": "ダンジョン集中モード", "desc": "集中タイマーで勉強や作業。PDFリーダーとアニメLo-Fiも利用できます。", "tip": "途中終了するとHPが減る場合があります。", "submode": "focus"} ,
+            {"tab": "dungeon", "submode": "focus", "targets": ["#rpg-lofi-track", "#dungeon-mode-focus"], "icon": "🎧", "title": "アニメLo-Fiと集中モード", "desc": "ダンジョンでオフライン楽曲やClassic Synthを選び、集中時間を楽しめます。通信は不要です。", "tip": "集中しやすい曲を選びましょう。"} ,
+            {"tab": "dungeon", "targets": ["#dungeon-subtab-flashcard"], "icon": "🃏", "title": "フラッシュカードと復習", "desc": "選択式フラッシュカードと間隔反復。ダンジョンでデッキを作成し、復習できます。", "tip": "自由練習では予定外のカードも復習できます。", "submode": "flashcard"} ,
+            {"tab": "status", "targets": ["#v6-journal-entry", "#history-log-list"], "icon": "📓", "title": "日記と履歴", "desc": "日記に気分や振り返りを記録。履歴で活動と日次評価を確認できます。", "tip": "日記は任意ですが、成長の振り返りに役立ちます。"} ,
+            {"tab": "status", "targets": ["#v7cj-tab-insights", "#v7cj"], "icon": "📊", "title": "週間分析とハンター記録", "desc": "週間分析で習慣の傾向を、Hunter Chronicleで物語を確認。履歴を読むだけでHPやレイドの結果は変わりません。", "tip": "記録が不足する週は未集計として表示されます。"} ,
+            {"tab": "dungeon", "targets": ["#v6-library-entry"], "icon": "📚", "title": "ナレッジライブラリ", "desc": "ライブラリで学習資料を読み、メモを残しましょう。", "tip": "資料の言語は翻訳の有無によります。", "submode": "flashcard"} ,
+            {"tab": "dungeon", "submode": "weekly", "targets": ["#dungeon-subtab-weekly", "#v7-raid-content"], "icon": "🐉", "title": "ウィークリーボス", "desc": "デイリークエストの攻撃は1日1回だけ自動記録。活動日ごとに最大100ダメージ、通常クリアは40%、チャレンジは60%。", "tip": "ダンジョンの週間ボスで進捗を確認。ボスはハンターのHPを減らしません。"} ,
+            {"tab": "dungeon", "submode": "weekly", "targets": ["#v7-visual-replay", "#v7-watch-battle"], "icon": "⚔️", "title": "バトルとリプレイ", "desc": "未再生の攻撃を表示すると、命中時にボスHPの表示が減少します。リプレイは何度でも視聴できますが、追加ダメージや報酬はありません。", "tip": "同じクエストの再チェックでは攻撃は増えません。"} ,
+            {"tab": "dungeon", "submode": "weekly", "targets": [".v7-codex-row", "#v7-raid-content"], "icon": "📖", "title": "深淵の図鑑と物語", "desc": "遭遇、初勝利、3勝目、5勝目で物語が解放されます。イントロをスキップしても後で読み返せます。", "tip": "週刊ボスの画面から物語とレイド履歴を開けます。"} ,
+            {"tab": "shop", "targets": ["#shop-items-container"], "icon": "🛒", "title": "システムショップ", "desc": "ゴールドでポーション、エリクサー、ストリーク保護やご褒美を購入。回復アイテムの基本価格は固定です。", "tip": "購入前にゴールド残高を確認しましょう。"} ,
+            {"tab": "shop", "targets": ["#v7-shop-exchange", "#v7-appearance-details"], "icon": "💠", "title": "レイド装飾とハンターの外見", "desc": "レイドクリスタルでオーラや別のフレームを購入。ランクフレームはランクアップで入手。購入前にプレビューでき、ショップで装備できます。", "tip": "装飾品に能力値やダメージの効果はありません。"} ,
+            {"tab": "treasury", "targets": ["#tr-net-balance"], "icon": "💰", "title": "家計簿", "desc": "収入・支出・残高とグラフを管理します。", "tip": "取引に応じてボーナスが付く場合があります。"} ,
+            {"tab": "status", "targets": ["#btn-font-settings"], "icon": "💾", "title": "設定：セーブとロード", "desc": "設定からスロットへの保存・読込、JSONバックアップの書き出しができます。", "tip": "アプリデータ削除でスロットが消えるため、外部バックアップも保存しましょう。"} ,
+            {"tab": "status", "targets": ["#rem-time-pagi", "#v6-auto-day-description"], "icon": "🔔", "title": "リマインダーと通知", "desc": "STATUSで通知時刻を設定。画面ロック中の通知はAndroidの権限や省電力設定に左右されます。", "tip": "通知が遅れる場合は権限と省電力設定を確認してください。"} ,
         ],
     };
 
@@ -8495,7 +8568,7 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
             '<span style="width:' + (idx === tutStep ? '18px' : '7px') + ';height:7px;border-radius:99px;background:' + (idx === tutStep ? '#22d3ee' : '#334155') + ';transition:all .2s;"></span>'
         ).join('');
 
-        switchAndHighlightFeature(item.tab, item.targets);
+        switchAndHighlightFeature(item.tab, item.targets, item.submode);
     }
 
     function closeTutorialTour(playDoneSound) {
