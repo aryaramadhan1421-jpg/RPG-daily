@@ -15,18 +15,6 @@ const SoundFX = {
     uiVolume: 0.90,
     battleVolume: 0.90,
 
-    loadVolumePreferences() {
-        const get = (key, fallback) => {
-            try {
-                const raw = localStorage.getItem(key);
-                if (raw == null) return fallback;
-                const value = Number(raw);
-                return Number.isFinite(value) && value >= 0 && value <= 100 ? value / 100 : fallback;
-            } catch (_) { return fallback; }
-        };
-        this.uiVolume = get('system_rpg_ui_sfx_volume', 0.90);
-        this.battleVolume = get('system_rpg_battle_sfx_volume', 0.90);
-    },
 
     init() {
         if (!this.ctx) {
@@ -72,28 +60,29 @@ const SoundFX = {
     },
 
     playClick() {
+        // Restored Beta 13 UI click sound: one short, clean sine tone.
+        // Keep Beta 14/15 independent UI volume and mute controls.
         this.triggerHaptic('tap');
         if (this.muted || this.uiVolume <= 0) return;
         try {
             this.init();
             const now = this.ctx.currentTime;
-            // Two short, mid-frequency layers remain audible on small phone speakers.
-            // The existing compressor protects peaks; never exceed digital clipping.
-            const makeTone = (wave, startHz, endHz, amp, duration) => {
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = wave;
-                osc.frequency.setValueAtTime(startHz, now);
-                osc.frequency.exponentialRampToValueAtTime(endHz, now + duration);
-                gain.gain.setValueAtTime(0.0001, now);
-                gain.gain.linearRampToValueAtTime(amp * this.uiVolume, now + 0.009);
-                gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-                osc.connect(gain); gain.connect(this.sfxOutput);
-                osc.start(now); osc.stop(now + duration + 0.008);
-            };
-            makeTone('triangle', 1020, 1500, 0.19, 0.100);
-            makeTone('sine', 690, 920, 0.085, 0.115);
-        } catch (_) {} // Audio is presentation only, never block a Quest or save.
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, now);
+            osc.frequency.exponentialRampToValueAtTime(1320, now + 0.045);
+
+            // Default 90% reproduces the original Beta 13 amplitude (0.08).
+            const volumeFactor = Math.max(0, Math.min(1, this.uiVolume)) / 0.90;
+            gain.gain.setValueAtTime(0.08 * volumeFactor, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+
+            osc.connect(gain);
+            gain.connect(this.sfxOutput);
+            osc.start(now);
+            osc.stop(now + 0.05);
+        } catch (_) {} // Sound must never interfere with saving or Quest progress.
     },
 
     playBattleAttack(moveIndex, phase) {
@@ -410,41 +399,8 @@ const SoundFX = {
         }
     }
 };
-// SOUND MIXER (presentation-only preferences; never serialize into Hunter progress)
-SoundFX.loadVolumePreferences();
-function setRpgSfxVolume(kind, percent) {
-    if (kind !== 'ui' && kind !== 'battle') return;
-    const value = Math.max(0, Math.min(100, Number(percent)));
-    if (!Number.isFinite(value)) return;
-    const key = kind === 'ui' ? 'system_rpg_ui_sfx_volume' : 'system_rpg_battle_sfx_volume';
-    try { localStorage.setItem(key, String(Math.round(value))); } catch (_) {}
-    if (kind === 'ui') SoundFX.uiVolume = value / 100;
-    else SoundFX.battleVolume = value / 100;
-    refreshRpgAudioMixer();
-}
-function refreshRpgAudioMixer() {
-    const t = (id,en,ja) => typeof v6Text === 'function' ? v6Text(id,en,ja) : id;
-    const header=document.getElementById('rpg-sfx-mixer-title');
-    if(header)header.textContent=t('🔊 PENGATURAN EFEK SUARA','🔊 SOUND EFFECT SETTINGS','🔊 効果音の設定');
-    for(const [kind,pct,labelId,valueId,sliderId] of [
-        ['ui',SoundFX.uiVolume,'rpg-ui-sfx-label','rpg-ui-sfx-value','rpg-ui-sfx-volume'],
-        ['battle',SoundFX.battleVolume,'rpg-battle-sfx-label','rpg-battle-sfx-value','rpg-battle-sfx-volume']
-    ]) {
-        const label=document.getElementById(labelId),val=document.getElementById(valueId),slider=document.getElementById(sliderId);
-        if(label)label.textContent=kind==='ui' ? t('Suara tombol','Button sounds','ボタン音') : t('Suara pertarungan','Battle sounds','戦闘音');
-        if(val)val.textContent=Math.round(pct*100)+'%';
-        if(slider)slider.value=String(Math.round(pct*100));
-    }
-    const trial=document.getElementById('rpg-battle-sfx-test');
-    if(trial)trial.textContent=t('▶ Coba suara pedang','▶ Test sword sound','▶ 剣の音を試す');
-    const note=document.getElementById('rpg-sfx-mixer-note');
-    if(note)note.textContent=t('Volume maksimum tetap dibatasi oleh pengaturan HP. Suara dimatikan mengikuti tombol mute aplikasi.',
-        'Maximum volume follows your phone volume. App mute also disables these sounds.',
-        '最大音量は端末の設定に依存します。アプリのミュートも反映されます。');
-}
-window.addEventListener('system-language-changed', refreshRpgAudioMixer);
-if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',refreshRpgAudioMixer);
-else refreshRpgAudioMixer();
+// Original fixed sound balance. Volume is controlled by the phone and the
+// existing app mute switch; obsolete Beta 14/15 slider values are ignored.
 
 function updateAudioIcon() {
     const wrap = document.getElementById('icon-audio-wrap');
@@ -6349,8 +6305,10 @@ function openFontSettingsModal() {
         })();
     syncThemeChips(savedTheme);
     const modal = document.getElementById('font-settings-modal');
-    if (modal) modal.classList.remove('hidden');
-    refreshRpgAudioMixer();
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.scrollTop = 0; // Always open Settings at the top on small screens.
+    }
 }
 
 function closeFontSettingsModal() {

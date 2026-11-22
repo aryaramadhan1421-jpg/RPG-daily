@@ -535,16 +535,18 @@
 
             <!-- V7: read-only weekly analytics and archived Hunter Chronicle -->
             <section class="system-card v7cj" id="v7cj" aria-label="Hunter Chronicle and Weekly Insights">
-                <div class="v7cj-tabs" role="tablist" aria-label="Weekly History">
-                    <button type="button" id="v7cj-tab-insights" role="tab" aria-selected="true" onclick="V7Chronicle.setTab('insights')">📊 Insight Mingguan</button>
-                    <button type="button" id="v7cj-tab-chronicle" role="tab" aria-selected="false" onclick="V7Chronicle.setTab('chronicle')">📜 Hunter Chronicle</button>
+                <div class="v7cj-tabs" role="group" aria-label="Weekly History">
+                    <button type="button" id="v7cj-tab-insights" aria-expanded="false" aria-controls="v7cj-panel" onclick="V7Chronicle.toggle('insights')">📊 Insight Mingguan</button>
+                    <button type="button" id="v7cj-tab-chronicle" aria-expanded="false" aria-controls="v7cj-panel" onclick="V7Chronicle.toggle('chronicle')">📜 Hunter Chronicle</button>
                 </div>
+                <div id="v7cj-panel" class="v7cj-panel" hidden>
                 <div class="v7cj-week-nav">
                     <button type="button" id="v7cj-prev" onclick="V7Chronicle.shiftWeek(1)" aria-label="Previous week">‹</button>
                     <strong id="v7cj-week">—</strong>
                     <button type="button" id="v7cj-next" onclick="V7Chronicle.shiftWeek(-1)" aria-label="Next week">›</button>
                 </div>
                 <div id="v7cj-body" aria-live="polite"></div>
+                </div>
             </section>
 
             <!-- System Simulation & Reset Controls -->
@@ -1977,28 +1979,6 @@
                     </button>
                 </div>
             </div>
-
-            <!-- Beta 14: two independent local SFX controls, separate from music and game state -->
-            <section id="rpg-sfx-mixer" style="margin-top:0.85rem;padding-top:0.85rem;border-top:1px solid #1e293b;">
-                <h4 id="rpg-sfx-mixer-title" style="font-size:12px;color:#a5f3fc;font-weight:700;margin-bottom:0.55rem;">🔊 PENGATURAN EFEK SUARA</h4>
-                <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;color:#cbd5e1;">
-                    <label id="rpg-ui-sfx-label" for="rpg-ui-sfx-volume">Suara tombol</label><span id="rpg-ui-sfx-value">90%</span>
-                </div>
-                <input id="rpg-ui-sfx-volume" type="range" min="0" max="100" step="5" value="90"
-                    oninput="setRpgSfxVolume('ui',this.value)" style="width:100%;accent-color:#22d3ee;" />
-                <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;color:#cbd5e1;">
-                    <label id="rpg-battle-sfx-label" for="rpg-battle-sfx-volume">Suara pertarungan</label><span id="rpg-battle-sfx-value">90%</span>
-                </div>
-                <input id="rpg-battle-sfx-volume" type="range" min="0" max="100" step="5" value="90"
-                    oninput="setRpgSfxVolume('battle',this.value)" style="width:100%;accent-color:#c084fc;" />
-                <button type="button" id="rpg-battle-sfx-test" onclick="SoundFX.playBattleAttack(2,'impact')"
-                    style="padding:0.5rem;margin-top:0.3rem;border:1px solid #475569;border-radius:0.5rem;font-size:11px;color:#e2e8f0;background:#1e293b;">
-                    ▶ Coba suara pedang
-                </button>
-                <p id="rpg-sfx-mixer-note" style="font-size:10px;color:#94a3b8;line-height:1.5;margin-top:0.5rem;">
-                    Volume maksimum tetap dibatasi oleh pengaturan HP. Suara dimatikan mengikuti tombol mute aplikasi.
-                </p>
-            </section>
 
             <div style="margin-top: 0.85rem; padding-top: 0.85rem; border-top: 1px solid #1e293b;">
                 <button type="button" onclick="if (typeof closeFontSettingsModal === 'function') { closeFontSettingsModal(); } else { const fm = document.getElementById('font-settings-modal'); if (fm) fm.classList.add('hidden'); } if (typeof openTutorialModal === 'function') { openTutorialModal(0); }"
