@@ -3020,6 +3020,40 @@ function moveQuestInOrder(fromId, toId) {
     saveState();
     renderQuests();
 }
+// Reordering the auto-bottom *display* must not save completed quests at the
+// end of the permanent manual list. Reorder only within their completion group;
+// preserve positions of every other quest (including hidden/filter-mismatched).
+function reorderQuestsWithoutMixingCompletion(snapshot, originalIds, orderedIds) {
+    if (!Array.isArray(snapshot) || !Array.isArray(originalIds) || !Array.isArray(orderedIds) ||
+        originalIds.length !== orderedIds.length) return null;
+    const byId = new Map();
+    for (const quest of snapshot) {
+        if (!quest || quest.id == null || byId.has(String(quest.id))) return null;
+        byId.set(String(quest.id), quest);
+    }
+    const visible = new Set(originalIds);
+    if (visible.size !== originalIds.length || new Set(orderedIds).size !== orderedIds.length ||
+        originalIds.some(id => !byId.has(id)) || orderedIds.some(id => !visible.has(id))) return null;
+
+    // Completed cards must remain below incomplete cards, even during drag.
+    // A cross-group drop is ignored rather than silently rewriting tomorrow's order.
+    let passedCompleted = false;
+    for (const id of orderedIds) {
+        if (byId.get(id).completed) passedCompleted = true;
+        else if (passedCompleted) return null;
+    }
+    const pending = orderedIds.filter(id => !byId.get(id).completed);
+    const completed = orderedIds.filter(id => byId.get(id).completed);
+    let pendingIndex = 0, completedIndex = 0;
+    const result = snapshot.map(quest => {
+        if (!visible.has(String(quest.id))) return quest;
+        return quest.completed ? byId.get(completed[completedIndex++]) : byId.get(pending[pendingIndex++]);
+    });
+    if (pendingIndex !== pending.length || completedIndex !== completed.length ||
+        result.length !== snapshot.length || new Set(result).size !== snapshot.length) return null;
+    return result;
+}
+
 // Long-press quest sorting: live DOM reordering, commit only on release.
 const questSort = {timer:null, active:false, pointerId:null, card:null, origin:null,
     startX:0,startY:0,x:0,y:0,raf:0, suppressUntil:0, moved:false};
@@ -3106,29 +3140,22 @@ function questSortFinish(event) {
     questSort.suppressUntil=Date.now()+500;
     questSortAbort(false);
     if (!changed) return;
-    // Build from an immutable snapshot: never search an array while mutating it.
+    // The visual completed-at-bottom partition is temporary; drag reordering
+    // must never burn that partition into the permanently saved manual order.
     const snapshot = gameState.quests.slice();
-    const byId = new Map(snapshot.filter(q => q && q.id != null).map(q => [String(q.id), q]));
-    const unique = new Set(ordered);
-    if (unique.size !== ordered.length || ordered.some(id => !byId.has(id)) ||
-        snapshot.some(q => !q || q.id == null)) {
-        console.error('Quest reorder cancelled: invalid quest IDs or data');
+    const reordered = reorderQuestsWithoutMixingCompletion(snapshot, original, ordered);
+    if (!reordered) {
+        console.warn('Quest reorder cancelled: mixed completion groups or invalid quest IDs');
         renderQuests();
         return;
     }
-    let next = 0;
-    const visible = new Set(original);
-    const reordered = snapshot.map(q => visible.has(String(q.id)) ? byId.get(ordered[next++]) : q);
-    if (reordered.length !== snapshot.length || reordered.some(q => !q) ||
-        new Set(reordered).size !== snapshot.length) {
-        console.error('Quest reorder cancelled: quest integrity check failed');
-        renderQuests();
-        return;
-    }
-    // Save a pre-reorder recovery point before committing any changed order.
     try { localStorage.setItem('system_rpg_pre_reorder_backup_v1', JSON.stringify(gameState)); } catch (_) {}
     gameState.quests = reordered;
-    saveState();
+    if (saveState() !== true) {
+        // Do not pretend a rearrangement was saved if localStorage is unavailable.
+        gameState.quests = snapshot;
+        console.warn('Quest reorder rolled back: save failed');
+    }
     renderQuests();
 }
 function questSortAbort(restore) {
@@ -3207,21 +3234,23 @@ function renderQuests() {
     if (incompleteDaily) navBadge.classList.remove('hidden');
     else navBadge.classList.add('hidden');
 
-    const filtered = gameState.quests
-        .filter(q => {
-            const matchCat = currentQuestFilter === 'ALL' || q.category === currentQuestFilter;
-            const slot = inferQuestTimeSlot(q);
-            const matchTime = currentTimeSlotFilter === 'ALL' || slot === currentTimeSlotFilter;
-            const matchStatus = currentQuestStatusFilter === 'ALL' ||
-                (currentQuestStatusFilter === 'ACTIVE' && !q.completed) ||
-                (currentQuestStatusFilter === 'DONE' && q.completed);
-            const matchSearch = !questSearchQuery || q.title.toLowerCase().includes(questSearchQuery);
-            const matchDay = currentQuestDayFilter === 'ALL' || isQuestActiveOnDate(q, getCurrentGameDateKey());
-            return matchCat && matchTime && matchStatus && matchSearch && matchDay;
-        })
-        // Stable display-only partition: completed quests appear below active quests.
-        // Do not mutate gameState.quests here: manual order and progress remain intact.
-        .sort((a, b) => Number(Boolean(a.completed)) - Number(Boolean(b.completed)));
+    const matchingQuests = gameState.quests.filter(q => {
+        const matchCat = currentQuestFilter === 'ALL' || q.category === currentQuestFilter;
+        const slot = inferQuestTimeSlot(q);
+        const matchTime = currentTimeSlotFilter === 'ALL' || slot === currentTimeSlotFilter;
+        const matchStatus = currentQuestStatusFilter === 'ALL' ||
+            (currentQuestStatusFilter === 'ACTIVE' && !q.completed) ||
+            (currentQuestStatusFilter === 'DONE' && q.completed);
+        const matchSearch = !questSearchQuery || q.title.toLowerCase().includes(questSearchQuery);
+        const matchDay = currentQuestDayFilter === 'ALL' || isQuestActiveOnDate(q, getCurrentGameDateKey());
+        return matchCat && matchTime && matchStatus && matchSearch && matchDay;
+    });
+    // IMPORTANT: the auto-bottom effect is ONLY a view. Never sort/mutate the
+    // manual order in gameState.quests; it must survive midnight rollover.
+    const filtered = [
+        ...matchingQuests.filter(q => !q.completed),
+        ...matchingQuests.filter(q => q.completed)
+    ];
 
     if (filtered.length === 0) {
         container.innerHTML = `
