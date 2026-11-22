@@ -196,6 +196,8 @@ class MainActivity : ComponentActivity() {
         fun hapticFeedback(type: String) {
             when (type.lowercase(Locale.ROOT)) {
                 "quest", "check", "tap" -> triggerVibration(35L, null)
+                "fingerprint-touch" -> triggerVibration(90L, null)
+                "fingerprint-scan" -> triggerVibration(48L, null)
                 "complete", "claim" -> triggerVibration(0L, longArrayOf(0, 45, 50, 75))
                 "levelup", "rankup" -> triggerVibration(0L, longArrayOf(0, 60, 50, 90, 60, 160))
                 "damage", "penalty", "error" -> triggerVibration(0L, longArrayOf(0, 120, 60, 120))
