@@ -14,6 +14,8 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -48,6 +50,42 @@ class MainActivity : ComponentActivity() {
     private val CHANNEL_ID = "system_rpg_channel"
 
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
+    private val fingerprintHapticHandler = Handler(Looper.getMainLooper())
+    private var fingerprintScanTimeout: Runnable? = null
+    private var fingerprintScanVibrator: Vibrator? = null
+
+    private fun stopFingerprintScanHaptic() {
+        fingerprintScanTimeout?.let { fingerprintHapticHandler.removeCallbacks(it) }
+        fingerprintScanTimeout = null
+        try { fingerprintScanVibrator?.cancel() } catch (_: Exception) {}
+        fingerprintScanVibrator = null
+    }
+
+    private fun beginFingerprintScanHaptic() {
+        stopFingerprintScanHaptic()
+        try {
+            val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                (getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+            } else {
+                @Suppress("DEPRECATION")
+                getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            }
+            if (!vibrator.hasVibrator()) return
+            fingerprintScanVibrator = vibrator
+            // Short, closely spaced pulses for the duration of a touch; not a solid motor lock.
+            val pattern = longArrayOf(0, 44, 48, 44, 64)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createWaveform(pattern, 0))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(pattern, 0)
+            }
+            // Fail-safe if the WebView never delivers pointer-up/cancel.
+            val expire = Runnable { stopFingerprintScanHaptic() }
+            fingerprintScanTimeout = expire
+            fingerprintHapticHandler.postDelayed(expire, 2500L)
+        } catch (_: Exception) { stopFingerprintScanHaptic() }
+    }
 
     private val fileChooserLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -190,6 +228,16 @@ class MainActivity : ComponentActivity() {
         @JavascriptInterface
         fun vibrate(durationMs: Long) {
             triggerVibration(durationMs.coerceIn(10L, 2000L), null)
+        }
+
+        @JavascriptInterface
+        fun startFingerprintScanning() {
+            runOnUiThread { beginFingerprintScanHaptic() }
+        }
+
+        @JavascriptInterface
+        fun stopFingerprintScanning() {
+            runOnUiThread { stopFingerprintScanHaptic() }
         }
 
         @JavascriptInterface
@@ -375,6 +423,16 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun onPause() {
+        stopFingerprintScanHaptic()
+        super.onPause()
+    }
+
+    override fun onDestroy() {
+        stopFingerprintScanHaptic()
+        super.onDestroy()
     }
 
     private fun fireTopScreenNotification(title: String, body: String) {
