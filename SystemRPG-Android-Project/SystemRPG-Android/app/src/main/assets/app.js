@@ -12,6 +12,21 @@ const SoundFX = {
     ambientNodes: [],
     ambientGain: null,
     sfxOutput: null,
+    uiVolume: 0.90,
+    battleVolume: 0.90,
+
+    loadVolumePreferences() {
+        const get = (key, fallback) => {
+            try {
+                const raw = localStorage.getItem(key);
+                if (raw == null) return fallback;
+                const value = Number(raw);
+                return Number.isFinite(value) && value >= 0 && value <= 100 ? value / 100 : fallback;
+            } catch (_) { return fallback; }
+        };
+        this.uiVolume = get('system_rpg_ui_sfx_volume', 0.90);
+        this.battleVolume = get('system_rpg_battle_sfx_volume', 0.90);
+    },
 
     init() {
         if (!this.ctx) {
@@ -58,22 +73,79 @@ const SoundFX = {
 
     playClick() {
         this.triggerHaptic('tap');
-        if (this.muted) return;
-        this.init();
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, now);
-        osc.frequency.exponentialRampToValueAtTime(1320, now + 0.045);
+        if (this.muted || this.uiVolume <= 0) return;
+        try {
+            this.init();
+            const now = this.ctx.currentTime;
+            // Two short, mid-frequency layers remain audible on small phone speakers.
+            // The existing compressor protects peaks; never exceed digital clipping.
+            const makeTone = (wave, startHz, endHz, amp, duration) => {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = wave;
+                osc.frequency.setValueAtTime(startHz, now);
+                osc.frequency.exponentialRampToValueAtTime(endHz, now + duration);
+                gain.gain.setValueAtTime(0.0001, now);
+                gain.gain.linearRampToValueAtTime(amp * this.uiVolume, now + 0.009);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+                osc.connect(gain); gain.connect(this.sfxOutput);
+                osc.start(now); osc.stop(now + duration + 0.008);
+            };
+            makeTone('triangle', 1020, 1500, 0.19, 0.100);
+            makeTone('sine', 690, 920, 0.085, 0.115);
+        } catch (_) {} // Audio is presentation only, never block a Quest or save.
+    },
 
-        gain.gain.setValueAtTime(0.08, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
-
-        osc.connect(gain);
-        gain.connect(this.sfxOutput);
-        osc.start(now);
-        osc.stop(now + 0.05);
+    playBattleAttack(moveIndex, phase) {
+        if (this.muted || this.battleVolume <= 0) return;
+        try {
+            this.init();
+            const now = this.ctx.currentTime;
+            const move = ((Number(moveIndex) || 0) % 3 + 3) % 3;
+            const impact = phase === 'impact';
+            const voice = [
+                {wind:[1400,480,0.13], hit:[260,90,0.20]},  // Shadow Slash
+                {wind:[1850,720,0.10], hit:[480,150,0.18]}, // Phantom Strike
+                {wind:[440,930,0.24], hit:[145,55,0.34]}    // Abyss Breaker
+            ][move];
+            const [startHz, endHz, duration] = impact ? voice.hit : voice.wind;
+            const strength = this.battleVolume * (impact ? 0.23 : 0.13);
+            const osc = this.ctx.createOscillator();
+            const envelope = this.ctx.createGain();
+            const filter = this.ctx.createBiquadFilter();
+            osc.type = impact ? 'triangle' : 'sawtooth';
+            osc.frequency.setValueAtTime(startHz, now);
+            osc.frequency.exponentialRampToValueAtTime(endHz, now + duration);
+            filter.type = 'lowpass';
+            filter.frequency.value = impact ? 2700 : 3800;
+            envelope.gain.setValueAtTime(0.0001, now);
+            envelope.gain.linearRampToValueAtTime(strength, now + (impact ? 0.008 : 0.025));
+            envelope.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+            osc.connect(filter); filter.connect(envelope); envelope.connect(this.sfxOutput);
+            osc.start(now); osc.stop(now + duration + 0.015);
+            // Small filtered noise burst for sword whoosh and a crisp blade impact.
+            const noiseDuration = impact ? 0.105 : 0.15;
+            if (!this.battleNoise || this.battleNoise.sampleRate !== this.ctx.sampleRate) {
+                const length = Math.ceil(this.ctx.sampleRate * 0.22);
+                const buffer = this.ctx.createBuffer(1, length, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i=0;i<length;i++) data[i] = (Math.random()*2-1)*0.45;
+                this.battleNoise = buffer;
+            }
+            const noise = this.ctx.createBufferSource();
+            const noiseFilter = this.ctx.createBiquadFilter();
+            const noiseGain = this.ctx.createGain();
+            noise.buffer = this.battleNoise;
+            noiseFilter.type = 'bandpass';
+            noiseFilter.frequency.setValueAtTime(impact ? 1450 : 2400, now);
+            noiseFilter.frequency.exponentialRampToValueAtTime(impact ? 650 : 950, now + noiseDuration);
+            noiseFilter.Q.value = 0.75;
+            noiseGain.gain.setValueAtTime(0.0001,now);
+            noiseGain.gain.linearRampToValueAtTime(this.battleVolume*(impact ? 0.23 : 0.17),now+0.012);
+            noiseGain.gain.exponentialRampToValueAtTime(0.0001,now+noiseDuration);
+            noise.connect(noiseFilter);noiseFilter.connect(noiseGain);noiseGain.connect(this.sfxOutput);
+            noise.start(now); noise.stop(now+noiseDuration+0.01);
+        } catch (_) {} // Battle effects are cosmetic and must never change damage.
     },
 
     playUndo() {
@@ -87,7 +159,7 @@ const SoundFX = {
         osc.frequency.setValueAtTime(620, now);
         osc.frequency.exponentialRampToValueAtTime(340, now + 0.11);
 
-        gain.gain.setValueAtTime(0.09, now);
+        gain.gain.setValueAtTime(0.15 * this.uiVolume, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
 
         osc.connect(gain);
@@ -181,7 +253,7 @@ const SoundFX = {
         osc.frequency.setValueAtTime(987.77, now);
         osc.frequency.setValueAtTime(1318.51, now + 0.07);
 
-        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.setValueAtTime(0.12 * this.uiVolume, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
 
         osc.connect(gain);
@@ -338,6 +410,42 @@ const SoundFX = {
         }
     }
 };
+// SOUND MIXER (presentation-only preferences; never serialize into Hunter progress)
+SoundFX.loadVolumePreferences();
+function setRpgSfxVolume(kind, percent) {
+    if (kind !== 'ui' && kind !== 'battle') return;
+    const value = Math.max(0, Math.min(100, Number(percent)));
+    if (!Number.isFinite(value)) return;
+    const key = kind === 'ui' ? 'system_rpg_ui_sfx_volume' : 'system_rpg_battle_sfx_volume';
+    try { localStorage.setItem(key, String(Math.round(value))); } catch (_) {}
+    if (kind === 'ui') SoundFX.uiVolume = value / 100;
+    else SoundFX.battleVolume = value / 100;
+    refreshRpgAudioMixer();
+}
+function refreshRpgAudioMixer() {
+    const t = (id,en,ja) => typeof v6Text === 'function' ? v6Text(id,en,ja) : id;
+    const header=document.getElementById('rpg-sfx-mixer-title');
+    if(header)header.textContent=t('🔊 PENGATURAN EFEK SUARA','🔊 SOUND EFFECT SETTINGS','🔊 効果音の設定');
+    for(const [kind,pct,labelId,valueId,sliderId] of [
+        ['ui',SoundFX.uiVolume,'rpg-ui-sfx-label','rpg-ui-sfx-value','rpg-ui-sfx-volume'],
+        ['battle',SoundFX.battleVolume,'rpg-battle-sfx-label','rpg-battle-sfx-value','rpg-battle-sfx-volume']
+    ]) {
+        const label=document.getElementById(labelId),val=document.getElementById(valueId),slider=document.getElementById(sliderId);
+        if(label)label.textContent=kind==='ui' ? t('Suara tombol','Button sounds','ボタン音') : t('Suara pertarungan','Battle sounds','戦闘音');
+        if(val)val.textContent=Math.round(pct*100)+'%';
+        if(slider)slider.value=String(Math.round(pct*100));
+    }
+    const trial=document.getElementById('rpg-battle-sfx-test');
+    if(trial)trial.textContent=t('▶ Coba suara pedang','▶ Test sword sound','▶ 剣の音を試す');
+    const note=document.getElementById('rpg-sfx-mixer-note');
+    if(note)note.textContent=t('Volume maksimum tetap dibatasi oleh pengaturan HP. Suara dimatikan mengikuti tombol mute aplikasi.',
+        'Maximum volume follows your phone volume. App mute also disables these sounds.',
+        '最大音量は端末の設定に依存します。アプリのミュートも反映されます。');
+}
+window.addEventListener('system-language-changed', refreshRpgAudioMixer);
+if (document.readyState==='loading') document.addEventListener('DOMContentLoaded',refreshRpgAudioMixer);
+else refreshRpgAudioMixer();
+
 function updateAudioIcon() {
     const wrap = document.getElementById('icon-audio-wrap');
     const btn = document.getElementById('btn-audio-toggle');
@@ -6237,6 +6345,7 @@ function openFontSettingsModal() {
     syncThemeChips(savedTheme);
     const modal = document.getElementById('font-settings-modal');
     if (modal) modal.classList.remove('hidden');
+    refreshRpgAudioMixer();
 }
 
 function closeFontSettingsModal() {
@@ -6818,6 +6927,7 @@ setTimeout(syncAndroidHomeWidget, 800);
 let isSplashUnlocking = false;
 let fpHoldTimer = null;
 let fpVibrateInterval = null;
+let fpNativeScanActive = false;
 let fpAudioCtx = null;
 
 // ==========================================
@@ -6899,9 +7009,19 @@ function clearFingerprintHoldTimers() {
         clearInterval(fpVibrateInterval);
         fpVibrateInterval = null;
     }
+    if (fpNativeScanActive) {
+        fpNativeScanActive=false;
+        try {
+            if (window.AndroidBridge && typeof window.AndroidBridge.stopFingerprintScanning === 'function')
+                window.AndroidBridge.stopFingerprintScanning();
+        } catch (_) {}
+    }
+    // Stop any repeating vibration started as a browser fallback.
+    try { if (typeof navigator!=='undefined' && navigator.vibrate) navigator.vibrate(0); } catch (_) {}
 }
 
 function playFingerprintUnlockSound() {
+    if (typeof SoundFX !== 'undefined' && SoundFX.muted) return;
     try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (!AudioCtx) return;
@@ -6919,7 +7039,7 @@ function playFingerprintUnlockSound() {
             osc.frequency.setValueAtTime(freq, now + idx * 0.07);
 
             gain.gain.setValueAtTime(0.001, now + idx * 0.07);
-            gain.gain.linearRampToValueAtTime(0.28, now + idx * 0.07 + 0.02);
+            gain.gain.linearRampToValueAtTime(0.30 * (typeof SoundFX!=='undefined'?SoundFX.uiVolume:0.9), now + idx * 0.07 + 0.02);
             gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.07 + 0.32);
 
             osc.connect(gain);
@@ -6993,13 +7113,20 @@ function startFingerprintHold(event) {
     );
 
     awakeningHaptic('touch');
-    fpVibrateInterval = setInterval(() => {
-        if (isSplashUnlocking) {
-            clearFingerprintHoldTimers();
-            return;
+    try {
+        if (window.AndroidBridge && typeof window.AndroidBridge.startFingerprintScanning === 'function' &&
+            localStorage.getItem('system_rpg_haptic_enabled')!=='false') {
+            window.AndroidBridge.startFingerprintScanning();
+            fpNativeScanActive=true;
         }
-        awakeningHaptic('scan');
-    }, 380);
+    } catch (_) { fpNativeScanActive=false; }
+    // Browser-only fallback. Native Android owns its repeating vibrator waveform.
+    if (!fpNativeScanActive) {
+        fpVibrateInterval = setInterval(() => {
+            if (isSplashUnlocking || document.hidden) { clearFingerprintHoldTimers(); return; }
+            awakeningHaptic('scan');
+        }, 145);
+    }
 
     fpHoldTimer = setTimeout(() => {
         unlockSystemSplashScreen();
@@ -7022,6 +7149,12 @@ function cancelFingerprintHold() {
         startAutoSplashFantasyBGM();
     }
 }
+
+document.addEventListener('visibilitychange', () => {
+    if(document.hidden) cancelFingerprintHold();
+});
+window.addEventListener('pagehide',cancelFingerprintHold);
+window.addEventListener('blur',cancelFingerprintHold);
 
 function initSplashBgmAutoplay() {
     startAutoSplashFantasyBGM();

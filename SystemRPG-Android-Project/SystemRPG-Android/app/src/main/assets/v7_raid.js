@@ -356,6 +356,8 @@ function paintVictory(w,p) {
         if(name)name.textContent=move.name()+(frame.length>1?'  ×'+frame.length:'');
         if(impact)impact.textContent='';
         stage.classList.add('v7-replay-active',move.style);
+        // Only decorative audio. The damage ledger is never touched by SoundFX.
+        try { if(typeof SoundFX!=='undefined' && SoundFX.playBattleAttack) SoundFX.playBattleAttack(session.step%ATTACKS.length,'windup'); } catch (_) {}
         // The HP bar changes at impact, not on Quest completion or on button press.
         scheduleBattle(()=>{
             if(activeBattle!==session || document.hidden || !stage.isConnected){cancelBattle();return;}
@@ -365,6 +367,8 @@ function paintVictory(w,p) {
             const total=frame.reduce((sum,h)=>sum+h.amount,0);
             if(impact)impact.textContent=total>0?'−'+damageLabel(total):'';
             if(!session.visualOnly)paintBattleHP(session.week);
+            // SFX plays at the precise frame of visual HP impact; replay is still free.
+            try { if(typeof SoundFX!=='undefined' && SoundFX.playBattleAttack) SoundFX.playBattleAttack(session.step%ATTACKS.length,'impact'); } catch (_) {}
             session.step++;
             scheduleBattle(()=>playBattleFrame(session),session.reduced?110:760);
         },session.reduced?0:440);
