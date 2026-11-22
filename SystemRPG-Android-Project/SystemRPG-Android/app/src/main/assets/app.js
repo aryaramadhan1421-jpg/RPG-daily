@@ -1448,6 +1448,9 @@ function checkRealDayRollover() {
     }
     // Finalize the previous raid after all pending Daily Evaluations.
     if (window.V7Raid) window.V7Raid.advance(today);
+    // Chronicle archives are derived from settled evaluations and stored in
+    // this same transaction; they never modify rewards, HP or Streak.
+    if (window.V7Chronicle) window.V7Chronicle.captureClosedWeeks(today);
     // Reset only after settlement, never before snapshotting yesterday.
     gameState.quests.forEach(q => { if(q.category === 'Daily Quest') { q.completed=false; if(q.trackingType === 'count') q.currentCount=0; delete q.lastReward; } });
     gameState.selectedDate = today;
@@ -2768,6 +2771,8 @@ function renderHistory() {
         `;
         logListEl.appendChild(row);
     });
+    // History analytics is display-only; no Quest or reward settlement here.
+    if (window.V7Chronicle) window.V7Chronicle.render();
 }
 
 function deleteHistoryLog(logId) {

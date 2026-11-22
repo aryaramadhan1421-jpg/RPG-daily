@@ -533,6 +533,20 @@
                 </div>
             </div>
 
+            <!-- V7: read-only weekly analytics and archived Hunter Chronicle -->
+            <section class="system-card v7cj" id="v7cj" aria-label="Hunter Chronicle and Weekly Insights">
+                <div class="v7cj-tabs" role="tablist" aria-label="Weekly History">
+                    <button type="button" id="v7cj-tab-insights" role="tab" aria-selected="true" onclick="V7Chronicle.setTab('insights')">📊 Insight Mingguan</button>
+                    <button type="button" id="v7cj-tab-chronicle" role="tab" aria-selected="false" onclick="V7Chronicle.setTab('chronicle')">📜 Hunter Chronicle</button>
+                </div>
+                <div class="v7cj-week-nav">
+                    <button type="button" id="v7cj-prev" onclick="V7Chronicle.shiftWeek(1)" aria-label="Previous week">‹</button>
+                    <strong id="v7cj-week">—</strong>
+                    <button type="button" id="v7cj-next" onclick="V7Chronicle.shiftWeek(-1)" aria-label="Next week">›</button>
+                </div>
+                <div id="v7cj-body" aria-live="polite"></div>
+            </section>
+
             <!-- System Simulation & Reset Controls -->
             <div class="system-card space-y-3" style="border-color: rgba(245, 158, 11, 0.25);">
                 <div class="flex items-center justify-between">
@@ -2060,6 +2074,7 @@
     <script src="app.js"></script>
     <script src="v7_lore.js"></script>
     <script src="v7_raid.js"></script>
+    <script src="v7_chronicle.js"></script>
 
 </body>
 </html>
