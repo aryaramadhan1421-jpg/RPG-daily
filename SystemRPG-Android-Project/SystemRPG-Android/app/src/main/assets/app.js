@@ -5777,9 +5777,90 @@ function ensureTreasuryState() {
     return gameState.treasury;
 }
 
-function formatRupiah(num) {
-    const sign = num < 0 ? '-' : '';
-    return sign + 'Rp ' + Math.abs(Math.round(num)).toLocaleString('id-ID');
+const TREASURY_CURRENCIES = ['IDR', 'USD', 'JPY', 'AUD', 'SGD'];
+const TREASURY_CURRENCY_WHOLE = ['IDR', 'JPY'];
+
+function treasuryUi(key) {
+    const lang = (typeof gameState !== 'undefined' && gameState && gameState.language) ||
+        window.__v6ActiveLanguage || 'id';
+    const phrases = {
+        amount: {id:'Nominal',en:'Amount',ja:'金額'},
+        currency: {id:'Mata Uang',en:'Currency',ja:'通貨'},
+        filter: {id:'Ringkasan untuk',en:'Showing transactions in',ja:'取引の表示通貨'},
+        empty: {id:'Belum ada transaksi untuk mata uang ini.',en:'No transactions in this currency yet.',ja:'この通貨の取引はまだありません。'},
+        invalid: {id:'⚠️ Nominal tidak valid. Gunakan titik untuk ribuan dan koma untuk desimal.',en:'⚠️ Invalid amount. Use dots for thousands and commas for decimals.',ja:'⚠️ 金額が正しくありません。桁区切りはピリオド、小数はカンマを使用してください。'},
+        auto: {id:'📊 Ringkasan Keuangan Otomatis',en:'📊 Automatic Financial Summary',ja:'📊 自動財務サマリー'},
+        autoHint: {id:'Dihitung dari transaksi, tanpa pengisian manual',en:'Calculated from transactions; no manual setup',ja:'取引から自動集計・手動設定不要'},
+        thisMonth: {id:'Bulan ini',en:'This month',ja:'今月'},
+        cashflow: {id:'Sisa Arus Kas Bulan Ini',en:'This Month’s Net Cash Flow',ja:'今月の収支差額'},
+        baseline: {id:'Total Pengeluaran Bulan Lalu',en:'Last Month’s Total Expenses',ja:'先月の支出合計'},
+        top: {id:'Kategori belanja terbesar',en:'Largest spending category',ja:'最大の支出カテゴリ'},
+        noData: {id:'Belum cukup transaksi untuk membuat ringkasan otomatis.',en:'Not enough transaction data for an automatic summary.',ja:'自動集計に必要な取引データがまだありません。'},
+        noCurrentMonth: {id:'Belum ada transaksi bulan ini',en:'No transactions this month',ja:'今月の取引はまだありません'},
+        note: {id:'Ini bukan saldo rekening atau batas anggaran. Tidak ada konversi mata uang otomatis.',en:'Not an account balance or spending limit. No automatic currency conversion.',ja:'口座残高や予算上限ではありません。自動為替換算は行いません。'},
+        noCategory: {id:'Belum ada',en:'Not available',ja:'データなし'}
+    };
+    return (phrases[key] && (phrases[key][lang] || phrases[key].id)) || key;
+}
+
+function getTreasuryCurrency() {
+    const tr = ensureTreasuryState();
+    if (!TREASURY_CURRENCIES.includes(tr.selectedCurrency)) tr.selectedCurrency = 'IDR';
+    return tr.selectedCurrency;
+}
+
+function setTreasuryCurrency(next) {
+    if (!TREASURY_CURRENCIES.includes(next)) return;
+    const tr = ensureTreasuryState();
+    if (tr.selectedCurrency === next) return;
+    tr.selectedCurrency = next;
+    // Never relabel a typed number when switching currency by accident.
+    const entry = document.getElementById('tx-amount');
+    if (entry) entry.value = '';
+    selectedTreasuryCategoryFilter = null;
+    saveState();
+    renderTreasury();
+}
+
+function formatTreasuryAmountTyping(text, currency = getTreasuryCurrency()) {
+    let clean = String(text || '').replace(/[^\d.,]/g, '').replace(/\./g, '');
+    const supportsCents = !TREASURY_CURRENCY_WHOLE.includes(currency);
+    let decimal = '';
+    if (supportsCents && clean.includes(',')) {
+        const parts = clean.split(',');
+        clean = parts[0];
+        decimal = ',' + (parts.slice(1).join('').replace(/\D/g, '').slice(0, 2));
+    } else {
+        clean = clean.replace(/,/g, '');
+    }
+    const digits = clean.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+    return (digits ? digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '0') + decimal;
+}
+
+function parseTreasuryAmountInput(text, currency = getTreasuryCurrency()) {
+    const raw = String(text || '').trim();
+    if (!/^\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?$/.test(raw) &&
+        !/^\d+(?:,\d{1,2})?$/.test(raw)) return NaN;
+    if (TREASURY_CURRENCY_WHOLE.includes(currency) && raw.includes(',')) return NaN;
+    const value = Number(raw.replace(/\./g, '').replace(',', '.'));
+    return Number.isFinite(value) && value > 0 && value <= 999999999999 ? value : NaN;
+}
+
+function handleTreasuryAmountInput(input) {
+    if (!input) return;
+    const wasBlank = !String(input.value || '').trim();
+    input.value = wasBlank ? '' : formatTreasuryAmountTyping(input.value);
+}
+
+function formatRupiah(num, currency = getTreasuryCurrency()) {
+    // Kept under original name so existing charts, calculator and History can use it.
+    const lang = (typeof gameState !== 'undefined' && gameState && gameState.language) ||
+        window.__v6ActiveLanguage || 'id';
+    const locale = lang === 'ja' ? 'ja-JP' : lang === 'en' ? 'en-US' : 'id-ID';
+    const decimals = TREASURY_CURRENCY_WHOLE.includes(currency) ? 0 : 2;
+    return new Intl.NumberFormat(locale, {
+        style:'currency', currency, minimumFractionDigits:0, maximumFractionDigits:decimals
+    }).format(Number(num) || 0);
 }
 
 function updateTreasuryCategoryOptions() {
@@ -5861,15 +5942,15 @@ function applyCalcToNominal() {
     const val = evaluateCalcExpression(calcExpr);
     const amountInput = document.getElementById('tx-amount');
     if (amountInput && val > 0) {
-        amountInput.value = val;
-        const formatted = val.toLocaleString('id-ID');
+        amountInput.value = formatTreasuryAmountTyping(String(val));
+        const formatted = formatRupiah(val);
         const curLang = (typeof gameState !== 'undefined' && gameState.language) || localStorage.getItem('system_rpg_lang') || 'id';
         if (curLang === 'en') {
-            spawnFloatingReward(`✓ Amount Rp ${formatted} inserted!`);
+            spawnFloatingReward(`✓ Amount ${formatted} inserted!`);
         } else if (curLang === 'ja') {
-            spawnFloatingReward(`✓ 金額 Rp ${formatted} を入力しました！`);
+            spawnFloatingReward(`✓ 金額 ${formatted} を入力しました！`);
         } else {
-            spawnFloatingReward(`✓ Nominal Rp ${formatted} dimasukkan!`);
+            spawnFloatingReward(`✓ Nominal ${formatted} dimasukkan!`);
         }
     } else {
         spawnFloatingReward(tTreasury('⚠️ Hitung nominal lebih dari 0 terlebih dahulu'));
@@ -5881,16 +5962,22 @@ function handleAddTreasuryTx(e) {
     const tr = ensureTreasuryState();
     const type = document.getElementById('tx-type').value;
     const dateStr = document.getElementById('tx-date').value || getCurrentGameDateKey();
-    const amount = Math.max(1, parseInt(document.getElementById('tx-amount').value, 10) || 0);
+    const currency = getTreasuryCurrency();
+    const amount = parseTreasuryAmountInput(document.getElementById('tx-amount').value, currency);
     const category = document.getElementById('tx-category').value;
     const note = document.getElementById('tx-note').value.trim();
-    if (!amount || !note) return;
+    if (!Number.isFinite(amount)) {
+        if (typeof spawnFloatingReward === 'function') spawnFloatingReward(treasuryUi('invalid'));
+        return;
+    }
+    if (!note) return;
 
    tr.transactions.unshift({
         id: 'tx_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
         type,
         dateStr,
         amount,
+        currency,
         category,
         note
     });
@@ -6053,10 +6140,27 @@ function initTreasuryDefaults() {
         }
     }
     updateTreasuryCategoryOptions();
+    const cEl = document.getElementById('tx-currency');
+    if (cEl) cEl.value = getTreasuryCurrency();
 }
 
 function renderTreasury() {
     const tr = ensureTreasuryState();
+    const currency = getTreasuryCurrency();
+    const currencyEl = document.getElementById('tx-currency');
+    if (currencyEl && currencyEl.value !== currency) currencyEl.value = currency;
+    const currencyLabel = document.getElementById('tx-currency-label');
+    const amountLabel = document.getElementById('tx-amount-label');
+    if (currencyLabel) currencyLabel.textContent = treasuryUi('currency');
+    if (amountLabel) amountLabel.textContent = treasuryUi('amount');
+    const currencyNote = document.getElementById('tr-currency-note');
+    if (currencyNote) currencyNote.textContent = `${treasuryUi('filter')} ${currency} · ${treasuryUi('note')}`;
+    const autoTitle = document.getElementById('tr-auto-insights-title');
+    const autoHint = document.getElementById('tr-auto-insights-hint');
+    if (autoTitle) autoTitle.textContent = treasuryUi('auto');
+    if (autoHint) autoHint.textContent = treasuryUi('autoHint');
+    const amountInput = document.getElementById('tx-amount');
+    if (amountInput) amountInput.placeholder = currency === 'IDR' || currency === 'JPY' ? '1.250.000' : '1.250,50';
     const todayKey = getCurrentGameDateKey();
     const quotaUsed = tr.dailyBonusCounts[todayKey] || 0;
     const quotaBadge = document.getElementById('treasury-rpg-quota-badge');
@@ -6075,6 +6179,8 @@ function renderTreasury() {
     const fYear = document.getElementById('tr-filter-year')?.value || todayKey.slice(0, 4);
 
     const filtered = tr.transactions.filter(tx => {
+        // Old transactions have no currency: they are IDR, never converted.
+        if ((tx.currency || 'IDR') !== currency) return false;
         if (treasuryPeriodMode === 'daily') return tx.dateStr === fDate;
         if (treasuryPeriodMode === 'monthly') return (tx.dateStr || '').startsWith(fMonth);
         return (tx.dateStr || '').startsWith(fYear);
@@ -6086,10 +6192,10 @@ function renderTreasury() {
 
     filtered.forEach(tx => {
         if (tx.type === 'income') {
-            totalIn += tx.amount;
+            totalIn += Number(tx.amount) || 0;
         } else {
-            totalOut += tx.amount;
-            catTotals[tx.category] = (catTotals[tx.category] || 0) + tx.amount;
+            totalOut += Number(tx.amount) || 0;
+            catTotals[tx.category] = (catTotals[tx.category] || 0) + (Number(tx.amount) || 0);
         }
     });
 
@@ -6198,6 +6304,36 @@ function renderTreasury() {
             }).join('');
         }
     }
+    renderTreasuryAutoInsights(tr.transactions, currency);
+}
+
+function renderTreasuryAutoInsights(allTransactions, currency) {
+    const el = document.getElementById('tr-auto-insights-body');
+    if (!el) return;
+    const thisMonth = getCurrentGameDateKey().slice(0, 7);
+    const [year, month] = thisMonth.split('-').map(Number);
+    const previousMonthDate = new Date(year, month - 2, 1);
+    const lastMonth = `${previousMonthDate.getFullYear()}-${String(previousMonthDate.getMonth()+1).padStart(2,'0')}`;
+    const txs = allTransactions.filter(tx => (tx.currency || 'IDR') === currency);
+    const within = (mo) => txs.filter(tx => String(tx.dateStr || '').startsWith(mo));
+    const cur = within(thisMonth), prev = within(lastMonth);
+    const sum = (a, type) => a.filter(t => t.type === type).reduce((total,t) => total + (Number(t.amount)||0),0);
+    const income = sum(cur,'income'), spending = sum(cur,'expense');
+    const pastSpending = sum(prev,'expense');
+    const cats = {};
+    for (const tx of cur.filter(t=>t.type==='expense')) cats[tx.category] = (cats[tx.category]||0) + (Number(tx.amount)||0);
+    const winner = Object.entries(cats).sort((a,b)=>b[1]-a[1])[0];
+    if (!cur.length && !prev.length) {
+        el.textContent = treasuryUi('noData');
+        return;
+    }
+    const row = (label,value) => `<div class="treasury-auto-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+    el.innerHTML = `<div class="treasury-auto-rows">` +
+        row(treasuryUi('thisMonth'),thisMonth) +
+        row(treasuryUi('cashflow'),cur.length ? formatRupiah(income-spending,currency) : treasuryUi('noCurrentMonth')) +
+        row(treasuryUi('baseline'),prev.length ? formatRupiah(pastSpending,currency) : treasuryUi('noCategory')) +
+        row(treasuryUi('top'),winner ? `${tTreasury(winner[0])} (${formatRupiah(winner[1],currency)})` : treasuryUi('noCategory')) +
+        `</div><p class="treasury-auto-note">${escapeHtml(treasuryUi('note'))}</p>`;
 }
 // ==========================================
 // 12. ANCIENT GRIMOIRE READER (PDF IN DUNGEON)

@@ -1339,3 +1339,19 @@ body.sysrpg-tutorial-active main::after {
 .v7-quest-dialog-actions button{border-radius:9px;padding:9px 13px;background:#14344a;border:1px solid #2a6579;color:#d7f7ff}
 .v7-quest-dialog-actions button:last-child{background:#0e7490;color:white}
 .v7-quest-dialog-actions button:disabled{opacity:.4;cursor:not-allowed}
+
+/* Treasury simplified: original calculator/dashboard remain untouched. */
+.treasury-amount-pair{display:grid;grid-template-columns:minmax(0,1fr) 66px;gap:5px;align-items:center}
+.treasury-amount-pair .input-cyber{width:100%}
+@media(max-width:480px){.treasury-amount-category-grid{grid-template-columns:minmax(0,1fr)}}
+.treasury-currency-assist{display:block;font-size:9px;color:#94a3b8;margin-top:4px}
+.treasury-currency-note{font-size:10px;color:#94a3b8;line-height:1.5}
+.treasury-auto-panel{padding:.65rem .8rem;margin-top:.25rem;border-color:rgba(34,211,238,.28)}
+.treasury-auto-summary{cursor:pointer;display:flex;flex-direction:column;gap:.2rem;font-size:.75rem;font-weight:800;color:#67e8f9}
+.treasury-auto-summary span:last-child{font-size:.62rem;font-weight:500;color:#94a3b8}
+.treasury-auto-body{padding-top:.8rem;color:#cbd5e1;font-size:.71rem}
+.treasury-auto-rows{display:grid;gap:.5rem}
+.treasury-auto-row{display:flex;justify-content:space-between;align-items:start;gap:1rem;border-bottom:1px solid #1e293b;padding-bottom:.4rem}
+.treasury-auto-row span{color:#94a3b8}
+.treasury-auto-row strong{color:#f8fafc;text-align:right;overflow-wrap:anywhere}
+.treasury-auto-note{font-size:.6rem;color:#94a3b8;margin-top:.55rem;line-height:1.5}

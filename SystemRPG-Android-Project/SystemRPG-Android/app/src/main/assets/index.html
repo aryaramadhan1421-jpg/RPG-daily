@@ -1431,8 +1431,14 @@
 
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label style="display: block; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">Nominal (Rp)</label>
-                        <input type="number" id="tx-amount" min="1" required placeholder="Contoh: 25000" class="input-cyber font-display" style="color: #fcd34d; font-weight: 700;">
+                        <label id="tx-amount-label" for="tx-amount" style="display: block; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">Nominal</label>
+                        <div class="treasury-amount-pair">
+                            <input type="text" id="tx-amount" inputmode="decimal" autocomplete="off" required placeholder="1.250.000" oninput="handleTreasuryAmountInput(this)" class="input-cyber font-display" style="color: #fcd34d; font-weight: 700; min-width: 0;">
+                            <select id="tx-currency" aria-label="Mata uang" onchange="setTreasuryCurrency(this.value)" class="input-cyber" style="font-size:0.72rem; min-width:0;">
+                                <option value="IDR">IDR</option><option value="USD">USD</option><option value="JPY">JPY</option><option value="AUD">AUD</option><option value="SGD">SGD</option>
+                            </select>
+                        </div>
+                        <span id="tx-currency-label" class="treasury-currency-assist">Mata Uang</span>
                     </div>
                     <div>
                         <label style="display: block; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">Kategori</label>
@@ -1452,6 +1458,7 @@
 
             <!-- Cashflow Analytics Dashboard -->
             <div class="system-card space-y-3">
+                <p id="tr-currency-note" class="treasury-currency-note">Ringkasan untuk IDR · Tidak ada konversi otomatis</p>
                 <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--bg-slate-800); padding-bottom: 0.5rem;">
                     <h3 class="font-display" style="font-weight: 700; font-size: 0.875rem; text-transform: uppercase; color: var(--cyan-400);">📊 Dashboard Arus Kas</h3>
                 </div>
@@ -1511,6 +1518,14 @@
                     <div id="tr-transaction-list" class="scroll-box space-y-1-5"></div>
                 </div>
             </div>
+            <!-- Read-only insights: no extra budget or savings form. -->
+            <details class="system-card treasury-auto-panel" id="tr-auto-insights">
+                <summary class="treasury-auto-summary">
+                    <span id="tr-auto-insights-title">📊 Ringkasan Keuangan Otomatis</span>
+                    <span id="tr-auto-insights-hint">Dihitung dari transaksi, tanpa pengisian manual</span>
+                </summary>
+                <div id="tr-auto-insights-body" class="treasury-auto-body"></div>
+            </details>
         </section>
 
     </main>
