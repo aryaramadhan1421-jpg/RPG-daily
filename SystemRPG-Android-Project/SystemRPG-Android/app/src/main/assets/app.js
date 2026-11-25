@@ -1374,6 +1374,7 @@ function acknowledgeDailyReport() {
         delete gameState.pendingDailyReport;
         saveState();
     }
+    setTimeout(() => { if (window.V7Motivation) window.V7Motivation.offer(); }, 500);
 }
 function checkRealDayRollover() {
     // Calendar-based, idempotent settlement. All data stays local/offline.
@@ -7289,6 +7290,7 @@ function unlockSystemSplashScreen() {
     }
 
     setTimeout(showPendingDailyReport, 520);
+    setTimeout(() => { if (window.V7Motivation) window.V7Motivation.offer(); }, 1100);
     if (typeof window.onSystemUnlocked === 'function') {
         try { window.onSystemUnlocked(); } catch (_e) {}
     } else if (typeof renderAll === 'function') {
@@ -8733,6 +8735,7 @@ window.TUTORIAL_STORAGE_KEY = 'sysrpg_tutorial_v2';
         if (typeof switchTab === 'function') {
             try { switchTab('status', true); } catch (e) {}
         }
+        setTimeout(() => { if (window.V7Motivation) window.V7Motivation.offer(); }, 500);
     }
 
     window.openTutorialModal = function (startIndex = 0) {
