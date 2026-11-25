@@ -473,6 +473,15 @@
                 </div>
             </div>
 
+            <!-- Read-only progression and achievement gallery; no duplicate economy. -->
+            <section class="system-card v7-growth" id="v7-growth-section" aria-label="Hunter Growth">
+                <button type="button" id="v7-growth-toggle" class="v7-growth-toggle" onclick="V7Growth.toggle()" aria-expanded="false" aria-controls="v7-growth-details">⚔️ Hunter Growth <span>▾</span></button>
+                <div id="v7-growth-details" hidden>
+                    <div id="v7-growth-milestones"></div>
+                    <div id="v7-growth-achievements"></div>
+                </div>
+            </section>
+
             <!-- Habit Tracker & Riwayat Progres -->
             <div class="system-card space-y-3">
                 <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--bg-slate-800); padding-bottom: 0.5rem;">
@@ -1595,6 +1604,7 @@
                 <p style="color: var(--emerald-400);">✓ HP dipulihkan penuh sesuai Max HP</p>
                 <p style="color: #d8b4fe;">★ Rank: <span id="levelup-new-rank" style="font-weight: 700;">Novice</span></p>
             </div>
+            <div id="v7-growth-level-summary" class="v7-growth-level-summary" aria-live="polite"></div>
             <button type="button" onclick="closeModal('modal-levelup')" class="w-full font-display" style="margin-top: 1.25rem; background: var(--cyan-500); color: #020617; font-weight: 700; padding: 0.625rem; border-radius: 0.75rem;">
                 TERIMA KEKUATAN
             </button>
@@ -2081,6 +2091,7 @@
     <script src="v7_raid.js"></script>
     <script src="v7_chronicle.js"></script>
     <script src="v7_motivation.js"></script>
+    <script src="v7_growth.js"></script>
 
 </body>
 </html>

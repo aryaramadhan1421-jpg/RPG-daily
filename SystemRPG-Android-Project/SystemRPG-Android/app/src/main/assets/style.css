@@ -1358,3 +1358,34 @@ body.sysrpg-tutorial-active main::after {
 
 /* Daily Hunter Briefing; isolated from gameplay HUD and dialogs */
 #v7-motivation-overlay{position:fixed;inset:0;z-index:10050;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(2,6,23,.83);overflow-y:auto}#v7-motivation-overlay.hidden{display:none!important}.v7-motivation-card{width:min(100%,390px);max-height:calc(100dvh - 30px);overflow-y:auto;background:linear-gradient(150deg,#142139,#090f20);border:1px solid #386887;border-radius:20px;padding:19px;color:#e2e8f0;box-shadow:0 16px 60px #0009;text-align:center}.v7-motivation-kicker{color:#67e8f9;letter-spacing:.11em;font-size:11px;font-weight:800}.v7-motivation-icon{font-size:32px;margin:10px}.v7-motivation-card h2{font-size:19px;line-height:1.4;margin:6px 0}.v7-motivation-card p{font-size:13px;line-height:1.6;color:#cbd5e1;margin:8px 0}.v7-motivation-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}.v7-motivation-stats>div,.v7-motivation-mission{border-radius:12px;background:#1e293b;padding:11px}.v7-motivation-stats small{display:block;color:#94a3b8;font-size:11px}.v7-motivation-stats strong{display:block;color:#f8fafc;font-size:21px;margin-top:4px}.v7-motivation-mission{text-align:left}.v7-motivation-mission strong{font-size:13px;color:#7dd3fc}.v7-motivation-actions{display:flex;gap:10px;margin-top:15px}.v7-motivation-actions button{flex:1;min-height:42px;border-radius:10px;border:1px solid #475569;background:#1e293b;color:#e2e8f0;font-weight:700;font-size:13px;cursor:pointer}.v7-motivation-actions button:last-child{background:#0891b2;color:white;border-color:#22d3ee}
+/* Beta 29: small, collapsible growth status; no full-screen duplicate UI. */
+.v7-growth{margin-top:.8rem;border-color:rgba(34,211,238,.23)}
+.v7-growth-toggle{width:100%;display:flex;justify-content:space-between;align-items:center;text-align:left;color:#a5f3fc;font-weight:800;font-size:.81rem;letter-spacing:.02em;padding:.2rem}
+.v7-growth-toggle span{color:#94a3b8}
+#v7-growth-details{margin-top:.8rem;display:grid;gap:.85rem}
+#v7-growth-details[hidden]{display:none}
+.v7-growth-row{padding:.65rem;background:rgba(15,23,42,.78);border:1px solid #334155;border-radius:.65rem;font-size:.78rem}
+.v7-growth-row strong{color:#dbeafe}
+.v7-growth-row small{display:block;color:#94a3b8;margin-top:.2rem}
+.v7-growth-bar{height:7px;border-radius:9px;background:#1e293b;overflow:hidden;margin-top:.45rem}
+.v7-growth-bar>span{display:block;height:100%;background:linear-gradient(90deg,#0891b2,#a855f7);border-radius:9px;max-width:100%}
+.v7-growth-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem;margin-top:.5rem}
+.v7-growth-badge{min-width:0;padding:.6rem;border-radius:.65rem;border:1px solid #334155;background:rgba(15,23,42,.84);font-size:.68rem;color:#cbd5e1}
+.v7-growth-badge strong{display:block;color:#f0f9ff;margin-bottom:.2rem}
+.v7-growth-badge[data-locked="true"]{opacity:.55}
+.v7-growth-level-summary{color:#cbd5e1;margin-top:.85rem;font-size:.76rem;text-align:left;line-height:1.6}
+.v7-growth-level-summary:empty{display:none}
+.v7-growth-toast{position:fixed;z-index:100000;bottom:100px;left:50%;transform:translateX(-50%);width:min(92vw,355px);background:#0f172a;color:#e9d5ff;border:1px solid #a855f7;box-shadow:0 9px 30px #0009;border-radius:14px;padding:14px}
+.v7-growth-toast button{display:block;margin:12px 0 0 auto;color:#67e8f9;font-weight:700}
+.v7-growth-chronicle{margin-top:12px;border:1px solid #334155;border-radius:10px;padding:10px;font-size:.78rem}
+.v7-growth-chronicle li{margin-top:5px}
+
+.v7-growth-evolved{border-color:var(--v7-growth-stat-color)!important;box-shadow:0 0 13px color-mix(in srgb,var(--v7-growth-stat-color),transparent 82%)}
+.v7-growth-stat-title{display:block;color:var(--v7-growth-stat-color);font-size:.6rem;letter-spacing:.05em}
+.v7-growth-rank-awakening{animation:v7-growth-awaken 1.2s ease-out 1}
+@keyframes v7-growth-awaken{0%{box-shadow:0 0 0 #fbbf2400}45%{box-shadow:0 0 40px #fbbf2480}100%{box-shadow:0 0 12px #fbbf242b}}
+@media(prefers-reduced-motion:reduce){.v7-growth-rank-awakening{animation:none}}
+
+.v7-growth-rank-sword{text-align:center;color:#fbbf24;font-size:1.8rem;animation:v7-sword-swipe .7s ease-out 1}
+@keyframes v7-sword-swipe{from{opacity:0;transform:translateX(-28px) rotate(-20deg)}to{opacity:1;transform:translateX(0) rotate(0)}}
+@media(prefers-reduced-motion:reduce){.v7-growth-rank-sword{animation:none}}

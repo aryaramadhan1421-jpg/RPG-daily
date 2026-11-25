@@ -1954,6 +1954,8 @@ function getDiscountedShopCost(baseCost) {
 }
 
 function addRewards(baseXp, baseGold, statType = null, statXpGain = 15, silentFloat = false) {
+    // Capture presentation-only before/after snapshots; do not alter reward rules.
+    const growthBefore = window.V7Growth ? window.V7Growth.snapshot(gameState.player) : null;
     const mult = getStreakMultiplier();
     const titleObj = getActiveTitleObj();
     const hpCond = getHpCondition();
@@ -2023,12 +2025,22 @@ function addRewards(baseXp, baseGold, statType = null, statXpGain = 15, silentFl
             document.getElementById('levelup-new-rank').textContent = promoted
                 ? `${rank.title} (🎉 RANK UP!)`
                 : rank.title;
+            if (window.V7Growth) window.V7Growth.decorateLevelModal();
             openModal('modal-levelup');
         }, 400);
     }
 
-    saveState();
+    let growthEvent = null;
+    if (growthBefore && window.V7Growth) {
+        try { growthEvent = window.V7Growth.capture(growthBefore, window.V7Growth.snapshot(gameState.player)); }
+        catch (growthError) { console.warn('Growth capture skipped:', growthError); }
+    }
+    const rewardsSaved = saveState();
     renderAll();
+    if (rewardsSaved && growthEvent && window.V7Growth) {
+        try { window.V7Growth.onReward(growthEvent, {silent: silentFloat}); }
+        catch (growthError) { console.warn('Optional growth presentation failed:', growthError); }
+    }
 
     return { finalXp, finalGold, statType, statXpGain: finalStatXpGain };
 }
@@ -2420,6 +2432,9 @@ function renderStatus() {
     renderPlayerPortrait();
     updateRadarChart(p.stats, tierInfo.cap);
     renderAnalyticsMetrics();
+    if (window.V7Growth) {
+        try { window.V7Growth.render(); } catch (growthError) { console.warn('Growth card render:', growthError); }
+    }
 
     const activeTitle = getActiveTitleObj();
     const unlockedCount = TITLES_CATALOG.filter(t => t.checkUnlocked(gameState)).length;
