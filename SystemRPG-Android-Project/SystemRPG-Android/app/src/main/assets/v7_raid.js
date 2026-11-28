@@ -238,7 +238,7 @@
         createWeek(v,week);
         return true;
     }
-    function recordQuest(q,dateKey) {
+    function recordQuest(q,dateKey,credit=1) {
         if(!q ||q.category!=='Daily Quest'||!q.completed||q.id == null) return false;
         const today=keyOf(new Date());
         // The quest event must belong to today; no rewards for backdated edits.
@@ -253,7 +253,7 @@
             Object.prototype.hasOwnProperty.call(v.questHitLedger,hitKey)) return false;
         // If the weekly maximum was reached, don't create zero-damage queued attacks.
         if(w.rewardClaimed||modeCleared(w))return false;
-        const hit=w.balanceVersion===2?adaptiveHit(w,dateKey,q.id):LEGACY_HIT;
+        const hit=(w.balanceVersion===2?adaptiveHit(w,dateKey,q.id):LEGACY_HIT)*Math.max(0,Math.min(1,Number(credit)||0));
         if(hit<=0)return false;
         battleView(w); // Capture old hits as displayed BEFORE adding a new pending hit.
         const limit=w.maxDamage;
@@ -480,9 +480,12 @@ function paintVictory(w,p) {
         const oldTier=live?w.rewardTier:undefined;
         if(live){w.rewardClaimed=true;w.rewardTier=r.challenge?'challenge':'normal';}
         gameState.player.gold=Number(gameState.player.gold)+r.gold;
+        const oldReport=JSON.stringify(gameState.v8Report||null);
+        V8Core.recordGold(gameState,r.gold);
         v.raidCrystals+=r.crystals;
         if(r.challenge && !hadAura) v.cosmetics.owned.auras.push('aura_eclipse');
         if(saveState() !== true) {
+            gameState.v8Report=JSON.parse(oldReport);
             r.claimed=false;if(live){delete w.rewardClaimed;if(oldTier===undefined)delete w.rewardTier;else w.rewardTier=oldTier;}gameState.player.gold=oldGold;v.raidCrystals=oldCrystals;
             if(!hadAura)v.cosmetics.owned.auras=v.cosmetics.owned.auras.filter(id=>id!=='aura_eclipse');
             return false;
@@ -735,7 +738,7 @@ function renderAppearance() {
              <div class="v7-button-row">${button(t('📖 Baca Kisah','📖 Read Story','📖 物語を読む'), `V7Raid.openBossStory('${b.id}')`)}
              ${button(t('Lewati Intro','Skip Intro','登場演出をスキップ'), 'V7Raid.dismissEncounter()')}</div></div>` : '';
         return introduction + `<div class="v7-boss-card ${modeCleared(w,p.displayedDamage)?'v7-defeated':normal&&!w.rewardClaimed?'v7-enraged':''}">
-            <div class="v7-muted">${esc(w.week)} · ${esc(t('RAID BEBAS · V7.2','OPEN RAID · V7.2','自由レイド · V7.2'))}</div>
+            <div class="v7-muted">${esc(w.week)} · ${esc(t('RAID BEBAS · V8.0','OPEN RAID · V8.0','自由レイド · V8.0'))}</div>
             <div class="v7-battle-arena">
               <div class="v7-arena-title"><strong>🐉 ${esc(b.name)}</strong><small>${esc(b.epithet)}</small><button type="button" class="v7-boss-story-link" onclick="V7Raid.openBossStory('${b.id}')">📖 ${esc(t('Baca Lore','Read Lore','物語を読む'))}</button></div>
               <div class="v7-replay-stage" aria-label="${esc(t('Arena pertarungan Weekly Boss','Weekly Boss battle arena','週間ボスの戦闘アリーナ'))}">

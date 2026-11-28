@@ -81,10 +81,11 @@ function onReward(evt,options={}){if(options.silent)return; latest=evt;if(!evt.c
 let open=false;
 function toggle(){open=!open;const d=document.getElementById('v7-growth-details'),b=document.getElementById('v7-growth-toggle');if(d)d.hidden=!open;if(b)b.setAttribute('aria-expanded',String(open));render();}
 function achievementCards(p){
- const r=rank(p),log=history()||[];
+ const r=String(rank(p)).replace(/-RANK$/,''),log=history()||[];
  const has=(id)=>log.some(c=>c.id===id);
  const raidArchive=(typeof gameState!=='undefined'&&gameState.v7Raid&&gameState.v7Raid.archive)||{};
  const defeated=Object.values(raidArchive).filter(r=>r&&r.won===true);
+ const active=gameState.v7Raid?.active;if(active&&active.maxDamage>0&&active.damage+1e-6>=active.normalTarget&&!raidArchive[active.week])defeated.push(active);
  const arr=[
  {name:'Hunter Lv.10',ok:p.level>=10},{name:'Hunter Lv.20',ok:p.level>=20},
  {name:'Rank D',ok:r!=='E'},{name:'Rank C',ok:['C','B','A','S','NATIONAL'].includes(r)},

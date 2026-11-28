@@ -78,6 +78,7 @@
         }
     };
     function lang() {const value=typeof v6UiLang==='function'?v6UiLang():((typeof gameState!=='undefined'&&gameState.language)||'id');return dict[value]?value:'id';}
+    const tSafe=(id,en,ja)=>({id,en,ja}[lang()]||id);
     function txt(key) {return (dict[lang()]||dict.id)[key]||dict.id[key]||key;}
     function fmt(s,vars) {return s.replace(/\{(\w+)\}/g,(_,k)=>String(vars[k]??''));}
     function localDay(key) {const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(key||''));return m?new Date(+m[1],+m[2]-1,+m[3],12):null;}
@@ -99,11 +100,11 @@
         for(let i=0;i<7;i++) {
             const key=addDays(start,i),e=evaluated[key];
             if(!validEval(e)) {missingDays++;list.push({date:key,kind:'missing',done:0,total:0,pct:0});continue;}
-            const d=number(e.doneCount),t=number(e.totalDaily),pct=t?Math.round(10000*d/t)/100:0;
+            const t=number(e.totalDaily),d=V8Core.evaluationCredit(e),pct=t?Math.round(10000*d/t)/100:0;
             // Legacy/manual evaluations without streak status cannot support a certified Chronicle.
             const estimated=!!e.estimated || !['completed','protected','broken','no_quests'].includes(e.streakStatus);
             if(estimated)estimatedDays++;else verifiedDays++;
-            done+=d;total+=t;if(t>0) {activeDays++;if(pct>bestPct){bestPct=pct;bestDate=key;}}
+            done=Math.round((done+d)*10)/10;total+=t;if(t>0) {activeDays++;if(pct>bestPct){bestPct=pct;bestDate=key;}}
             if(e.streakStatus==='completed')metDays++;
             if(e.streakStatus==='protected')protectedDays++;
             list.push({date:key,kind:t===0?'rest':estimated?'estimated':'recorded',done:d,total:t,pct,streakStatus:e.streakStatus||''});
@@ -111,7 +112,7 @@
             if(!estimated&&snap&&Array.isArray(snap.questIds)&&Array.isArray(snap.completedIds)) {
                 const completed=new Set(snap.completedIds.map(String));
                 for(const id of new Set(snap.questIds.map(String))) {
-                    const c=habitCounts.get(id)||{id,scheduled:0,completed:0};c.scheduled++;if(completed.has(id))c.completed++;habitCounts.set(id,c);
+                    const c=habitCounts.get(id)||{id,scheduled:0,completed:0};c.scheduled++;if(completed.has(id))c.completed++;else if((snap.partialIds||[]).includes(id))c.completed=Math.round((c.completed+0.4)*10)/10;habitCounts.set(id,c);
                 }
             }
         }
@@ -160,7 +161,6 @@
     function setTab(next) {
         if(next!=='insights'&&next!=='chronicle')return;
         tab=next;expanded=true;
-        if(tab==='chronicle'&&offset===0)offset=1;
         render();
     }
     function toggle(next) {
@@ -225,9 +225,13 @@
                 `<h4>${safeText(title)}</h4>${parts.map(p=>`<p>${safeText(p)}</p>`).join('')}`+
                 `<div class="v7cj-story-meta">${safeText(`${snap.done}/${snap.total} · ${snap.average===null?'—':snap.average+'%'} · ${snap.metDays} ${txt('targetDays')}`)}</div>`+
                 `<small>${safeText(txt('archiveHint'))}</small></article>`;
+        } else if(summary.verifiedDays>0||summary.estimatedDays>0) {
+            const lead=tSafe('Catatan sementara','Provisional Chronicle','暫定年代記');
+            body.innerHTML=`<article class="v7cj-story"><div class="v7cj-kicker">${safeText(lead)}</div><p>${safeText(fmt(txt('storyLead'),{done:summary.done,total:summary.total,days:summary.activeDays}))}</p><p>${safeText(fmt(txt('storyStreak'),{met:summary.metDays,shield:summary.protectedDays}))}</p><small>${safeText(txt('coverage'))}: ${7-summary.missingDays}/7 · ${safeText(txt('partial'))}. ${safeText(txt('notes'))}</small></article>`;
         } else {
             body.innerHTML=`<div class="v7cj-empty"><strong>📖 ${safeText(txt('notReady'))}</strong><p>${safeText(offset===0?txt('noStoryCurrent'):txt('missingStory'))}</p></div>`;
         }
+        if(tab==='insights' && window.V8)window.V8.appendAnalysis(body,wk);
         if (tab==='chronicle' && window.V7Growth) window.V7Growth.appendChronicle(body,wk);
     }
     function initialize() {

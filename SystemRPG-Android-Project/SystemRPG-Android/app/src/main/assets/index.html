@@ -17,7 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Orbitron:wght@600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=7.2">
+    <link rel="stylesheet" href="style.css?v=8.0">
     <style>
         .death-stat-grid {
             display: grid;
@@ -390,7 +390,7 @@
                     </div>
                 </div>
 
-                <p id="progression-balance-status" style="font-size:10px;color:#94a3b8;margin:6px 2px 2px;" aria-live="polite">V7.2</p>
+                <p id="progression-balance-status" style="font-size:10px;color:#94a3b8;margin:6px 2px 2px;" aria-live="polite">V8.0</p>
                 <div class="grid grid-cols-1 gap-3" style="padding-top: 4px;">
                     <!-- STR -->
                     <div class="stat-box">
@@ -542,6 +542,7 @@
             </div>
 
             <!-- V7: read-only weekly analytics and archived Hunter Chronicle -->
+            <section class="system-card v8-section" id="v8-status"></section>
             <section class="system-card v7cj" id="v7cj" aria-label="Hunter Chronicle and Weekly Insights">
                 <div class="v7cj-tabs" role="group" aria-label="Weekly History">
                     <button type="button" id="v7cj-tab-insights" aria-expanded="false" aria-controls="v7cj-panel" onclick="V7Chronicle.toggle('insights')">📊 Insight Mingguan</button>
@@ -1017,6 +1018,7 @@
                             <span id="lofi-volume-label" class="font-display shrink-0" style="font-size: 11px; color: #d8b4fe; font-weight: 700; width: 2.25rem; text-align: right;">45%</span>
                         </div>
                         <div class="rpg-music-picker"><label for="rpg-lofi-track">🎼 Offline Soundtrack</label><div class="lofi-playlist-controls"><button type="button" onclick="cycleRpgLofiTrack(-1)" aria-label="Previous soundtrack" title="Previous">⏮</button><select id="rpg-lofi-track" onchange="selectRpgLofiTrack(this.value)" aria-label="Choose soundtrack"><option value="moonlit">Moonlit Study</option><option value="night">Night Quest</option><option value="rainy-window">Rainy Window</option><option value="sakura-evening">Sakura Evening</option><option value="neon-station">Neon Station</option><option value="quiet-library">Quiet Library</option><option value="midnight-rain">Midnight Rain</option><option value="lantern-street">Lantern Street</option><option value="snowfall-dream">Snowfall Dream</option><option value="dawn-over-campus">Dawn Over Campus</option><option value="spring-original">02 Spring (Original)</option><option value="spring-lantern-walk">Spring Lantern Walk</option><option value="synth">Classic Synth</option><option value="custom">MP3 dari HP</option></select><button type="button" onclick="cycleRpgLofiTrack(1)" aria-label="Next soundtrack" title="Next">⏭</button></div></div>
+                        <section class="v8-section" id="v8-music"></section>
                         <audio id="lofi-local-audio-player" loop class="hidden"></audio>
                     </div>
 
@@ -1271,6 +1273,7 @@
 
             <div id="v72-gold-collection" aria-label="Hunter Gold Collection"></div>
             <!-- Raid Cosmetics use the same Shop catalog visual language as Gold items. -->
+            <section class="system-card v8-section" id="v8-sanctuary-shop"></section>
             <div id="v7-shop-exchange" aria-label="Raid Cosmetics items"></div>
 
             <!-- V7 Cosmetics manager: Shop-owned view; equipment remains in v7Raid save. -->
@@ -2081,13 +2084,15 @@
         <div class="hunter-guide-card"><div class="hunter-guide-top"><strong id="hunter-health-guide-heading">HUNTER SURVIVAL GUIDE</strong><button type="button" onclick="closeHunterHealthGuide()" aria-label="Close guide">✕</button></div><div id="hunter-health-guide-content"></div><button type="button" onclick="closeHunterHealthGuide()" id="hunter-health-close">Tutup</button></div>
     </div>
     <!-- Safe bulk-quest scheduling must load BEFORE app.js runs day rollover. -->
+    <script src="v8_core.js?v=8.0"></script>
     <script src="v7_quality.js"></script>
-    <script src="app.js?v=7.2"></script>
+    <script src="app.js?v=8.0"></script>
     <script src="v7_lore.js"></script>
-    <script src="v7_raid.js?v=7.2"></script>
-    <script src="v7_chronicle.js?v=7.2"></script>
+    <script src="v7_raid.js?v=8.0"></script>
+    <script src="v7_chronicle.js?v=8.0"></script>
     <script src="v7_motivation.js"></script>
     <script src="v7_growth.js"></script>
+    <script src="v8_ui.js?v=8.0"></script>
 
 </body>
 </html>

@@ -12,6 +12,7 @@ const SoundFX = {
     ambientNodes: [],
     ambientGain: null,
     sfxOutput: null,
+    masterSfxGain: null,
     uiVolume: 0.90,
     battleVolume: 0.90,
 
@@ -28,7 +29,8 @@ const SoundFX = {
             compressor.attack.value = 0.005;
             compressor.release.value = 0.12;
             const outputGain = this.ctx.createGain();
-            outputGain.gain.value = 1.55;
+            outputGain.gain.value = 1.55 * V8Core.sfxVolume();
+            this.masterSfxGain = outputGain;
             compressor.connect(outputGain);
             outputGain.connect(this.ctx.destination);
             this.sfxOutput = compressor;
@@ -113,7 +115,7 @@ const SoundFX = {
             const template = this._combatClips && this._combatClips[name];
             if (!template || template.readyState < 2) return false;
             const clip = template.cloneNode(true);
-            clip.volume = Math.max(0, Math.min(1, volume * this.battleVolume));
+            clip.volume = Math.max(0, Math.min(1, volume * this.battleVolume * V8Core.sfxVolume()));
             clip.playbackRate = Math.max(0.55, Math.min(1.6, rate));
             const result = clip.play();
             if (result && typeof result.catch === 'function') result.catch(() => {});
@@ -1408,14 +1410,15 @@ function checkRealDayRollover() {
         const total = snap && Array.isArray(snap.questIds) ? snap.questIds.length : quests.length;
         const done = snap && Array.isArray(snap.completedIds) ?
             snap.completedIds.filter(id => snap.questIds.includes(id)).length :
-            (i === 0 ? quests.filter(q => q.completed).length : 0);
+            (i === 0 ? quests.filter(q => V8Core.credit(q)===1).length : 0);
         const threshold = snap && Number(snap.thresholdPct) >= 10 && Number(snap.thresholdPct) <= 100 ?
             Number(snap.thresholdPct) : (Number(gameState.activeDayThresholdPct) || getStreakThresholdPct());
-        const ratio = total ? done / total : 0;
+        const weighted = snap ? V8Core.snapshotCredit(snap, done, total) : i===0 ? V8Core.sum(quests) : 0;
+        const ratio = total ? weighted / total : 0;
         const pct = total ? Math.floor(100*ratio + 1e-9) : 0;
         const met = total > 0 && ratio*100 + 1e-9 >= threshold;
         const estimated = !snap; // Legacy history has no immutable schedule. Warn instead of claiming certainty.
-        const tier = evaluateDailyTier(total ? done/total : 0, gameState.player.maxHp);
+        const tier = evaluateDailyTier(ratio, gameState.player.maxHp);
         const damage = total > 0 ? tier.rawDamage : 0; // Independent of streak threshold.
         let status = total === 0 ? 'no_quests' : met ? 'completed' : 'broken';
         if (total === 0) {
@@ -1441,8 +1444,8 @@ function checkRealDayRollover() {
             appliedDamage = result.mitigatedDamage || 0;
             totalDamage += appliedDamage;
         }
-        dailyReportDays.push({date:key, done, total, pct, status, damage:appliedDamage, estimated});
-        gameState.history.evaluations[key] = {dateStr:key, doneCount:done, totalDaily:total, pct, thresholdPct:threshold, streakStatus:status, evaluatedAt:new Date().toISOString(), automatic:true, estimated};
+        dailyReportDays.push({date:key, done:weighted, total, pct, status, damage:appliedDamage, estimated});
+        gameState.history.evaluations[key] = {dateStr:key, doneCount:done, weightedDone:weighted, totalDaily:total, pct, thresholdPct:threshold, streakStatus:status, evaluatedAt:new Date().toISOString(), automatic:true, estimated};
         settled++;
     }
     // Apply confirmed bulk Quest changes only AFTER evaluating the old day,
@@ -1454,7 +1457,7 @@ function checkRealDayRollover() {
     // this same transaction; they never modify rewards, HP or Streak.
     if (window.V7Chronicle) window.V7Chronicle.captureClosedWeeks(today);
     // Reset only after settlement, never before snapshotting yesterday.
-    gameState.quests.forEach(q => { if(q.category === 'Daily Quest') { q.completed=false; if(q.trackingType === 'count') q.currentCount=0; delete q.lastReward; } });
+    gameState.quests.forEach(q => { if(q.category === 'Daily Quest') { q.completed=false; if(q.trackingType === 'count') q.currentCount=0; delete q.lastReward; delete q.v8Tier; } });
     gameState.selectedDate = today;
     gameState.lastRealDate = today;
     gameState.lastStreakDate = null;
@@ -1481,13 +1484,17 @@ function captureActiveDaySnapshot() {
     const scheduled = gameState.quests.filter(q => q.category === 'Daily Quest' && isQuestActiveOnDate(q, key));
     gameState.dailyScheduleSnapshots[key] = {
         questIds: [...new Set(scheduled.map(q => String(q.id)))],
-        completedIds: [...new Set(scheduled.filter(q => q.completed).map(q => String(q.id)))],
+        completedIds: [...new Set(scheduled.filter(q => V8Core.credit(q)===1).map(q => String(q.id)))],
+        partialIds: scheduled.filter(q => V8Core.credit(q)===0.4).map(q=>String(q.id)),
+        questMeta: Object.fromEntries(scheduled.map(q=>[String(q.id),{title:q.title,slot:inferQuestTimeSlot(q)}])),
         thresholdPct: Number(gameState.activeDayThresholdPct) || getStreakThresholdPct()
     };
 }
 function saveState() {
+    if (V8Core.batch) return true;
     try {
         captureActiveDaySnapshot();
+        V8Core.captureDay(gameState);
         if (window.V7Raid && typeof window.V7Raid.prepareSave === 'function') window.V7Raid.prepareSave();
         gameState.muted = SoundFX.muted;
         gameState.ambientMode = SoundFX.ambientMode;
@@ -2052,6 +2059,7 @@ function addRewards(baseXp, baseGold, statType = null, statXpGain = 15, silentFl
 
     gameState.player.xp += finalXp;
     gameState.player.gold += finalGold;
+    V8Core.recordGold(gameState,finalGold);
 
     let statLeveledUp = false;
     let newStatLvl = 1;
@@ -2139,7 +2147,7 @@ function addRewards(baseXp, baseGold, statType = null, statXpGain = 15, silentFl
     if (typeof recordReward === 'function') recordReward(result);
     const rewardsSaved = saveState();
     renderAll();
-    if (rewardsSaved && growthEvent && window.V7Growth) {
+    if (rewardsSaved && !V8Core.batch && growthEvent && window.V7Growth) {
         try { window.V7Growth.onReward(growthEvent, {silent: silentFloat}); }
         catch (growthError) { console.warn('Optional growth presentation failed:', growthError); }
     }
@@ -2149,6 +2157,7 @@ function addRewards(baseXp, baseGold, statType = null, statXpGain = 15, silentFl
 
 function revokeRewards(xpAmount, goldAmount, statType = null, statXpGain = 15, earnedVersion = 1) {
     gameState.player.gold = Math.max(0, gameState.player.gold - goldAmount);
+    V8Core.recordGold(gameState,-goldAmount);
 
     if (statType && gameState.player.stats[statType] !== undefined) {
         if (!gameState.player.statXp) gameState.player.statXp = { STR: 0, INT: 0, WIS: 0, CHR: 0 };
@@ -2236,6 +2245,7 @@ function advancePenaltyQuestProgress() {
         const rewardGold = pq.rewardGold;
         gameState.player.hp = Math.min(gameState.player.maxHp, (gameState.player.hp || 0) + rewardHp);
         gameState.player.gold = (gameState.player.gold || 0) + rewardGold;
+        V8Core.recordGold(gameState,rewardGold);
         pq.active = false;
         pq.progress = 0;
         return { completed: true, rewardHp, rewardGold };
@@ -2390,6 +2400,7 @@ function takeDamage(amount, suppressDeathModal = false, deferPersistence = false
 // 5. UI RENDERING FUNCTIONS
 // ==========================================
 function renderAll() {
+    if(V8Core.batch)return;
     renderOracle();
     renderStatus();
     if (typeof renderPenaltyQuestBanner === 'function') renderPenaltyQuestBanner();
@@ -2405,6 +2416,7 @@ function renderAll() {
     if (typeof renderTreasury === 'function') renderTreasury();
     if (typeof renderGrimoireBookmarks === 'function') renderGrimoireBookmarks();
     if (window.V7Raid) window.V7Raid.render();
+    if(window.V8) window.V8.refresh();
 }
 
 function renderStatus() {
@@ -2414,8 +2426,8 @@ function renderStatus() {
     const mult = getStreakMultiplier();
     const balanceStatus = document.getElementById('progression-balance-status');
     if (balanceStatus) balanceStatus.textContent = statCurveVersion() === 2
-        ? v6Text('V7.2 · Balanced Stat aktif', 'V7.2 · Balanced Stat active', 'V7.2 · バランス型能力値：有効')
-        : v6Text('V7.2 · Balanced Stat mulai besok', 'V7.2 · Balanced Stat starts next day', 'V7.2 · バランス型能力値：翌日開始');
+        ? v6Text('V8.0 · Balanced Stat aktif', 'V8.0 · Balanced Stat active', 'V8.0 · バランス型能力値：有効')
+        : v6Text('V8.0 · Balanced Stat mulai besok', 'V8.0 · Balanced Stat starts next day', 'V8.0 · バランス型能力値：翌日開始');
 
     const hudGoldEl = document.getElementById('header-gold');
     if (hudGoldEl) {
@@ -2650,29 +2662,13 @@ function renderAnalyticsMetrics() {
     const rateEl = document.getElementById('metric-weekly-rate');
     if (rateEl) {
         const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest' && isQuestActiveOnDate(q, getCurrentGameDateKey()));
-        const totalDailyPerDay = Math.max(1, dailyQuests.length);
-        const dailyCounts = (gameState.history && gameState.history.dailyCounts) || {};
-        const baseDate = parseDateKey(getCurrentGameDateKey());
-        const day = baseDate.getDay();
-        const diffToMon = (day === 0 ? 6 : day - 1);
-        const monday = new Date(baseDate);
-        monday.setDate(baseDate.getDate() - diffToMon);
-
-        let daysElapsed = diffToMon + 1;
-        let completedSum = 0;
-        for (let i = 0; i < daysElapsed; i++) {
-            const d = new Date(monday);
-            d.setDate(monday.getDate() + i);
-            const key = formatDateKey(d);
-            if (key === getCurrentGameDateKey()) {
-                completedSum += dailyQuests.filter(q => q.completed).length;
-            } else {
-                completedSum += Math.min(totalDailyPerDay, dailyCounts[key] || 0);
-            }
+        const baseDate=parseDateKey(getCurrentGameDateKey());
+        const monday=new Date(baseDate);monday.setDate(baseDate.getDate()-((baseDate.getDay()+6)%7));
+        let done=V8Core.sum(dailyQuests),total=dailyQuests.length;
+        for(const [key,e] of Object.entries(gameState.history?.evaluations||{})){
+            if(key>=formatDateKey(monday)&&key<getCurrentGameDateKey()&&Number.isInteger(e.totalDaily)&&e.totalDaily>=0&&Number.isInteger(e.doneCount)&&e.doneCount>=0&&e.doneCount<=e.totalDaily){total+=e.totalDaily;done+=V8Core.evaluationCredit(e);}
         }
-        const targetSum = daysElapsed * totalDailyPerDay;
-        const ratePct = Math.min(100, Math.round((completedSum / targetSum) * 100));
-        rateEl.textContent = `${ratePct}%`;
+        rateEl.textContent=total?`${Math.round(done/total*100)}%`:'—';
     }
 }
 
@@ -3072,6 +3068,7 @@ function setQuestDayFilter(mode) {
 function openEditQuestModal(id) {
     const q = gameState.quests.find(item => item.id === id);
     if (!q) return;
+    if(q.v8Tier){V8Core.lockNotice();return;}
     SoundFX.playClick();
     document.getElementById('edit-q-id').value = q.id;
     document.getElementById('edit-q-title').value = q.title;
@@ -3100,6 +3097,7 @@ function saveEditedQuest(e) {
     const q = gameState.quests.find(item => item.id === id);
     if (!q) return;
 
+    if(q.v8Tier){V8Core.lockNotice();return;}
     q.title = document.getElementById('edit-q-title').value.trim() || q.title;
     q.category = document.getElementById('edit-q-category').value;
     q.timeSlot = document.getElementById('edit-q-timeslot').value;
@@ -3340,7 +3338,7 @@ function renderQuests() {
     container.innerHTML = '';
 
     const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest' && isQuestActiveOnDate(q, getCurrentGameDateKey()));
-    const doneDailyCount = dailyQuests.filter(q => q.completed).length;
+    const doneDailyCount = V8Core.sum(dailyQuests);
     const totalDailyCount = dailyQuests.length;
 
     const targetPct = getStreakThresholdPct();
@@ -3361,8 +3359,8 @@ function renderQuests() {
     const dailyTextEl = document.getElementById('daily-progress-text');
     const dailyBarEl = document.getElementById('daily-progress-bar');
     if (dailyTextEl && dailyBarEl) {
-        const pct = totalDailyCount > 0 ? Math.round((doneDailyCount / totalDailyCount) * 100) : 0;
-        const targetMet = pct >= targetPct && totalDailyCount > 0;
+        const pct = totalDailyCount > 0 ? Math.floor((doneDailyCount / totalDailyCount) * 100 + 1e-9) : 0;
+        const targetMet = totalDailyCount > 0 && doneDailyCount/totalDailyCount >= getStreakThresholdRatio();
         dailyTextEl.textContent = `${doneDailyCount} / ${totalDailyCount} (${pct}%)${targetMet ? ' 🔥' : ''}`;
         dailyBarEl.style.width = `${pct}%`;
         dailyBarEl.style.background = targetMet
@@ -3427,7 +3425,7 @@ function renderQuests() {
         const isDone = q.completed;
         const isCount = q.trackingType === 'count' && (q.targetCount || 0) > 1;
         const curCount = isCount ? (q.currentCount || 0) : 0;
-        const tgtCount = isCount ? (q.targetCount || 1) : 1;
+        const tgtCount = isCount ? (q.targetCount || 1)*(q.v8Partial&&q.category==='Daily Quest'?2:1) : 1;
         const stepCount = isCount ? (q.stepCount || 1) : 1;
         const unitLabel = isCount ? (q.unit || 'kali') : '';
         const countPct = isCount ? Math.min(100, Math.round((curCount / tgtCount) * 100)) : 0;
@@ -3451,9 +3449,9 @@ function renderQuests() {
                         📊 Progres: ${curCount} / ${tgtCount} ${escapeHtml(unitLabel)} (${countPct}%)
                     </span>
                     <div class="flex items-center gap-1">
-                        <button type="button" onclick="adjustQuestCount('${q.id}', -${stepCount})" style="padding: 2px 8px; border-radius: 0.4rem; background: #1e293b; border: 1px solid #475569; color: #cbd5e1; font-weight: 800; font-size: 11px;" title="Kurangi hitungan">-${stepCount}</button>
-                        <button type="button" onclick="adjustQuestCount('${q.id}', ${stepCount})" style="padding: 2px 9px; border-radius: 0.4rem; background: rgba(6,182,212,0.22); border: 1px solid rgba(34,211,238,0.55); color: #67e8f9; font-weight: 800; font-size: 11px;" title="Tambah hitungan">+${stepCount}</button>
-                        <button type="button" onclick="promptSetQuestCount('${q.id}')" style="padding: 2px 7px; border-radius: 0.4rem; background: rgba(168,85,247,0.2); border: 1px solid rgba(192,132,252,0.45); color: #e9d5ff; font-weight: 700; font-size: 10px;" title="Input angka manual">Set</button>
+                        <button ${q.v8Tier?'disabled':''} type="button" onclick="adjustQuestCount('${q.id}', -${stepCount})" style="padding: 2px 8px; border-radius: 0.4rem; background: #1e293b; border: 1px solid #475569; color: #cbd5e1; font-weight: 800; font-size: 11px;" title="Kurangi hitungan">-${stepCount}</button>
+                        <button ${q.v8Tier?'disabled':''} type="button" onclick="adjustQuestCount('${q.id}', ${stepCount})" style="padding: 2px 9px; border-radius: 0.4rem; background: rgba(6,182,212,0.22); border: 1px solid rgba(34,211,238,0.55); color: #67e8f9; font-weight: 800; font-size: 11px;" title="Tambah hitungan">+${stepCount}</button>
+                        <button ${q.v8Tier?'disabled':''} type="button" onclick="promptSetQuestCount('${q.id}')" style="padding: 2px 7px; border-radius: 0.4rem; background: rgba(168,85,247,0.2); border: 1px solid rgba(192,132,252,0.45); color: #e9d5ff; font-weight: 700; font-size: 10px;" title="Input angka manual">Set</button>
                     </div>
                 </div>
                 <div class="progress-track-sm">
@@ -3464,7 +3462,7 @@ function renderQuests() {
 
         card.innerHTML = `
             <div class="flex items-start gap-2-5 flex-1 min-w-0">
-                <button onclick="toggleQuest('${q.id}')" title="${isDone ? 'Klik untuk batalkan (Undo)' : 'Centang selesai penuh'}"
+                <button ${q.v8Tier?'disabled aria-disabled="true"':''} onclick="toggleQuest('${q.id}')" title="${isDone ? 'Klik untuk batalkan (Undo)' : 'Centang selesai penuh'}"
                     style="margin-top: 2px; width: 1.5rem; height: 1.5rem; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; ${checkBtnStyle}">
                     <svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                 </button>
@@ -3479,6 +3477,7 @@ function renderQuests() {
                         <p class="${isDone ? 'line-through' : ''}" style="font-size: 0.875rem; font-weight: 500; color: ${isDone ? '#94a3b8' : '#f1f5f9'}; line-height: 1.35;">${escapeHtml(q.title)}</p>
                     </div>
                     ${counterControlsHtml}
+                    ${V8Core.questControls(q)}
                     <div class="flex flex-wrap items-center gap-3 font-display" style="margin-top: 6px; font-size: 11px; font-weight: 700;">
                         <span style="color: var(--cyan-400);">+${q.xp} XP</span>
                         <span style="color: var(--amber-400);">+${q.gold} Gold</span>
@@ -3710,13 +3709,14 @@ function toggleQuestCountInputs(mode) {
 
 function adjustQuestCount(id, delta) {
     const q = gameState.quests.find(item => item.id === id);
-    if (!q || q.trackingType !== 'count') return;
-    const target = Math.max(1, q.targetCount || 1);
+    if (!q || q.trackingType !== 'count' || q.v8Tier) return;
+    const target = Math.max(1, q.targetCount || 1)*(q.v8Partial&&q.category==='Daily Quest'?2:1);
     const prev = q.currentCount || 0;
     const next = Math.max(0, Math.min(target, prev + delta));
     if (next === prev) return;
 
     q.currentCount = next;
+    if(q.v8Partial&&q.category==='Daily Quest'){saveState();renderQuests();return;}
     if (next >= target && !q.completed) {
         toggleQuest(id);
         return;
@@ -3733,8 +3733,8 @@ function adjustQuestCount(id, delta) {
 
 function promptSetQuestCount(id) {
     const q = gameState.quests.find(item => item.id === id);
-    if (!q || q.trackingType !== 'count') return;
-    const target = Math.max(1, q.targetCount || 1);
+    if (!q || q.trackingType !== 'count' || q.v8Tier) return;
+    const target = Math.max(1, q.targetCount || 1)*(q.v8Partial&&q.category==='Daily Quest'?2:1);
     const unit = q.unit || 'kali';
     const raw = window.prompt(`Masukkan progres hitungan untuk "${q.title}" (0 - ${target} ${unit}):`, String(q.currentCount || 0));
     if (raw === null) return;
@@ -3800,18 +3800,23 @@ function handleAddQuest(e) {
     spawnFloatingReward('⚔️ Quest Baru Ditambahkan!');
 }
 
-function toggleQuest(id, preserveCount = false) {
+function toggleQuest(id, preserveCount = false, tier = null) {
     const q = gameState.quests.find(item => item.id === id);
     if (!q) return;
 
     const todayKey = getCurrentGameDateKey();
+    if(q.v8Tier && q.completed)return;
+    if(tier && (!V8Core.batch || !V8Core.validTier(tier) || q.category!=='Daily Quest' || q.completed || !isQuestActiveOnDate(q,todayKey)))return;
+    if(q.v8Partial && q.category==='Daily Quest' && !tier && !q.completed){if(window.V8)window.V8.choose(q.id);return;}
+    const rewardScale = tier ? V8Core.tiers[tier].reward : 1;
 
     if (!q.completed) {
+        if(tier)q.v8Tier=tier;
         q.completed = true;
         // V7 raid ledger must be updated before addRewards() triggers saveState().
-        if (q.category === 'Daily Quest' && window.V7Raid) window.V7Raid.recordQuest(q, todayKey);
+        if (q.category === 'Daily Quest' && window.V7Raid) window.V7Raid.recordQuest(q, todayKey, V8Core.credit(q));
         if (q.trackingType === 'count' && !preserveCount) {
-            q.currentCount = q.targetCount || 1;
+            q.currentCount = tier ? V8Core.target(q,tier) : q.targetCount || 1;
         }
 
         let effectiveBaseXp = q.xp;
@@ -3830,8 +3835,8 @@ function toggleQuest(id, preserveCount = false) {
             SoundFX.playQuestComplete();
         }
 
-        const statXpEarned = getQuestStatXpGain(q);
-        const rewardResult = addRewards(effectiveBaseXp, effectiveBaseGold, q.stat, statXpEarned, isCrit, result => {
+        const statXpEarned = Math.round(getQuestStatXpGain(q)*rewardScale);
+        const rewardResult = addRewards(Math.round(effectiveBaseXp*rewardScale), Math.round(effectiveBaseGold*rewardScale), q.stat, statXpEarned, isCrit, result => {
             q.lastReward = { xp: result.finalXp, gold: result.finalGold, stat: q.stat, statXpGain: result.statXpGain, statCurveVersion: result.statCurveVersion };
         });
         if (isCrit) {
@@ -3853,11 +3858,11 @@ function toggleQuest(id, preserveCount = false) {
             }, 300);
         }
 
-        recordActivityHistory(q.title, q.category, q.stat, rewardResult.finalXp, rewardResult.finalGold, q.id);
+        recordActivityHistory(tier ? `${q.title} · ${tier}` : q.title, q.category, q.stat, rewardResult.finalXp, rewardResult.finalGold, q.id);
 
         // Penalty Quest hanya dihitung dari Daily Quest yang benar-benar diselesaikan.
         // Hook ini sebelumnya belum dipanggil, sehingga progress penalty tidak pernah bertambah.
-        if (q.category === 'Daily Quest') {
+        if (q.category === 'Daily Quest' && V8Core.credit(q)===1) {
             const penaltyProgress = advancePenaltyQuestProgress();
             if (penaltyProgress?.completed) {
                 SoundFX.playQuestComplete();
@@ -3873,7 +3878,7 @@ function toggleQuest(id, preserveCount = false) {
                 if (!gameState.history.slotCombosClaimed) gameState.history.slotCombosClaimed = {};
                 const comboKey = `${todayKey}_${slot}`;
                 const slotQuests = gameState.quests.filter(item => item.category === 'Daily Quest' && inferQuestTimeSlot(item) === slot);
-                if (slotQuests.length > 0 && slotQuests.every(item => item.completed) && !gameState.history.slotCombosClaimed[comboKey]) {
+                if (slotQuests.length > 0 && slotQuests.every(item => V8Core.credit(item)===1) && !gameState.history.slotCombosClaimed[comboKey]) {
                     const comboReward = addRewards(15, 25, 'WIS', 15, true, result => {
                         gameState.history.slotCombosClaimed[comboKey] = {
                             xp: result.finalXp, gold: result.finalGold, statXpGain: result.statXpGain, statCurveVersion: result.statCurveVersion
@@ -3886,7 +3891,7 @@ function toggleQuest(id, preserveCount = false) {
             }
 
             const dailyQuests = gameState.quests.filter(item => item.category === 'Daily Quest' && isQuestActiveOnDate(item, todayKey));
-            const doneCount = dailyQuests.filter(item => item.completed).length;
+            const doneCount = V8Core.sum(dailyQuests);
             const ratio = dailyQuests.length > 0 ? (doneCount / dailyQuests.length) : 0;
 
             if (ratio >= getStreakThresholdRatio() && gameState.lastStreakDate !== todayKey) {
@@ -3936,7 +3941,7 @@ function toggleQuest(id, preserveCount = false) {
 
             if (gameState.lastStreakDate === todayKey) {
                 const dailyQuests = gameState.quests.filter(item => item.category === 'Daily Quest' && isQuestActiveOnDate(item, todayKey));
-                const doneCount = dailyQuests.filter(item => item.completed).length;
+                const doneCount = V8Core.sum(dailyQuests);
                 const ratio = dailyQuests.length > 0 ? (doneCount / dailyQuests.length) : 0;
                 if (ratio < getStreakThresholdRatio()) {
                     gameState.player.streak = Math.max(0, (gameState.player.streak || 1) - 1);
@@ -3954,6 +3959,7 @@ function toggleQuest(id, preserveCount = false) {
 }
 
 function deleteQuest(id) {
+    if(gameState.quests.find(q=>q.id===id)?.v8Tier){V8Core.lockNotice();return;}
     SoundFX.playClick();
     gameState.quests = gameState.quests.filter(q => q.id !== id);
     saveState();
@@ -4398,7 +4404,7 @@ function openMysteryGacha() {
             glowShadow = '0 0 28px rgba(251,191,36,0.55)';
             if (subRoll < 0.5) {
                 emoji = '👑';
-                gameState.player.gold += 500;
+                gameState.player.gold += 500; V8Core.recordGold(gameState,500);
                 gameState.player.hp = gameState.player.maxHp;
                 addRewards(250, 0, randStat, 60, true);
                 rewardTitle = '+500 GOLD + FULL HP + 250 XP!';
@@ -4408,7 +4414,7 @@ function openMysteryGacha() {
                 emoji = '🐉';
                 const gotShield = (gameState.player.shields || 0) < 2;
                 if (gotShield) gameState.player.shields = (gameState.player.shields || 0) + 1;
-                else gameState.player.gold += 350;
+                else {gameState.player.gold += 350; V8Core.recordGold(gameState,350);}
                 addRewards(300, 0, randStat, 80, true);
                 rewardTitle = gotShield ? '+1 SHIELD + 300 XP + 80 STAT XP!' : '+350 GOLD + 300 XP + 80 STAT XP!';
                 rewardDesc = gotShield
@@ -4432,7 +4438,7 @@ function openMysteryGacha() {
                     rewardDesc = `Pelindung Streak ditambahkan (Stok: ${gameState.player.shields}/2) +40 WIS XP.`;
                     logEffect = 'Epic: +1 Streak Shield, +120 XP, +40 WIS';
                 } else {
-                    gameState.player.gold += 280;
+                    gameState.player.gold += 280; V8Core.recordGold(gameState,280);
                     addRewards(120, 0, 'WIS', 40, true);
                     rewardTitle = '+280 GOLD & +120 XP!';
                     rewardDesc = 'Stok Shield penuh (2/2), dikonversi menjadi +280 Gold & +120 XP!';
@@ -4447,7 +4453,7 @@ function openMysteryGacha() {
                 logEffect = 'Epic: +35 All Stats XP & +150 XP';
             } else {
                 emoji = '💰';
-                gameState.player.gold += 300;
+                gameState.player.gold += 300; V8Core.recordGold(gameState,300);
                 addRewards(90, 0, 'CHR', 35, true);
                 rewardTitle = '+300 GOLD & +90 XP!';
                 rewardDesc = 'Harta karun tersembunyi! Profit bersih +150 Gold & +35 CHR XP.';
@@ -4468,7 +4474,7 @@ function openMysteryGacha() {
                 logEffect = `Rare: +180 XP & +50 ${randStat} XP`;
             } else if (subRoll < 0.67) {
                 emoji = '💎';
-                gameState.player.gold += 210;
+                gameState.player.gold += 210; V8Core.recordGold(gameState,210);
                 addRewards(60, 0, randStat, 30, true);
                 rewardTitle = '+210 GOLD & +60 XP!';
                 rewardDesc = `Profit bersih +60 Gold beserta tambahan +30 ${randStat} XP!`;
@@ -4496,7 +4502,7 @@ function openMysteryGacha() {
                 logEffect = `Common: +95 XP & +30 ${randStat} XP`;
             } else if (subRoll < 0.70) {
                 emoji = '🪙';
-                gameState.player.gold += 120;
+                gameState.player.gold += 120; V8Core.recordGold(gameState,120);
                 addRewards(50, 0, 'CHR', 20, true);
                 rewardTitle = '+120 GOLD & +50 XP!';
                 rewardDesc = 'Cashback 120 Gold + bonus +50 XP & +20 CHR XP.';
@@ -4710,7 +4716,7 @@ function completeDungeon() {
         const targetQ = gameState.quests.find(q => q.id === linkedQuestId && !q.completed);
         if (targetQ) {
             toggleQuest(targetQ.id);
-            linkedNote = `\n\n🎯 Quest Tertaut "${targetQ.title}" otomatis selesai!`;
+            linkedNote = targetQ.completed ? `\n\n🎯 Quest Tertaut "${targetQ.title}" otomatis selesai!` : `\n\n🎯 ${v6Text("Pilih hasil quest fleksibel secara manual.","Select the flexible quest tier manually.","柔軟なクエストの結果を手動で選択してください。")}`;
         }
     }
 
@@ -5026,14 +5032,14 @@ function confirmJournalAndAdvance(saveJournal) {
     }
 
     const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest' && isQuestActiveOnDate(q, getCurrentGameDateKey()));
-    const doneCount = dailyQuests.filter(q => q.completed).length;
+    const doneCount = V8Core.sum(dailyQuests);
     const totalDaily = dailyQuests.length;
     const ratio = totalDaily > 0 ? (doneCount / totalDaily) : 1;
     const pct = Math.round(ratio * 100);
 
     // Snapshot recorded before effects, preventing duplicate evaluation.
     if (!gameState.history.evaluations) gameState.history.evaluations = {};
-    gameState.history.evaluations[currentKey] = {dateStr:currentKey, doneCount, totalDaily, pct, evaluatedAt:new Date().toISOString()};
+    gameState.history.evaluations[currentKey] = {dateStr:currentKey, doneCount:dailyQuests.filter(q=>V8Core.credit(q)===1).length, weightedDone:doneCount, totalDaily, pct, evaluatedAt:new Date().toISOString()};
     const nextDateKey = currentKey; // Keep game date until explicit Next Day.
 
     syncPlayerMaxHp();
@@ -5627,9 +5633,10 @@ function getPendingDailySummary() {
     const pending = dailyQuests.filter(q => !q.completed);
     return {
         total: dailyQuests.length,
-        done: dailyQuests.length - pending.length,
-        pendingCount: pending.length,
-        sampleTitles: pending.slice(0, 3).map(q => q.title)
+        done: V8Core.sum(dailyQuests),
+        fullDone: dailyQuests.filter(q=>V8Core.credit(q)===1).length,
+        pendingCount: dailyQuests.filter(q=>V8Core.credit(q)<1).length,
+        sampleTitles: dailyQuests.filter(q=>V8Core.credit(q)<1).slice(0, 3).map(q => q.title)
     };
 }
 
@@ -5684,10 +5691,11 @@ async function sendTestSystemNotification() {
 }
 
 function syncSystemReminders() {
+    if(V8Core.batch)return;
     const rem = ensureReminderState();
     if (!rem.enabled) { cancelNativeSystemReminders(); return; }
     const summary = getPendingDailySummary();
-    const pct = summary.total > 0 ? Math.round((summary.done / summary.total) * 100) : 0;
+    const pct = summary.total > 0 ? Math.floor((summary.done / summary.total) * 100 + 1e-9) : 0;
     const thresholdPct = getStreakThresholdPct();
     const lang = getReminderLang();
     try {
@@ -5696,7 +5704,7 @@ function syncSystemReminders() {
                 window.AndroidBridge.scheduleDailyRemindersFull(JSON.stringify({
                     times: rem.times,
                     pendingCount: summary.pendingCount,
-                    doneCount: summary.done,
+                    doneCount: summary.fullDone,
                     totalCount: summary.total,
                     pct: pct,
                     thresholdPct: thresholdPct,
@@ -5729,7 +5737,7 @@ function syncHomeScreenWidget() {
         const p = gameState.player;
         const rankObj = (typeof getPlayerRank === 'function') ? getPlayerRank(p.level) : { title: 'E-Rank' };
         const summary = (typeof getPendingDailySummary === 'function') ? getPendingDailySummary() : { done: 0, total: 0 };
-        const dailyPct = summary.total > 0 ? Math.round((summary.done / summary.total) * 100) : 0;
+        const dailyPct = summary.total > 0 ? Math.floor((summary.done / summary.total) * 100 + 1e-9) : 0;
 
        if (typeof window.AndroidBridge.setAppLanguage === 'function') {
             window.AndroidBridge.setAppLanguage(getReminderLang());
@@ -7186,9 +7194,9 @@ function syncAndroidHomeWidget() {
         const p = gameState.player;
         const rank = getPlayerRank(p.level);
         const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest' && isQuestActiveOnDate(q, getCurrentGameDateKey()));
-        const doneCount = dailyQuests.filter(q => q.completed).length;
+        const doneCount = V8Core.sum(dailyQuests);
         const totalDaily = dailyQuests.length;
-        const pct = totalDaily > 0 ? Math.round((doneCount / totalDaily) * 100) : 0;
+        const pct = totalDaily > 0 ? Math.floor((doneCount / totalDaily) * 100 + 1e-9) : 0;
 
         let subtitle = `HP ${p.hp}/${p.maxHp} • Daily: ${doneCount}/${totalDaily} (${pct}%)`;
         if (pct >= 100 && totalDaily > 0) {
@@ -7302,11 +7310,12 @@ let isStartingSplashBgm = false;
 let rpgSplashAudio = null;
 function startAutoSplashFantasyBGM() {
     if (isSplashUnlocking || isSplashBgmPlaying) return;
+    if(V8Core.awakeningUrl && rpgSplashAudio && rpgSplashAudio.getAttribute('src')!==V8Core.awakeningUrl){rpgSplashAudio.pause();rpgSplashAudio=null;}
     if (!rpgSplashAudio) {
-        rpgSplashAudio = new Audio('awakening-dark-remaster.mp3');
+        rpgSplashAudio = new Audio(V8Core.awakeningUrl || 'awakening-dark-remaster.mp3');
         rpgSplashAudio.loop = true;
         rpgSplashAudio.preload = 'auto';
-        rpgSplashAudio.volume = 1.0;
+        rpgSplashAudio.volume = V8Core.awakeningVolume();
     }
     isSplashBgmPlaying = true;
     rpgSplashAudio.play().catch(() => { isSplashBgmPlaying = false; });
@@ -7399,7 +7408,7 @@ function playFingerprintUnlockSound() {
             osc.frequency.setValueAtTime(freq, now + idx * 0.07);
 
             gain.gain.setValueAtTime(0.001, now + idx * 0.07);
-            gain.gain.linearRampToValueAtTime(0.30 * (typeof SoundFX!=='undefined'?SoundFX.uiVolume:0.9), now + idx * 0.07 + 0.02);
+            gain.gain.linearRampToValueAtTime(0.30 * V8Core.sfxVolume() * (typeof SoundFX!=='undefined'?SoundFX.uiVolume:0.9), now + idx * 0.07 + 0.02);
             gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.07 + 0.32);
 
             osc.connect(gain);
