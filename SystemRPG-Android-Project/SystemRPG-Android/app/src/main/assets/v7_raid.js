@@ -8,16 +8,31 @@
     const DAILY_POTENTIAL = 100;
     const DAMAGE_SCALE = 1000000;
     const ROSTER = Object.freeze([
-        {id:'fenrir',name:'Fenrir Shade',epithet:'The Forgotten Beast',tier:0,motif:{id:'sumpah yang terlupakan di bawah cahaya bulan',en:'a forgotten oath beneath the moon',ja:'月光の下に忘れられた誓い'}},
-        {id:'golem',name:'Runebound Golem',epithet:'The Silent Sentinel',tier:0,motif:{id:'rune yang menjaga gerbang sunyi',en:'runes guarding a silent gate',ja:'静かな門を守る古代のルーン'}},
-        {id:'hollow',name:'Hollow Knight',epithet:'The Fallen Oathkeeper',tier:1,motif:{id:'zirah dari janji yang telah dikhianati',en:'the armor of a broken promise',ja:'破られた約束の鎧'}},
-        {id:'raven',name:'Raven Oracle',epithet:'The Keeper of Lost Prophecies',tier:1,motif:{id:'ramalan yang tersebar bersama bulu gagak',en:'prophecies scattered among black feathers',ja:'黒い羽根に散った予言'}},
-        {id:'dragon',name:'Abyss Dragon',epithet:'The Devourer of Light',tier:2,motif:{id:'api yang menelan cahaya bintang',en:'a flame that consumes starlight',ja:'星明かりを飲み込む炎'}},
-        {id:'warden',name:'Abyssal Warden',epithet:'The Eternal Jailer',tier:2,motif:{id:'penjara tanpa jalan keluar',en:'a prison without an exit',ja:'出口のない監獄'}},
-        {id:'queen',name:'Nocturne Queen',epithet:'The Sovereign of Silence',tier:3,motif:{id:'kerajaan yang telah melupakan nyanyiannya',en:'a kingdom that has forgotten its songs',ja:'歌を忘れた王国'}},
-        {id:'seraph',name:'Eclipse Seraph',epithet:'The Fallen Light',tier:3,motif:{id:'sayap yang menutupi fajar terakhir',en:'wings eclipsing the final dawn',ja:'最後の夜明けを覆う翼'}},
-        {id:'void',name:'Void Sovereign',epithet:'The King Beyond the Veil',tier:4,motif:{id:'takhta di luar cakrawala terakhir',en:'a throne beyond the last horizon',ja:'最後の地平線の向こうの玉座'}},
-        {id:'architect',name:'The First Architect',epithet:'The Origin of the System',tier:4,motif:{id:'rancangan yang lebih tua dari SYSTEM itu sendiri',en:'blueprints older than the System itself',ja:'SYSTEMよりも古い設計図'}}
+        {id:'fenrir',name:'Fenrir Shade',epithet:'The Forgotten Beast',epithets:{"id":"Sang Binatang yang Terlupakan","en":"The Forgotten Beast","ja":"忘れられた獣"},tier:0,motif:{id:'sumpah yang terlupakan di bawah cahaya bulan',en:'a forgotten oath beneath the moon',ja:'月光の下に忘れられた誓い'}},
+        {id:'golem',name:'Runebound Golem',epithet:'The Silent Sentinel',epithets:{"id":"Penjaga Sunyi","en":"The Silent Sentinel","ja":"静かなる番人"},tier:0,motif:{id:'rune yang menjaga gerbang sunyi',en:'runes guarding a silent gate',ja:'静かな門を守る古代のルーン'}},
+        {id:'hollow',name:'Hollow Knight',epithet:'The Fallen Oathkeeper',epithets:{"id":"Penjaga Sumpah yang Jatuh","en":"The Fallen Oathkeeper","ja":"堕ちた誓いの守護者"},tier:1,motif:{id:'zirah dari janji yang telah dikhianati',en:'the armor of a broken promise',ja:'破られた約束の鎧'}},
+        {id:'raven',name:'Raven Oracle',epithet:'The Keeper of Lost Prophecies',epithets:{"id":"Penjaga Ramalan yang Hilang","en":"The Keeper of Lost Prophecies","ja":"失われた予言の番人"},tier:1,motif:{id:'ramalan yang tersebar bersama bulu gagak',en:'prophecies scattered among black feathers',ja:'黒い羽根に散った予言'}},
+        {id:'dragon',name:'Abyss Dragon',epithet:'The Devourer of Light',epithets:{"id":"Pemangsa Cahaya","en":"The Devourer of Light","ja":"光を喰らう者"},tier:2,motif:{id:'api yang menelan cahaya bintang',en:'a flame that consumes starlight',ja:'星明かりを飲み込む炎'}},
+        {id:'warden',name:'Abyssal Warden',epithet:'The Eternal Jailer',epithets:{"id":"Sipir Abadi","en":"The Eternal Jailer","ja":"永遠の看守"},tier:2,motif:{id:'penjara tanpa jalan keluar',en:'a prison without an exit',ja:'出口のない監獄'}},
+        {id:'queen',name:'Nocturne Queen',epithet:'The Sovereign of Silence',epithets:{"id":"Penguasa Keheningan","en":"The Sovereign of Silence","ja":"静寂の女王"},tier:3,motif:{id:'kerajaan yang telah melupakan nyanyiannya',en:'a kingdom that has forgotten its songs',ja:'歌を忘れた王国'}},
+        {id:'seraph',name:'Eclipse Seraph',epithet:'The Fallen Light',epithets:{"id":"Cahaya yang Jatuh","en":"The Fallen Light","ja":"堕ちた光"},tier:3,motif:{id:'sayap yang menutupi fajar terakhir',en:'wings eclipsing the final dawn',ja:'最後の夜明けを覆う翼'}},
+        {id:'void',name:'Void Sovereign',epithet:'The King Beyond the Veil',epithets:{"id":"Raja di Balik Tabir","en":"The King Beyond the Veil","ja":"帳の向こうの王"},tier:4,motif:{id:'takhta di luar cakrawala terakhir',en:'a throne beyond the last horizon',ja:'最後の地平線の向こうの玉座'}},
+        {id:'architect',name:'The First Architect',epithet:'The Origin of the System',epithets:{"id":"Asal Mula SYSTEM","en":"The Origin of the System","ja":"SYSTEMの起源"},tier:4,motif:{id:'rancangan yang lebih tua dari SYSTEM itu sendiri',en:'blueprints older than the System itself',ja:'SYSTEMよりも古い設計図'}},
+        {"id":"scorpion","name":"Crimson Scorpion","epithet":"Guardian of the Red Spring","epithets":{"id":"Penjaga Mata Air Merah","en":"Guardian of the Red Spring","ja":"赤い泉の守護者"},"tier":0,"color":"#f97366"},
+        {"id":"frostrevenant","name":"Frost Revenant","epithet":"Keeper of the Frozen Road","epithets":{"id":"Penjaga Jalan Beku","en":"Keeper of the Frozen Road","ja":"凍った道の番人"},"tier":0,"color":"#7dd3fc"},
+        {"id":"graveborn","name":"Graveborn Guardian","epithet":"Keeper of Lost Names","epithets":{"id":"Penjaga Nama yang Hilang","en":"Keeper of Lost Names","ja":"失われた名の守護者"},"tier":0,"color":"#a3e635"},
+        {"id":"executioner","name":"Phantom Executioner","epithet":"Judge Without a Verdict","epithets":{"id":"Hakim Tanpa Putusan","en":"Judge Without a Verdict","ja":"判決なき裁き手"},"tier":1,"color":"#94a3b8"},
+        {"id":"marionette","name":"Cursed Marionette","epithet":"Dancer of Broken Strings","epithets":{"id":"Penari Benang Patah","en":"Dancer of Broken Strings","ja":"切れた糸の踊り手"},"tier":1,"color":"#f0abfc"},
+        {"id":"minotaur","name":"Dread Minotaur","epithet":"Guardian of the Broken Maze","epithets":{"id":"Penjaga Labirin Retak","en":"Guardian of the Broken Maze","ja":"壊れた迷宮の番人"},"tier":1,"color":"#fb923c"},
+        {"id":"leviathan","name":"Leviathan","epithet":"Keeper of the Sunken City","epithets":{"id":"Penjaga Kota Tenggelam","en":"Keeper of the Sunken City","ja":"沈んだ街の守護者"},"tier":2,"color":"#22d3ee"},
+        {"id":"hydra","name":"Obsidian Hydra","epithet":"Three Voices, One Memory","epithets":{"id":"Tiga Suara Satu Ingatan","en":"Three Voices, One Memory","ja":"三つの声、一つの記憶"},"tier":2,"color":"#a78bfa"},
+        {"id":"devourer","name":"Soul Devourer","epithet":"Collector of Echoes","epithets":{"id":"Pengumpul Gema","en":"Collector of Echoes","ja":"残響の収集者"},"tier":2,"color":"#c084fc"},
+        {"id":"behemoth","name":"Astral Behemoth","epithet":"Bearer of the Sky","epithets":{"id":"Pemikul Langit","en":"Bearer of the Sky","ja":"空を背負う者"},"tier":3,"color":"#818cf8"},
+        {"id":"archangel","name":"Fallen Archangel","epithet":"Wings of the Dissenter","epithets":{"id":"Sayap Sang Pembangkang","en":"Wings of the Dissenter","ja":"異議を唱えた翼"},"tier":3,"color":"#fde68a"},
+        {"id":"chronos","name":"Chronos Keeper","epithet":"Keeper of the Last Clock","epithets":{"id":"Penjaga Jam Terakhir","en":"Keeper of the Last Clock","ja":"最後の時計の守り手"},"tier":3,"color":"#5eead4"},
+        {"id":"chaos","name":"Primordial Chaos","epithet":"Rift Before Dawn","epithets":{"id":"Retakan Sebelum Fajar","en":"Rift Before Dawn","ja":"夜明け以前の裂け目"},"tier":4,"color":"#f472b6"},
+        {"id":"monarch","name":"Eternal Monarch","epithet":"Crown Without an Heir","epithets":{"id":"Mahkota Tanpa Pewaris","en":"Crown Without an Heir","ja":"継承者なき王冠"},"tier":4,"color":"#fbbf24"},
+        {"id":"nameless","name":"The Nameless God","epithet":"The Unnamed Witness","epithets":{"id":"Saksi Tanpa Nama","en":"The Unnamed Witness","ja":"名もなき証人"},"tier":4,"color":"#e2e8f0"}
     ]);
     // Milestone frames cannot be purchased: earned from Hunter Rank alone.
     // E/D = Awakened, C/B = Arcane, A = Royal, S/National = Sovereign.
@@ -181,13 +196,17 @@
         return counts;
     }
     function chooseBoss(v,week) {
-        const eligible=ROSTER.filter(b=>b.tier<=tierForRank());
+        const tier=tierForRank();
+        const ordinal=Math.floor(localDate(week).getTime()/604800000);
+        const eligible=ROSTER.filter(b=>tier>0&&ordinal%5===0?b.tier<tier:b.tier===tier);
         const counts=countsByBoss(v);
         const alternatives=eligible.length>1?eligible.filter(b=>b.id!==v.lastBossId):eligible;
         const pool=alternatives.length?alternatives:eligible;
         // Prefer undiscovered / uncompleted stories; every qualified boss stays eligible.
-        const best=Math.min(...pool.map(b=>counts[b.id]||0));
-        const tie=pool.filter(b=>(counts[b.id]||0)===best);
+        const unseen=pool.filter(b=>!v.seenBosses.includes(b.id)&&!Object.values(v.archive).some(r=>r&&r.bossId===b.id));
+        const candidates=unseen.length?unseen:pool;
+        const best=Math.min(...candidates.map(b=>counts[b.id]||0));
+        const tie=candidates.filter(b=>(counts[b.id]||0)===best);
         const number=Array.from(week).reduce((x,ch)=>x*31+ch.charCodeAt(0),0);
         return tie[Math.abs(number)%tie.length];
     }
@@ -701,18 +720,18 @@ function renderAppearance() {
         overlay.id='v7-story-overlay';overlay.className='v7-story-overlay';
         overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
         overlay.setAttribute('aria-label',t('Kisah Boss','Boss Story','ボスの物語'));
-        const titles=[t('Pertemuan Pertama','First Encounter','初遭遇'),t('Sumpah yang Terungkap','First Victory','最初の勝利'),t('Ingatan yang Terkubur','Three Victories','三度の勝利'),t('Kebenaran Terakhir','Five Victories','五度の勝利')];
-        const open=[true,progress.victories>=1,progress.victories>=3,progress.victories>=5];
+        const titles=[t('Pertemuan Pertama','First Encounter','初遭遇'),t('Sumpah yang Terungkap','First Victory','最初の勝利'),t('Ingatan yang Terkubur','Two Victories','二度の勝利'),t('Kebenaran Terakhir','Three Victories','三度の勝利')];
+        const open=[true,progress.victories>=1,progress.victories>=2,progress.victories>=3];
         const chapters=titles.map((title,i)=>`<section class="v7-story-chapter ${open[i]?'':'v7-story-locked'}">
           <div class="v7-story-chapter-title"><span>${i+1}. ${esc(title)}</span><span>${open[i]?'📖':'🔒'}</span></div>
-          ${open[i]?`${lore(b,i).split('\n\n').map(p=>`<p>${esc(p)}</p>`).join('')}`:`<p>${esc(t('Fragmen ini terbuka setelah','Unlock after','解放条件：'))} ${i===1?'1':i===2?'3':'5'} ${esc(t('kemenangan melawan Boss ini.','victories against this Boss.','回の勝利。'))}</p>`}
+          ${open[i]?`${lore(b,i).split('\n\n').map(p=>`<p>${esc(p)}</p>`).join('')}`:`<p>${esc(t('Fragmen ini terbuka setelah','Unlock after','解放条件：'))} ${i===1?'1':i===2?'2':'3'} ${esc(t('kemenangan melawan Boss ini.','victories against this Boss.','回の勝利。'))}</p>`}
           </section>`).join('');
         overlay.innerHTML=`<div class="v7-story-reader" role="document">
           <header class="v7-story-reader-head"><div><small>${esc(t('ABYSS CODEX · ARSIP KISAH','ABYSS CODEX · STORY ARCHIVE','深淵の図鑑 · 物語の記録'))}</small>
-            <h3>${esc(b.name)}</h3><span>${esc(b.epithet)}</span></div>
+            <h3>${esc(b.name)}</h3><span>${esc(b.epithets?t(b.epithets.id,b.epithets.en,b.epithets.ja):b.epithet)}</span></div>
             <button type="button" class="v7-story-close" aria-label="${esc(t('Tutup kisah','Close story','物語を閉じる'))}" onclick="V7Raid.closeBossStory()">✕</button></header>
           <div class="v7-story-scroll"><img src="bosses/${esc(b.id)}.webp" alt="${esc(b.name)}" class="v7-story-cover" loading="lazy">
-          <p class="v7-story-intro">${esc(t('Kisah terbuka saat target Normal tercapai, tanpa menunggu Senin. Satu kemenangan per Boss per minggu. Fragmen berikutnya membutuhkan 3 dan 5 kemenangan.','Chapters unlock when the Normal target is reached, without waiting for Monday. One victory per Boss per week. Later chapters require 3 and 5 victories.','通常目標を達成すると月曜日を待たずに解放されます。勝利はボスごとに週1回。続編は3回と5回の勝利で解放されます。'))}</p>
+          <p class="v7-story-intro">${esc(t('Kisah terbuka saat target Normal tercapai, tanpa menunggu Senin. Satu kemenangan per Boss per minggu. Fragmen berikutnya membutuhkan 2 dan 3 kemenangan.','Chapters unlock when the Normal target is reached, without waiting for Monday. One victory per Boss per week. Later chapters require 2 and 3 victories.','通常目標を達成すると月曜日を待たずに解放されます。勝利はボスごとに週1回。続編は2回と3回の勝利で解放されます。'))}</p>
           ${chapters}</div>
           <footer><button type="button" class="v7-raid-btn" onclick="V7Raid.closeBossStory()">${esc(t('Tutup Buku','Close Book','本を閉じる'))}</button></footer>
           </div>`;
@@ -741,14 +760,14 @@ function renderAppearance() {
         const challenge=normal&&p.displayedDamage+1e-6>=w.challengeTarget;
         const attacks=Object.keys(w.hits||{}).length;
         const introduction = !v.seenBosses.includes(b.id) ?
-            `<div class="v7-raid-panel v7-intro"><div class="v7-muted">${esc(t('PERTEMUAN PERTAMA','FIRST ENCOUNTER','初遭遇'))} · ${esc(b.epithet)}</div>
+            `<div class="v7-raid-panel v7-intro"><div class="v7-muted">${esc(t('PERTEMUAN PERTAMA','FIRST ENCOUNTER','初遭遇'))} · ${esc(b.epithets?t(b.epithets.id,b.epithets.en,b.epithets.ja):b.epithet)}</div>
              <h3>⚔️ ${esc(b.name)}</h3><p>${esc(t('Sebuah kisah baru terbuka di Abyss Codex. Baca sekarang atau lanjutkan pertarungan; ceritanya tidak akan hilang.','A new story has unlocked in the Abyss Codex. Read it now or continue; it will remain available.','深淵の図鑑に新しい物語が解放されました。今読んでも、後で読んでも消えません。'))}</p>
              <div class="v7-button-row">${button(t('📖 Baca Kisah','📖 Read Story','📖 物語を読む'), `V7Raid.openBossStory('${b.id}')`)}
              ${button(t('Lewati Intro','Skip Intro','登場演出をスキップ'), 'V7Raid.dismissEncounter()')}</div></div>` : '';
         return introduction + `<div class="v7-boss-card ${modeCleared(w,p.displayedDamage)?'v7-defeated':normal&&!w.rewardClaimed?'v7-enraged':''}">
             <div class="v7-muted">${esc(w.week)} · ${esc(t('RAID BEBAS','OPEN RAID','自由レイド'))}</div>
-            <div class="v7-battle-arena">
-              <div class="v7-arena-title"><strong>🐉 ${esc(b.name)}</strong><small>${esc(b.epithet)}</small><button type="button" class="v7-boss-story-link" onclick="V7Raid.openBossStory('${b.id}')">📖 ${esc(t('Baca Lore','Read Lore','物語を読む'))}</button></div>
+            <div class="v7-battle-arena ${b.color?'v82-new-boss':''}" style="--v82-boss-color:${b.color||'#a78bfa'};--v82-boss-speed:${3.1+b.tier*.4}s">
+              <div class="v7-arena-title"><strong>🐉 ${esc(b.name)}</strong><small>${esc(b.epithets?t(b.epithets.id,b.epithets.en,b.epithets.ja):b.epithet)}</small><button type="button" class="v7-boss-story-link" onclick="V7Raid.openBossStory('${b.id}')">📖 ${esc(t('Baca Lore','Read Lore','物語を読む'))}</button></div>
               <div class="v7-replay-stage" aria-label="${esc(t('Arena pertarungan Weekly Boss','Weekly Boss battle arena','週間ボスの戦闘アリーナ'))}">
                 <div class="v7-replay-hunter" id="v7-hunter-silhouette" aria-label="${esc(t('Hunter dengan satu Shadow Sword','Hunter with one Shadow Sword','シャドウソードを一本持つハンター'))}">
                   <svg viewBox="0 0 92 120" aria-hidden="true"><defs><linearGradient id="v7-hunter-armor" x1="0" x2="1"><stop stop-color="#111f35"/><stop offset=".48" stop-color="#2b3c56"/><stop offset="1" stop-color="#050a15"/></linearGradient><linearGradient id="v7-hunter-cloak" x1="0" x2="1"><stop stop-color="#16223a"/><stop offset="1" stop-color="#030712"/></linearGradient></defs><path d="M25 39Q16 52 12 88L3 117 34 105 50 108 82 120 73 70 63 40Z" fill="url(#v7-hunter-cloak)" stroke="#43536d" stroke-width="1.2"/><path d="M23 21Q23 2 43 4Q59 4 63 23L59 40 29 39Z" fill="#080d1b" stroke="#536680" stroke-width="1.5"/><path d="M34 26l22 0-6 7-11 0z" fill="#2b3b56"/><path d="M35 27l5 1-5 2zm15 1 5-1-1 3z" fill="#67e8f9" opacity=".8"/><path d="M26 41 58 39 66 72 54 83 25 80 20 65Z" fill="url(#v7-hunter-armor)" stroke="#5a7393" stroke-width="1.2"/><path d="M20 44l-8 12 17 4 9-17zm43 0 13 13-18 5-7-20z" fill="#1b2a45" stroke="#728da5" stroke-width="1"/><path d="M30 81 17 114 32 115 43 91 57 115 72 115 60 80Z" fill="#091226" stroke="#536a89" stroke-width="1"/><path d="M30 51l29 15M26 70l31 0" stroke="#67e8f9" stroke-opacity=".45" stroke-width="1.2"/><path class="v7-sword-blade" d="M61 57 89 6 84 1 50 52Z" fill="#67e8f9"/><path d="M49 50 65 65" stroke="#2a3550" stroke-width="6"/><path d="M46 47 67 68" stroke="#b5c9db" stroke-width="1.5"/></svg>
@@ -795,9 +814,9 @@ function renderAppearance() {
         const v=state();
         const rows=ROSTER.map(b=>{
             const p=bossProgress(b,v),u=p.met;
-            const locks=[u,p.victories>=1,p.victories>=3,p.victories>=5];
+            const locks=[u,p.victories>=1,p.victories>=2,p.victories>=3];
             return `<details class="v7-codex-row" data-raid-fold="codex-${b.id}"><summary>${u?'📖':'🔒'} ${esc(u?b.name:'???')} <small>${u?`· ${p.victories} ${esc(t('kemenangan','wins','勝'))}`:'· '+esc(t('Belum ditemukan','Undiscovered','未発見'))}</small></summary>
-            ${u?`<p class="v7-muted">${esc(b.epithet)}</p><p class="v7-muted">📖 ${locks.filter(Boolean).length}/4 ${esc(t('fragmen terbuka','chapters unlocked','解放済みの断片'))}</p><button type="button" class="v7-raid-btn v7-read-story-btn" onclick="V7Raid.openBossStory('${b.id}')">${esc(t('📖 Baca Kisah Lengkap','📖 Read Story','📖 物語を読む'))}</button>`:esc(t('Temui Boss ini dalam Weekly Raid untuk membuka Lore.','Encounter this boss to discover its lore.','ボスとの遭遇で解放。'))}</details>`;
+            ${u?`<p class="v7-muted">${esc(b.epithets?t(b.epithets.id,b.epithets.en,b.epithets.ja):b.epithet)}</p><p class="v7-muted">📖 ${locks.filter(Boolean).length}/4 ${esc(t('fragmen terbuka','chapters unlocked','解放済みの断片'))}</p><button type="button" class="v7-raid-btn v7-read-story-btn" onclick="V7Raid.openBossStory('${b.id}')">${esc(t('📖 Baca Kisah Lengkap','📖 Read Story','📖 物語を読む'))}</button>`:esc(t('Temui Boss ini dalam Weekly Raid untuk membuka Lore.','Encounter this boss to discover its lore.','ボスとの遭遇で解放。'))}</details>`;
         }).join('');
         return `<div class="v7-raid-panel"><h3>📜 ${esc(t('KODEKS ABYSS','ABYSS CODEX','深淵の図鑑'))}</h3>${rows}</div>`;
     }

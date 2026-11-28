@@ -17,7 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Orbitron:wght@600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=8.1">
+    <link rel="stylesheet" href="style.css?v=8.2">
     <style>
         .death-stat-grid {
             display: grid;
@@ -482,6 +482,26 @@
                 </div>
             </section>
 
+            <details class="system-card v82-status-group" id="v82-archive">
+                <summary class="font-display" id="v82-archive-label">ARSIP HUNTER</summary>
+            <!-- V7: read-only weekly analytics and archived Hunter Chronicle -->
+            <section class="v8-section" id="v8-status"></section>
+            <section class="v7cj" id="v7cj" aria-label="Hunter Chronicle and Weekly Insights">
+                <div class="v7cj-tabs" role="group" aria-label="Weekly History">
+                    <button type="button" id="v7cj-tab-insights" aria-expanded="false" aria-controls="v7cj-panel" onclick="V7Chronicle.toggle('insights')">📊 Insight Mingguan</button>
+                    <button type="button" id="v7cj-tab-chronicle" aria-expanded="false" aria-controls="v7cj-panel" onclick="V7Chronicle.toggle('chronicle')">📜 Hunter Chronicle</button>
+                </div>
+                <div id="v7cj-panel" class="v7cj-panel" hidden>
+                <div class="v7cj-week-nav">
+                    <button type="button" id="v7cj-prev" onclick="V7Chronicle.shiftWeek(1)" aria-label="Previous week">‹</button>
+                    <strong id="v7cj-week">—</strong>
+                    <button type="button" id="v7cj-next" onclick="V7Chronicle.shiftWeek(-1)" aria-label="Next week">›</button>
+                </div>
+                <div id="v7cj-body" aria-live="polite"></div>
+                </div>
+            </section>
+
+            </details>
             <!-- Habit Tracker & Riwayat Progres -->
             <div class="system-card space-y-3">
                 <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--bg-slate-800); padding-bottom: 0.5rem;">
@@ -540,23 +560,9 @@
                 </div>
             </div>
 
-            <!-- V7: read-only weekly analytics and archived Hunter Chronicle -->
-            <section class="system-card v8-section" id="v8-status"></section>
-            <section class="system-card v7cj" id="v7cj" aria-label="Hunter Chronicle and Weekly Insights">
-                <div class="v7cj-tabs" role="group" aria-label="Weekly History">
-                    <button type="button" id="v7cj-tab-insights" aria-expanded="false" aria-controls="v7cj-panel" onclick="V7Chronicle.toggle('insights')">📊 Insight Mingguan</button>
-                    <button type="button" id="v7cj-tab-chronicle" aria-expanded="false" aria-controls="v7cj-panel" onclick="V7Chronicle.toggle('chronicle')">📜 Hunter Chronicle</button>
-                </div>
-                <div id="v7cj-panel" class="v7cj-panel" hidden>
-                <div class="v7cj-week-nav">
-                    <button type="button" id="v7cj-prev" onclick="V7Chronicle.shiftWeek(1)" aria-label="Previous week">‹</button>
-                    <strong id="v7cj-week">—</strong>
-                    <button type="button" id="v7cj-next" onclick="V7Chronicle.shiftWeek(-1)" aria-label="Next week">›</button>
-                </div>
-                <div id="v7cj-body" aria-live="polite"></div>
-                </div>
-            </section>
-
+            <section class="system-card v8-section" id="v82-sanctuary-entry"></section>
+            <details class="system-card v82-status-group" id="v82-settings">
+                <summary class="font-display" id="v82-settings-label">PENGATURAN SYSTEM</summary>
             <!-- System Simulation & Reset Controls -->
             <div class="system-card space-y-3" style="border-color: rgba(245, 158, 11, 0.25);">
                 <div class="flex items-center justify-between">
@@ -626,6 +632,7 @@
                 <div><strong>❤️ HUNTER SURVIVAL GUIDE</strong><p data-health-i18n="summary">Aturan HP, penalti, Shield, kematian dan respawn</p></div>
                 <button type="button" onclick="openHunterHealthGuide()" data-health-i18n="open">Baca Panduan →</button>
             </div>
+            </details>
         </section>
 
         <!-- ==================== TAB 2: QUESTS ==================== -->
@@ -1016,7 +1023,7 @@
                                 style="flex: 1; accent-color: #a855f7; height: 6px; background: #334155; border-radius: 9999px; cursor: pointer;">
                             <span id="lofi-volume-label" class="font-display shrink-0" style="font-size: 11px; color: #d8b4fe; font-weight: 700; width: 2.25rem; text-align: right;">45%</span>
                         </div>
-                        <div class="rpg-music-picker"><label for="rpg-lofi-track">🎼 Offline Soundtrack</label><div class="lofi-playlist-controls"><button type="button" onclick="cycleRpgLofiTrack(-1)" aria-label="Previous soundtrack" title="Previous">⏮</button><select id="rpg-lofi-track" onchange="selectRpgLofiTrack(this.value)" aria-label="Choose soundtrack"><option value="moonlit">Moonlit Study</option><option value="night">Night Quest</option><option value="rainy-window">Rainy Window</option><option value="sakura-evening">Sakura Evening</option><option value="neon-station">Neon Station</option><option value="quiet-library">Quiet Library</option><option value="midnight-rain">Midnight Rain</option><option value="lantern-street">Lantern Street</option><option value="snowfall-dream">Snowfall Dream</option><option value="dawn-over-campus">Dawn Over Campus</option><option value="spring-original">02 Spring (Original)</option><option value="spring-lantern-walk">Spring Lantern Walk</option><option value="synth">Classic Synth</option><option value="custom">MP3 dari HP</option></select><button type="button" onclick="cycleRpgLofiTrack(1)" aria-label="Next soundtrack" title="Next">⏭</button></div></div>
+                        <div class="rpg-music-picker"><label for="rpg-lofi-track">🎼 Offline Soundtrack</label><div class="lofi-playlist-controls"><button type="button" onclick="cycleRpgLofiTrack(-1)" aria-label="Previous soundtrack" title="Previous">⏮</button><select id="rpg-lofi-track" onchange="selectRpgLofiTrack(this.value)" aria-label="Choose soundtrack"><option value="moonlit">Moonlit Study</option><option value="night">Night Quest</option><option value="rainy-window">Rainy Window</option><option value="sakura-evening">Sakura Evening</option><option value="neon-station">Neon Station</option><option value="quiet-library">Quiet Library</option><option value="midnight-rain">Midnight Rain</option><option value="lantern-street">Lantern Street</option><option value="snowfall-dream">Snowfall Dream</option><option value="dawn-over-campus">Dawn Over Campus</option><option value="spring-original">Spring Original</option><option value="spring-lantern-walk">Spring Lantern Walk</option><option value="synth">Classic Synth</option><option value="custom">MP3 dari HP</option></select><button type="button" onclick="cycleRpgLofiTrack(1)" aria-label="Next soundtrack" title="Next">⏭</button></div></div>
                         <section class="v8-section" id="v8-music"></section>
                         <audio id="lofi-local-audio-player" loop class="hidden"></audio>
                     </div>
@@ -2083,16 +2090,16 @@
         <div class="hunter-guide-card"><div class="hunter-guide-top"><strong id="hunter-health-guide-heading">HUNTER SURVIVAL GUIDE</strong><button type="button" onclick="closeHunterHealthGuide()" aria-label="Close guide">✕</button></div><div id="hunter-health-guide-content"></div><button type="button" onclick="closeHunterHealthGuide()" id="hunter-health-close">Tutup</button></div>
     </div>
     <!-- Safe bulk-quest scheduling must load BEFORE app.js runs day rollover. -->
-    <script src="v8_core.js?v=8.1"></script>
+    <script src="v8_core.js?v=8.2"></script>
     <script src="v7_quality.js"></script>
-    <script src="app.js?v=8.1"></script>
-    <script src="v7_lore.js?v=8.1"></script>
-    <script src="v7_raid.js?v=8.1"></script>
-    <script src="v7_chronicle.js?v=8.1"></script>
+    <script src="app.js?v=8.2"></script>
+    <script src="v7_lore.js?v=8.2"></script>
+    <script src="v7_raid.js?v=8.2"></script>
+    <script src="v7_chronicle.js?v=8.2"></script>
     <script src="v7_motivation.js"></script>
     <script src="v7_growth.js"></script>
-    <script src="v8_room.js?v=8.1"></script>
-    <script src="v8_ui.js?v=8.1"></script>
+    <script src="v8_room.js?v=8.2"></script>
+    <script src="v8_ui.js?v=8.2"></script>
 
 </body>
 </html>

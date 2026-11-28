@@ -153,7 +153,7 @@ const SoundFX = {
             hollow:['armor',1.02], raven:['arcane',1.28],
             dragon:['beast',.64], warden:['armor',.76],
             queen:['arcane',.98], seraph:['arcane',1.43],
-            void:['beast',.57], architect:['arcane',.76]
+            void:['beast',.57], architect:['arcane',.76], scorpion:['beast',1.15], frostrevenant:['armor',.91], graveborn:['stone',.71], executioner:['armor',.69], marionette:['arcane',1.65], minotaur:['beast',.79], leviathan:['beast',.49], hydra:['beast',.89], devourer:['arcane',.59], behemoth:['stone',.61], archangel:['arcane',1.13], chronos:['armor',1.24], chaos:['beast',.42], monarch:['armor',.58], nameless:['arcane',.48]
         };
         const [family,rate] = voices[String(bossId)] || ['armor',1];
         const kind = phase === 'defeat' ? 'defeat' : 'hit';
@@ -1457,7 +1457,7 @@ function checkRealDayRollover() {
     // this same transaction; they never modify rewards, HP or Streak.
     if (window.V7Chronicle) window.V7Chronicle.captureClosedWeeks(today);
     // Reset only after settlement, never before snapshotting yesterday.
-    gameState.quests.forEach(q => { if(q.category === 'Daily Quest') { q.completed=false; if(q.trackingType === 'count') q.currentCount=0; delete q.lastReward; delete q.v8Tier; } });
+    gameState.quests.forEach(q => { if(q.category === 'Daily Quest') { q.completed=false; if(q.trackingType === 'count') q.currentCount=0; delete q.lastReward; delete q.v8Tier; delete q.v8Partial; } });
     gameState.selectedDate = today;
     gameState.lastRealDate = today;
     gameState.lastStreakDate = null;
@@ -1493,6 +1493,7 @@ function captureActiveDaySnapshot() {
 function saveState() {
     if (V8Core.batch) return true;
     try {
+        V8Core.retireFlexible(gameState);
         captureActiveDaySnapshot();
         V8Core.captureDay(gameState);
         if (window.V7Raid && typeof window.V7Raid.prepareSave === 'function') window.V7Raid.prepareSave();
@@ -2401,6 +2402,7 @@ function takeDamage(amount, suppressDeathModal = false, deferPersistence = false
 // ==========================================
 function renderAll() {
     if(V8Core.batch)return;
+    V8Core.retireFlexible(gameState);
     renderOracle();
     renderStatus();
     if (typeof renderPenaltyQuestBanner === 'function') renderPenaltyQuestBanner();
@@ -3425,7 +3427,7 @@ function renderQuests() {
         const isDone = q.completed;
         const isCount = q.trackingType === 'count' && (q.targetCount || 0) > 1;
         const curCount = isCount ? (q.currentCount || 0) : 0;
-        const tgtCount = isCount ? (q.targetCount || 1)*(q.v8Partial&&q.category==='Daily Quest'?2:1) : 1;
+        const tgtCount = isCount ? (q.targetCount || 1) : 1;
         const stepCount = isCount ? (q.stepCount || 1) : 1;
         const unitLabel = isCount ? (q.unit || 'kali') : '';
         const countPct = isCount ? Math.min(100, Math.round((curCount / tgtCount) * 100)) : 0;
@@ -3710,13 +3712,13 @@ function toggleQuestCountInputs(mode) {
 function adjustQuestCount(id, delta) {
     const q = gameState.quests.find(item => item.id === id);
     if (!q || q.trackingType !== 'count' || q.v8Tier) return;
-    const target = Math.max(1, q.targetCount || 1)*(q.v8Partial&&q.category==='Daily Quest'?2:1);
+    const target = Math.max(1, q.targetCount || 1);
     const prev = q.currentCount || 0;
     const next = Math.max(0, Math.min(target, prev + delta));
-    if (next === prev) return;
+    if (next === prev) { if(delta>0 && next>=target && !q.completed)toggleQuest(id); return; }
 
     q.currentCount = next;
-    if(q.v8Partial&&q.category==='Daily Quest'){saveState();renderQuests();return;}
+    
     if (next >= target && !q.completed) {
         toggleQuest(id);
         return;
@@ -3734,7 +3736,7 @@ function adjustQuestCount(id, delta) {
 function promptSetQuestCount(id) {
     const q = gameState.quests.find(item => item.id === id);
     if (!q || q.trackingType !== 'count' || q.v8Tier) return;
-    const target = Math.max(1, q.targetCount || 1)*(q.v8Partial&&q.category==='Daily Quest'?2:1);
+    const target = Math.max(1, q.targetCount || 1);
     const unit = q.unit || 'kali';
     const raw = window.prompt(`Masukkan progres hitungan untuk "${q.title}" (0 - ${target} ${unit}):`, String(q.currentCount || 0));
     if (raw === null) return;
@@ -3806,8 +3808,8 @@ function toggleQuest(id, preserveCount = false, tier = null) {
 
     const todayKey = getCurrentGameDateKey();
     if(q.v8Tier && q.completed)return;
-    if(tier && (!V8Core.batch || !V8Core.validTier(tier) || q.category!=='Daily Quest' || q.completed || !isQuestActiveOnDate(q,todayKey)))return;
-    if(q.v8Partial && q.category==='Daily Quest' && !tier && !q.completed){if(window.V8)window.V8.choose(q.id);return;}
+    if(tier)return;
+    
     const rewardScale = tier ? V8Core.tiers[tier].reward : 1;
 
     if (!q.completed) {
@@ -5761,16 +5763,8 @@ function syncHomeScreenWidget() {
     } catch (e) {}
 }
 
-function reminderSlotPrompt(slot) {
-    const prompts = {
-        Pagi: v6Text('Mulai hari dengan satu quest ringan.','Start your day with one easy quest.','まずは簡単なクエストから始めよう。'),
-        Siang: v6Text('Cek progres, istirahat sejenak, lalu lanjutkan prioritas.','Check progress, take a break, then resume priorities.','進捗を確認し、休憩してから優先課題を続けよう。'),
-        Sore: v6Text('Waktunya menuntaskan quest yang masih tertunda.','Time to tackle the remaining quests.','残りのクエストに取り組もう。'),
-        Petang: v6Text('Review harimu dan siapkan langkah terakhir.','Review your day and plan the final steps.','今日を振り返り、最後の行動を決めよう。'),
-        Malam: v6Text('Cek quest sebelum tengah malam; 100% mencegah penalti HP.','Check quests before midnight; 100% prevents the HP penalty.','深夜までに確認。100%達成でHPペナルティを防げます。')
-    };
-    return prompts[slot]||'';
-}
+const V82_REMINDER_PROMPTS={"Pagi": [["Mulai hari dengan satu quest ringan.", "Start with one easy quest.", "簡単なクエストから始めよう。"], ["Hari baru, kesempatan baru.", "A new day, a new opportunity.", "新しい一日、新しい機会。"], ["Bangun ritme sebelum mengejar target.", "Build your rhythm before chasing targets.", "目標の前にリズムを整えよう。"], ["Satu langkah kecil membuka perjalanan hari ini.", "One small step opens today’s journey.", "小さな一歩から今日の旅が始まる。"], ["Pilih misi pertama yang paling mudah dimulai.", "Choose the mission that is easiest to start.", "最も始めやすい任務を選ぼう。"], ["Awali pagi dengan fokus dan tenang.", "Begin the morning calmly and focused.", "落ち着いて集中し朝を始めよう。"], ["Periksa jadwal sebelum memulai aktivitas.", "Check your schedule before getting started.", "始める前に予定を確認しよう。"], ["Momentum tumbuh dari langkah pertama.", "Momentum grows from the first step.", "勢いは最初の一歩から生まれる。"], ["Hunter, siapkan perlengkapan dan prioritasmu.", "Hunter, prepare your gear and priorities.", "ハンター、準備と優先順位を整えよう。"], ["Tidak perlu sempurna untuk mulai.", "You need not be perfect to begin.", "完璧でなくても始められる。"]], "Siang": [["Cek progres dan ambil jeda sejenak.", "Check progress and take a short break.", "進捗を確認し少し休憩しよう。"], ["Setengah hari telah berlalu; pilih prioritas berikutnya.", "Half the day has passed; choose your next priority.", "一日の半分が過ぎた。次の優先課題を選ぼう。"], ["Isi energi sebelum melanjutkan misi.", "Refuel before continuing your missions.", "任務の続きの前にエネルギーを補給しよう。"], ["Pencapaian kecil tetap berarti.", "Small achievements still count.", "小さな達成にも意味がある。"], ["Periksa quest yang paling memungkinkan dikerjakan.", "Look for the quest you can realistically tackle.", "今取り組めるクエストを探そう。"], ["Atur ulang fokus untuk sisa hari.", "Reset your focus for the rest of the day.", "残りの一日に向け集中を整えよう。"], ["Jangan lupa makan dan beristirahat.", "Remember to eat and rest.", "食事と休憩を忘れずに。"], ["Checkpoint siang: tinjau daftar misi.", "Midday checkpoint: review your missions.", "昼の確認：任務一覧を見直そう。"], ["Selesaikan satu tugas pada satu waktu.", "Finish one task at a time.", "一つずつ取り組もう。"], ["Kemajuan bukan perlombaan.", "Progress is not a race.", "成長は競争ではない。"]], "Sore": [["Masih ada waktu untuk mengubah hasil hari ini.", "There is still time to shape today’s outcome.", "今日の結果を変える時間はまだある。"], ["Pilih satu quest yang tertunda.", "Choose one pending quest.", "残っているクエストを一つ選ぼう。"], ["Lanjutkan ritme yang sudah dibangun.", "Continue the rhythm you have built.", "積み上げたリズムを続けよう。"], ["Coba selesaikan tugas ringan terlebih dahulu.", "Try finishing a lighter task first.", "まず軽い課題から終えよう。"], ["Sore adalah kesempatan untuk kembali fokus.", "The afternoon is a chance to refocus.", "午後は集中を取り戻す機会。"], ["Tinjau rencana dan sesuaikan dengan tenaga.", "Review your plan and match it to your energy.", "計画を見直し体力に合わせよう。"], ["Satu misi selesai lebih baik daripada menunda semuanya.", "One mission finished beats postponing them all.", "一つの達成は全ての先延ばしより良い。"], ["Bergerak sedikit sebelum kembali belajar.", "Move a little before returning to study.", "学習に戻る前に少し体を動かそう。"], ["Checkpoint sore: lanjutkan yang memungkinkan.", "Afternoon checkpoint: continue what is manageable.", "午後の確認：無理なくできることを続けよう。"], ["Tetap tenang dan kerjakan prioritasmu.", "Stay calm and work on your priorities.", "落ち着いて優先課題に取り組もう。"]], "Petang": [["Review perjalanan hari ini.", "Review today’s journey.", "今日の歩みを振り返ろう。"], ["Cahaya memudar; periksa misi yang tersisa.", "The light fades; check remaining missions.", "日が暮れる。残る任務を確認しよう。"], ["Siapkan langkah terakhir yang realistis.", "Prepare a realistic final step.", "無理のない最後の一歩を準備しよう。"], ["Hargai usaha yang sudah kamu lakukan.", "Acknowledge the effort you have made.", "ここまでの努力を認めよう。"], ["Tinjau prioritas sebelum memasuki malam.", "Review priorities before nightfall.", "夜の前に優先順位を見直そう。"], ["Rapikan rencana dan ruang istirahatmu.", "Organize your plan and resting space.", "計画と休む場所を整えよう。"], ["Selesaikan yang penting, bukan semua sekaligus.", "Focus on what matters, not everything at once.", "一度に全部ではなく大切なことを。"], ["Perhatikan energi yang tersisa.", "Notice how much energy you have left.", "残りの体力に気を配ろう。"], ["Checkpoint petang: lihat perkembangan Hunter.", "Evening checkpoint: review Hunter progress.", "夕暮れの確認：ハンターの進捗を見よう。"], ["Catat satu hal baik dari hari ini.", "Note one good thing from today.", "今日の良かったことを一つ記そう。"]], "Malam": [["Pemeriksaan terakhir sebelum tengah malam.", "Final check before midnight.", "深夜前の最終確認。"], ["Hari hampir berakhir; tinjau misi hari ini.", "The day is nearly over; review today’s missions.", "一日が終わる前に今日の任務を確認しよう。"], ["Selesaikan yang memungkinkan lalu beristirahat.", "Finish what is manageable, then rest.", "無理なくできることを終え、休もう。"], ["Siapkan diri untuk hari esok.", "Prepare for tomorrow.", "明日に備えよう。"], ["Jangan korbankan waktu tidur untuk mengejar angka.", "Do not sacrifice sleep to chase numbers.", "数字のために睡眠を犠牲にしないで。"], ["Tutup perjalanan hari ini dengan tenang.", "Close today’s journey calmly.", "今日の旅を穏やかに締めくくろう。"], ["Periksa daftar misi untuk terakhir kali.", "Check the mission list one last time.", "任務一覧を最後に確認しよう。"], ["Refleksikan satu pelajaran dari hari ini.", "Reflect on one lesson from today.", "今日の学びを一つ振り返ろう。"], ["Persiapkan misi pertama besok.", "Prepare tomorrow’s first mission.", "明日の最初の任務を準備しよう。"], ["Istirahat adalah bagian dari perjalanan Hunter.", "Rest is part of a Hunter’s journey.", "休息もハンターの旅の一部。"]]};
+function reminderSlotPrompt(slot) {const list=V82_REMINDER_PROMPTS[slot];if(!list)return '';const n=Math.floor(Date.UTC(new Date().getFullYear(),new Date().getMonth(),new Date().getDate())/86400000);return v6Text(...list[n%list.length]);}
 function checkScheduledReminderTick() {
     const rem = ensureReminderState();
     if (!rem.enabled) return;
@@ -5804,7 +5798,7 @@ function checkScheduledReminderTick() {
 
                 fireOsNotification(
                     d.schedTitle(slotLbl),
-                    summary.total===0 ? v6Text('Tidak ada Daily Quest terjadwal hari ini.','No daily quests scheduled today.','本日はデイリークエストの予定がありません。') : summary.pendingCount ? `${reminderSlotPrompt(slot)} ${d.schedBody(gameState.player.name, focusText, gameState.player.streak)}` : d.testDone(gameState.player.name),
+                    summary.total===0 ? v6Text('Tidak ada Daily Quest terjadwal hari ini.','No daily quests scheduled today.','本日はデイリークエストの予定がありません。') : summary.pendingCount ? `${reminderSlotPrompt(slot)} ${d.schedBody(gameState.player.name, focusText, gameState.player.streak)}` : `${d.testDone(gameState.player.name)} ${v6Text('Saatnya menikmati waktu istirahat.','Enjoy your rest.','ゆっくり休もう。')}`,
                     `system-rpg-${slot.toLowerCase()}`
                 );
             }
