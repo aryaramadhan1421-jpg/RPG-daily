@@ -216,9 +216,7 @@
                 fmt(txt('storyStreak'),{met:snap.metDays,shield:snap.protectedDays})];
             if(snap.raid&&snap.raid.bossId) {
                 // Boss IDs are canonical game IDs; do not fabricate a boss if the archive lacks one.
-                const boss=({'fenrir':'Fenrir Shade','golem':'Runebound Golem','hollow':'Hollow Knight',
-                   'raven':'Raven Oracle','dragon':'Abyss Dragon','warden':'Abyssal Warden','queen':'Nocturne Queen',
-                   'seraph':'Eclipse Seraph','void':'Void Sovereign','architect':'The First Architect'})[snap.raid.bossId]||snap.raid.bossId;
+                const boss=window.V7Raid?.roster?.find(b=>b.id===snap.raid.bossId)?.name||snap.raid.bossId;
                 parts.push(snap.raid.won?
                     fmt(txt('storyBossWin'),{boss,result:snap.raid.challenge?txt('challenge'):txt('normal')}):
                     fmt(txt('storyBossAttempt'),{boss,damage:snap.raid.damage}));

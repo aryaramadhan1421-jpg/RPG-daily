@@ -26,12 +26,12 @@ function capture(a,b){
  if(b.level>a.level)changes.push({type:'hunter',from:a.level,to:b.level,id:'hunter:'+b.level});
  for(const k of STATS)if(b.stats[k]>a.stats[k])changes.push({type:'stat',stat:k,from:a.stats[k],to:b.stats[k],id:'stat:'+k+':'+b.stats[k]});
  if(a.rank!==b.rank)changes.push({type:'rank',from:a.rank,to:b.rank,id:'rank:'+b.rank});
- const fresh=changes.filter(c=>!log.some(r=>r&&r.id===c.id));
+ const all=V84History.records(gameState,'growthEvents');
+ const fresh=changes.filter(c=>!all.some(r=>r&&r.id===c.id));
  if(!fresh.length)return null;
  const date=at(),timestamp=new Date().toISOString();
  fresh.forEach(c=>log.push({...c,date,timestamp}));
- // The existing saveState() persists this log alongside the normal state. Keep bounded.
- if(log.length>250)log.splice(0,log.length-250);
+ // V8.4: no expiry. Completed months move to the permanent archive on save.
  latest={before:a,after:b,changes:fresh};
  return latest;
 }
@@ -81,7 +81,7 @@ function onReward(evt,options={}){if(options.silent)return; latest=evt;if(!evt.c
 let open=false;
 function toggle(){open=!open;const d=document.getElementById('v7-growth-details'),b=document.getElementById('v7-growth-toggle');if(d)d.hidden=!open;if(b)b.setAttribute('aria-expanded',String(open));render();}
 function achievementCards(p){
- const r=String(rank(p)).replace(/-RANK$/,''),log=history()||[];
+ const r=String(rank(p)).replace(/-RANK$/,''),log=V84History.records(gameState,'growthEvents');
  const has=(id)=>log.some(c=>c.id===id);
  const raidArchive=(typeof gameState!=='undefined'&&gameState.v7Raid&&gameState.v7Raid.archive)||{};
  const defeated=Object.values(raidArchive).filter(r=>r&&r.won===true);
@@ -124,7 +124,7 @@ function render(){
 }
 function appendChronicle(container,week){
  if(!container||!week)return;
- const log=history()||[];
+ const log=V84History.records(gameState,'growthEvents');
  const first=new Date(week+'T00:00:00'),end=new Date(first);end.setDate(end.getDate()+7);
  const entries=log.filter(x=>x?.timestamp&&new Date(x.timestamp)>=first&&new Date(x.timestamp)<end);
  const old=container.querySelector('#v7-growth-chronicle');if(old)old.remove();

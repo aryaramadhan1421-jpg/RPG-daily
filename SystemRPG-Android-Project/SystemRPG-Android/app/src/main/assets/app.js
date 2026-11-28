@@ -1070,9 +1070,7 @@ function recordActivityHistory(title, type, stat, xp, gold, questId = null) {
         dateStr: dateKey
     });
 
-    if (gameState.history.logs.length > 100) {
-        gameState.history.logs = gameState.history.logs.slice(0, 100);
-    }
+    // No automatic expiry. Older months are archived transactionally on save.
 }
 
 let gameState = loadState();
@@ -1200,10 +1198,20 @@ let currentQuestStatusFilter = 'ALL';
 let questSearchQuery = '';
 let shopSearchQuery = '';
 let showAllHistoryLogs = false;
+let v84HistoryMonth = '';
+let v84HistoryPage = 0;
 
 function loadState() {
     try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        let raw = V84History.read(STORAGE_KEY);
+        // Recover an Android backup before the first startup save can overwrite it.
+        if (!raw && window.AndroidBridge?.loadAutoBackup) {
+            const backup = window.AndroidBridge.loadAutoBackup();
+            if (V84History.validRaw(backup)) {
+                V84History.write(STORAGE_KEY, backup);
+                raw = backup;
+            }
+        }
         if (raw) {
             const parsed = JSON.parse(raw);
             SoundFX.muted = !!parsed.muted;
@@ -1325,9 +1333,11 @@ function loadState() {
                 });
                 parsed.shopRebalancedV2 = true;
             }
+            V84History.archive(parsed, realToday);
             return parsed;
         }
     } catch (e) {
+        V84History.protect(e);
         console.error('Gagal memuat state:', e);
     }
     return initDemoHistory(JSON.parse(JSON.stringify(DEFAULT_STATE)));
@@ -1503,12 +1513,13 @@ function saveState() {
             console.error('Save blocked: malformed quest data. Existing saved progress was not overwritten.');
             return;
         }
+        V84History.archive(gameState, formatDateKey(new Date()));
         const serialized = JSON.stringify(gameState);
-        localStorage.setItem(STORAGE_KEY, serialized);
+        const storageMode = V84History.write(STORAGE_KEY, serialized);
         // The local save has committed. Nonessential Android bridges must not make
         // this operation appear to fail after progress is already persisted.
         try {
-            if (window.AndroidBridge && typeof window.AndroidBridge.saveAutoBackup === 'function') {
+            if (storageMode === 'local' && window.AndroidBridge && typeof window.AndroidBridge.saveAutoBackup === 'function') {
                 window.AndroidBridge.saveAutoBackup(serialized);
             }
         } catch (bridgeError) { console.error('Auto-backup Android gagal:', bridgeError); }
@@ -1518,7 +1529,7 @@ function saveState() {
         } catch (widgetError) { console.error('Widget sync gagal:', widgetError); }
         return true;
     } catch (e) {
-        console.error('Gagal menyimpan state:', e);
+        V84History.notice(e);
         return false;
     }
 }
@@ -1528,7 +1539,7 @@ function saveState() {
 function runSilentAutoRestore() {
     try {
         if (!window.AndroidBridge || typeof window.AndroidBridge.loadAutoBackup !== 'function') return;
-        const currentLocal = localStorage.getItem(STORAGE_KEY);
+        const currentLocal = V84History.read(STORAGE_KEY);
         const backupStr = window.AndroidBridge.loadAutoBackup();
         if (!backupStr || backupStr.length < 20) return;
         // Never silently restore a malformed Android backup over valid local progress.
@@ -1545,8 +1556,8 @@ function runSilentAutoRestore() {
                 const parsedBackup = JSON.parse(backupStr);
                 const localLvl = parsedLocal?.player?.level || 1;
                 const backupLvl = parsedBackup?.player?.level || 1;
-                const localLogs = parsedLocal?.history?.logs?.length || 0;
-                const backupLogs = parsedBackup?.history?.logs?.length || 0;
+                const localLogs = V84History.count(parsedLocal,'logs');
+                const backupLogs = V84History.count(parsedBackup,'logs');
                 if (localLvl === 1 && localLogs === 0 && (backupLvl > 1 || backupLogs > 0)) {
                     shouldRestore = true;
                 }
@@ -1554,7 +1565,7 @@ function runSilentAutoRestore() {
         }
 
         if (shouldRestore) {
-            localStorage.setItem(STORAGE_KEY, backupStr);
+            V84History.write(STORAGE_KEY, backupStr);
             // Re-boot through loadState() + rollover: never mix two different saves.
             window.location.reload();
             return;
@@ -1577,7 +1588,7 @@ function getRequiredXP(level) {
 
 function getTodayDailyXpEarned() {
     const todayKey = getCurrentGameDateKey();
-    const logs = (gameState.history && Array.isArray(gameState.history.logs)) ? gameState.history.logs : [];
+    const logs = V84History.onDate(gameState,'logs',todayKey);
     return logs
         .filter(l => l.dateStr === todayKey && l.type === 'Daily Quest')
         .reduce((sum, l) => sum + (l.xp || 0), 0);
@@ -1758,7 +1769,7 @@ function ensureProgressionBalance(day) {
     const p = gameState.player;
     // Existing growth events can establish previously earned milestones (e.g. after undo).
     let highestLevel = p.level, highestRank = currentRankIndex(p);
-    for (const event of (gameState.history?.growthEvents || [])) {
+    for (const event of V84History.records(gameState,'growthEvents')) {
         if (event?.type === 'hunter' && Number.isFinite(Number(event.to))) highestLevel = Math.max(highestLevel, Number(event.to));
         if (event?.type === 'rank') highestRank = Math.max(highestRank, RANKS_CATALOG.findIndex(r => r.rankCode === event.to));
     }
@@ -2589,7 +2600,6 @@ function setRadarChartMode(mode) {
 
 function getLast7DaysStatActivity() {
     const counts = { STR: 0, INT: 0, WIS: 0, CHR: 0 };
-    const logs = (gameState.history && Array.isArray(gameState.history.logs)) ? gameState.history.logs : [];
     const baseDate = parseDateKey(getCurrentGameDateKey());
     const validDates = new Set();
     for (let i = 0; i < 7; i++) {
@@ -2597,6 +2607,7 @@ function getLast7DaysStatActivity() {
         d.setDate(baseDate.getDate() - i);
         validDates.add(formatDateKey(d));
     }
+    const logs = [...validDates].flatMap(day=>V84History.onDate(gameState,'logs',day));
     logs.forEach(l => {
         if (validDates.has(l.dateStr) && l.stat && counts[l.stat] !== undefined) {
             counts[l.stat] += 1;
@@ -2763,7 +2774,7 @@ function renderHistory() {
     const activeDateStr = gameState.selectedHistoryDate || getCurrentGameDateKey();
     const todayStr = formatDateKey(new Date());
     const dailyCounts = gameState.history?.dailyCounts || {};
-    const logs = gameState.history?.logs || [];
+    const logs = showAllHistoryLogs ? V84History.records(gameState,'logs',v84HistoryMonth||undefined) : V84History.onDate(gameState,'logs',activeDateStr);
 
     if (datePickerEl) datePickerEl.value = activeDateStr;
     if (dateLabelEl) {
@@ -2811,9 +2822,24 @@ function renderHistory() {
         heatmapEl.appendChild(cell);
     }
 
-    const displayedLogs = showAllHistoryLogs 
-        ? logs 
-        : logs.filter(item => item.dateStr === activeDateStr);
+    const pageSize=50;
+    v84HistoryPage=Math.min(v84HistoryPage,Math.max(0,Math.ceil(logs.length/pageSize)-1));
+    const displayedLogs = showAllHistoryLogs ? logs.slice(v84HistoryPage*pageSize,(v84HistoryPage+1)*pageSize) : logs;
+    let archiveControls=document.getElementById('v84-history-controls');
+    if(!archiveControls){archiveControls=document.createElement('div');archiveControls.id='v84-history-controls';archiveControls.style.cssText='display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:6px 0;font-size:12px;';logListEl.before(archiveControls);}
+    archiveControls.hidden=!showAllHistoryLogs;
+    archiveControls.style.display=showAllHistoryLogs?'flex':'none';archiveControls.replaceChildren();
+    if(showAllHistoryLogs){
+        const select=document.createElement('select');select.style.cssText='max-width:100%;background:var(--bg-slate-900);color:var(--cyan-400);border:1px solid #334155;border-radius:6px;padding:6px;';
+        select.setAttribute('aria-label',v6Text('Bulan arsip','Archive month','記録月'));
+        const months=new Set(V84History.listMonths(gameState));
+        try{for(const d of Object.keys(JSON.parse(localStorage.getItem('system_rpg_v6_journal')||'{}')))if(/^\d{4}-\d{2}-\d{2}$/.test(d))months.add(d.slice(0,7));}catch(_){}
+        for(const m of ['',...[...months].sort().reverse()]){const o=document.createElement('option');o.value=m;o.textContent=m||v6Text('Semua bulan','All months','全期間');select.append(o);}select.value=v84HistoryMonth;
+        select.onchange=()=>{SoundFX.playClick();v84HistoryMonth=select.value;v84HistoryPage=0;renderHistory();};archiveControls.append(select);
+        const pages=Math.max(1,Math.ceil(logs.length/pageSize));
+        for(const dir of [-1,1]){const b=document.createElement('button');b.type='button';b.textContent=dir<0?'‹':'›';b.style.cssText='min-width:44px;min-height:36px;border:1px solid #334155;border-radius:6px;';b.disabled=dir<0?v84HistoryPage===0:v84HistoryPage>=pages-1;b.setAttribute('aria-label',dir<0?v6Text('Sebelumnya','Previous','前へ'):v6Text('Berikutnya','Next','次へ'));b.onclick=()=>{SoundFX.playClick();v84HistoryPage+=dir;renderHistory();};archiveControls.append(b);}
+        const label=document.createElement('span');label.textContent=`${v84HistoryPage+1}/${pages}`;archiveControls.append(label);
+    }
 
     if (logTitleEl) {
         logTitleEl.textContent = showAllHistoryLogs 
@@ -2825,8 +2851,8 @@ function renderHistory() {
     }
 
     logListEl.innerHTML = '';
-    const journals = (gameState.history?.journals || []).filter(j => showAllHistoryLogs || j.dateStr === activeDateStr);
-    if (displayedLogs.length === 0 && journals.length === 0 && !Object.keys((()=>{try{return JSON.parse(localStorage.getItem("system_rpg_v6_journal")||"{}")}catch(_){return {}}})()).some(day => showAllHistoryLogs || day === activeDateStr)) {
+    const journals = (gameState.history?.journals || []).filter(j => showAllHistoryLogs ? (!v84HistoryMonth || String(j.dateStr).startsWith(v84HistoryMonth)) : j.dateStr === activeDateStr);
+    if (displayedLogs.length === 0 && journals.length === 0 && !Object.keys((()=>{try{return JSON.parse(localStorage.getItem("system_rpg_v6_journal")||"{}")}catch(_){return {}}})()).some(day => showAllHistoryLogs ? (!v84HistoryMonth || day.startsWith(v84HistoryMonth)) : day === activeDateStr)) {
         logListEl.innerHTML = `<p style="font-size: 0.75rem; color: #64748b; text-align: center; padding: 0.75rem 0;">${statusText('noQuests', {date:activeDateStr})}</p>`;
         return;
     }
@@ -2850,7 +2876,7 @@ function renderHistory() {
     try {
         const hunterEntries = JSON.parse(localStorage.getItem('system_rpg_v6_journal') || '{}');
         const selectedEntries = Object.entries(hunterEntries)
-            .filter(([day]) => showAllHistoryLogs || day === activeDateStr)
+            .filter(([day]) => showAllHistoryLogs ? (!v84HistoryMonth || day.startsWith(v84HistoryMonth)) : day === activeDateStr)
             .sort(([a],[b]) => b.localeCompare(a));
         const lang = typeof v6UiLang === 'function' ? v6UiLang() : 'id';
         const translations = {
@@ -2911,16 +2937,20 @@ function renderHistory() {
 }
 
 function deleteHistoryLog(logId) {
-    const idx = gameState.history.logs.findIndex(l => l.id === logId);
-    if (idx === -1) return;
-    const target = gameState.history.logs[idx];
+    const found = V84History.findLog(gameState,l=>l.id===logId);
+    if (!found) return;
+    const {array,index:idx,entry:target} = found;
     SoundFX.playClick();
 
-    if (gameState.history.dailyCounts[target.dateStr]) {
-        gameState.history.dailyCounts[target.dateStr] = Math.max(0, gameState.history.dailyCounts[target.dateStr] - 1);
+    const beforeCount=gameState.history.dailyCounts[target.dateStr];
+    if (beforeCount) gameState.history.dailyCounts[target.dateStr] = Math.max(0, beforeCount - 1);
+    array.splice(idx, 1);
+    if(saveState()!==true){
+        // Save may have rebuilt active arrays; restore into the current appropriate bucket.
+        const h=gameState.history,m=String(target.dateStr||'').slice(0,7),bucket=h.permanentArchive?.months?.[m];
+        const dest=m<formatDateKey(new Date()).slice(0,7)&&bucket?bucket.logs:h.logs;
+        dest.splice(Math.min(idx,dest.length),0,target);if(beforeCount!==undefined)h.dailyCounts[target.dateStr]=beforeCount;return;
     }
-    gameState.history.logs.splice(idx, 1);
-    saveState();
     renderAll();
     spawnFloatingReward('Riwayat aktivitas dihapus');
 }
@@ -2935,6 +2965,7 @@ function selectHistoryDate(dateStr) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return;
     gameState.selectedHistoryDate = dateStr;
     showAllHistoryLogs = false;
+    v84HistoryPage=0;
     saveState();
     renderHistory();
     spawnFloatingReward(`📅 Tanggal Sistem: ${formatReadableDate(dateStr)}`);
@@ -2948,6 +2979,7 @@ function resetToTodayDate() {
 function toggleShowAllLogs() {
     SoundFX.playClick();
     showAllHistoryLogs = !showAllHistoryLogs;
+    v84HistoryMonth = '';v84HistoryPage=0;
     renderHistory();
 }
 
@@ -3923,9 +3955,9 @@ function toggleQuest(id, preserveCount = false, tier = null) {
         delete q.lastReward;
 
         if (gameState.history && Array.isArray(gameState.history.logs)) {
-            const logIdx = gameState.history.logs.findIndex(l => l.questId === q.id && l.dateStr === todayKey);
-            if (logIdx !== -1) {
-                gameState.history.logs.splice(logIdx, 1);
+            const logMatch = V84History.findLog(gameState,l=>l.questId===q.id&&l.dateStr===todayKey);
+            if (logMatch) {
+                logMatch.array.splice(logMatch.index, 1);
             }
             if (gameState.history.dailyCounts && gameState.history.dailyCounts[todayKey]) {
                 gameState.history.dailyCounts[todayKey] = Math.max(0, gameState.history.dailyCounts[todayKey] - 1);
@@ -5172,6 +5204,7 @@ function confirmResetData() {
         if (confirmInput) confirmInput.focus();
         return;
     }
+    if(V84History.isBlocked()){V84History.notice('Recover backup before reset');return;}
     SoundFX.playDamage();
     localStorage.removeItem(STORAGE_KEY);
     gameState = initDemoHistory(JSON.parse(JSON.stringify(DEFAULT_STATE)));
@@ -5755,8 +5788,8 @@ function syncHomeScreenWidget() {
                 p.streak || 0,
                 rankObj.title || 'E-Rank',
                 p.level || 1,
-                p.hp || 100,
-                p.maxHp || 100,
+                p.hp ?? 100,
+                p.maxHp ?? 100,
                 dailyPct
             );
         }
@@ -5765,6 +5798,7 @@ function syncHomeScreenWidget() {
 
 const V82_REMINDER_PROMPTS={"Pagi": [["Mulai hari dengan satu quest ringan.", "Start with one easy quest.", "簡単なクエストから始めよう。"], ["Hari baru, kesempatan baru.", "A new day, a new opportunity.", "新しい一日、新しい機会。"], ["Bangun ritme sebelum mengejar target.", "Build your rhythm before chasing targets.", "目標の前にリズムを整えよう。"], ["Satu langkah kecil membuka perjalanan hari ini.", "One small step opens today’s journey.", "小さな一歩から今日の旅が始まる。"], ["Pilih misi pertama yang paling mudah dimulai.", "Choose the mission that is easiest to start.", "最も始めやすい任務を選ぼう。"], ["Awali pagi dengan fokus dan tenang.", "Begin the morning calmly and focused.", "落ち着いて集中し朝を始めよう。"], ["Periksa jadwal sebelum memulai aktivitas.", "Check your schedule before getting started.", "始める前に予定を確認しよう。"], ["Momentum tumbuh dari langkah pertama.", "Momentum grows from the first step.", "勢いは最初の一歩から生まれる。"], ["Hunter, siapkan perlengkapan dan prioritasmu.", "Hunter, prepare your gear and priorities.", "ハンター、準備と優先順位を整えよう。"], ["Tidak perlu sempurna untuk mulai.", "You need not be perfect to begin.", "完璧でなくても始められる。"]], "Siang": [["Cek progres dan ambil jeda sejenak.", "Check progress and take a short break.", "進捗を確認し少し休憩しよう。"], ["Setengah hari telah berlalu; pilih prioritas berikutnya.", "Half the day has passed; choose your next priority.", "一日の半分が過ぎた。次の優先課題を選ぼう。"], ["Isi energi sebelum melanjutkan misi.", "Refuel before continuing your missions.", "任務の続きの前にエネルギーを補給しよう。"], ["Pencapaian kecil tetap berarti.", "Small achievements still count.", "小さな達成にも意味がある。"], ["Periksa quest yang paling memungkinkan dikerjakan.", "Look for the quest you can realistically tackle.", "今取り組めるクエストを探そう。"], ["Atur ulang fokus untuk sisa hari.", "Reset your focus for the rest of the day.", "残りの一日に向け集中を整えよう。"], ["Jangan lupa makan dan beristirahat.", "Remember to eat and rest.", "食事と休憩を忘れずに。"], ["Checkpoint siang: tinjau daftar misi.", "Midday checkpoint: review your missions.", "昼の確認：任務一覧を見直そう。"], ["Selesaikan satu tugas pada satu waktu.", "Finish one task at a time.", "一つずつ取り組もう。"], ["Kemajuan bukan perlombaan.", "Progress is not a race.", "成長は競争ではない。"]], "Sore": [["Masih ada waktu untuk mengubah hasil hari ini.", "There is still time to shape today’s outcome.", "今日の結果を変える時間はまだある。"], ["Pilih satu quest yang tertunda.", "Choose one pending quest.", "残っているクエストを一つ選ぼう。"], ["Lanjutkan ritme yang sudah dibangun.", "Continue the rhythm you have built.", "積み上げたリズムを続けよう。"], ["Coba selesaikan tugas ringan terlebih dahulu.", "Try finishing a lighter task first.", "まず軽い課題から終えよう。"], ["Sore adalah kesempatan untuk kembali fokus.", "The afternoon is a chance to refocus.", "午後は集中を取り戻す機会。"], ["Tinjau rencana dan sesuaikan dengan tenaga.", "Review your plan and match it to your energy.", "計画を見直し体力に合わせよう。"], ["Satu misi selesai lebih baik daripada menunda semuanya.", "One mission finished beats postponing them all.", "一つの達成は全ての先延ばしより良い。"], ["Bergerak sedikit sebelum kembali belajar.", "Move a little before returning to study.", "学習に戻る前に少し体を動かそう。"], ["Checkpoint sore: lanjutkan yang memungkinkan.", "Afternoon checkpoint: continue what is manageable.", "午後の確認：無理なくできることを続けよう。"], ["Tetap tenang dan kerjakan prioritasmu.", "Stay calm and work on your priorities.", "落ち着いて優先課題に取り組もう。"]], "Petang": [["Review perjalanan hari ini.", "Review today’s journey.", "今日の歩みを振り返ろう。"], ["Cahaya memudar; periksa misi yang tersisa.", "The light fades; check remaining missions.", "日が暮れる。残る任務を確認しよう。"], ["Siapkan langkah terakhir yang realistis.", "Prepare a realistic final step.", "無理のない最後の一歩を準備しよう。"], ["Hargai usaha yang sudah kamu lakukan.", "Acknowledge the effort you have made.", "ここまでの努力を認めよう。"], ["Tinjau prioritas sebelum memasuki malam.", "Review priorities before nightfall.", "夜の前に優先順位を見直そう。"], ["Rapikan rencana dan ruang istirahatmu.", "Organize your plan and resting space.", "計画と休む場所を整えよう。"], ["Selesaikan yang penting, bukan semua sekaligus.", "Focus on what matters, not everything at once.", "一度に全部ではなく大切なことを。"], ["Perhatikan energi yang tersisa.", "Notice how much energy you have left.", "残りの体力に気を配ろう。"], ["Checkpoint petang: lihat perkembangan Hunter.", "Evening checkpoint: review Hunter progress.", "夕暮れの確認：ハンターの進捗を見よう。"], ["Catat satu hal baik dari hari ini.", "Note one good thing from today.", "今日の良かったことを一つ記そう。"]], "Malam": [["Pemeriksaan terakhir sebelum tengah malam.", "Final check before midnight.", "深夜前の最終確認。"], ["Hari hampir berakhir; tinjau misi hari ini.", "The day is nearly over; review today’s missions.", "一日が終わる前に今日の任務を確認しよう。"], ["Selesaikan yang memungkinkan lalu beristirahat.", "Finish what is manageable, then rest.", "無理なくできることを終え、休もう。"], ["Siapkan diri untuk hari esok.", "Prepare for tomorrow.", "明日に備えよう。"], ["Jangan korbankan waktu tidur untuk mengejar angka.", "Do not sacrifice sleep to chase numbers.", "数字のために睡眠を犠牲にしないで。"], ["Tutup perjalanan hari ini dengan tenang.", "Close today’s journey calmly.", "今日の旅を穏やかに締めくくろう。"], ["Periksa daftar misi untuk terakhir kali.", "Check the mission list one last time.", "任務一覧を最後に確認しよう。"], ["Refleksikan satu pelajaran dari hari ini.", "Reflect on one lesson from today.", "今日の学びを一つ振り返ろう。"], ["Persiapkan misi pertama besok.", "Prepare tomorrow’s first mission.", "明日の最初の任務を準備しよう。"], ["Istirahat adalah bagian dari perjalanan Hunter.", "Rest is part of a Hunter’s journey.", "休息もハンターの旅の一部。"]]};
 function reminderSlotPrompt(slot) {const list=V82_REMINDER_PROMPTS[slot];if(!list)return '';const n=Math.floor(Date.UTC(new Date().getFullYear(),new Date().getMonth(),new Date().getDate())/86400000);return v6Text(...list[n%list.length]);}
+function v84ClearReminder(slot){const bank=[['Nikmati istirahatmu.','Enjoy your rest.','ゆっくり休もう。'],['Hargai usaha hari ini.','Celebrate your effort today.','今日の努力を認めよう。'],['Misi hari ini berhasil dituntaskan.','Today’s missions are complete.','今日の任務は完了した。'],['Isi kembali energimu.','Recharge your energy.','エネルギーを回復しよう。'],['Perjalanan berlanjut esok hari.','The journey continues tomorrow.','旅は明日も続く。']];const n=Math.floor(Date.UTC(new Date().getFullYear(),new Date().getMonth(),new Date().getDate())/86400000);return v6Text(...bank[(n+Math.max(0,SYSTEM_REMINDER_SLOTS.indexOf(slot)))%bank.length]);}
 function checkScheduledReminderTick() {
     const rem = ensureReminderState();
     if (!rem.enabled) return;
@@ -5798,7 +5832,7 @@ function checkScheduledReminderTick() {
 
                 fireOsNotification(
                     d.schedTitle(slotLbl),
-                    summary.total===0 ? v6Text('Tidak ada Daily Quest terjadwal hari ini.','No daily quests scheduled today.','本日はデイリークエストの予定がありません。') : summary.pendingCount ? `${reminderSlotPrompt(slot)} ${d.schedBody(gameState.player.name, focusText, gameState.player.streak)}` : `${d.testDone(gameState.player.name)} ${v6Text('Saatnya menikmati waktu istirahat.','Enjoy your rest.','ゆっくり休もう。')}`,
+                    summary.total===0 ? v6Text('Tidak ada Daily Quest terjadwal hari ini.','No daily quests scheduled today.','本日はデイリークエストの予定がありません。') : summary.pendingCount ? `${reminderSlotPrompt(slot)} ${d.schedBody(gameState.player.name, focusText, gameState.player.streak)}` : `${d.testDone(gameState.player.name)} ${v84ClearReminder(slot)}`,
                     `system-rpg-${slot.toLowerCase()}`
                 );
             }
@@ -7158,7 +7192,7 @@ function toggleAnimeLofi1Hour() {
         playLofiChordAndBeat();
         clearInterval(lofiBeatInterval);
         lofiBeatInterval = setInterval(playLofiChordAndBeat, 380);
-        if (status) status.textContent = 'Sedang Memutar: Midnight Tokyo Lofi (Offline)';
+        if (status) status.textContent = v6Text('Sedang memutar: Midnight Tokyo Lofi (Offline)','Playing: Midnight Tokyo Lofi (Offline)','再生中：Midnight Tokyo Lofi（オフライン）');
     }
 
     startLofiCountdown();
@@ -7182,80 +7216,15 @@ function loadLocalLofiMp3(e) {
     localAudio.src = URL.createObjectURL(file);
     toggleAnimeLofi1Hour();
     const status = document.getElementById('lofi-status-text');
-    if (status) status.textContent = `Memutar: ${file.name.slice(0, 24)} (Loop 1 Jam)`;
+    if (status) status.textContent = v6Text(`Memutar: ${file.name.slice(0,24)} (Loop 1 jam)`,`Playing: ${file.name.slice(0,24)} (1-hour loop)`,`再生中：${file.name.slice(0,24)}（1時間ループ）`);
 }
 
 // ==========================================
 // 15. ANDROID HOME SCREEN WIDGET SYNC BRIDGE
 // ==========================================
 function syncAndroidHomeWidget() {
-    try {
-        if (!window.AndroidBridge) return;
-        const p = gameState.player;
-        const rank = getPlayerRank(p.level);
-        const dailyQuests = gameState.quests.filter(q => q.category === 'Daily Quest' && isQuestActiveOnDate(q, getCurrentGameDateKey()));
-        const doneCount = V8Core.sum(dailyQuests);
-        const totalDaily = dailyQuests.length;
-        const pct = totalDaily > 0 ? Math.floor((doneCount / totalDaily) * 100 + 1e-9) : 0;
-
-        let subtitle = `HP ${p.hp}/${p.maxHp} • Daily: ${doneCount}/${totalDaily} (${pct}%)`;
-        if (pct >= 100 && totalDaily > 0) {
-            subtitle = `S-Rank Clear! HP ${p.hp}/${p.maxHp} • Streak aman 🔥`;
-        } else if (pct >= getStreakThresholdPct() && totalDaily > 0) {
-            subtitle = `Target ≥${getStreakThresholdPct()}% tercapai! (${doneCount}/${totalDaily}) • HP ${p.hp}`;
-        } else if (p.streak > 0) {
-            subtitle = `Jaga ${p.streak} hari streak! (${doneCount}/${totalDaily}) • HP ${p.hp}`;
-        }
-
-        // Build last 5 days array (Indo day initials: M, S, S, R, K, J, S)
-        const dayInitials = ['M', 'S', 'S', 'R', 'K', 'J', 'S'];
-        const activeDateStr = getCurrentGameDateKey();
-        const baseDate = parseDateKey(activeDateStr);
-        const dailyCounts = (gameState.history && gameState.history.dailyCounts) || {};
-        const last5 = [];
-
-        for (let i = 4; i >= 0; i--) {
-            const d = new Date(baseDate);
-            d.setDate(baseDate.getDate() - i);
-            const key = formatDateKey(d);
-            const isToday = (key === activeDateStr);
-            const isDone = isToday
-                ? (pct >= getStreakThresholdPct() || gameState.lastStreakDate === activeDateStr)
-                : ((dailyCounts[key] || 0) > 0);
-            last5.push({
-                label: dayInitials[d.getDay()],
-                done: isDone
-            });
-        }
-
-        if (typeof window.AndroidBridge.updateWidgetData === 'function') {
-            window.AndroidBridge.updateWidgetData(
-                Number(p.streak || 0),
-                Number(p.level || 1),
-                String(rank.rankCode || 'E-RANK'),
-                String(subtitle),
-                JSON.stringify(last5)
-            );
-        }
-
-        if (typeof window.AndroidBridge.updateWidgetFull === 'function') {
-            window.AndroidBridge.updateWidgetFull(JSON.stringify({
-                streak: p.streak || 0,
-                level: p.level || 1,
-                rankCode: rank.rankCode || 'E-RANK',
-                hp: p.hp || 0,
-                maxHp: p.maxHp || 100,
-                doneDaily: doneCount,
-                totalDaily: totalDaily,
-                pct: pct,
-                thresholdPct: getStreakThresholdPct(),
-                subtitle: subtitle,
-                last5: last5
-            }));
-        }
-    } catch (e) {
-        console.error('Widget sync error:', e);
-    }
+    // All callers use the same six-argument native contract.
+    syncHomeScreenWidget();
 }
 
 // Auto-cek pergantian hari & paksa sinkron widget saat aplikasi dibuka kembali dari background
@@ -10002,15 +9971,15 @@ window.addEventListener('DOMContentLoaded', () => {
 (function () {
  'use strict';
  const FORMAT='system-rpg-v6-backup', MAIN='system_rpg_productivity_offline_v2';
- const EXTRA=['system_rpg_flashcards_v1','sysrpg_tutorial_v2','system_rpg_lang','sysrpg_zoom_key','sysrpg_ffam_key'];
+ const EXTRA=['system_rpg_flashcards_v1','sysrpg_tutorial_v2','system_rpg_lang','sysrpg_zoom_key','sysrpg_ffam_key','system_rpg_v6_journal','system_rpg_v6_journal_rewards','system_rpg_v6_library','system_rpg_v6_read_rewards'];
  const SLOT_PREFIX='system_rpg_manual_save_slot_v2_';
  const css='background:#071827;color:#e2e8f0;border:1px solid #155e75;border-radius:12px;padding:14px;';
  const btn='border:1px solid #0891b2;border-radius:8px;background:#083344;color:#a5f3fc;padding:10px;font-weight:700;cursor:pointer;';
  function valid(s){return s&&typeof s==='object'&&!Array.isArray(s)&&s.player&&typeof s.player==='object'&&Array.isArray(s.quests)&&s.quests.every(q=>q&&typeof q==='object'&&q.id!=null);}
  function readBackup(){
    // saveState() is the game's existing persistence mechanism; do not recalculate penalties.
-   if(typeof saveState==='function') saveState();
-   const raw=localStorage.getItem(MAIN);
+   if(typeof saveState==='function'&&saveState()!==true)throw Error('Save failed; export cancelled.');
+   const raw=V84History.read(MAIN);
    if(!raw||!valid(JSON.parse(raw))) throw Error('Progres tidak valid; backup tidak dibuat.');
    const storage={[MAIN]:raw};EXTRA.forEach(k=>{const v=localStorage.getItem(k);if(v!==null)storage[k]=v;});
    return {format:FORMAT,version:1,createdAt:new Date().toISOString(),storage};
@@ -10018,7 +9987,7 @@ window.addEventListener('DOMContentLoaded', () => {
  function parseBackup(obj){
    if(!obj||obj.format!==FORMAT||obj.version!==1||!obj.storage||typeof obj.storage!=='object'||Array.isArray(obj.storage))throw Error('Format backup tidak dikenali.');
    const raw=obj.storage[MAIN];if(typeof raw!=='string')throw Error('Backup tidak berisi progres.');
-   const state=JSON.parse(raw);if(!valid(state))throw Error('Struktur Quest atau Hunter tidak valid.');
+   const state=JSON.parse(raw);if(!valid(state)||!V84History.validRaw(raw))throw Error(v6Text('Struktur Quest, Hunter, atau arsip tidak valid.','Invalid Quest, Hunter, or archive data.','クエスト、ハンター、または記録データが無効です。'));
    for(const k of EXTRA)if(Object.hasOwn(obj.storage,k)&&typeof obj.storage[k]!=='string')throw Error('Data tambahan rusak: '+k);
    return {raw,state};
  }
@@ -10035,28 +10004,28 @@ window.addEventListener('DOMContentLoaded', () => {
  function line(body,text){const el=document.createElement('div');el.textContent=text;el.style.cssText='font-size:12px;line-height:1.5;color:#cbd5e1;';body.appendChild(el);return el;}
  function action(body,text,handler){const b=document.createElement('button');b.textContent=text;b.style.cssText=btn+'width:100%;text-align:left;';b.onclick=handler;body.appendChild(b);return b;}
  function notice(title,text){modal(title,(b)=>line(b,text));}
- function slot(i){const s=localStorage.getItem(SLOT_PREFIX+i);if(!s)return null;try{const obj=JSON.parse(s);const {state}=parseBackup(obj);return {obj,state};}catch(_){return {invalid:true};}}
+ function slot(i){try{let s=localStorage.getItem(SLOT_PREFIX+i);if(!s)return null;if(s===V84History.marker){s=window.AndroidBridge?.loadV84Slot?.(i);if(!s)throw Error('Slot unavailable');}const obj=JSON.parse(s);const {state}=parseBackup(obj);return {obj,state};}catch(_){return {invalid:true};}}
+ function writeSlot(i,raw){const key=SLOT_PREFIX+i,old=localStorage.getItem(key);if(old!==V84History.marker){try{localStorage.setItem(key,raw);return;}catch(e){if(!window.AndroidBridge?.saveV84Slot)throw e;}}if(window.AndroidBridge?.saveV84Slot?.(i,raw)!==true)throw Error('Slot save failed');if(old!==V84History.marker)localStorage.setItem(key,V84History.marker);}
  function desc(s){if(!s)return 'KOSONG';if(s.invalid)return 'DATA RUSAK — jangan digunakan';return `${new Date(s.obj.createdAt).toLocaleString('id-ID')} · ${String(s.state.player.name||'Hunter').slice(0,30)} · ${s.state.quests.length} Quest`;}
  function confirmScreen(title,info,onYes){modal(title,(b,close)=>{line(b,info);action(b,'YA, LANJUTKAN',()=>{close();onYes();});action(b,'BATAL',close);});}
  function restore(obj){
    let checked;try{checked=parseBackup(obj);}catch(e){notice('LOAD GAGAL',e.message);return;}
    const name=String(checked.state.player.name||'Hunter').slice(0,50);
    confirmScreen('KONFIRMASI LOAD GAME',`Hunter: ${name} · ${checked.state.quests.length} Quest. Progres aktif akan diganti dengan backup ${new Date(obj.createdAt).toLocaleString('id-ID')}.`,()=>{
-     const keys=[MAIN,...EXTRA];const old={};keys.forEach(k=>old[k]=localStorage.getItem(k));
+     const keys=EXTRA;const old={};keys.forEach(k=>old[k]=localStorage.getItem(k));
      try{
-       localStorage.setItem(MAIN,checked.raw);
        EXTRA.forEach(k=>{if(Object.hasOwn(obj.storage,k))localStorage.setItem(k,obj.storage[k]);});
-       if(window.AndroidBridge&&typeof window.AndroidBridge.saveAutoBackup==='function')window.AndroidBridge.saveAutoBackup(checked.raw);
-       notice('LOAD BERHASIL','Progres berhasil dipulihkan. Tekan tombol di bawah untuk memuat ulang aplikasi.');
-       const panel=document.querySelector('#sysrpg-save-overlay section div');
-       if(panel)action(panel,'MUAT ULANG SEKARANG',()=>window.location.reload());
+       const mode=V84History.write(MAIN,checked.raw,true);
+       if(mode==='local'){try{window.AndroidBridge?.saveAutoBackup?.(checked.raw);}catch(_){} }
+       // Reload immediately: no timer may overwrite the restored state with the old in-memory game.
+       window.location.reload();
      }catch(e){keys.forEach(k=>{try{if(old[k]===null)localStorage.removeItem(k);else localStorage.setItem(k,old[k]);}catch(_){}});notice('LOAD GAGAL','Penyimpanan tidak berhasil: '+e.message);}
    });
  }
  window.sysrpgOpenSaveCenter=function(){modal('🛡️ HUNTER SAVE GAME',(b)=>{
    line(b,'Pilih slot untuk menyimpan progres saat ini. Slot lama akan diganti hanya setelah konfirmasi.');
    for(let i=1;i<=3;i++){const n=i,s=slot(n);action(b,`SLOT ${n} · ${desc(s)}`,()=>{
-     const doSave=()=>{try{const obj=readBackup();localStorage.setItem(SLOT_PREFIX+n,JSON.stringify(obj));notice('SAVE BERHASIL',`Progres tersimpan di Slot ${n}. Slot ini berada di data aplikasi, bukan file HP.`);}catch(e){notice('SAVE GAGAL',e.message);}};
+     const doSave=()=>{try{const obj=readBackup();writeSlot(n,JSON.stringify(obj));notice('SAVE BERHASIL',`Progres tersimpan di Slot ${n}. Slot ini berada di data aplikasi, bukan file HP.`);}catch(e){notice('SAVE GAGAL',e.message);}};
      if(s)confirmScreen('TIMPA SLOT '+n,'Cadangan lama di slot ini akan diganti. Lanjutkan?',doSave);else doSave();
    });}
    line(b,'Penting: Slot lokal ikut terhapus jika data aplikasi dibersihkan atau aplikasi di-uninstall. Gunakan Export ke HP untuk cadangan tambahan.');
@@ -10067,12 +10036,14 @@ window.addEventListener('DOMContentLoaded', () => {
    action(b,'📁 IMPORT FILE JSON DARI HP',()=>{document.getElementById('sysrpg-backup-import')?.click();});
  });};
  window.sysrpgExportBackup=function(){
-   try{const obj=readBackup();const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='SYSTEM_RPG_Backup_'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+   try{const obj=readBackup(),filename='SYSTEM_RPG_Backup_'+new Date().toISOString().slice(0,10)+'.json',json=JSON.stringify(obj);
+     if(window.AndroidBridge?.exportV84Backup){if(window.AndroidBridge.exportV84Backup(json,filename,v6UiLang())!==true)throw Error(v6Text('Ekspor tidak dapat dimulai.','Export could not start.','エクスポートを開始できません。'));notice(v6Text('EXPORT DIMULAI','EXPORT STARTED','エクスポート開始'),v6Text('Pilih lokasi penyimpanan JSON. Hasil akan dikonfirmasi oleh Android.','Choose where to save the JSON. Android will confirm the result.','JSONの保存先を選択してください。結果はAndroidで通知されます。'));return;}
+     const blob=new Blob([json],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
      notice('EXPORT DIMULAI','Permintaan penyimpanan JSON sudah dikirim. Periksa folder Download atau lokasi yang dipilih; ekspor belum dapat dipastikan berhasil dari dalam WebView.');
    }catch(e){notice('EXPORT GAGAL',e.message);}
  };
  window.sysrpgImportBackup=async function(event){const input=event?.target;const file=input?.files?.[0];if(!file)return;
-   try{if(file.size>20*1024*1024)throw Error('File terlalu besar (maks. 20 MB).');const obj=JSON.parse(await file.text());parseBackup(obj);restore(obj);}catch(e){notice('IMPORT GAGAL',e.message);}finally{if(input)input.value='';}
+   try{if(file.size>100*1024*1024)throw Error('File terlalu besar (maks. 100 MB).');const obj=JSON.parse(await file.text());parseBackup(obj);restore(obj);}catch(e){notice('IMPORT GAGAL',e.message);}finally{if(input)input.value='';}
  };
 })();
 
