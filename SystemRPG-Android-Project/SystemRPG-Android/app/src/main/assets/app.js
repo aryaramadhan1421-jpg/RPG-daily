@@ -2889,7 +2889,7 @@ function renderHistory() {
             const card = document.createElement('div');
             card.style.cssText = 'background:rgba(8,47,73,.38);border:1px solid rgba(34,211,238,.4);border-radius:.75rem;padding:.75rem;margin-bottom:.5rem;overflow-wrap:anywhere';
             const mood = {'Very Happy':'🤩','Happy':'😊','Neutral':'😐','Sad':'😔','Stressed':'😣'}[j.mood] || '📖';
-            const lines = [[t[1],j.good],[t[2],j.improve],[t[3],j.tomorrow],['Activities',j.activities],['Achievements',j.achievements]]
+            const lines = [[lang==='ja'?'タイトル':lang==='en'?'Title':'Judul',j.title],[lang==='ja'?'自由記述':lang==='en'?'Free writing':'Tulisan bebas',j.body],[t[1],j.good],[t[2],j.improve],[t[3],j.tomorrow],['Activities',j.activities],['Achievements',j.achievements]]
                 .filter(([,value]) => value && String(value).trim());
             const heading = document.createElement('div');
             heading.style.cssText='color:#67e8f9;font-size:12px;font-weight:700;margin-bottom:8px';
@@ -9879,13 +9879,13 @@ const V6 = (() => {
  }
  const body=()=>document.getElementById('v6-body');
  const date=()=>typeof getCurrentGameDateKey==='function'?getCurrentGameDateKey():new Date().toISOString().slice(0,10);
- function show(title){document.getElementById('v6-heading').textContent=title;document.getElementById('v6-overlay').classList.remove('hidden');document.body.style.overflow='hidden';updateV6ArchiveHud();setTimeout(localizeOverlay,0);document.getElementById('v6-overlay').scrollTop=0;}
- function close(){if(journalDate && !confirmDiscard())return; journalDate=null;document.getElementById('v6-overlay').classList.add('hidden');document.body.style.overflow='';}
+ function show(title){document.getElementById('v6-heading').textContent=title;document.getElementById('v6-overlay').classList.remove('hidden');document.body.style.overflow='hidden';updateV6ArchiveHud();if(!window.V85Journal?.isActive())setTimeout(localizeOverlay,0);document.getElementById('v6-overlay').scrollTop=0;}
+ function close(){if(window.V85Journal?.isActive()){if(!V85Journal.close())return;}else if(journalDate && !confirmDiscard())return; journalDate=null;document.getElementById('v6-overlay').classList.add('hidden');document.body.style.overflow='';}
  const moods=[['Very Happy','🤩'],['Happy','😊'],['Neutral','😐'],['Sad','😔'],['Stressed','😣']];
  let journalDirty=false;
  function confirmDiscard(){return !journalDirty || confirm('Perubahan jurnal belum disimpan. Buang perubahan?');}
- function openJournal(){journalDate=date();journalDirty=false;renderJournal();show('HUNTER JOURNAL');}
- function openJournalAt(day){if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return;journalDate=day;journalDirty=false;renderJournal();show('HUNTER JOURNAL');}
+ function openJournal(){if(window.V85Journal){articleId=null;journalDate=null;V85Journal.open(date());show(ui('HUNTER JOURNAL','HUNTER JOURNAL','ハンター日記'));return;}journalDate=date();journalDirty=false;renderJournal();show('HUNTER JOURNAL');}
+ function openJournalAt(day){if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return;if(window.V85Journal){articleId=null;journalDate=null;V85Journal.open(day);show(ui('HUNTER JOURNAL','HUNTER JOURNAL','ハンター日記'));return;}journalDate=day;journalDirty=false;renderJournal();show('HUNTER JOURNAL');}
  function renderJournal(){
   journalDirty=false;
   const records=read(JKEY,{}),data=records[journalDate]||{},dates=Object.keys(records).sort().reverse();
@@ -9910,7 +9910,7 @@ const V6 = (() => {
   renderJournal();document.getElementById('v6-save-status').textContent='✓ Journal saved'+reward;
   if(typeof renderHistory==='function')renderHistory();
  }
- function openLibrary(){articleId=null;filter='All';renderLibrary();show(v7LibraryT('KNOWLEDGE LIBRARY','KNOWLEDGE LIBRARY','知識ライブラリー'));requestAnimationFrame(()=>{const overlay=document.getElementById('v6-overlay');if(overlay)overlay.scrollTop=0;const content=document.getElementById('v6-body');if(content)content.scrollTop=0;});}
+ function openLibrary(){if(window.V85Journal?.isActive()&&!V85Journal.close())return;articleId=null;filter='All';renderLibrary();show(v7LibraryT('KNOWLEDGE LIBRARY','KNOWLEDGE LIBRARY','知識ライブラリー'));requestAnimationFrame(()=>{const overlay=document.getElementById('v6-overlay');if(overlay)overlay.scrollTop=0;const content=document.getElementById('v6-body');if(content)content.scrollTop=0;});}
  function renderLibrary(){
   const progress=read(LKEY,{}),cats=['All',...new Set(articles.map(a=>a[2]))];
   const recentlyRead=articles.map(a=>({a,p:progress[a[0]]||{}})).filter(x=>x.p.updatedAt)
@@ -9941,7 +9941,7 @@ const V6 = (() => {
   if(jump)jump.onchange=e=>{if(e.target.value!==''){const at=Number(e.target.value);updateArticle({currentChapter:at});openArticle(id,at);}};
  }
  function updateArticle(patch){const all=read(LKEY,{});all[articleId]={...all[articleId],...patch,updatedAt:new Date().toISOString()};write(LKEY,all);}
- return {openJournal,openJournalAt,openLibrary,openArticle,close,refreshLanguage:()=>{if(document.getElementById('v6-overlay')?.classList.contains('hidden'))return;if(articleId){openArticle(articleId);}else if(document.getElementById('v6-category')){renderLibrary();}else{localizeOverlay();}}};
+ return {openJournal,openJournalAt,openLibrary,openArticle,close,refreshLanguage:()=>{if(document.getElementById('v6-overlay')?.classList.contains('hidden'))return;if(window.V85Journal?.isActive()){V85Journal.render();document.getElementById('v6-heading').textContent=ui('HUNTER JOURNAL','HUNTER JOURNAL','ハンター日記');return;}if(articleId){openArticle(articleId);}else if(document.getElementById('v6-category')){renderLibrary();}else{localizeOverlay();}}};
 })();
 
 window.addEventListener('system-language-changed',()=>{if(typeof renderShop==='function')renderShop();if(typeof renderOracle==='function')renderOracle();});
@@ -9971,7 +9971,7 @@ window.addEventListener('DOMContentLoaded', () => {
 (function () {
  'use strict';
  const FORMAT='system-rpg-v6-backup', MAIN='system_rpg_productivity_offline_v2';
- const EXTRA=['system_rpg_flashcards_v1','sysrpg_tutorial_v2','system_rpg_lang','sysrpg_zoom_key','sysrpg_ffam_key','system_rpg_v6_journal','system_rpg_v6_journal_rewards','system_rpg_v6_library','system_rpg_v6_read_rewards'];
+ const EXTRA=['system_rpg_flashcards_v1','sysrpg_tutorial_v2','system_rpg_lang','sysrpg_zoom_key','sysrpg_ffam_key','system_rpg_v6_journal','system_rpg_v85_journal_drafts','system_rpg_v6_journal_rewards','system_rpg_v6_library','system_rpg_v6_read_rewards'];
  const SLOT_PREFIX='system_rpg_manual_save_slot_v2_';
  const css='background:#071827;color:#e2e8f0;border:1px solid #155e75;border-radius:12px;padding:14px;';
  const btn='border:1px solid #0891b2;border-radius:8px;background:#083344;color:#a5f3fc;padding:10px;font-weight:700;cursor:pointer;';
