@@ -90,7 +90,7 @@ class ReminderReceiver : BroadcastReceiver() {
         }
 
         // Streak and HP are separate: only 100% Daily Quests prevents the daily HP penalty.
-        val body = when {
+        val progressBody = when {
             lang.startsWith("en") -> when {
                 dailyPct >= 100 -> "Perfect clear (100%)! No daily HP penalty; keep your streak going!"
                 dailyPct >= targetPct -> "Streak target reached ($dailyPct% / $targetPct%). Finish all remaining quests to avoid an HP penalty."
@@ -108,6 +108,34 @@ class ReminderReceiver : BroadcastReceiver() {
             }
         }
 
+        // Distinct prompts per time slot; preserve the existing progress and HP rules.
+        val prompt = when {
+            lang.startsWith("en") -> when (slot) {
+                "Pagi" -> "Start your day with one easy quest."
+                "Siang" -> "Check progress and take a short break."
+                "Sore" -> "Tackle the remaining quests."
+                "Petang" -> "Review your day and plan the final steps."
+                "Malam" -> "Final check before midnight."
+                else -> ""
+            }
+            lang.startsWith("ja") -> when (slot) {
+                "Pagi" -> "簡単なクエストから始めよう。"
+                "Siang" -> "進捗を確認して少し休憩しよう。"
+                "Sore" -> "残りのクエストに取り組もう。"
+                "Petang" -> "今日を振り返り、最後の行動を決めよう。"
+                "Malam" -> "深夜前の最終確認。"
+                else -> ""
+            }
+            else -> when (slot) {
+                "Pagi" -> "Mulai hari dengan satu quest ringan."
+                "Siang" -> "Cek progres dan ambil jeda sejenak."
+                "Sore" -> "Tuntaskan quest yang masih tertunda."
+                "Petang" -> "Review harimu dan siapkan langkah terakhir."
+                "Malam" -> "Pemeriksaan terakhir sebelum tengah malam."
+                else -> ""
+            }
+        }
+        val body = if (dailyPct >= 100) progressBody else listOf(prompt, progressBody).filter { it.isNotBlank() }.joinToString(" ")
         showReminderNotification(context, title, body)
         MainActivity.scheduleExactAlarmsFromPrefs(context)
     }
