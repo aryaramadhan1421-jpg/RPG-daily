@@ -17,7 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Orbitron:wght@600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=8.0">
+    <link rel="stylesheet" href="style.css?v=8.1">
     <style>
         .death-stat-grid {
             display: grid;
@@ -227,11 +227,10 @@
             <div class="system-card">
                 <div class="flex items-start justify-between gap-3">
                     <div class="flex items-center gap-3">
-                        <button type="button" onclick="openAvatarModal()" id="player-portrait-btn" style="position: relative; width: 3.75rem; height: 3.75rem; border-radius: 0.85rem; background: linear-gradient(135deg, rgba(6,182,212,0.22), rgba(147,51,234,0.25)); border: 1.5px solid rgba(34,211,238,0.65); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; padding: 0;" class="shadow-neon-blue shrink-0" title="Klik untuk ganti Avatar / Foto Hunter">
+                        <button type="button" onclick="openAvatarModal()" id="player-portrait-btn" style="position: relative; width: 3.75rem; height: 3.75rem; border-radius: 0.85rem; background: linear-gradient(135deg, rgba(6,182,212,0.22), rgba(147,51,234,0.25)); border: 1.5px solid rgba(34,211,238,0.65); display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; padding: 0;" class="shadow-neon-blue shrink-0" title="Klik untuk ganti Avatar / Foto Hunter" aria-label="Klik untuk ganti Avatar / Foto Hunter">
                             <div id="player-portrait-render" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
                                 <svg class="icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
                             </div>
-                            <span style="position: absolute; bottom: 0; right: 0; background: rgba(2,6,23,0.88); color: #67e8f9; font-size: 9px; padding: 1px 4px; border-top-left-radius: 5px; border-top: 1px solid rgba(34,211,238,0.4); border-left: 1px solid rgba(34,211,238,0.4);">✎</span>
                         </button>
                         <div>
                             <div class="flex flex-wrap items-center gap-1-5">
@@ -390,7 +389,7 @@
                     </div>
                 </div>
 
-                <p id="progression-balance-status" style="font-size:10px;color:#94a3b8;margin:6px 2px 2px;" aria-live="polite">V8.0</p>
+                <p id="progression-balance-status" style="font-size:10px;color:#94a3b8;margin:6px 2px 2px;" aria-live="polite"></p>
                 <div class="grid grid-cols-1 gap-3" style="padding-top: 4px;">
                     <!-- STR -->
                     <div class="stat-box">
@@ -1309,7 +1308,7 @@
                 </div>
 
                 <!-- Relic Catalog List -->
-                <div id="armory-relic-list" class="space-y-2"></div>
+                <details class="v81-shop-fold"><summary class="v7-shop-heading font-display" id="v81-relic-catalog-title">Katalog Relic</summary><div id="armory-relic-list" class="space-y-2"></div></details>
             </div>
 
             <!-- Mystery Chest Gacha Banner -->
@@ -2084,15 +2083,16 @@
         <div class="hunter-guide-card"><div class="hunter-guide-top"><strong id="hunter-health-guide-heading">HUNTER SURVIVAL GUIDE</strong><button type="button" onclick="closeHunterHealthGuide()" aria-label="Close guide">✕</button></div><div id="hunter-health-guide-content"></div><button type="button" onclick="closeHunterHealthGuide()" id="hunter-health-close">Tutup</button></div>
     </div>
     <!-- Safe bulk-quest scheduling must load BEFORE app.js runs day rollover. -->
-    <script src="v8_core.js?v=8.0"></script>
+    <script src="v8_core.js?v=8.1"></script>
     <script src="v7_quality.js"></script>
-    <script src="app.js?v=8.0"></script>
-    <script src="v7_lore.js"></script>
-    <script src="v7_raid.js?v=8.0"></script>
-    <script src="v7_chronicle.js?v=8.0"></script>
+    <script src="app.js?v=8.1"></script>
+    <script src="v7_lore.js?v=8.1"></script>
+    <script src="v7_raid.js?v=8.1"></script>
+    <script src="v7_chronicle.js?v=8.1"></script>
     <script src="v7_motivation.js"></script>
     <script src="v7_growth.js"></script>
-    <script src="v8_ui.js?v=8.0"></script>
+    <script src="v8_room.js?v=8.1"></script>
+    <script src="v8_ui.js?v=8.1"></script>
 
 </body>
 </html>

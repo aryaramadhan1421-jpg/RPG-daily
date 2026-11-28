@@ -604,6 +604,7 @@ function applyCosmetics() {
         const blade=icon.querySelector&&icon.querySelector('.v7-sword-blade');
         if(blade){blade.setAttribute('d',weapon?.shape||'M61 57 89 6 84 1 50 52Z');blade.style.fill=weapon?.css||aura?.css||'#67e8f9';blade.style.stroke=weapon?'#f8fafc':'';blade.style.strokeWidth=weapon?'.65':'';blade.style.filter=weapon||aura?'drop-shadow(0 0 7px '+(weapon?.css||aura.css)+')':'';}
         if(typeof icon.style.setProperty==='function')icon.style.setProperty('--v7-aura-color',aura?aura.css:'#67e8f9');
+        if(icon.dataset)icon.dataset.v7Aura=aura?.id||'';
         if(icon.classList && typeof icon.classList.toggle==='function')icon.classList.toggle('v7-aura-equipped',!!aura);
     }
 }
@@ -671,6 +672,7 @@ function renderAppearance() {
     </div>`;
     root.innerHTML=preview+`<div class="v72-equipped-grid">${extraPreview}</div>`+rankRoadmap+slots+`<div class="v7-appearance-footer"><span>${esc(t('Kosmetik tidak menambah statistik atau damage.','Cosmetics never boost stats or damage.','見た目だけの変更です。'))}</span>
       <button type="button" class="v7-raid-btn" onclick="V7Raid.collapseAppearance()">${esc(t('Tutup Koleksi','Close Collection','コレクションを閉じる'))}</button></div>`;
+    const photo=root.querySelector('.v7-appearance-avatar'),source=document.getElementById('player-portrait-render');if(photo&&source)photo.replaceChildren(...[...source.childNodes].map(n=>n.cloneNode(true)));
 }
     function lore(b,i) {
         const lang = typeof v6UiLang === 'function' ? v6UiLang() : 'id';
@@ -678,9 +680,9 @@ function renderAppearance() {
         if (chapters && chapters[i]) return chapters[i][lang === 'en' ? 1 : lang === 'ja' ? 2 : 0];
         return t('Fragmen cerita belum tersedia.','Story chapter is unavailable.','物語を読み込めません。');
     }
-    let openStoryBossId = null;
+    let openStoryBossId = null,storyRenderKey=null;
     function closeBossStory() {
-        openStoryBossId = null;
+        openStoryBossId = null;storyRenderKey=null;
         const overlay=document.getElementById('v7-story-overlay');
         if(overlay)overlay.remove();
     }
@@ -691,7 +693,10 @@ function renderAppearance() {
         if(!progress.met)return false; // Never reveal an undiscovered Boss.
         openStoryBossId=id;
         const old=document.getElementById('v7-story-overlay');
-        if(old)old.remove();
+        const renderKey=JSON.stringify([id,progress.victories,typeof v6UiLang==='function'?v6UiLang():'id']);
+        if(old&&storyRenderKey===renderKey)return true;
+        const scroll=old?.querySelector('.v7-story-scroll')?.scrollTop||0;
+        if(old)old.remove();storyRenderKey=renderKey;
         const overlay=document.createElement('div');
         overlay.id='v7-story-overlay';overlay.className='v7-story-overlay';
         overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
@@ -700,19 +705,20 @@ function renderAppearance() {
         const open=[true,progress.victories>=1,progress.victories>=3,progress.victories>=5];
         const chapters=titles.map((title,i)=>`<section class="v7-story-chapter ${open[i]?'':'v7-story-locked'}">
           <div class="v7-story-chapter-title"><span>${i+1}. ${esc(title)}</span><span>${open[i]?'📖':'🔒'}</span></div>
-          ${open[i]?`<p>${esc(lore(b,i))}</p>`:`<p>${esc(t('Fragmen ini terbuka setelah','Unlock after','解放条件：'))} ${i===1?'1':i===2?'3':'5'} ${esc(t('kemenangan melawan Boss ini.','victories against this Boss.','回の勝利。'))}</p>`}
+          ${open[i]?`${lore(b,i).split('\n\n').map(p=>`<p>${esc(p)}</p>`).join('')}`:`<p>${esc(t('Fragmen ini terbuka setelah','Unlock after','解放条件：'))} ${i===1?'1':i===2?'3':'5'} ${esc(t('kemenangan melawan Boss ini.','victories against this Boss.','回の勝利。'))}</p>`}
           </section>`).join('');
         overlay.innerHTML=`<div class="v7-story-reader" role="document">
           <header class="v7-story-reader-head"><div><small>${esc(t('ABYSS CODEX · ARSIP KISAH','ABYSS CODEX · STORY ARCHIVE','深淵の図鑑 · 物語の記録'))}</small>
             <h3>${esc(b.name)}</h3><span>${esc(b.epithet)}</span></div>
             <button type="button" class="v7-story-close" aria-label="${esc(t('Tutup kisah','Close story','物語を閉じる'))}" onclick="V7Raid.closeBossStory()">✕</button></header>
           <div class="v7-story-scroll"><img src="bosses/${esc(b.id)}.webp" alt="${esc(b.name)}" class="v7-story-cover" loading="lazy">
-          <p class="v7-story-intro">${esc(t('Kisah yang sudah terbuka dapat dibaca lagi kapan pun. Melewati intro tidak menghapusnya.','Unlocked chapters can be reread at any time. Skipping the intro never removes them.','解放した物語はいつでも読み返せます。登場演出をスキップしても消えません。'))}</p>
+          <p class="v7-story-intro">${esc(t('Kisah terbuka saat target Normal tercapai, tanpa menunggu Senin. Satu kemenangan per Boss per minggu. Fragmen berikutnya membutuhkan 3 dan 5 kemenangan.','Chapters unlock when the Normal target is reached, without waiting for Monday. One victory per Boss per week. Later chapters require 3 and 5 victories.','通常目標を達成すると月曜日を待たずに解放されます。勝利はボスごとに週1回。続編は3回と5回の勝利で解放されます。'))}</p>
           ${chapters}</div>
           <footer><button type="button" class="v7-raid-btn" onclick="V7Raid.closeBossStory()">${esc(t('Tutup Buku','Close Book','本を閉じる'))}</button></footer>
           </div>`;
         document.body.appendChild(overlay);
         overlay.querySelector('.v7-story-close')?.focus();
+        const storyScroll=overlay.querySelector('.v7-story-scroll');if(storyScroll)storyScroll.scrollTop=scroll;
         return true;
     }
     if (typeof document!=='undefined' && typeof document.addEventListener==='function') document.addEventListener('keydown',event=>{
@@ -720,7 +726,9 @@ function renderAppearance() {
     });
     function bossProgress(b,v) {
         const history=Object.values(v.archive).filter(r=>r&&r.bossId===b.id);
-        const victories=history.filter(r=>r.won).length;
+        const live=v.active;
+        const currentWin=!!(live&&live.bossId===b.id&&!v.archive[live.week]&&normalCleared(live));
+        const victories=history.filter(r=>r.won).length+(currentWin?1:0);
         const met=history.length>0 || (v.active&&v.active.bossId===b.id);
         return {victories,met};
     }
@@ -738,7 +746,7 @@ function renderAppearance() {
              <div class="v7-button-row">${button(t('📖 Baca Kisah','📖 Read Story','📖 物語を読む'), `V7Raid.openBossStory('${b.id}')`)}
              ${button(t('Lewati Intro','Skip Intro','登場演出をスキップ'), 'V7Raid.dismissEncounter()')}</div></div>` : '';
         return introduction + `<div class="v7-boss-card ${modeCleared(w,p.displayedDamage)?'v7-defeated':normal&&!w.rewardClaimed?'v7-enraged':''}">
-            <div class="v7-muted">${esc(w.week)} · ${esc(t('RAID BEBAS · V8.0','OPEN RAID · V8.0','自由レイド · V8.0'))}</div>
+            <div class="v7-muted">${esc(w.week)} · ${esc(t('RAID BEBAS','OPEN RAID','自由レイド'))}</div>
             <div class="v7-battle-arena">
               <div class="v7-arena-title"><strong>🐉 ${esc(b.name)}</strong><small>${esc(b.epithet)}</small><button type="button" class="v7-boss-story-link" onclick="V7Raid.openBossStory('${b.id}')">📖 ${esc(t('Baca Lore','Read Lore','物語を読む'))}</button></div>
               <div class="v7-replay-stage" aria-label="${esc(t('Arena pertarungan Weekly Boss','Weekly Boss battle arena','週間ボスの戦闘アリーナ'))}">
@@ -788,7 +796,7 @@ function renderAppearance() {
         const rows=ROSTER.map(b=>{
             const p=bossProgress(b,v),u=p.met;
             const locks=[u,p.victories>=1,p.victories>=3,p.victories>=5];
-            return `<details class="v7-codex-row"><summary>${u?'📖':'🔒'} ${esc(u?b.name:'???')} <small>${u?`· ${p.victories} ${esc(t('kemenangan','wins','勝'))}`:'· '+esc(t('Belum ditemukan','Undiscovered','未発見'))}</small></summary>
+            return `<details class="v7-codex-row" data-raid-fold="codex-${b.id}"><summary>${u?'📖':'🔒'} ${esc(u?b.name:'???')} <small>${u?`· ${p.victories} ${esc(t('kemenangan','wins','勝'))}`:'· '+esc(t('Belum ditemukan','Undiscovered','未発見'))}</small></summary>
             ${u?`<p class="v7-muted">${esc(b.epithet)}</p><p class="v7-muted">📖 ${locks.filter(Boolean).length}/4 ${esc(t('fragmen terbuka','chapters unlocked','解放済みの断片'))}</p><button type="button" class="v7-raid-btn v7-read-story-btn" onclick="V7Raid.openBossStory('${b.id}')">${esc(t('📖 Baca Kisah Lengkap','📖 Read Story','📖 物語を読む'))}</button>`:esc(t('Temui Boss ini dalam Weekly Raid untuk membuka Lore.','Encounter this boss to discover its lore.','ボスとの遭遇で解放。'))}</details>`;
         }).join('');
         return `<div class="v7-raid-panel"><h3>📜 ${esc(t('KODEKS ABYSS','ABYSS CODEX','深淵の図鑑'))}</h3>${rows}</div>`;
@@ -796,6 +804,8 @@ function renderAppearance() {
 
 function renderArchive() {
     const v=state(),rows=Object.values(v.archive).sort((a,b)=>b.week.localeCompare(a.week));
+    const w=v.active, b=w&&ROSTER.find(x=>x.id===w.bossId);
+    const live=w&&b&&!v.archive[w.week]?`<div class="v81-raid-current"><img src="bosses/${esc(b.id)}.webp" alt=""><div><small>${esc(t('Minggu berjalan','Current week','今週'))} · ${esc(w.week)}</small><strong>${esc(b.name)}</strong><p>${esc(normalCleared(w)?(modeCleared(w)&&(!w.rewardClaimed||claimedTier(w)==='challenge')?'Challenge Clear':'Normal Clear'):t('Dalam pertarungan','In progress','進行中'))} · ${Math.round(w.damage*100)/100}/${w.challengeTarget} DMG</p><p>${esc(w.rewardClaimed?t('Hadiah diklaim','Reward claimed','報酬受取済み'):t('Hadiah melalui panel Boss','Claim rewards in Boss panel','報酬はボス画面で受取'))}</p><button type="button" class="v7-raid-btn" onclick="V7Raid.openBossStory('${b.id}')">📖 ${esc(t('Baca kisah','Read story','物語を読む'))}</button></div></div>`:'';
     const summary=rows.map(r=>{const boss=ROSTER.find(b=>b.id===r.bossId);
         const status=r.challenge?t('✦ CHALLENGE CLEAR','✦ CHALLENGE CLEAR','✦ チャレンジ達成'):
             r.won?t('⚔ NORMAL CLEAR','⚔ NORMAL CLEAR','⚔ 通常クリア'):
@@ -804,7 +814,7 @@ function renderArchive() {
             <div class="v7-archive-summary"><strong>${esc(r.week)} · ${esc(boss?boss.name:'Boss')}</strong>
               <small>${r.damage}/${r.maxDamage} ${esc(t('DMG','DMG','ダメージ'))} · ${esc(status)}</small>
               ${r.won?`<small>🪙 +${r.gold} Gold · 💠 +${r.crystals} ${esc(t('Kristal Raid','Raid Crystals','レイドクリスタル'))} ${r.challenge?' · ✨ '+esc(t('Eclipse Aura (kemenangan pertama)','Eclipse Aura (first clear)','エクリプスオーラ（初回）')):''}</small>`:''}
-              <details class="v7-battle-summary"><summary>📊 ${esc(t('Rincian Pertarungan','Battle Summary','戦闘サマリー'))}</summary>
+              <details class="v7-battle-summary" data-raid-fold="archive-${esc(r.week)}"><summary>📊 ${esc(t('Rincian Pertarungan','Battle Summary','戦闘サマリー'))}</summary>
                 <p>${esc(t('Quest berkontribusi','Contributing Quests','貢献クエスト'))}: <b>${Number(r.hits)||0}</b> · ${esc(t('Damage tercatat','Recorded Damage','記録ダメージ'))}: <b>${Number(r.damage)||0}</b></p>
                 <p>${esc(t('Hari berkontribusi','Contributing Days','貢献日数'))}: <b>${Number.isFinite(Number(r.daysContributed))?Number(r.daysContributed):'—'}</b> · ${esc(t('Hadiah','Reward','報酬'))}: ${r.claimed?esc(t('Diklaim','Claimed','受取済み')):r.won?esc(t('Belum diklaim','Unclaimed','未受取')):esc(t('Tidak tersedia','Not available','なし'))}</p>
                 ${r.dayDamage&&typeof r.dayDamage==='object'?`<ul>${Object.entries(r.dayDamage).sort((a,b)=>a[0].localeCompare(b[0])).map(([day,amount])=>`<li>${esc(day)} · ${Number(amount)||0} DMG</li>`).join('')}</ul>`:`<p class="v7-muted">${esc(t('Rincian harian tidak tersedia untuk Raid lama.','Daily breakdown unavailable for older raids.','古いレイドには日別データがありません。'))}</p>`}
@@ -814,7 +824,7 @@ function renderArchive() {
              `<span class="v7-archive-status">${r.claimed&&r.won?esc(t('✓ Diklaim','✓ Claimed','受取済み')):'—'}</span>`}
         </div>`;
     }).join('');
-    return `<div class="v7-raid-panel"><h3>🏆 ${esc(t('ARSIP RAID','RAID ARCHIVE','レイド履歴'))}</h3><p class="v7-muted">${esc(t('Hadiah setiap Raid dibayarkan sekali; klaim yang sudah dilakukan tetap tercatat.','Each raid reward is paid once; previous claims stay recorded.','各レイドの報酬は一度だけ受け取れます。受取済みの記録は保持されます。'))}</p>${summary||`<p class="v7-muted">${esc(t('Belum ada minggu yang berakhir.','No completed weeks yet.','記録はありません。'))}</p>`}</div>`;
+    return `<div class="v7-raid-panel"><h3>🏆 ${esc(t('ARSIP RAID','RAID ARCHIVE','レイド履歴'))}</h3><p class="v7-muted">${esc(t('Hadiah setiap Raid dibayarkan sekali; klaim yang sudah dilakukan tetap tercatat.','Each raid reward is paid once; previous claims stay recorded.','各レイドの報酬は一度だけ受け取れます。受取済みの記録は保持されます。'))}</p>${live}${summary||`<p class="v7-muted">${esc(t('Belum ada minggu yang berakhir.','No completed weeks yet.','記録はありません。'))}</p>`}</div>`;
 }
     // Preview is read-only: does not equip, spend Raid Crystals or modify save data.
     function cosmeticArt(item){
@@ -833,12 +843,12 @@ function renderArchive() {
         closeCosmeticPreview();
         const color=item.css||'#67e8f9';
         const isAura=item.kind==='auras';
-        const illustration=['weapons','fingerprints'].includes(item.kind)?cosmeticArt(item):isAura?`<div class="v7-cosmetic-sample v7-sample-aura" style="--v7-preview-color:${color}">
+        const illustration=['weapons','fingerprints'].includes(item.kind)?cosmeticArt(item):isAura?`<div class="v7-cosmetic-sample v7-sample-aura" data-preview-id="${esc(item.id)}" style="--v7-preview-color:${color}">
           <span class="v7-aura-wave"></span><span class="v7-aura-wave second"></span>
           <span class="v7-preview-hunter"><i class="v7-preview-hood"></i><i class="v7-preview-body"></i><i class="v7-preview-blade"></i></span>
           <span class="v7-aura-particle p1">✦</span><span class="v7-aura-particle p2">✧</span><span class="v7-aura-particle p3">✦</span>
-        </div>`:`<div class="v7-cosmetic-sample v7-sample-frame" style="--v7-preview-color:${color}">
-          <span class="v7-frame-preview-frame"><span class="v7-frame-preview-hunter">◈</span></span>
+        </div>`:`<div class="v7-cosmetic-sample v7-sample-frame" data-preview-id="${esc(item.id)}" style="--v7-preview-color:${color}">
+          <div class="v81-frame-context"><div class="v81-frame-example"><span class="v7-frame-preview-frame v81-preview-photo" aria-hidden="true">◈</span><small>${esc(t('Foto Hunter','Hunter portrait','ハンター写真'))}</small></div><div class="v81-frame-example"><span class="v81-preview-fingerprint" aria-hidden="true">◉</span><small>${esc(t('Awakening','Awakening','覚醒'))}</small></div></div>
         </div>`;
         const overlay=document.createElement('div');overlay.id='v7-cosmetic-preview-overlay';overlay.className='v7-cosmetic-overlay';
         overlay.innerHTML=`<div class="v7-cosmetic-modal" role="dialog" aria-modal="true" aria-labelledby="v7-cosmetic-modal-heading">
@@ -850,18 +860,21 @@ function renderArchive() {
         </div>`;
         overlay.addEventListener('click',e=>{if(e.target===overlay)closeCosmeticPreview();});
         document.body.appendChild(overlay);
+        const photo=overlay.querySelector('.v81-preview-photo'),source=document.getElementById('player-portrait-render');if(photo&&source){photo.replaceChildren(...[...source.childNodes].map(n=>n.cloneNode(true)));}
+        const scanner=overlay.querySelector('.v81-preview-fingerprint'),fp=document.getElementById('fp-svg-icon');if(scanner&&fp){const copy=fp.cloneNode(true);copy.removeAttribute('id');scanner.replaceChildren(copy);}
+        overlay.querySelector('.v7-cosmetic-modal-top button')?.focus();
         return true;
     }
 function renderGoldCollection(){
     const v=state(),term=(document.getElementById('shop-search-input')?.value||'').toLocaleLowerCase().trim();
-    const sections=[{kinds:['weapons'],label:t('HUNTER ARMORY','HUNTER ARMORY','ハンター武器庫')},{kinds:['frames','auras','fingerprints'],label:t('LUXURY COLLECTION','LUXURY COLLECTION','高級コレクション')}];
+    const sections=[{id:'armory',kinds:['weapons'],label:t('HUNTER ARMORY','HUNTER ARMORY','ハンター武器庫')},{id:'luxury',kinds:['frames','auras','fingerprints'],label:t('LUXURY COLLECTION','LUXURY COLLECTION','高級コレクション')}];
     return sections.map(section=>{
         const cards=GOLD_COLLECTION.filter(item=>section.kinds.includes(item.kind)&&(!term||(item.name+' '+item.kind+' '+section.label+' '+t('gold emas pedang bingkai aura fingerprint kosmetik','gold sword frame aura fingerprint cosmetic','ゴールド 剣 フレーム オーラ 指紋')).toLocaleLowerCase().includes(term))).map(item=>{
             const owned=v.cosmetics.owned[item.kind].includes(item.id),equipped=v.cosmetics.equipped[SLOT_BY_KIND[item.kind]]===item.id,cost=goldCost(item),canBuy=Number.isFinite(goldBalance())&&goldBalance()>=cost;
             const kindLabel={weapons:t('Skin pedang permanen','Permanent sword skin','永久武器スキン'),frames:t('Bingkai permanen','Permanent frame','永久フレーム'),auras:t('Aura permanen','Permanent aura','永久オーラ'),fingerprints:t('Skin fingerprint permanen','Permanent fingerprint skin','永久指紋スキン')}[item.kind];
-            return `<div class="system-card v7-exchange-row v7-shop-item v72-gold-item">${cosmeticArt(item)}<div class="v7-shop-copy"><b>${esc(item.name)}</b><small>${esc(kindLabel)}</small><button type="button" class="v7-shop-preview-btn" onclick="V7Raid.previewCosmetic('${item.id}')">👁 ${esc(t('Lihat Preview','Preview item','プレビュー'))}</button></div><div class="v7-shop-action">${owned?`<button type="button" class="v7-shop-manage" onclick="V7Raid.openAppearance()">${esc(equipped?t('✓ Dipakai','✓ Equipped','装備中'):t('✓ Dimiliki · Atur','✓ Owned · Manage','所持 · 管理'))}</button>`:`<button type="button" class="v7-raid-btn v7-price-btn v72-gold-price" onclick="V7Raid.requestGoldPurchase('${item.id}')" ${canBuy?'':'disabled'}>🪙 ${goldLabel(cost)}${cost<item.cost?`<del>${goldLabel(item.cost)}</del>`:''}</button>`}</div></div>`;
+            return `<div class="system-card v7-exchange-row v7-shop-item v72-gold-item">${cosmeticArt(item)}<div class="v7-shop-copy"><b>${esc(item.name)}</b><small>${esc(kindLabel)}</small><button type="button" class="v7-shop-preview-btn" data-cosmetic-preview="${item.id}">👁 ${esc(t('Lihat Preview','Preview item','プレビュー'))}</button></div><div class="v7-shop-action">${owned?`<button type="button" class="v7-shop-manage" onclick="V7Raid.openAppearance()">${esc(equipped?t('✓ Dipakai','✓ Equipped','装備中'):t('✓ Dimiliki · Atur','✓ Owned · Manage','所持 · 管理'))}</button>`:`<button type="button" class="v7-raid-btn v7-price-btn v72-gold-price" onclick="V7Raid.requestGoldPurchase('${item.id}')" ${canBuy?'':'disabled'}>🪙 ${goldLabel(cost)}${cost<item.cost?`<del>${goldLabel(item.cost)}</del>`:''}</button>`}</div></div>`;
         }).join('');
-        return cards?`<div class="v7-shop-section v72-gold-section"><div class="v7-shop-heading"><strong>${esc(section.label)}</strong><span>🪙 ${goldLabel(goldBalance())}</span></div><p class="v7-appearance-hint">${esc(t('Koleksi permanen · Diskon CHR berlaku · Hanya kosmetik','Permanent collection · CHR discount applies · Cosmetic only','永久コレクション · CHR割引 · 見た目のみ'))}</p><div class="v7-shop-list">${cards}</div></div>`:'';
+        return cards?`<details class="v7-shop-section v72-gold-section v81-shop-fold" data-shop-section="${section.id}"><summary class="v7-shop-heading"><strong>${esc(section.label)}</strong><span>🪙 ${goldLabel(goldBalance())}</span></summary><p class="v7-appearance-hint">${esc(t('Dibeli dengan Gold dari quest · Diskon CHR · Permanen, tanpa bonus Stat','Bought with quest Gold · CHR discount · Permanent, cosmetic only','クエストのゴールドで購入 · CHR割引 · 永久・見た目のみ'))}</p><div class="v7-shop-list">${cards}</div></details>`:'';
     }).join('');
 }
 function renderExchange() {
@@ -878,22 +891,23 @@ function renderExchange() {
               title="${esc(canBuy?t('Beli kosmetik','Buy cosmetic','購入'):t('Raid Crystals belum cukup','Not enough Raid Crystals','クリスタル不足'))}">
               💠 ${item.cost}</button>`;
         return `<div class="system-card v7-exchange-row v7-shop-item">
-            <div class="v7-shop-icon" aria-hidden="true">${item.kind==='frames'?'🖼️':'✨'}</div>
-            <div class="v7-shop-copy"><b>${esc(item.name)}</b><small>${item.challengeOnly?esc(t('Challenge Clear pertama → klaim hadiah','First Challenge Clear → claim reward','初回チャレンジ達成→報酬を受け取る')):item.kind==='frames'?esc(t('Bingkai avatar & Awakening','Avatar & Awakening frame','フレーム')):esc(t('Efek Hunter & Shadow Sword','Hunter & Shadow Sword aura','オーラ'))}</small><button type="button" class="v7-shop-preview-btn" onclick="V7Raid.previewCosmetic('${item.id}')">👁 ${esc(t('Lihat Preview','Preview item','プレビュー'))}</button></div>
+            ${cosmeticArt(item)}
+            <div class="v7-shop-copy"><b>${esc(item.name)}</b><small>${item.challengeOnly?esc(t('Challenge Clear pertama → klaim hadiah','First Challenge Clear → claim reward','初回チャレンジ達成→報酬を受け取る')):item.kind==='frames'?esc(t('Bingkai avatar & Awakening','Avatar & Awakening frame','フレーム')):esc(t('Efek Hunter & Shadow Sword','Hunter & Shadow Sword aura','オーラ'))}</small><button type="button" class="v7-shop-preview-btn" data-cosmetic-preview="${item.id}">👁 ${esc(t('Lihat Preview','Preview item','プレビュー'))}</button></div>
             <div class="v7-shop-action">${action}</div>
         </div>`;
     }).join('');
     if(!cards)return '';
-    return `<div class="v7-shop-section"><div class="v7-shop-heading"><strong>✨ ${esc(t('KOSMETIK RAID','RAID COSMETICS','レイド装飾'))}</strong><span>💠 ${v.raidCrystals}</span></div>
+    return `<details class="v7-shop-section v81-shop-fold" data-shop-section="raid"><summary class="v7-shop-heading"><strong>✨ ${esc(t('KOSMETIK RAID','RAID COSMETICS','レイド装飾'))}</strong><span>💠 ${v.raidCrystals}</span></summary>
         <div class="v7-shop-list">${cards}</div>
-        <p class="v7-appearance-hint">${esc(t('Beli dengan Kristal Raid, lalu buka Hunter Appearance di bawah untuk memasang Frame atau Aura.','Buy with Raid Crystals, then open Hunter Appearance below to equip Frame or Aura.','レイドクリスタルで購入後、下の「ハンターの外見」でフレームやオーラを装備できます。'))}</p></div>`;
+        <p class="v7-appearance-hint">${esc(t('Eksklusif Weekly Boss: Kristal Raid atau hadiah Challenge. Tidak dijual dengan Gold; efek visual saja.','Weekly Boss exclusive: Raid Crystals or Challenge rewards. Not sold for Gold; visual only.','週間ボス限定：レイドクリスタルまたはチャレンジ報酬。ゴールド購入不可。見た目のみ。'))}</p></details>`;
 }
     function syncStaticLabels() {
         const labels={
             'v7-weekly-boss-tab-label':t('Weekly Boss','Weekly Boss','週間ボス'),
             'v7-appearance-heading':t('✨ PENAMPILAN HUNTER','✨ HUNTER APPEARANCE','✨ ハンターの外見'),
             'v7-appearance-subtitle':t('Atur Frame, Aura, Pedang, dan Fingerprint','Manage frames, auras, swords and fingerprint skins','フレーム・オーラ・剣・指紋スキンを管理'),
-            'v7-appearance-label':t('KOLEKSI ▾','COLLECTION ▾','コレクション ▾')
+            'v7-appearance-label':t('KOLEKSI ▾','COLLECTION ▾','コレクション ▾'),
+            'v81-relic-catalog-title':t('Katalog Relic','Relic catalog','レリック一覧')
         };
         for(const [id,label] of Object.entries(labels)){
             const el=document.getElementById(id);
@@ -902,11 +916,18 @@ function renderExchange() {
         const pill=document.getElementById('v7-crystal-pill');
         if(pill)pill.title=t('Kristal Raid · Hadiah Weekly Boss','Raid Crystals · Weekly Boss rewards','レイドクリスタル · 週間ボス報酬');
     }
+    document.addEventListener('click',e=>{const btn=e.target.closest?.('[data-cosmetic-preview]');if(btn){e.preventDefault();previewCosmetic(btn.dataset.cosmeticPreview);}});
+    const shopFolds=new Map();let shopWasSearching=false;
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('v7-cosmetic-preview-overlay'))closeCosmeticPreview();});
     function renderShopExchange() {
         const goldCollection=document.getElementById('v72-gold-collection');
-        if(goldCollection)goldCollection.innerHTML=renderGoldCollection();
         const shopExchange=document.getElementById('v7-shop-exchange');
+        const searching=!!document.getElementById('shop-search-input')?.value.trim();
+        if(!shopWasSearching)for(const root of [goldCollection,shopExchange])root?.querySelectorAll('details[data-shop-section]').forEach(d=>shopFolds.set(d.dataset.shopSection,d.open));
+        shopWasSearching=searching;
+        if(goldCollection)goldCollection.innerHTML=renderGoldCollection();
         if(shopExchange)shopExchange.innerHTML=renderExchange();
+        for(const root of [goldCollection,shopExchange])root?.querySelectorAll('details[data-shop-section]').forEach(d=>d.open=searching||shopFolds.get(d.dataset.shopSection)===true);
         syncStaticLabels();
         renderAppearance();
         const crystalCounter=document.getElementById('header-raid-crystals');
@@ -920,11 +941,13 @@ function renderExchange() {
         cancelBattle();
         const el=document.getElementById('v7-raid-content');if(!el)return;
         const v=state();
+        const folds=new Set([...el.querySelectorAll("details[data-raid-fold][open]")].map(x=>x.dataset.raidFold));
         const rewards=pendingRewards();
         const banner=rewards.length?`<div class="v7-raid-panel">🎁 ${esc(t('Reward menunggu klaim','Rewards ready to claim','受け取り待ち報酬'))}: ${rewards.length}</div>`:'';
         el.innerHTML=`<div class="v7-raid-panel v7-header"><span>⚔️ SYSTEM RPG · ${esc(t('BOSS MINGGUAN','WEEKLY BOSS','週間ボス'))}</span><small>${esc(t('Offline • Boss tidak mengurangi HP Hunter','Offline • Boss does not attack Hunter HP','オフライン・ボスはハンターのHPを減らしません'))}</small></div>
           ${banner}${renderBoss()}
           ${renderArchive()}${renderCodex()}`;
+        el.querySelectorAll("details[data-raid-fold]").forEach(x=>x.open=folds.has(x.dataset.raidFold));
         renderShopExchange();
         applyCosmetics();
         if(openStoryBossId)openBossStory(openStoryBossId);

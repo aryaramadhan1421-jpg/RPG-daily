@@ -2426,8 +2426,8 @@ function renderStatus() {
     const mult = getStreakMultiplier();
     const balanceStatus = document.getElementById('progression-balance-status');
     if (balanceStatus) balanceStatus.textContent = statCurveVersion() === 2
-        ? v6Text('V8.0 · Balanced Stat aktif', 'V8.0 · Balanced Stat active', 'V8.0 · バランス型能力値：有効')
-        : v6Text('V8.0 · Balanced Stat mulai besok', 'V8.0 · Balanced Stat starts next day', 'V8.0 · バランス型能力値：翌日開始');
+        ? v6Text('Balanced Stat aktif', 'Balanced Stat active', 'バランス型能力値：有効')
+        : v6Text('Balanced Stat mulai besok', 'Balanced Stat starts next day', 'バランス型能力値：翌日開始');
 
     const hudGoldEl = document.getElementById('header-gold');
     if (hudGoldEl) {
@@ -4047,9 +4047,14 @@ function v6ShopDescription(item){
  if(item.desc!==defaults[item.id])return item.desc||'';
  return t[l]||item.desc;
 }
+const shopBaseFoldState={survival:true,personal:false};
+let shopBaseWasSearching=false;
 function renderShop() {
     if(enforceFixedSurvivalItems())saveState(); // Recover any older customized base prices.
     const container = document.getElementById('shop-list');
+    if(!shopBaseWasSearching)container.querySelectorAll('details[data-base-shop]').forEach(d=>shopBaseFoldState[d.dataset.baseShop]=d.open);
+    const searching=!!shopSearchQuery;
+    shopBaseWasSearching=searching;
     container.innerHTML = '';
 
     // Update status & label harga tombol Gacha (150 Gold)
@@ -4077,13 +4082,14 @@ function renderShop() {
 
     const survivalTypes=new Set(['potion','elixir','shield']);
     const orderedShop=[...filteredShop.filter(item=>survivalTypes.has(item.type)),...filteredShop.filter(item=>!survivalTypes.has(item.type))];
-    let lastCategory=null;
+    let lastCategory=null,categoryList=null;
     orderedShop.forEach(item => {
         const category=survivalTypes.has(item.type)?'survival':'personal';
         if(category!==lastCategory){
-            const heading=document.createElement('h3');heading.className='v72-shop-category';
+            const fold=document.createElement('details');fold.className='v81-shop-fold v81-base-fold';fold.dataset.baseShop=category;fold.open=searching||shopBaseFoldState[category];
+            const heading=document.createElement('summary');heading.className='v7-shop-heading v72-shop-category font-display';
             heading.textContent=category==='survival'?v6Text('🧪 SURVIVAL SHOP','🧪 SURVIVAL SHOP','🧪 サバイバルショップ'):v6Text('🎁 PERSONAL REWARD','🎁 PERSONAL REWARD','🎁 個人報酬');
-            container.appendChild(heading);lastCategory=category;
+            fold.appendChild(heading);categoryList=document.createElement('div');categoryList.className='v7-shop-list';fold.appendChild(categoryList);container.appendChild(fold);lastCategory=category;
         }
         const finalCost = getDiscountedShopCost(item.cost);
         const hasDiscount = finalCost < item.cost;
@@ -4147,7 +4153,7 @@ function renderShop() {
                 ` : ''}
             </div>
         `;
-        container.appendChild(card);
+        categoryList.appendChild(card);
     });
     renderRedeemHistory();
     if(window.V7Raid?.renderShopExchange)window.V7Raid.renderShopExchange();
