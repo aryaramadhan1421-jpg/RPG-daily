@@ -17,7 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Orbitron:wght@600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=7.1">
+    <link rel="stylesheet" href="style.css?v=7.2">
     <style>
         .death-stat-grid {
             display: grid;
@@ -390,7 +390,7 @@
                     </div>
                 </div>
 
-                <p id="progression-balance-status" style="font-size:10px;color:#94a3b8;margin:6px 2px 2px;" aria-live="polite">V7.1</p>
+                <p id="progression-balance-status" style="font-size:10px;color:#94a3b8;margin:6px 2px 2px;" aria-live="polite">V7.2</p>
                 <div class="grid grid-cols-1 gap-3" style="padding-top: 4px;">
                     <!-- STR -->
                     <div class="stat-box">
@@ -1266,15 +1266,10 @@
                 <button type="button" id="btn-clear-shop-search" onclick="clearShopSearch()" class="hidden" style="position: absolute; right: 0.65rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.75rem;">✕</button>
             </div>
 
-            <!-- Section Divider 1: Consumables & Real-World Rewards -->
-            <div class="flex items-center justify-between" style="padding: 0.25rem 0.1rem; border-bottom: 1px solid rgba(251,191,36,0.3);">
-                <span class="font-display" style="font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: #fcd34d; text-transform: uppercase;">🎁 Potion & Real-World Rewards</span>
-                <span style="font-size: 10px; color: #94a3b8;">Konsumsi & Hadiah Nyata</span>
-            </div>
-
             <!-- Shop Items Container -->
             <div id="shop-list" class="space-y-2-5"></div>
 
+            <div id="v72-gold-collection" aria-label="Hunter Gold Collection"></div>
             <!-- Raid Cosmetics use the same Shop catalog visual language as Gold items. -->
             <div id="v7-shop-exchange" aria-label="Raid Cosmetics items"></div>
 
@@ -2087,10 +2082,10 @@
     </div>
     <!-- Safe bulk-quest scheduling must load BEFORE app.js runs day rollover. -->
     <script src="v7_quality.js"></script>
-    <script src="app.js?v=7.1"></script>
+    <script src="app.js?v=7.2"></script>
     <script src="v7_lore.js"></script>
-    <script src="v7_raid.js?v=7.1"></script>
-    <script src="v7_chronicle.js"></script>
+    <script src="v7_raid.js?v=7.2"></script>
+    <script src="v7_chronicle.js?v=7.2"></script>
     <script src="v7_motivation.js"></script>
     <script src="v7_growth.js"></script>
 

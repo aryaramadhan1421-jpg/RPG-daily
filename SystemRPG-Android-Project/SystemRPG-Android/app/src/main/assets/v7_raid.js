@@ -34,7 +34,24 @@
         {id:'aura_crimson',kind:'auras',name:'Crimson Aura',cost:30,css:'#fb7185'},
         {id:'aura_eclipse',kind:'auras',name:'Eclipse Aura',cost:0,css:'#c084fc',challengeOnly:true}
     ]);
-    const COSMETIC_ITEMS=Object.freeze([...RANK_FRAMES,...EXCHANGE]);
+    // Permanent Gold cosmetics; independent of 24-hour relics and Raid Crystal rewards.
+    const GOLD_COLLECTION=Object.freeze([
+        {id:'weapon_iron',kind:'weapons',name:'Iron Blade',cost:1500,css:'#d1d5db',shape:'M61 57 89 6 84 1 50 52Z'},
+        {id:'weapon_frost',kind:'weapons',name:'Frost Fang',cost:3500,css:'#7dd3fc',shape:'M52 53 58 38 73 24 70 19 90 2 86 25 78 29 69 48 61 59Z'},
+        {id:'weapon_crimson',kind:'weapons',name:'Crimson Fang',cost:7500,css:'#fb7185',shape:'M50 53 59 35 65 39 70 17 77 22 89 0 91 19 83 35 75 31 69 52 61 59Z'},
+        {id:'weapon_monarch',kind:'weapons',name:"Monarch’s Blade",cost:15000,css:'#c084fc',shape:'M49 53 56 35 62 38 64 22 77 18 89 0 91 21 82 30 77 47 69 44 61 60Z'},
+        {id:'frame_gold_luxury',kind:'frames',name:'Luxury Frame',cost:5000,css:'#fbbf24',sigil:'♛'},
+        {id:'frame_gold_celestial',kind:'frames',name:'Celestial Frame',cost:12000,css:'#93c5fd',sigil:'✦'},
+        {id:'aura_gold_ember',kind:'auras',name:'Solar Ember Aura',cost:7500,css:'#fb923c'},
+        {id:'aura_gold_aurora',kind:'auras',name:'Aurora Veil',cost:16000,css:'#34d399'},
+        {id:'fp_gold_rune',kind:'fingerprints',name:'Rune Scanner',cost:2500,css:'#a78bfa',sigil:'✧'},
+        {id:'fp_gold_royal',kind:'fingerprints',name:'Royal Scanner',cost:20000,css:'#fbbf24',sigil:'♛'}
+    ]);
+    const COSMETIC_ITEMS=Object.freeze([...RANK_FRAMES,...EXCHANGE,...GOLD_COLLECTION]);
+    const SLOT_BY_KIND={frames:'frame',auras:'aura',weapons:'weapon',fingerprints:'fingerprint'};
+    const goldCost=item=>typeof getDiscountedShopCost==='function'?getDiscountedShopCost(item.cost):item.cost;
+    const goldBalance=()=>Number(gameState.player?.gold);
+    const goldLabel=n=>Number(n).toLocaleString(typeof v6UiLang==='function'&&v6UiLang()==='id'?'id-ID':typeof v6UiLang==='function'&&v6UiLang()==='ja'?'ja-JP':'en-US');
     const RANK_ORDER=['E-RANK','D-RANK','C-RANK','B-RANK','A-RANK','S-RANK','NATIONAL'];
     const getCosmetic=id=>COSMETIC_ITEMS.find(x=>x.id===id);
     const A = (value) => Array.isArray(value) ? value : [];
@@ -92,6 +109,11 @@
         if (!v.cosmetics.equipped) v.cosmetics.equipped={frame:null,aura:null};
         v.cosmetics.owned.frames=A(v.cosmetics.owned.frames);
         v.cosmetics.owned.auras=A(v.cosmetics.owned.auras);
+        for(const kind of ['weapons','fingerprints']){
+            v.cosmetics.owned[kind]=A(v.cosmetics.owned[kind]);
+            const slot=SLOT_BY_KIND[kind];
+            if(!v.cosmetics.owned[kind].includes(v.cosmetics.equipped[slot])||getCosmetic(v.cosmetics.equipped[slot])?.kind!==kind)v.cosmetics.equipped[slot]=null;
+        }
         v.raidCrystals=Math.max(0,Math.floor(Number(v.raidCrystals)||0));
         return v;
     }
@@ -503,23 +525,46 @@ function paintVictory(w,p) {
         if(saveState()===false){v.raidCrystals+=item.cost;v.cosmetics.owned[item.kind]=v.cosmetics.owned[item.kind].filter(id=>id!==itemId);return false;}
         render();return true;
     }
+    function requestGoldPurchase(id){
+        const item=GOLD_COLLECTION.find(x=>x.id===id),v=state();
+        if(!item||v.cosmetics.owned[item.kind].includes(id)||!Number.isFinite(goldBalance())||goldBalance()<goldCost(item))return false;
+        const cost=goldCost(item);
+        claimDialog(`<span class="v7-claim-tag">HUNTER COLLECTION</span><h3 id="v7-claim-title">${esc(item.name)}</h3>${cosmeticArt(item)}<p>${esc(t('Beli permanen dengan Gold? Tidak menambah Stat atau damage.','Purchase permanently with Gold? No stat or damage bonuses.','ゴールドで永久購入しますか？能力値・ダメージは増えません。'))}</p><p>🪙 ${goldLabel(cost)}</p><button type="button" class="v7-raid-btn" onclick="V7Raid.closeClaimDialog()">${esc(t('Batal','Cancel','キャンセル'))}</button><button type="button" class="v7-raid-btn v7-claim-btn" onclick="V7Raid.buyGold('${id}',${cost})">${esc(t('Beli','Buy','購入'))}</button>`);
+        return true;
+    }
+    function buyGold(id,quotedCost){
+        const item=GOLD_COLLECTION.find(x=>x.id===id),v=state();
+        if(!item||v.cosmetics.owned[item.kind].includes(id))return false;
+        const cost=goldCost(item),balance=goldBalance();
+        if(!Number.isSafeInteger(cost)||cost<=0||!Number.isFinite(balance)||balance<cost||cost!==quotedCost){closeClaimDialog();renderShopExchange();return false;}
+        const previousGold=gameState.player.gold,previousOwned=v.cosmetics.owned[item.kind].slice(),previousHistory=Array.isArray(gameState.redeemHistory)?gameState.redeemHistory.slice():gameState.redeemHistory;
+        gameState.player.gold=balance-cost;v.cosmetics.owned[item.kind].push(id);
+        if(typeof recordRedeemHistory==='function')recordRedeemHistory(item.name,cost,'cosmetic','Hunter Collection');
+        let committed=false;
+        try{committed=saveState()===true;}catch(e){console.error(e);}
+        if(!committed){gameState.player.gold=previousGold;v.cosmetics.owned[item.kind]=previousOwned;gameState.redeemHistory=previousHistory;closeClaimDialog();if(typeof spawnFloatingReward==='function')spawnFloatingReward(t('Gagal menyimpan. Gold tidak dipotong.','Save failed. Gold was not deducted.','保存に失敗しました。ゴールドは消費されていません。'));return false;}
+        try{renderAll();}catch(e){console.error('Cosmetic saved; refresh failed',e);}
+        claimDialog(`<span class="v7-claim-tag">✦ HUNTER COLLECTION ✦</span><div class="v7-claim-loot"><h3 id="v7-claim-title">${esc(t('KOLEKSI BARU!','NEW COLLECTION ITEM!','新しいコレクション！'))}</h3>${cosmeticArt(item)}<p>${esc(item.name)}</p><p>${esc(t('Dimiliki permanen','Permanently owned','永久所持'))}</p></div><button type="button" class="v7-raid-btn v7-claim-btn" onclick="V7Raid.equipPurchased('${id}')">${esc(t('Pakai sekarang','Equip now','今すぐ装備'))}</button><button type="button" class="v7-raid-btn" onclick="V7Raid.closeClaimDialog()">${esc(t('Nanti','Later','後で'))}</button>`,true);
+        try{if(typeof SoundFX!=='undefined')SoundFX.playLevelUp();}catch(_){}
+        return true;
+    }
+    function equipPurchased(id){if(equip(id)){closeClaimDialog();return true;}return false;}
     function equip(itemId) {
-        const v=state(),oldFrame=v.cosmetics.equipped.frame,oldAura=v.cosmetics.equipped.aura;
+        const v=state(),old={...v.cosmetics.equipped};
         if(itemId===null){v.cosmetics.equipped.frame=null;v.cosmetics.equipped.aura=null;}
         else {const item=getCosmetic(itemId); if(!item||!v.cosmetics.owned[item.kind].includes(itemId))return false;
-            v.cosmetics.equipped[item.kind==='frames'?'frame':'aura']=itemId;}
-        if(saveState()===false){v.cosmetics.equipped.frame=oldFrame;v.cosmetics.equipped.aura=oldAura;return false;}
+            v.cosmetics.equipped[SLOT_BY_KIND[item.kind]]=itemId;}
+        if(saveState()!==true){v.cosmetics.equipped=old;return false;}
         render();applyCosmetics();return true;
     }
-
-function unequip(slot) {
-    if(slot!=='frame' && slot!=='aura') return false;
-    const v=state(),old=v.cosmetics.equipped[slot];
-    if(old===null) return false;
-    v.cosmetics.equipped[slot]=null;
-    if(saveState()===false){v.cosmetics.equipped[slot]=old;return false;}
-    render();return true;
-}
+    function unequip(slot) {
+        if(!Object.values(SLOT_BY_KIND).includes(slot)) return false;
+        const v=state(),old=v.cosmetics.equipped[slot];
+        if(old===null) return false;
+        v.cosmetics.equipped[slot]=null;
+        if(saveState()!==true){v.cosmetics.equipped[slot]=old;return false;}
+        render();return true;
+    }
 function openAppearance() {
     syncRankFrames();
     if(typeof switchTab==='function')switchTab('shop');
@@ -550,10 +595,11 @@ function applyCosmetics() {
         }
     }
     const icon=document.getElementById('v7-hunter-silhouette');
-    const aura=getCosmetic(v.cosmetics.equipped.aura);
+    const aura=getCosmetic(v.cosmetics.equipped.aura),weapon=getCosmetic(v.cosmetics.equipped.weapon),fingerprint=getCosmetic(v.cosmetics.equipped.fingerprint);
+    if(awakening){awakening.classList.toggle('v72-scanner-equipped',!!fingerprint);awakening.dataset.v72Scanner=fingerprint?.id||'';awakening.style.setProperty('--v72-scanner-color',fingerprint?.css||'#22d3ee');}
     if(icon) {
         const blade=icon.querySelector&&icon.querySelector('.v7-sword-blade');
-        if(blade){blade.style.fill=aura?aura.css:'#67e8f9';blade.style.filter=aura?'drop-shadow(0 0 7px '+aura.css+')':'';}
+        if(blade){blade.setAttribute('d',weapon?.shape||'M61 57 89 6 84 1 50 52Z');blade.style.fill=weapon?.css||aura?.css||'#67e8f9';blade.style.stroke=weapon?'#f8fafc':'';blade.style.strokeWidth=weapon?'.65':'';blade.style.filter=weapon||aura?'drop-shadow(0 0 7px '+(weapon?.css||aura.css)+')':'';}
         if(typeof icon.style.setProperty==='function')icon.style.setProperty('--v7-aura-color',aura?aura.css:'#67e8f9');
         if(icon.classList && typeof icon.classList.toggle==='function')icon.classList.toggle('v7-aura-equipped',!!aura);
     }
@@ -564,7 +610,7 @@ function renderAppearance() {
     if(!root)return;
     const v=state();
     applyCosmetics();
-    const choices=[['frames','frame',t('Portrait Frame','Portrait Frame','ポートレートフレーム')],['auras','aura',t('Hunter Aura','Hunter Aura','ハンターオーラ')]];
+    const choices=[['frames','frame',t('Portrait Frame','Portrait Frame','ポートレートフレーム')],['auras','aura',t('Hunter Aura','Hunter Aura','ハンターオーラ')],['weapons','weapon',t('Skin Pedang','Weapon Skin','武器スキン')],['fingerprints','fingerprint',t('Skin Fingerprint','Fingerprint Skin','指紋スキン')]];
     const itemName=id=>{const item=getCosmetic(id);return item?item.name:t('Tidak dipakai','None','なし');};
     const frame=getCosmetic(v.cosmetics.equipped.frame);
     const aura=getCosmetic(v.cosmetics.equipped.aura);
@@ -579,6 +625,7 @@ function renderAppearance() {
             <small>${esc(aura?aura.name:t('Tanpa Aura','No Aura','オーラなし'))}</small>
           </div>
         </div>`;
+    const extraPreview=['weapon','fingerprint'].map(slot=>{const item=getCosmetic(v.cosmetics.equipped[slot]);return `<div class="v72-equipped-preview">${cosmeticArt(item|| (slot==='weapon'?{kind:'weapons',css:'#67e8f9',shape:'M61 57 89 6 84 1 50 52Z'}:{kind:'fingerprints',css:'#22d3ee'}))}<small>${esc(item?.name||(slot==='weapon'?t('Shadow Sword bawaan','Default Shadow Sword','標準シャドウソード'):t('Fingerprint bawaan','Default Fingerprint','標準指紋')))}</small></div>`;}).join('');
     const slots=choices.map(([kind,slot,title])=>{
         const current=v.cosmetics.equipped[slot];
         const owned=COSMETIC_ITEMS.filter(item=>item.kind===kind&&v.cosmetics.owned[kind].includes(item.id));
@@ -591,7 +638,7 @@ function renderAppearance() {
             </button>`;
         }).join('');
         return `<div class="v7-appearance-slot">
-            <div class="v7-appearance-slot-title"><strong>${kind==='frames'?'🖼️':'✨'} ${esc(title)}</strong>
+            <div class="v7-appearance-slot-title"><strong>${{frames:'🖼️',auras:'✨',weapons:'⚔️',fingerprints:'◉'}[kind]} ${esc(title)}</strong>
               <span>${esc(itemName(current))}</span></div>
             <div class="v7-appearance-choices">
               <button type="button" class="v7-appearance-choice ${!current?'is-active':''}"
@@ -619,7 +666,7 @@ function renderAppearance() {
           t('Frame Rank terbuka otomatis saat persyaratan Level dan Stat tercapai. Frame lama tetap dimiliki.','Frames unlock automatically at the required level and stats; older frames remain yours.','レベルと能力値で自動解放します。'):
           t('Semua Frame Rank sudah terbuka! Kamu bebas mengganti Frame kapan saja.','All Rank Frames unlocked! Switch anytime.','ランクフレームをすべて解放しました。'))}</p>
     </div>`;
-    root.innerHTML=preview+rankRoadmap+slots+`<div class="v7-appearance-footer"><span>${esc(t('Kosmetik tidak menambah statistik atau damage.','Cosmetics never boost stats or damage.','見た目だけの変更です。'))}</span>
+    root.innerHTML=preview+`<div class="v72-equipped-grid">${extraPreview}</div>`+rankRoadmap+slots+`<div class="v7-appearance-footer"><span>${esc(t('Kosmetik tidak menambah statistik atau damage.','Cosmetics never boost stats or damage.','見た目だけの変更です。'))}</span>
       <button type="button" class="v7-raid-btn" onclick="V7Raid.collapseAppearance()">${esc(t('Tutup Koleksi','Close Collection','コレクションを閉じる'))}</button></div>`;
 }
     function lore(b,i) {
@@ -688,7 +735,7 @@ function renderAppearance() {
              <div class="v7-button-row">${button(t('📖 Baca Kisah','📖 Read Story','📖 物語を読む'), `V7Raid.openBossStory('${b.id}')`)}
              ${button(t('Lewati Intro','Skip Intro','登場演出をスキップ'), 'V7Raid.dismissEncounter()')}</div></div>` : '';
         return introduction + `<div class="v7-boss-card ${modeCleared(w,p.displayedDamage)?'v7-defeated':normal&&!w.rewardClaimed?'v7-enraged':''}">
-            <div class="v7-muted">${esc(w.week)} · ${esc(t('RAID BEBAS · V7.1','OPEN RAID · V7.1','自由レイド · V7.1'))}</div>
+            <div class="v7-muted">${esc(w.week)} · ${esc(t('RAID BEBAS · V7.2','OPEN RAID · V7.2','自由レイド · V7.2'))}</div>
             <div class="v7-battle-arena">
               <div class="v7-arena-title"><strong>🐉 ${esc(b.name)}</strong><small>${esc(b.epithet)}</small><button type="button" class="v7-boss-story-link" onclick="V7Raid.openBossStory('${b.id}')">📖 ${esc(t('Baca Lore','Read Lore','物語を読む'))}</button></div>
               <div class="v7-replay-stage" aria-label="${esc(t('Arena pertarungan Weekly Boss','Weekly Boss battle arena','週間ボスの戦闘アリーナ'))}">
@@ -767,6 +814,12 @@ function renderArchive() {
     return `<div class="v7-raid-panel"><h3>🏆 ${esc(t('ARSIP RAID','RAID ARCHIVE','レイド履歴'))}</h3><p class="v7-muted">${esc(t('Hadiah setiap Raid dibayarkan sekali; klaim yang sudah dilakukan tetap tercatat.','Each raid reward is paid once; previous claims stay recorded.','各レイドの報酬は一度だけ受け取れます。受取済みの記録は保持されます。'))}</p>${summary||`<p class="v7-muted">${esc(t('Belum ada minggu yang berakhir.','No completed weeks yet.','記録はありません。'))}</p>`}</div>`;
 }
     // Preview is read-only: does not equip, spend Raid Crystals or modify save data.
+    function cosmeticArt(item){
+        const color=item.css||'#67e8f9';
+        if(item.kind==='weapons')return `<div class="v72-art v72-weapon-art" style="--v72-color:${color}"><svg viewBox="0 0 98 82" aria-hidden="true"><g transform="translate(0 5)"><path d="${item.shape}" fill="${color}" stroke="#f8fafc" stroke-width=".7"/><path d="M45 49 66 65M53 58 38 76" stroke="#aab9cb" stroke-width="5" stroke-linecap="round"/><path d="M45 49 66 65" stroke="${color}" stroke-width="2"/></g></svg></div>`;
+        if(item.kind==='fingerprints')return `<div class="v72-art v72-fingerprint-art ${item.id==='fp_gold_royal'?'v72-royal':''}" style="--v72-color:${color}"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="28" fill="none" stroke="${color}" stroke-dasharray="4 4"/><g transform="translate(14 14) scale(1.5)" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round"><path d="M2 12a10 10 0 0 1 18-6M5 19c1-3 1-5 1-7a6 6 0 0 1 12 0c0 3-.5 6-1 9M9 22c1-3 1-7 1-10a2 2 0 0 1 4 0c0 4 0 8-1 10M21 17c1-3 1-6 0-8"/></g></svg></div>`;
+        return `<div class="v72-art ${item.kind==='frames'?'v72-frame-art':'v72-aura-art'}" style="--v72-color:${color}"><span>${esc(item.sigil||(item.kind==='frames'?'◈':'✦'))}</span></div>`;
+    }
     function closeCosmeticPreview() {
         const overlay=document.getElementById('v7-cosmetic-preview-overlay');
         if(overlay) overlay.remove();
@@ -777,7 +830,7 @@ function renderArchive() {
         closeCosmeticPreview();
         const color=item.css||'#67e8f9';
         const isAura=item.kind==='auras';
-        const illustration=isAura?`<div class="v7-cosmetic-sample v7-sample-aura" style="--v7-preview-color:${color}">
+        const illustration=['weapons','fingerprints'].includes(item.kind)?cosmeticArt(item):isAura?`<div class="v7-cosmetic-sample v7-sample-aura" style="--v7-preview-color:${color}">
           <span class="v7-aura-wave"></span><span class="v7-aura-wave second"></span>
           <span class="v7-preview-hunter"><i class="v7-preview-hood"></i><i class="v7-preview-body"></i><i class="v7-preview-blade"></i></span>
           <span class="v7-aura-particle p1">✦</span><span class="v7-aura-particle p2">✧</span><span class="v7-aura-particle p3">✦</span>
@@ -788,7 +841,7 @@ function renderArchive() {
         overlay.innerHTML=`<div class="v7-cosmetic-modal" role="dialog" aria-modal="true" aria-labelledby="v7-cosmetic-modal-heading">
           <div class="v7-cosmetic-modal-top"><h3 id="v7-cosmetic-modal-heading">${esc(item.name)}</h3>
           <button type="button" class="v7-raid-btn" onclick="V7Raid.closeCosmeticPreview()" aria-label="${esc(t('Tutup','Close','閉じる'))}">✕</button></div>
-          ${illustration}<p class="v7-muted">${esc(isAura?t('Aura mengelilingi Hunter dan mewarnai Shadow Sword ketika bertarung.','The aura surrounds your Hunter and colors the Shadow Sword in battle.','オーラは戦闘中のハンターを包み、シャドウソードの色を変えます。'):t('Frame menghiasi avatar Hunter di Status dan layar Awakening.','This frame decorates the Hunter avatar in Status and Awakening.','フレームはステータスと覚醒画面のハンター像を飾ります。'))}</p>
+          ${illustration}<p class="v7-muted">${esc(item.kind==='weapons'?t('Skin mengubah bentuk dan warna pedang di pertarungan, tanpa mengubah damage.','Changes sword shape and color in battle, never damage.','戦闘中の剣の形と色を変更します。ダメージは変わりません。'):item.kind==='fingerprints'?t('Skin mengubah tampilan pemindai Awakening, tanpa mengubah durasi.','Changes the Awakening scanner appearance, not the duration.','覚醒スキャナーの見た目のみ変更します。'):isAura?t('Aura mengelilingi Hunter dan mewarnai Shadow Sword ketika bertarung.','The aura surrounds your Hunter and colors the Shadow Sword in battle.','オーラは戦闘中のハンターを包み、シャドウソードの色を変えます。'):t('Frame menghiasi avatar Hunter di Status dan layar Awakening.','This frame decorates the Hunter avatar in Status and Awakening.','フレームはステータスと覚醒画面のハンター像を飾ります。'))}</p>
           <p class="v7-muted">${esc(t('Pratinjau saja — tidak membeli atau memasang item.','Preview only — no purchase or equipment changes.','プレビューのみ。購入や装備の変更はありません。'))}</p>
           <button type="button" class="v7-raid-btn" onclick="V7Raid.closeCosmeticPreview()">${esc(t('Kembali ke Shop','Back to Shop','ショップへ戻る'))}</button>
         </div>`;
@@ -796,6 +849,18 @@ function renderArchive() {
         document.body.appendChild(overlay);
         return true;
     }
+function renderGoldCollection(){
+    const v=state(),term=(document.getElementById('shop-search-input')?.value||'').toLocaleLowerCase().trim();
+    const sections=[{kinds:['weapons'],label:t('HUNTER ARMORY','HUNTER ARMORY','ハンター武器庫')},{kinds:['frames','auras','fingerprints'],label:t('LUXURY COLLECTION','LUXURY COLLECTION','高級コレクション')}];
+    return sections.map(section=>{
+        const cards=GOLD_COLLECTION.filter(item=>section.kinds.includes(item.kind)&&(!term||(item.name+' '+item.kind+' '+section.label+' '+t('gold emas pedang bingkai aura fingerprint kosmetik','gold sword frame aura fingerprint cosmetic','ゴールド 剣 フレーム オーラ 指紋')).toLocaleLowerCase().includes(term))).map(item=>{
+            const owned=v.cosmetics.owned[item.kind].includes(item.id),equipped=v.cosmetics.equipped[SLOT_BY_KIND[item.kind]]===item.id,cost=goldCost(item),canBuy=Number.isFinite(goldBalance())&&goldBalance()>=cost;
+            const kindLabel={weapons:t('Skin pedang permanen','Permanent sword skin','永久武器スキン'),frames:t('Bingkai permanen','Permanent frame','永久フレーム'),auras:t('Aura permanen','Permanent aura','永久オーラ'),fingerprints:t('Skin fingerprint permanen','Permanent fingerprint skin','永久指紋スキン')}[item.kind];
+            return `<div class="system-card v7-exchange-row v7-shop-item v72-gold-item">${cosmeticArt(item)}<div class="v7-shop-copy"><b>${esc(item.name)}</b><small>${esc(kindLabel)}</small><button type="button" class="v7-shop-preview-btn" onclick="V7Raid.previewCosmetic('${item.id}')">👁 ${esc(t('Lihat Preview','Preview item','プレビュー'))}</button></div><div class="v7-shop-action">${owned?`<button type="button" class="v7-shop-manage" onclick="V7Raid.openAppearance()">${esc(equipped?t('✓ Dipakai','✓ Equipped','装備中'):t('✓ Dimiliki · Atur','✓ Owned · Manage','所持 · 管理'))}</button>`:`<button type="button" class="v7-raid-btn v7-price-btn v72-gold-price" onclick="V7Raid.requestGoldPurchase('${item.id}')" ${canBuy?'':'disabled'}>🪙 ${goldLabel(cost)}${cost<item.cost?`<del>${goldLabel(item.cost)}</del>`:''}</button>`}</div></div>`;
+        }).join('');
+        return cards?`<div class="v7-shop-section v72-gold-section"><div class="v7-shop-heading"><strong>${esc(section.label)}</strong><span>🪙 ${goldLabel(goldBalance())}</span></div><p class="v7-appearance-hint">${esc(t('Koleksi permanen · Diskon CHR berlaku · Hanya kosmetik','Permanent collection · CHR discount applies · Cosmetic only','永久コレクション · CHR割引 · 見た目のみ'))}</p><div class="v7-shop-list">${cards}</div></div>`:'';
+    }).join('');
+}
 function renderExchange() {
     const v=state();
     const term=(document.getElementById('shop-search-input')?.value||'').toLocaleLowerCase().trim();
@@ -824,7 +889,7 @@ function renderExchange() {
         const labels={
             'v7-weekly-boss-tab-label':t('Weekly Boss','Weekly Boss','週間ボス'),
             'v7-appearance-heading':t('✨ PENAMPILAN HUNTER','✨ HUNTER APPEARANCE','✨ ハンターの外見'),
-            'v7-appearance-subtitle':t('Frame untuk Portrait & Awakening · Aura untuk Shadow Sword','Frames for Portrait & Awakening · Aura for Shadow Sword','フレーム：プロフィール・覚醒画面 · オーラ：シャドウソード'),
+            'v7-appearance-subtitle':t('Atur Frame, Aura, Pedang, dan Fingerprint','Manage frames, auras, swords and fingerprint skins','フレーム・オーラ・剣・指紋スキンを管理'),
             'v7-appearance-label':t('KOLEKSI ▾','COLLECTION ▾','コレクション ▾')
         };
         for(const [id,label] of Object.entries(labels)){
@@ -835,6 +900,8 @@ function renderExchange() {
         if(pill)pill.title=t('Kristal Raid · Hadiah Weekly Boss','Raid Crystals · Weekly Boss rewards','レイドクリスタル · 週間ボス報酬');
     }
     function renderShopExchange() {
+        const goldCollection=document.getElementById('v72-gold-collection');
+        if(goldCollection)goldCollection.innerHTML=renderGoldCollection();
         const shopExchange=document.getElementById('v7-shop-exchange');
         if(shopExchange)shopExchange.innerHTML=renderExchange();
         syncStaticLabels();
@@ -866,7 +933,7 @@ function renderExchange() {
         if(saveState()===false){v.seenBosses.pop();return false;}
         render();return true;
     }
-    window.V7Raid={openBossStory,closeBossStory,previewCosmetic,closeCosmeticPreview,state,advance,recordQuest,prepareSave,claim,requestClaim,confirmClaim,closeClaimDialog,unlock,equip,unequip,openAppearance,collapseAppearance,renderAppearance,syncStaticLabels,applyCosmetics,syncRankFrames,replay,replayVisual,skipBattle,cancelBattle,dismissEncounter,render,renderShopExchange,weekKey,
+    window.V7Raid={requestGoldPurchase,buyGold,equipPurchased,goldCollection:GOLD_COLLECTION,openBossStory,closeBossStory,previewCosmetic,closeCosmeticPreview,state,advance,recordQuest,prepareSave,claim,requestClaim,confirmClaim,closeClaimDialog,unlock,equip,unequip,openAppearance,collapseAppearance,renderAppearance,syncStaticLabels,applyCosmetics,syncRankFrames,replay,replayVisual,skipBattle,cancelBattle,dismissEncounter,render,renderShopExchange,weekKey,
         roster:ROSTER,exchange:EXCHANGE,rankFrames:RANK_FRAMES};
     // Run after the V6 boot sequence, not before its gameState initialization.
     const didChange=advance(keyOf(new Date()));

@@ -2414,8 +2414,8 @@ function renderStatus() {
     const mult = getStreakMultiplier();
     const balanceStatus = document.getElementById('progression-balance-status');
     if (balanceStatus) balanceStatus.textContent = statCurveVersion() === 2
-        ? v6Text('V7.1 · Balanced Stat aktif', 'V7.1 · Balanced Stat active', 'V7.1 · バランス型能力値：有効')
-        : v6Text('V7.1 · Balanced Stat mulai besok', 'V7.1 · Balanced Stat starts next day', 'V7.1 · バランス型能力値：翌日開始');
+        ? v6Text('V7.2 · Balanced Stat aktif', 'V7.2 · Balanced Stat active', 'V7.2 · バランス型能力値：有効')
+        : v6Text('V7.2 · Balanced Stat mulai besok', 'V7.2 · Balanced Stat starts next day', 'V7.2 · バランス型能力値：翌日開始');
 
     const hudGoldEl = document.getElementById('header-gold');
     if (hudGoldEl) {
@@ -4069,7 +4069,16 @@ function renderShop() {
 
     const MAX_STREAK_SHIELDS = 2;
 
-    filteredShop.forEach(item => {
+    const survivalTypes=new Set(['potion','elixir','shield']);
+    const orderedShop=[...filteredShop.filter(item=>survivalTypes.has(item.type)),...filteredShop.filter(item=>!survivalTypes.has(item.type))];
+    let lastCategory=null;
+    orderedShop.forEach(item => {
+        const category=survivalTypes.has(item.type)?'survival':'personal';
+        if(category!==lastCategory){
+            const heading=document.createElement('h3');heading.className='v72-shop-category';
+            heading.textContent=category==='survival'?v6Text('🧪 SURVIVAL SHOP','🧪 SURVIVAL SHOP','🧪 サバイバルショップ'):v6Text('🎁 PERSONAL REWARD','🎁 PERSONAL REWARD','🎁 個人報酬');
+            container.appendChild(heading);lastCategory=category;
+        }
         const finalCost = getDiscountedShopCost(item.cost);
         const hasDiscount = finalCost < item.cost;
         const isPotion = item.type === 'potion' || item.type === 'elixir';
@@ -4216,7 +4225,8 @@ function renderRedeemHistory() {
         shield: '🛡️',
         reward: '🎁',
         gacha: '🎲',
-        relic: '⚔️'
+        relic: '⚔️',
+        cosmetic: '✨'
     };
 
     listEl.innerHTML = records.map(r => `
