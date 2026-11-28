@@ -148,7 +148,49 @@ class MainActivity : ComponentActivity() {
         data?.delete()
     }
 
+    private var pendingV86Csv: java.io.File? = null
+    private var pendingV86Lang = "id"
+    private fun csvToast(lang: String, success: Boolean) {
+        val text = when (lang) {
+            "ja" -> if (success) "CSVを保存しました" else "CSVの保存に失敗しました"
+            "en" -> if (success) "CSV saved" else "CSV save failed"
+            else -> if (success) "CSV berhasil disimpan" else "CSV gagal disimpan"
+        }
+        android.widget.Toast.makeText(this, text, android.widget.Toast.LENGTH_SHORT).show()
+    }
+    private val csvLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri ->
+        val file = pendingV86Csv
+        pendingV86Csv = null
+        if (uri != null && file != null) {
+            try {
+                val stream = contentResolver.openOutputStream(uri, "w") ?: throw java.io.IOException("No output stream")
+                stream.use { out -> file.inputStream().use { it.copyTo(out) } }
+                csvToast(pendingV86Lang, true)
+            } catch (_: Exception) { csvToast(pendingV86Lang, false) }
+        }
+        file?.delete()
+    }
+
     inner class AndroidBridge {
+        @JavascriptInterface
+        fun exportV86Csv(csv: String, filename: String, lang: String): Boolean {
+            if (csv.isBlank()) return false
+            var temp: java.io.File? = null
+            return try {
+                val file = java.io.File.createTempFile("system-rpg-treasury-", ".csv", cacheDir)
+                temp = file
+                file.writeText(csv, Charsets.UTF_8)
+                runOnUiThread {
+                    if (pendingV86Csv != null) { file.delete(); csvToast(lang, false); return@runOnUiThread }
+                    pendingV86Csv = file
+                    pendingV86Lang = lang
+                    try { csvLauncher.launch(filename.replace(Regex("[^a-zA-Z0-9_.-]"), "_").take(100)) }
+                    catch (_: Exception) { pendingV86Csv = null; file.delete(); csvToast(lang, false) }
+                }
+                true
+            } catch (_: Exception) { temp?.delete(); false }
+        }
+
         @JavascriptInterface
         fun exportV84Backup(json: String, filename: String, lang: String): Boolean {
             if (json.isBlank()) return false
