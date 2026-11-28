@@ -147,16 +147,36 @@
         }
         return changed;
     }
-    let tab='insights',offset=0;
-    function setTab(next) {if(next!=='insights'&&next!=='chronicle')return;tab=next;if(tab==='chronicle'&&offset===0)offset=1;render();}
+    // Match the collapsible panel contract used by index.html.
+    let tab='insights',offset=0,expanded=false;
+    function syncPanel() {
+        const panel=document.getElementById('v7cj-panel');
+        if(panel)panel.hidden=!expanded;
+        for(const key of ['insights','chronicle']) {
+            const btn=document.getElementById('v7cj-tab-'+key);
+            if(btn)btn.setAttribute('aria-expanded',String(expanded&&tab===key));
+        }
+    }
+    function setTab(next) {
+        if(next!=='insights'&&next!=='chronicle')return;
+        tab=next;expanded=true;
+        if(tab==='chronicle'&&offset===0)offset=1;
+        render();
+    }
+    function toggle(next) {
+        if(next!=='insights'&&next!=='chronicle')return;
+        if(expanded&&tab===next){expanded=false;syncPanel();return;}
+        setTab(next);
+    }
     function shiftWeek(steps){offset=cap(offset+steps,0,104);render();}
     function weekForOffset() {return addDays(weekKey(today()),-7*offset);}
     function render() {
+        syncPanel();
         const root=document.getElementById('v7cj');if(!root||typeof gameState==='undefined'||!gameState)return;
         const wk=weekForOffset(),summary=buildWeek(wk,gameState),snap=gameState.history&&gameState.history.chronicles&&gameState.history.chronicles[wk];
         const tInsights=document.getElementById('v7cj-tab-insights'),tChronicle=document.getElementById('v7cj-tab-chronicle');
-        if(tInsights){tInsights.textContent=txt('insights');tInsights.setAttribute('aria-selected',String(tab==='insights'));}
-        if(tChronicle){tChronicle.textContent=txt('chronicle');tChronicle.setAttribute('aria-selected',String(tab==='chronicle'));}
+        if(tInsights){tInsights.textContent=txt('insights');}
+        if(tChronicle){tChronicle.textContent=txt('chronicle');}
         const prev=document.getElementById('v7cj-prev'),next=document.getElementById('v7cj-next');
         if(prev){prev.textContent='‹ '+txt('previous');prev.disabled=offset>=104;}
         if(next){next.textContent=txt('next')+' ›';next.disabled=offset===0;}
@@ -214,7 +234,7 @@
         try {const changed=captureClosedWeeks(today());if(changed&&typeof saveState==='function')saveState();render();}
         catch(e){console.warn('Chronicle/Insights unavailable:',e);}
     }
-    window.V7Chronicle={buildWeek,captureClosedWeeks,render,setTab,shiftWeek,weekKey};
+    window.V7Chronicle={buildWeek,captureClosedWeeks,render,setTab,toggle,shiftWeek,weekKey};
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initialize);
     else initialize();
 })();

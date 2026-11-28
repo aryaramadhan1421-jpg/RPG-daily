@@ -17,7 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Orbitron:wght@600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=7.1">
     <style>
         .death-stat-grid {
             display: grid;
@@ -390,6 +390,7 @@
                     </div>
                 </div>
 
+                <p id="progression-balance-status" style="font-size:10px;color:#94a3b8;margin:6px 2px 2px;" aria-live="polite">V7.1</p>
                 <div class="grid grid-cols-1 gap-3" style="padding-top: 4px;">
                     <!-- STR -->
                     <div class="stat-box">
@@ -2086,9 +2087,9 @@
     </div>
     <!-- Safe bulk-quest scheduling must load BEFORE app.js runs day rollover. -->
     <script src="v7_quality.js"></script>
-    <script src="app.js"></script>
+    <script src="app.js?v=7.1"></script>
     <script src="v7_lore.js"></script>
-    <script src="v7_raid.js"></script>
+    <script src="v7_raid.js?v=7.1"></script>
     <script src="v7_chronicle.js"></script>
     <script src="v7_motivation.js"></script>
     <script src="v7_growth.js"></script>

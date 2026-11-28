@@ -2412,6 +2412,10 @@ function renderStatus() {
     const reqXp = getRequiredXP(p.level);
     const rank = getPlayerRank(p.level);
     const mult = getStreakMultiplier();
+    const balanceStatus = document.getElementById('progression-balance-status');
+    if (balanceStatus) balanceStatus.textContent = statCurveVersion() === 2
+        ? v6Text('V7.1 · Balanced Stat aktif', 'V7.1 · Balanced Stat active', 'V7.1 · バランス型能力値：有効')
+        : v6Text('V7.1 · Balanced Stat mulai besok', 'V7.1 · Balanced Stat starts next day', 'V7.1 · バランス型能力値：翌日開始');
 
     const hudGoldEl = document.getElementById('header-gold');
     if (hudGoldEl) {
