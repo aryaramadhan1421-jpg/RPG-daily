@@ -110,7 +110,37 @@ class MainActivity : ComponentActivity() {
         filePathCallback = null
     }
 
+    private var pendingV8Report: ByteArray? = null
+    private val reportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("image/png")) { uri ->
+        val data = pendingV8Report
+        pendingV8Report = null
+        if (uri != null && data != null) {
+            try {
+                val stream = contentResolver.openOutputStream(uri) ?: throw java.io.IOException("No output stream")
+                stream.use { it.write(data) }
+                android.widget.Toast.makeText(this, "PNG saved", android.widget.Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) {
+                android.widget.Toast.makeText(this, "PNG save failed", android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     inner class AndroidBridge {
+        @JavascriptInterface
+        fun saveV8Report(base64: String, filename: String) {
+            if (base64.length > 12_000_000) return
+            runOnUiThread {
+                if (pendingV8Report != null) return@runOnUiThread
+                try {
+                    pendingV8Report = android.util.Base64.decode(base64, android.util.Base64.DEFAULT)
+                    reportLauncher.launch(filename.replace(Regex("[^a-zA-Z0-9_.-]"), "_").take(80))
+                } catch (_: Exception) {
+                    pendingV8Report = null
+                    android.widget.Toast.makeText(this@MainActivity, "PNG save failed", android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+
         @JavascriptInterface
         fun setKeepScreenOn(enable: Boolean) {
             runOnUiThread {
@@ -518,12 +548,13 @@ class MainActivity : ComponentActivity() {
                     filePathCallback = callback
 
                     val acceptTypes = fileChooserParams?.acceptTypes
-                        ?.filter { it.isNotBlank() }
+                        ?.filter { it.isNotBlank() && it.contains("/") }
                         ?.toTypedArray()
 
                     val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
                         addCategory(Intent.CATEGORY_OPENABLE)
                         type = "*/*"
+                        putExtra(Intent.EXTRA_ALLOW_MULTIPLE, fileChooserParams?.mode == FileChooserParams.MODE_OPEN_MULTIPLE)
                         if (!acceptTypes.isNullOrEmpty()) {
                             putExtra(Intent.EXTRA_MIME_TYPES, acceptTypes)
                         }
