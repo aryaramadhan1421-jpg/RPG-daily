@@ -17,7 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Orbitron:wght@600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=8.6">
+    <link rel="stylesheet" href="style.css?v=8.7">
     <style>
         .death-stat-grid {
             display: grid;
@@ -1413,16 +1413,18 @@
                     <button type="button" onclick="calcInput('+')" class="calc-btn calc-op">+</button>
                 </div>
 
+                <div class="v86-tools"><button type="button" class="v86-btn" onclick="calcInput('.')" aria-label="Decimal">,</button><span id="v87-calc-state" class="v86-note"></span></div>
                 <div class="grid grid-cols-3 gap-1-5">
                     <button type="button" onclick="calcEquals()" class="font-display" style="background: rgba(30,41,59,0.95); border: 1px solid #475569; color: #fff; font-weight: 800; font-size: 1rem; padding: 0.6rem; border-radius: 0.65rem;">
                         =
                     </button>
-                    <button type="button" onclick="applyCalcToNominal()" class="font-display shadow-neon-blue" style="grid-column: span 2; background: linear-gradient(to right, #06b6d4, #10b981); color: #020617; font-weight: 800; font-size: 0.75rem; padding: 0.6rem; border-radius: 0.65rem;">
+                    <button type="button" id="v87-apply" onclick="applyCalcToNominal()" disabled class="font-display shadow-neon-blue" style="grid-column: span 2; background: linear-gradient(to right, #06b6d4, #10b981); color: #020617; font-weight: 800; font-size: 0.75rem; padding: 0.6rem; border-radius: 0.65rem;">
                         ✓ PAKAI NOMINAL
                     </button>
                 </div>
             </div>
 
+            <details class="system-card v87-compact" id="v87-calc-history"><summary id="v87-calc-history-title">Riwayat perhitungan</summary><div id="v87-calc-history-body"></div></details>
             <!-- Record Cashflow Transaction Form -->
             <form onsubmit="handleAddTreasuryTx(event)" class="system-card space-y-3" style="border-color: rgba(251, 191, 36, 0.35);">
                 <div class="flex items-center justify-between" style="border-bottom: 1px solid var(--bg-slate-800); padding-bottom: 0.45rem;">
@@ -1452,7 +1454,7 @@
                                 <option value="IDR">IDR</option><option value="USD">USD</option><option value="JPY">JPY</option><option value="AUD">AUD</option><option value="SGD">SGD</option>
                             </select>
                         </div>
-                        <span id="tx-currency-label" class="treasury-currency-assist">Mata Uang</span>
+                        <span id="tx-currency-label" class="treasury-currency-assist">Mata Uang</span><small id="v87-number-hint" class="v86-note" style="display:block;margin-top:4px">Titik = ribuan</small>
                     </div>
                     <div>
                         <label style="display: block; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">Kategori</label>
@@ -1461,13 +1463,13 @@
                 </div>
 
                 <div>
-                    <label style="display: block; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;">Catatan / Keterangan</label>
-                    <input type="text" id="tx-note" required placeholder="Contoh: Makan siang ayam geprek / Gaji bulanan" class="input-cyber" style="font-size: 0.75rem;">
+                    <label style="display: block; font-size: 11px; color: #cbd5e1; margin-bottom: 4px;" id="v87-note-label">Catatan / Keterangan (opsional)</label>
+                    <input type="text" id="tx-note" maxlength="500" placeholder="Contoh: Makan siang ayam geprek / Gaji bulanan" class="input-cyber" style="font-size: 0.75rem;">
                 </div>
 
-                <button type="submit" class="w-full font-display shadow-neon-gold" style="background: linear-gradient(to right, #f59e0b, #f97316); color: #020617; font-weight: 800; font-size: 0.8125rem; padding: 0.65rem; border-radius: 0.75rem;">
+                <div id="v87-suggestions" class="v86-tools"></div><details class="v87-compact" id="v87-quick"><summary id="v87-quick-title">Transaksi favorit</summary><div id="v87-quick-body"></div></details><button type="submit" id="v87-submit" class="w-full font-display shadow-neon-gold" style="background: linear-gradient(to right, #f59e0b, #f97316); color: #020617; font-weight: 800; font-size: 0.8125rem; padding: 0.65rem; border-radius: 0.75rem;">
                     SIMPAN TRANSAKSI (+10 XP & +10 WIS)
-                </button>
+                </button><button type="button" id="v87-undo" class="v86-btn hidden" onclick="V87Treasury.undo()">Undo transaksi terakhir</button>
             </form>
 
             <!-- Cashflow Analytics Dashboard -->
@@ -1484,6 +1486,7 @@
                     <button type="button" onclick="setTreasuryPeriodMode('yearly')" id="tr-mode-yearly" class="font-display" style="padding: 6px; border-radius: 0.5rem; font-size: 11px; font-weight: 700; background: var(--bg-slate-900); color: var(--text-muted); border: 1px solid var(--bg-slate-800);">Tahunan</button>
                 </div>
 
+                <div class="v86-tools"><button type="button" class="v86-btn" id="tr-mode-range" onclick="setTreasuryPeriodMode('range')">Rentang</button><button type="button" class="v86-btn" id="tr-mode-all" onclick="setTreasuryPeriodMode('all')">Semua</button></div><div id="v87-range" class="v87-range hidden"><input type="date" class="input-cyber" id="v87-from" onchange="renderTreasury()" aria-label="Start date"><input type="date" class="input-cyber" id="v87-to" onchange="renderTreasury()" aria-label="End date"><span id="v87-range-error" class="v86-note"></span></div>
                 <!-- Dynamic Filter Control -->
                 <div class="flex items-center justify-between gap-2" style="background: rgba(2,6,23,0.75); border: 1px solid var(--bg-slate-800); border-radius: 0.65rem; padding: 0.5rem 0.65rem;">
                     <span id="tr-filter-label" style="font-size: 11px; color: var(--text-muted);">Filter Tanggal:</span>
@@ -2093,7 +2096,8 @@
     <script src="v8_core.js?v=8.3"></script>
     <script src="v7_quality.js"></script>
     <script src="v84_history.js?v=8.4"></script>
-    <script src="app.js?v=8.6"></script>
+    <script src="v87_treasury.js?v=8.7"></script>
+    <script src="app.js?v=8.7"></script>
     <script src="v7_lore.js?v=8.2"></script>
     <script src="v7_raid.js?v=8.3"></script>
     <script src="v7_chronicle.js?v=8.4"></script>
@@ -2103,6 +2107,6 @@
     <script src="v8_ui.js?v=8.4"></script>
 
     <script src="v85_journal.js?v=8.5"></script>
-    <script src="v86_treasury.js?v=8.6"></script>
+    <script src="v86_treasury.js?v=8.7"></script>
 </body>
 </html>

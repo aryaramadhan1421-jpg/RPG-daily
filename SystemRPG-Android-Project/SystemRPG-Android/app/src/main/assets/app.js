@@ -5928,6 +5928,7 @@ const TREASURY_CATEGORIES = {
 };
 
 function tTreasury(str) {
+    if(window.V87Treasury){const custom=V87Treasury.categoryLabel(str);if(custom!==null)return custom;}
     if (typeof appLanguage === 'undefined' || appLanguage === 'id') return str;
     if (typeof DICTIONARY !== 'undefined' && DICTIONARY[appLanguage] && DICTIONARY[appLanguage][str]) {
         return DICTIONARY[appLanguage][str];
@@ -5981,43 +5982,39 @@ function setTreasuryCurrency(next) {
     if (!TREASURY_CURRENCIES.includes(next)) return;
     const tr = ensureTreasuryState();
     if (tr.selectedCurrency === next) return;
-    tr.selectedCurrency = next;
+    const previous=tr.selectedCurrency;tr.selectedCurrency=next;
+    if(saveState()!==true){tr.selectedCurrency=previous;const picker=document.getElementById('tx-currency');if(picker)picker.value=previous;return;}
     // Never relabel a typed number when switching currency by accident.
     const entry = document.getElementById('tx-amount');
     if (entry) entry.value = '';
     selectedTreasuryCategoryFilter = null;
-    saveState();
     renderTreasury();
 }
 
 function formatTreasuryAmountTyping(text, currency = getTreasuryCurrency()) {
-    let clean = String(text || '').replace(/[^\d.,]/g, '').replace(/\./g, '');
-    const supportsCents = !TREASURY_CURRENCY_WHOLE.includes(currency);
-    let decimal = '';
-    if (supportsCents && clean.includes(',')) {
-        const parts = clean.split(',');
-        clean = parts[0];
-        decimal = ',' + (parts.slice(1).join('').replace(/\D/g, '').slice(0, 2));
-    } else {
-        clean = clean.replace(/,/g, '');
-    }
-    const digits = clean.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
-    return (digits ? digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '0') + decimal;
+    const raw=String(text??'').trim();if(!raw)return '';
+    // One explicit input convention in all languages: dots group thousands, comma separates decimals.
+    // Preserve invalid input rather than silently changing its monetary value.
+    if(!/^\d[\d.]*(?:,\d*)?$/.test(raw)|| (raw.includes(',')&&(TREASURY_CURRENCY_WHOLE.includes(currency)||raw.split(',')[1].length>2)))return raw;
+    const [whole,frac]=raw.split(',');
+    if(whole.includes('.')&&!/^\d{1,3}(?:\.\d{3})*$/.test(whole))return raw;
+    const digits=whole.replace(/\./g,'').replace(/^0+(?=\d)/,'');
+    return digits.replace(/\B(?=(\d{3})+(?!\d))/g,'.')+(frac!==undefined?','+frac:'');
 }
 
 function parseTreasuryAmountInput(text, currency = getTreasuryCurrency()) {
-    const raw = String(text || '').trim();
-    if (!/^\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?$/.test(raw) &&
-        !/^\d+(?:,\d{1,2})?$/.test(raw)) return NaN;
-    if (TREASURY_CURRENCY_WHOLE.includes(currency) && raw.includes(',')) return NaN;
-    const value = Number(raw.replace(/\./g, '').replace(',', '.'));
-    return Number.isFinite(value) && value > 0 && value <= 999999999999 ? value : NaN;
+    const raw=String(text??'').trim();
+    if(!TREASURY_CURRENCIES.includes(currency)||!/^\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?$/.test(raw)&&!/^\d+(?:,\d{1,2})?$/.test(raw))return NaN;
+    if(TREASURY_CURRENCY_WHOLE.includes(currency)&&raw.includes(','))return NaN;
+    const value=Number(raw.replace(/\./g,'').replace(',','.'));
+    return Number.isFinite(value)&&value>0&&value<=999999999999?value:NaN;
 }
 
 function handleTreasuryAmountInput(input) {
     if (!input) return;
     const wasBlank = !String(input.value || '').trim();
-    input.value = wasBlank ? '' : formatTreasuryAmountTyping(input.value);
+    if(wasBlank)input.value='';
+    else if(document.activeElement!==input)input.value=formatTreasuryAmountTyping(input.value);
 }
 
 function formatRupiah(num, currency = getTreasuryCurrency()) {
@@ -6036,119 +6033,27 @@ function updateTreasuryCategoryOptions() {
     const catEl = document.getElementById('tx-category');
     if (!typeEl || !catEl) return;
     const prevVal = catEl.value;
-    const list = TREASURY_CATEGORIES[typeEl.value] || TREASURY_CATEGORIES.expense;
-    catEl.innerHTML = list.map(c => `<option value="${c}">${tTreasury(c)}</option>`).join('');
-    if (prevVal && list.includes(prevVal)) {
-        catEl.value = prevVal;
-    }
+    const list = window.V87Treasury ? V87Treasury.categories(typeEl.value) : (TREASURY_CATEGORIES[typeEl.value] || TREASURY_CATEGORIES.expense);
+    catEl.replaceChildren(...list.map(c=>{const o=document.createElement('option');o.value=c;o.textContent=tTreasury(c);return o;}));
+    const preferred=window.V87Treasury?.lastCategory(typeEl.value);
+    if(prevVal && list.includes(prevVal)) catEl.value=prevVal; else if(list.includes(preferred))catEl.value=preferred;
+    window.V87Treasury?.suggest();
 }
 
-function calcInput(val) {
-    SoundFX.playClick();
-    const ops = ['+', '-', '*', '/'];
-    if (calcExpr === '' && ops.includes(val)) {
-        calcExpr = '0' + val;
-    } else if (ops.includes(val) && ops.includes(calcExpr.slice(-1))) {
-        calcExpr = calcExpr.slice(0, -1) + val;
-    } else {
-        calcExpr += val;
-    }
-    updateCalcDisplay();
-}
-
-function calcBackspace() {
-    SoundFX.playClick();
-    calcExpr = calcExpr.slice(0, -1);
-    updateCalcDisplay();
-}
-
-function calcClear() {
-    SoundFX.playClick();
-    calcExpr = '';
-    document.getElementById('calc-expression').textContent = '0';
-    document.getElementById('calc-display').textContent = '0';
-}
-
-function evaluateCalcExpression(expr) {
-    if (!expr) return 0;
-    let sanitized = expr.replace(/[^0-9+\-*/.]/g, '').replace(/[+\-*/.]+$/, '');
-    if (!sanitized) return 0;
-    sanitized = sanitized.replace(/(^|[+\-*/])0+(?=\d)/g, '$1');
-    try {
-        const res = Function('"use strict";return (' + sanitized + ')')();
-        if (typeof res === 'number' && !isFinite(res)) {
-            if (typeof spawnFloatingReward === 'function') {
-                spawnFloatingReward(tTreasury('⚠️ Error: Tidak bisa membagi dengan nol!'));
-            }
-            return 0;
-        }
-        return (typeof res === 'number' && isFinite(res)) ? Math.round(res) : 0;
-    } catch (e) {
-        return 0;
-    }
-}
-
-function updateCalcDisplay() {
-    const exprEl = document.getElementById('calc-expression');
-    const dispEl = document.getElementById('calc-display');
-    if (!exprEl || !dispEl) return;
-    exprEl.textContent = calcExpr.replace(/\*/g, '×').replace(/\//g, '÷') || '0';
-    const preview = evaluateCalcExpression(calcExpr);
-    dispEl.textContent = preview.toLocaleString('id-ID');
-}
-
-function calcEquals() {
-    SoundFX.playCoin();
-    const val = evaluateCalcExpression(calcExpr);
-    document.getElementById('calc-expression').textContent = (calcExpr.replace(/\*/g, '×').replace(/\//g, '÷') || '0') + ' =';
-    calcExpr = val > 0 ? String(val) : '';
-    document.getElementById('calc-display').textContent = val.toLocaleString('id-ID');
-}
-
-function applyCalcToNominal() {
-    SoundFX.playQuestComplete();
-    const val = evaluateCalcExpression(calcExpr);
-    const amountInput = document.getElementById('tx-amount');
-    if (amountInput && val > 0) {
-        amountInput.value = formatTreasuryAmountTyping(String(val));
-        const formatted = formatRupiah(val);
-        const curLang = (typeof gameState !== 'undefined' && gameState.language) || localStorage.getItem('system_rpg_lang') || 'id';
-        if (curLang === 'en') {
-            spawnFloatingReward(`✓ Amount ${formatted} inserted!`);
-        } else if (curLang === 'ja') {
-            spawnFloatingReward(`✓ 金額 ${formatted} を入力しました！`);
-        } else {
-            spawnFloatingReward(`✓ Nominal ${formatted} dimasukkan!`);
-        }
-    } else {
-        spawnFloatingReward(tTreasury('⚠️ Hitung nominal lebih dari 0 terlebih dahulu'));
-    }
-}
-
-function handleAddTreasuryTx(e) {
-    e.preventDefault();
-    const type = document.getElementById('tx-type').value;
-    const dateStr = document.getElementById('tx-date').value || getCurrentGameDateKey();
-    const currency = getTreasuryCurrency();
-    const amount = parseTreasuryAmountInput(document.getElementById('tx-amount').value, currency);
-    const category = document.getElementById('tx-category').value;
-    const note = document.getElementById('tx-note').value.trim();
-    if (!Number.isFinite(amount)) {spawnFloatingReward(treasuryUi('invalid'));return;}
-    if (!note || !V86Treasury.validDate(dateStr) || !TREASURY_CATEGORIES[type]?.includes(category)) return;
-    if(!V86Treasury.add({id:'tx_'+Date.now()+'_'+Math.random().toString(36).slice(2,10),type,dateStr,amount,currency,category,note}))return;
-    V86Treasury.resetSearch();
-    V86Treasury.years();
-    for(const [id,value] of [['tr-filter-date',dateStr],['tr-filter-month',dateStr.slice(0,7)],['tr-filter-year',dateStr.slice(0,4)]]){const el=document.getElementById(id);if(el)el.value=value;}
-    selectedTreasuryCategoryFilter=null;
-    document.getElementById('tx-amount').value='';document.getElementById('tx-note').value='';
-    renderTreasury();
-}
+function calcInput(val) { V87Treasury.calcInput(val); }
+function calcBackspace() { V87Treasury.calcBackspace(); }
+function calcClear() { V87Treasury.calcClear(); }
+function evaluateCalcExpression(expr) { try{return Number(V87Treasury.evaluate(expr));}catch(_){return NaN;} }
+function updateCalcDisplay() { window.V87Treasury?.calcRender(); }
+function calcEquals() { V87Treasury.calcEquals(); }
+function applyCalcToNominal() { V87Treasury.applyCalc(); }
+function handleAddTreasuryTx(e) { e.preventDefault(); V87Treasury.submit(); }
 function deleteTreasuryTx(id) { V86Treasury.openDetail(id); }
 
 function setTreasuryPeriodMode(mode) {
     SoundFX.playClick();
     treasuryPeriodMode = mode;
-    ['daily', 'monthly', 'yearly'].forEach(m => {
+    ['daily', 'monthly', 'yearly','range','all'].forEach(m => {
         const btn = document.getElementById(`tr-mode-${m}`);
         if (!btn) return;
         if (m === mode) {
@@ -6173,10 +6078,11 @@ function setTreasuryPeriodMode(mode) {
     } else if (mode === 'monthly') {
         lbl.textContent = tTreasury('Filter Bulan:');
         fMonth.classList.remove('hidden');
-    } else {
+    } else if(mode==='yearly') {
         lbl.textContent = tTreasury('Filter Tahun:');
         fYear.classList.remove('hidden');
-    }
+    } else lbl.textContent=mode==='range'?v6Text('Rentang tanggal','Date range','日付範囲'):v6Text('Seluruh riwayat','All history','全履歴');
+    document.getElementById('v87-range')?.classList.toggle('hidden',mode!=='range');
     renderTreasury();
 }
 
@@ -6272,6 +6178,7 @@ function renderTreasury() {
     if (amountInput) amountInput.placeholder = currency === 'IDR' || currency === 'JPY' ? '1.250.000' : '1.250,50';
     const todayKey = getCurrentGameDateKey();
     const quotaUsed = tr.dailyBonusCounts[todayKey] || 0;
+    window.V87Treasury?.refresh();
     const quotaBadge = document.getElementById('treasury-rpg-quota-badge');
     if (quotaBadge) {
         if (typeof appLanguage !== 'undefined' && appLanguage === 'en') {
@@ -6292,36 +6199,39 @@ function renderTreasury() {
         if ((tx.currency || 'IDR') !== currency) return false;
         if (treasuryPeriodMode === 'daily') return tx.dateStr === fDate;
         if (treasuryPeriodMode === 'monthly') return (tx.dateStr || '').startsWith(fMonth);
+        if(treasuryPeriodMode==='all')return true;
+        if(treasuryPeriodMode==='range')return V87Treasury.inRange(tx.dateStr);
         return (tx.dateStr || '').startsWith(fYear);
     });
 
-    let totalIn = 0;
-    let totalOut = 0;
-    const catTotals = {};
+    let inMinor=0n,outMinor=0n;
+    const catMinor=Object.create(null),catTotals=Object.create(null);
 
     filtered.forEach(tx => {
         if (tx.type === 'income') {
-            totalIn += Number(tx.amount) || 0;
+            inMinor += V87Treasury.minor(tx.amount,currency);
         } else {
-            totalOut += Number(tx.amount) || 0;
-            catTotals[tx.category] = (catTotals[tx.category] || 0) + (Number(tx.amount) || 0);
+            const n=V87Treasury.minor(tx.amount,currency);outMinor+=n;
+            catMinor[tx.category]=(catMinor[tx.category]||0n)+n;
         }
     });
 
-    const net = totalIn - totalOut;
+    const totalIn=V87Treasury.major(inMinor,currency),totalOut=V87Treasury.major(outMinor,currency);
+    for(const [c,n] of Object.entries(catMinor))catTotals[c]=V87Treasury.major(n,currency);
+    const net=V87Treasury.major(inMinor-outMinor,currency);
     const elIn = document.getElementById('tr-total-income');
     const elOut = document.getElementById('tr-total-expense');
     const elNet = document.getElementById('tr-net-balance');
-    if (elIn) elIn.textContent = formatRupiah(totalIn);
-    if (elOut) elOut.textContent = formatRupiah(totalOut);
+    if (elIn) elIn.textContent = V87Treasury.money(inMinor,currency);
+    if (elOut) elOut.textContent = V87Treasury.money(outMinor,currency);
     if (elNet) {
-        elNet.textContent = formatRupiah(net);
+        elNet.textContent = V87Treasury.money(inMinor-outMinor,currency);
         elNet.style.color = net >= 0 ? '#22d3ee' : '#fb7185';
     }
 
     const sumFlow = totalIn + totalOut;
-    const inPct = sumFlow > 0 ? Math.round((totalIn / sumFlow) * 100) : 50;
-    const outPct = sumFlow > 0 ? (100 - inPct) : 50;
+    const inPct = sumFlow > 0 ? Math.round((totalIn / sumFlow) * 100) : 0;
+    const outPct = sumFlow > 0 ? (100 - inPct) : 0;
     const elInPct = document.getElementById('tr-ratio-in-pct');
     const elOutPct = document.getElementById('tr-ratio-out-pct');
     const elInBar = document.getElementById('tr-ratio-in-bar');
@@ -6407,12 +6317,15 @@ function renderTreasuryAutoInsights(allTransactions, currency) {
     const txs = allTransactions.filter(tx => (tx.currency || 'IDR') === currency);
     const within = (mo) => txs.filter(tx => String(tx.dateStr || '').startsWith(mo));
     const cur = within(thisMonth), prev = within(lastMonth);
-    const sum = (a, type) => a.filter(t => t.type === type).reduce((total,t) => total + (Number(t.amount)||0),0);
+    const sum = (a,type)=>a.filter(t=>t.type===type).reduce((total,t)=>total+V87Treasury.minor(t.amount,currency),0n);
     const income = sum(cur,'income'), spending = sum(cur,'expense');
     const pastSpending = sum(prev,'expense');
-    const cats = {};
-    for (const tx of cur.filter(t=>t.type==='expense')) cats[tx.category] = (cats[tx.category]||0) + (Number(tx.amount)||0);
-    const winner = Object.entries(cats).sort((a,b)=>b[1]-a[1])[0];
+    const day=Number(getCurrentGameDateKey().slice(8,10));
+    const comparable=sum(prev.filter(x=>Number(String(x.dateStr).slice(8,10))<=day),'expense');
+    const currentToDate=sum(cur.filter(x=>Number(String(x.dateStr).slice(8,10))<=day),'expense');
+    const cats=Object.create(null);
+    for(const tx of cur.filter(t=>t.type==='expense'))cats[tx.category]=(cats[tx.category]||0n)+V87Treasury.minor(tx.amount,currency);
+    const winner=Object.entries(cats).sort((a,b)=>a[1]===b[1]?0:a[1]>b[1]?-1:1)[0];
     if (!cur.length && !prev.length) {
         el.textContent = treasuryUi('noData');
         return;
@@ -6420,9 +6333,11 @@ function renderTreasuryAutoInsights(allTransactions, currency) {
     const row = (label,value) => `<div class="treasury-auto-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
     el.innerHTML = `<div class="treasury-auto-rows">` +
         row(treasuryUi('thisMonth'),thisMonth) +
-        row(treasuryUi('cashflow'),cur.length ? formatRupiah(income-spending,currency) : treasuryUi('noCurrentMonth')) +
-        row(treasuryUi('baseline'),prev.length ? formatRupiah(pastSpending,currency) : treasuryUi('noCategory')) +
-        row(treasuryUi('top'),winner ? `${tTreasury(winner[0])} (${formatRupiah(winner[1],currency)})` : treasuryUi('noCategory')) +
+        row(treasuryUi('cashflow'),cur.length ? V87Treasury.money(income-spending,currency) : treasuryUi('noCurrentMonth')) +
+        row(treasuryUi('baseline'),prev.length ? V87Treasury.money(pastSpending,currency) : treasuryUi('noCategory')) +
+        row(v6Text('Jumlah transaksi bulan ini','Transactions this month','今月の取引件数'),String(cur.length)) +
+        (cur.length&&comparable>0n?row(v6Text('Pengeluaran vs periode sama bulan lalu','Expenses vs same period last month','先月同期間との支出比較'),`${Number((currentToDate-comparable)*1000n/comparable)/10}%`):'') +
+        row(treasuryUi('top'),winner ? `${tTreasury(winner[0])} (${V87Treasury.money(winner[1],currency)})` : treasuryUi('noCategory')) +
         `</div><p class="treasury-auto-note">${escapeHtml(treasuryUi('note'))}</p>`;
 }
 // ==========================================
@@ -9965,7 +9880,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click',e=>{
         const el=e.target.closest?.('button,summary');
         if(!el||el.disabled||el.getAttribute('aria-disabled')==='true')return;
-        if(!el.closest('#tab-status,#tab-dungeon,#tab-shop,.v8-overlay,#v7-cosmetic-preview-overlay,#v7-story-overlay,#v7-claim-overlay,.v86-btn,.v86-tx'))return;
+        if(!el.closest('#tab-status,#tab-dungeon,#tab-shop,#tab-treasury,.v8-overlay,#v7-cosmetic-preview-overlay,#v7-story-overlay,#v7-claim-overlay,.v86-btn,.v86-tx'))return;
         const before=clicks;
         setTimeout(()=>{if(clicks===before)SoundFX.playClick();},0);
     },true);
