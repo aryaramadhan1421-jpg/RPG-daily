@@ -205,6 +205,7 @@ class MainActivity : ComponentActivity() {
                     .putInt("pendingCount", pendingCount)
                     .putInt("doneCount", doneCount)
                     .putInt("totalCount", totalCount)
+                    .putString("progressDate", todayStr)
                     .putInt("pct", pct)
                     .putInt("dailyPct", pct)
                     .putInt("thresholdPct", thresholdPct)

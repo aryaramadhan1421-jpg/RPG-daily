@@ -108,35 +108,88 @@ class ReminderReceiver : BroadcastReceiver() {
             }
         }
 
-        // Distinct prompts per time slot; preserve the existing progress and HP rules.
-        val prompt = when {
-            lang.startsWith("en") -> when (slot) {
-                "Pagi" -> "Start your day with one easy quest."
-                "Siang" -> "Check progress and take a short break."
-                "Sore" -> "Tackle the remaining quests."
-                "Petang" -> "Review your day and plan the final steps."
-                "Malam" -> "Final check before midnight."
-                else -> ""
-            }
-            lang.startsWith("ja") -> when (slot) {
-                "Pagi" -> "簡単なクエストから始めよう。"
-                "Siang" -> "進捗を確認して少し休憩しよう。"
-                "Sore" -> "残りのクエストに取り組もう。"
-                "Petang" -> "今日を振り返り、最後の行動を決めよう。"
-                "Malam" -> "深夜前の最終確認。"
-                else -> ""
-            }
-            else -> when (slot) {
-                "Pagi" -> "Mulai hari dengan satu quest ringan."
-                "Siang" -> "Cek progres dan ambil jeda sejenak."
-                "Sore" -> "Tuntaskan quest yang masih tertunda."
-                "Petang" -> "Review harimu dan siapkan langkah terakhir."
-                "Malam" -> "Pemeriksaan terakhir sebelum tengah malam."
-                else -> ""
-            }
+        // Daily rotation per slot. No change to user-selected alarm times.
+        val banks = mapOf(
+            "Pagi" to listOf(
+                listOf("Mulai hari dengan satu quest ringan.", "Start with one easy quest.", "簡単なクエストから始めよう。"),
+                listOf("Hari baru, kesempatan baru.", "A new day, a new opportunity.", "新しい一日、新しい機会。"),
+                listOf("Bangun ritme sebelum mengejar target.", "Build your rhythm before chasing targets.", "目標の前にリズムを整えよう。"),
+                listOf("Satu langkah kecil membuka perjalanan hari ini.", "One small step opens today’s journey.", "小さな一歩から今日の旅が始まる。"),
+                listOf("Pilih misi pertama yang paling mudah dimulai.", "Choose the mission that is easiest to start.", "最も始めやすい任務を選ぼう。"),
+                listOf("Awali pagi dengan fokus dan tenang.", "Begin the morning calmly and focused.", "落ち着いて集中し朝を始めよう。"),
+                listOf("Periksa jadwal sebelum memulai aktivitas.", "Check your schedule before getting started.", "始める前に予定を確認しよう。"),
+                listOf("Momentum tumbuh dari langkah pertama.", "Momentum grows from the first step.", "勢いは最初の一歩から生まれる。"),
+                listOf("Hunter, siapkan perlengkapan dan prioritasmu.", "Hunter, prepare your gear and priorities.", "ハンター、準備と優先順位を整えよう。"),
+                listOf("Tidak perlu sempurna untuk mulai.", "You need not be perfect to begin.", "完璧でなくても始められる。")
+            ),
+            "Siang" to listOf(
+                listOf("Cek progres dan ambil jeda sejenak.", "Check progress and take a short break.", "進捗を確認し少し休憩しよう。"),
+                listOf("Setengah hari telah berlalu; pilih prioritas berikutnya.", "Half the day has passed; choose your next priority.", "一日の半分が過ぎた。次の優先課題を選ぼう。"),
+                listOf("Isi energi sebelum melanjutkan misi.", "Refuel before continuing your missions.", "任務の続きの前にエネルギーを補給しよう。"),
+                listOf("Pencapaian kecil tetap berarti.", "Small achievements still count.", "小さな達成にも意味がある。"),
+                listOf("Periksa quest yang paling memungkinkan dikerjakan.", "Look for the quest you can realistically tackle.", "今取り組めるクエストを探そう。"),
+                listOf("Atur ulang fokus untuk sisa hari.", "Reset your focus for the rest of the day.", "残りの一日に向け集中を整えよう。"),
+                listOf("Jangan lupa makan dan beristirahat.", "Remember to eat and rest.", "食事と休憩を忘れずに。"),
+                listOf("Checkpoint siang: tinjau daftar misi.", "Midday checkpoint: review your missions.", "昼の確認：任務一覧を見直そう。"),
+                listOf("Selesaikan satu tugas pada satu waktu.", "Finish one task at a time.", "一つずつ取り組もう。"),
+                listOf("Kemajuan bukan perlombaan.", "Progress is not a race.", "成長は競争ではない。")
+            ),
+            "Sore" to listOf(
+                listOf("Masih ada waktu untuk mengubah hasil hari ini.", "There is still time to shape today’s outcome.", "今日の結果を変える時間はまだある。"),
+                listOf("Pilih satu quest yang tertunda.", "Choose one pending quest.", "残っているクエストを一つ選ぼう。"),
+                listOf("Lanjutkan ritme yang sudah dibangun.", "Continue the rhythm you have built.", "積み上げたリズムを続けよう。"),
+                listOf("Coba selesaikan tugas ringan terlebih dahulu.", "Try finishing a lighter task first.", "まず軽い課題から終えよう。"),
+                listOf("Sore adalah kesempatan untuk kembali fokus.", "The afternoon is a chance to refocus.", "午後は集中を取り戻す機会。"),
+                listOf("Tinjau rencana dan sesuaikan dengan tenaga.", "Review your plan and match it to your energy.", "計画を見直し体力に合わせよう。"),
+                listOf("Satu misi selesai lebih baik daripada menunda semuanya.", "One mission finished beats postponing them all.", "一つの達成は全ての先延ばしより良い。"),
+                listOf("Bergerak sedikit sebelum kembali belajar.", "Move a little before returning to study.", "学習に戻る前に少し体を動かそう。"),
+                listOf("Checkpoint sore: lanjutkan yang memungkinkan.", "Afternoon checkpoint: continue what is manageable.", "午後の確認：無理なくできることを続けよう。"),
+                listOf("Tetap tenang dan kerjakan prioritasmu.", "Stay calm and work on your priorities.", "落ち着いて優先課題に取り組もう。")
+            ),
+            "Petang" to listOf(
+                listOf("Review perjalanan hari ini.", "Review today’s journey.", "今日の歩みを振り返ろう。"),
+                listOf("Cahaya memudar; periksa misi yang tersisa.", "The light fades; check remaining missions.", "日が暮れる。残る任務を確認しよう。"),
+                listOf("Siapkan langkah terakhir yang realistis.", "Prepare a realistic final step.", "無理のない最後の一歩を準備しよう。"),
+                listOf("Hargai usaha yang sudah kamu lakukan.", "Acknowledge the effort you have made.", "ここまでの努力を認めよう。"),
+                listOf("Tinjau prioritas sebelum memasuki malam.", "Review priorities before nightfall.", "夜の前に優先順位を見直そう。"),
+                listOf("Rapikan rencana dan ruang istirahatmu.", "Organize your plan and resting space.", "計画と休む場所を整えよう。"),
+                listOf("Selesaikan yang penting, bukan semua sekaligus.", "Focus on what matters, not everything at once.", "一度に全部ではなく大切なことを。"),
+                listOf("Perhatikan energi yang tersisa.", "Notice how much energy you have left.", "残りの体力に気を配ろう。"),
+                listOf("Checkpoint petang: lihat perkembangan Hunter.", "Evening checkpoint: review Hunter progress.", "夕暮れの確認：ハンターの進捗を見よう。"),
+                listOf("Catat satu hal baik dari hari ini.", "Note one good thing from today.", "今日の良かったことを一つ記そう。")
+            ),
+            "Malam" to listOf(
+                listOf("Pemeriksaan terakhir sebelum tengah malam.", "Final check before midnight.", "深夜前の最終確認。"),
+                listOf("Hari hampir berakhir; tinjau misi hari ini.", "The day is nearly over; review today’s missions.", "一日が終わる前に今日の任務を確認しよう。"),
+                listOf("Selesaikan yang memungkinkan lalu beristirahat.", "Finish what is manageable, then rest.", "無理なくできることを終え、休もう。"),
+                listOf("Siapkan diri untuk hari esok.", "Prepare for tomorrow.", "明日に備えよう。"),
+                listOf("Jangan korbankan waktu tidur untuk mengejar angka.", "Do not sacrifice sleep to chase numbers.", "数字のために睡眠を犠牲にしないで。"),
+                listOf("Tutup perjalanan hari ini dengan tenang.", "Close today’s journey calmly.", "今日の旅を穏やかに締めくくろう。"),
+                listOf("Periksa daftar misi untuk terakhir kali.", "Check the mission list one last time.", "任務一覧を最後に確認しよう。"),
+                listOf("Refleksikan satu pelajaran dari hari ini.", "Reflect on one lesson from today.", "今日の学びを一つ振り返ろう。"),
+                listOf("Persiapkan misi pertama besok.", "Prepare tomorrow’s first mission.", "明日の最初の任務を準備しよう。"),
+                listOf("Istirahat adalah bagian dari perjalanan Hunter.", "Rest is part of a Hunter’s journey.", "休息もハンターの旅の一部。")
+            )
+        )
+        val langIndex = if (lang.startsWith("en")) 1 else if (lang.startsWith("ja")) 2 else 0
+        val utcDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }
+        val dayNumber = (utcDate.parse(todayStr)?.time ?: 0L) / 86400000L
+        val bank = banks[slot]
+        val prompt = bank?.let { it[((dayNumber % it.size + it.size) % it.size).toInt()][langIndex] } ?: ""
+        // Don't invent today's counts from yesterday's saved schedule.
+        val fresh = lastUpdated == todayStr && prefs.getString("progressDate", "") == todayStr
+        val noQuests = fresh && prefs.getInt("totalCount", -1) == 0
+        val rest = listOf("Tidak ada quest terjadwal. Nikmati waktu istirahat.", "No quests scheduled. Enjoy your rest.", "本日のクエスト予定はありません。ゆっくり休もう。")[langIndex]
+        val unknown = listOf("Buka SYSTEM RPG untuk melihat progres hari ini.", "Open SYSTEM RPG to check today's progress.", "SYSTEM RPGを開いて今日の進捗を確認しよう。")[langIndex]
+        val completed = listOf("Semua misi selesai. Nikmati waktu istirahat.", "All missions complete. Enjoy your rest.", "全任務達成。ゆっくり休もう。")[langIndex]
+        val body = when {
+            !fresh -> "$prompt $unknown"
+            noQuests -> rest
+            dailyPct >= 100 -> "$progressBody $completed"
+            else -> "$prompt $progressBody"
         }
-        val body = if (dailyPct >= 100) progressBody else listOf(prompt, progressBody).filter { it.isNotBlank() }.joinToString(" ")
-        showReminderNotification(context, title, body)
+        val safeTitle = if (!fresh || noQuests) listOf("[SYSTEM] Pengingat Hunter", "[SYSTEM] Hunter Reminder", "[SYSTEM] ハンター通知")[langIndex] else title
+        showReminderNotification(context, safeTitle, body)
         MainActivity.scheduleExactAlarmsFromPrefs(context)
     }
 
