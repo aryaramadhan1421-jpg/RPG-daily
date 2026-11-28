@@ -128,8 +128,8 @@ function appendChronicle(container,week){
  const first=new Date(week+'T00:00:00'),end=new Date(first);end.setDate(end.getDate()+7);
  const entries=log.filter(x=>x?.timestamp&&new Date(x.timestamp)>=first&&new Date(x.timestamp)<end);
  const old=container.querySelector('#v7-growth-chronicle');if(old)old.remove();
- const area=document.createElement('section');area.className='v7-growth-chronicle';area.id='v7-growth-chronicle';
- area.innerHTML=`<strong>✨ ${esc(t('growth'))}</strong>${entries.length?'<ul>'+entries.map(e=>`<li>${esc(e.date)} · ${esc(e.type==='stat'?e.stat+' Lv.'+e.from+' → '+e.to:e.type==='rank'?'Rank '+e.from+' → '+e.to:'Hunter Lv.'+e.from+' → '+e.to)}</li>`).join('')+'</ul>':`<p>${esc(t('none'))}</p>`}`;
+ const area=document.createElement('details');area.className='v7-growth-chronicle';area.id='v7-growth-chronicle';
+ area.innerHTML=`<summary class="font-display">✨ ${esc(t('growth'))} <small>(${entries.length})</small></summary>${entries.length?'<ul>'+entries.map(e=>`<li>${esc(e.date)} · ${esc(e.type==='stat'?e.stat+' Lv.'+e.from+' → '+e.to:e.type==='rank'?'Rank '+e.from+' → '+e.to:'Hunter Lv.'+e.from+' → '+e.to)}</li>`).join('')+'</ul>':`<p>${esc(t('none'))}</p>`}`;
  container.appendChild(area);
 }
 window.V7Growth={snapshot,capture,onReward,render,toggle,decorateLevelModal,appendChronicle};

@@ -818,7 +818,7 @@ function renderAppearance() {
             return `<details class="v7-codex-row" data-raid-fold="codex-${b.id}"><summary>${u?'📖':'🔒'} ${esc(u?b.name:'???')} <small>${u?`· ${p.victories} ${esc(t('kemenangan','wins','勝'))}`:'· '+esc(t('Belum ditemukan','Undiscovered','未発見'))}</small></summary>
             ${u?`<p class="v7-muted">${esc(b.epithets?t(b.epithets.id,b.epithets.en,b.epithets.ja):b.epithet)}</p><p class="v7-muted">📖 ${locks.filter(Boolean).length}/4 ${esc(t('fragmen terbuka','chapters unlocked','解放済みの断片'))}</p><button type="button" class="v7-raid-btn v7-read-story-btn" onclick="V7Raid.openBossStory('${b.id}')">${esc(t('📖 Baca Kisah Lengkap','📖 Read Story','📖 物語を読む'))}</button>`:esc(t('Temui Boss ini dalam Weekly Raid untuk membuka Lore.','Encounter this boss to discover its lore.','ボスとの遭遇で解放。'))}</details>`;
         }).join('');
-        return `<div class="v7-raid-panel"><h3>📜 ${esc(t('KODEKS ABYSS','ABYSS CODEX','深淵の図鑑'))}</h3>${rows}</div>`;
+        return `<details class="v7-raid-panel v83-codex" data-raid-fold="codex-all"><summary class="font-display">📜 ${esc(t('KODEKS ABYSS','ABYSS CODEX','深淵の図鑑'))} <small>${ROSTER.filter(b=>bossProgress(b,v).met).length}/${ROSTER.length}</small></summary><div class="v83-codex-list">${rows}</div></details>`;
     }
 
 function renderArchive() {

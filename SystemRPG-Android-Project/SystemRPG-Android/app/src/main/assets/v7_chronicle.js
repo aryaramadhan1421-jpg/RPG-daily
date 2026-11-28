@@ -183,6 +183,8 @@
         const head=document.getElementById('v7cj-week');
         if(head)head.textContent=`${dateLabel(wk)} – ${dateLabel(addDays(wk,6))} · ${offset===0?txt('current'):txt('closed')}`;
         const body=document.getElementById('v7cj-body');if(!body)return;
+        const growthOpen=body.querySelector('#v7-growth-chronicle')?.open||false;
+        const growthScroll=body.querySelector('#v7-growth-chronicle ul')?.scrollTop||0;
         if(tab==='insights') {
             const avg=summary.average===null?'—':summary.average+'%';
             const cards=[[txt('completed'),`${summary.done} / ${summary.total}`],[txt('average'),avg],
@@ -196,7 +198,8 @@
                    `<div class="v7cj-bar-track"><div class="v7cj-bar ${d.kind==='estimated'?'v7cj-estimated':''}" style="height:${d.kind==='missing'||d.kind==='rest'?0:max}%"></div></div>`+
                    `<small>${d.kind==='missing'?'—':d.kind==='rest'?'·':Math.round(d.pct)+'%'}</small></div>`;
             }).join('');
-            const snapList=summary.habitCounts.sort((a,b)=>b.completed/b.scheduled-a.completed/a.scheduled||b.completed-a.completed).slice(0,3);
+            const activeIds=new Set((gameState.quests||[]).map(q=>String(q.id)));
+            const snapList=summary.habitCounts.filter(x=>activeIds.has(String(x.id))).sort((a,b)=>b.completed/b.scheduled-a.completed/a.scheduled||b.completed-a.completed).slice(0,3);
             const questMap=new Map(((gameState&&gameState.quests)||[]).map(q=>[String(q.id),String(q.title||'')]));
             const top=snapList.length?snapList.map(item=>`<li>${safeText(questMap.get(item.id)||('Quest '+item.id.slice(0,10)))} <strong>${item.completed}/${item.scheduled}</strong></li>`).join(''):
                 `<p class="v7cj-note">${safeText(txt('topNone'))}</p>`;
@@ -232,7 +235,7 @@
             body.innerHTML=`<div class="v7cj-empty"><strong>📖 ${safeText(txt('notReady'))}</strong><p>${safeText(offset===0?txt('noStoryCurrent'):txt('missingStory'))}</p></div>`;
         }
         if(tab==='insights' && window.V8)window.V8.appendAnalysis(body,wk);
-        if (tab==='chronicle' && window.V7Growth) window.V7Growth.appendChronicle(body,wk);
+        if (tab==='chronicle' && window.V7Growth) {window.V7Growth.appendChronicle(body,wk);const g=body.querySelector('#v7-growth-chronicle');if(g){g.open=growthOpen;const list=g.querySelector('ul');if(list)list.scrollTop=growthScroll;}}
     }
     function initialize() {
         try {const changed=captureClosedWeeks(today());if(changed&&typeof saveState==='function')saveState();render();}

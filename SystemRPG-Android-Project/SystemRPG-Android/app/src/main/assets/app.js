@@ -10075,3 +10075,18 @@ window.addEventListener('DOMContentLoaded', () => {
    try{if(file.size>20*1024*1024)throw Error('File terlalu besar (maks. 20 MB).');const obj=JSON.parse(await file.text());parseBackup(obj);restore(obj);}catch(e){notice('IMPORT GAGAL',e.message);}finally{if(input)input.value='';}
  };
 })();
+
+// V8.3: consistent audible controls in Status, Dungeon, Shop and V8 overlays.
+// Existing handlers keep their own sound; fallback runs only when none played.
+(function installV83ClickFeedback(){
+    if(typeof SoundFX==='undefined'||typeof SoundFX.playClick!=='function')return;
+    let clicks=0;const original=SoundFX.playClick;
+    SoundFX.playClick=function(...args){clicks++;return original.apply(this,args);};
+    document.addEventListener('click',e=>{
+        const el=e.target.closest?.('button,summary');
+        if(!el||el.disabled||el.getAttribute('aria-disabled')==='true')return;
+        if(!el.closest('#tab-status,#tab-dungeon,#tab-shop,.v8-overlay,#v7-cosmetic-preview-overlay,#v7-story-overlay,#v7-claim-overlay'))return;
+        const before=clicks;
+        setTimeout(()=>{if(clicks===before)SoundFX.playClick();},0);
+    },true);
+})();
