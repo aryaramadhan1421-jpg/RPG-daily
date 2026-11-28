@@ -685,6 +685,7 @@ const DEFAULT_STATE = {
         stats: { STR: 1, INT: 1, WIS: 1, CHR: 1 },
         statXp: { STR: 0, INT: 0, WIS: 0, CHR: 0 }
     },
+    progressionBalance: { statVersion: 2, highestHealedLevel: 1, highestHealedRank: 0, legacyStatTotals: {} },
     tavern: {
         activeUntil: null,
         weekKey: null,
@@ -1384,7 +1385,10 @@ function checkRealDayRollover() {
     if (!gameState.history.evaluations) gameState.history.evaluations = {};
     let cursor = gameState.lastRealDate || gameState.selectedDate || today;
     if (cursor > today) return; // Device clock rolled back: never rewind or pay twice.
+    const balanceCreated = ensureProgressionBalance(cursor);
     if (cursor === today) {
+        const migrated = activateBalancedStats(today);
+        if (balanceCreated || migrated) { saveState(); if (migrated) renderAll(); }
         if (window.V7Raid && window.V7Raid.advance(today)) saveState();
         if (gameState.selectedDate !== today) { gameState.selectedDate = today; saveState(); renderAll(); }
         return;
@@ -1455,6 +1459,7 @@ function checkRealDayRollover() {
     gameState.lastRealDate = today;
     gameState.lastStreakDate = null;
     gameState.activeDayThresholdPct = getStreakThresholdPct();
+    activateBalancedStats(today); // Only after the previous day has settled.
     if (dailyReportDays.length) {
         const previous = gameState.pendingDailyReport;
         const days = [...(previous && Array.isArray(previous.days) ? previous.days : []), ...dailyReportDays];
@@ -1717,8 +1722,75 @@ function getActiveTitleObj() {
 
 const MAX_STAT_LEVEL = 100;
 
+// V7 Balanced: separate curve version from existing Hunter XP and rank rules.
+function legacyStatXP(level) { return Math.max(60, Math.round(60 + level * 40)); }
+function balancedStatXP(level) { return Math.max(60, Math.round(60 + 100 * Math.pow(level, 1.48))); }
+function statCurveVersion() { return gameState.progressionBalance?.statVersion === 2 ? 2 : 1; }
 function getRequiredStatXP(statLevel) {
-    return Math.max(60, Math.round(60 + statLevel * 40));
+    return statCurveVersion() === 2 ? balancedStatXP(statLevel) : legacyStatXP(statLevel);
+}
+function statTotal(level, xp, curve) {
+    let total = Math.max(0, Number(xp) || 0);
+    for (let i = 1; i < level; i++) total += curve(i);
+    return total;
+}
+function convertLegacyStatTotal(total) {
+    let level = 1;
+    let left = Math.max(0, total);
+    while (level < MAX_STAT_LEVEL && left >= legacyStatXP(level)) {
+        left -= legacyStatXP(level++);
+    }
+    return statTotal(level, level === MAX_STAT_LEVEL ? 0 : Math.min(balancedStatXP(level)-1, Math.round(left * balancedStatXP(level) / legacyStatXP(level))), balancedStatXP);
+}
+function currentRankIndex(p) {
+    return Math.max(0, RANKS_CATALOG.findIndex(r => r.rankCode === getPlayerRank(p.level, p.stats).rankCode));
+}
+function ensureProgressionBalance(day) {
+    if (gameState.progressionBalance) return false;
+    const p = gameState.player;
+    // Existing growth events can establish previously earned milestones (e.g. after undo).
+    let highestLevel = p.level, highestRank = currentRankIndex(p);
+    for (const event of (gameState.history?.growthEvents || [])) {
+        if (event?.type === 'hunter' && Number.isFinite(Number(event.to))) highestLevel = Math.max(highestLevel, Number(event.to));
+        if (event?.type === 'rank') highestRank = Math.max(highestRank, RANKS_CATALOG.findIndex(r => r.rankCode === event.to));
+    }
+    gameState.progressionBalance = { statVersion: 1, legacyDay: day, highestHealedLevel: highestLevel, highestHealedRank: highestRank, legacyStatTotals: {} };
+    return true;
+}
+function activateBalancedStats(today) {
+    const b = gameState.progressionBalance;
+    if (!b || b.statVersion !== 1 || !(today > b.legacyDay)) return false;
+    const p = gameState.player;
+    for (const st of ['STR', 'INT', 'WIS', 'CHR']) {
+        const level = p.stats[st];
+        const oldXp = Math.max(0, Number(p.statXp[st]) || 0);
+        b.legacyStatTotals[st] = statTotal(level, level >= MAX_STAT_LEVEL ? 0 : oldXp, legacyStatXP);
+        // Preserve the existing level and fractional progress, to nearest whole XP.
+        p.statXp[st] = level >= MAX_STAT_LEVEL ? 0 : Math.min(balancedStatXP(level)-1, Math.round(oldXp * balancedStatXP(level) / legacyStatXP(level)));
+    }
+    b.statVersion = 2;
+    delete b.legacyDay;
+    return true;
+}
+function statXpForUndo(statType, amount, earnedVersion) {
+    const gain = Math.max(0, Number(amount) || 0);
+    if (statCurveVersion() !== 2 || earnedVersion === 2) return gain;
+    // Old completed Main/Boss quests may be unchecked long after migration.
+    // Translate their old XP against the saved legacy total, not the new curve directly.
+    const totals = gameState.progressionBalance.legacyStatTotals;
+    const before = Math.max(0, Number(totals[statType]) || 0);
+    const after = Math.max(0, before - gain);
+    totals[statType] = after;
+    return convertLegacyStatTotal(before) - convertLegacyStatTotal(after);
+}
+function progressionHealText(actual, rankBonus, eligible) {
+    const lang = statusLocale();
+    const text = {
+        id: rankBonus ? `Rank baru: HP penuh (+${actual} HP)` : eligible ? `Pemulihan level-up: +${actual} HP (maks. 30% Max HP per level)` : 'Bonus pemulihan level ini sudah pernah diterima.',
+        en: rankBonus ? `New rank: full recovery (+${actual} HP)` : eligible ? `Level-up recovery: +${actual} HP (up to 30% Max HP per level)` : 'Recovery for this level was already awarded.',
+        ja: rankBonus ? `新ランク：HP全回復（+${actual} HP）` : eligible ? `レベルアップ回復：+${actual} HP（各レベルで最大HPの30%まで）` : 'このレベルの回復ボーナスは受取済みです。'
+    };
+    return text[lang] || text.id;
 }
 
 function getQuestStatXpGain(questOrCategory) {
@@ -1953,7 +2025,14 @@ function getDiscountedShopCost(baseCost) {
     return Math.max(5, Math.round(baseCost * (1 - chrShopDiscount)));
 }
 
-function addRewards(baseXp, baseGold, statType = null, statXpGain = 15, silentFloat = false) {
+function addRewards(baseXp, baseGold, statType = null, statXpGain = 15, silentFloat = false, recordReward = null) {
+    ensureProgressionBalance(gameState.lastRealDate || formatDateKey(new Date()));
+    const balance = gameState.progressionBalance;
+    const player = gameState.player;
+    const prevRankTitle = getPlayerRank(player.level).title;
+    const prevRankIndex = currentRankIndex(player);
+    const version = statCurveVersion();
+    const statBefore = statType && player.stats[statType] !== undefined ? statTotal(player.stats[statType], player.statXp?.[statType], getRequiredStatXP) : 0;
     // Capture presentation-only before/after snapshots; do not alter reward rules.
     const growthBefore = window.V7Growth ? window.V7Growth.snapshot(gameState.player) : null;
     const mult = getStreakMultiplier();
@@ -2006,22 +2085,42 @@ function addRewards(baseXp, baseGold, statType = null, statXpGain = 15, silentFl
         }, 450);
     }
 
-    const prevRankTitle = getPlayerRank(gameState.player.level).title;
-    let leveledUp = false;
+    let creditedStatXp = 0;
+    if (statType && player.stats[statType] !== undefined) {
+        creditedStatXp = Math.max(0, statTotal(player.stats[statType], player.statXp[statType], getRequiredStatXP) - statBefore);
+    }
+    let leveledUp = false, eligibleHeal = false, hpRecovered = 0;
     while (gameState.player.xp >= getRequiredXP(gameState.player.level)) {
         gameState.player.xp -= getRequiredXP(gameState.player.level);
         gameState.player.level += 1;
         syncPlayerMaxHp();
-        gameState.player.hp = gameState.player.maxHp;
+        if (player.level > balance.highestHealedLevel) {
+            balance.highestHealedLevel = player.level;
+            eligibleHeal = true;
+            const beforeHp = player.hp;
+            player.hp = Math.min(player.maxHp, player.hp + Math.round(player.maxHp * 0.30));
+            hpRecovered += player.hp - beforeHp;
+        }
         leveledUp = true;
     }
 
+    const rankIndex = currentRankIndex(player);
+    const rankBonus = rankIndex > prevRankIndex && rankIndex > balance.highestHealedRank;
+    if (rankBonus) {
+        balance.highestHealedRank = rankIndex;
+        hpRecovered += player.maxHp - player.hp;
+        player.hp = player.maxHp;
+    }
+    if (rankBonus && !leveledUp) spawnFloatingReward(progressionHealText(hpRecovered, true, true));
     if (leveledUp) {
+        const newLevel = player.level;
+        const rank = getPlayerRank(newLevel);
+        const promoted = rank.title !== prevRankTitle;
         setTimeout(() => {
             SoundFX.playLevelUp();
-            const rank = getPlayerRank(gameState.player.level);
-            const promoted = rank.title !== prevRankTitle;
-            document.getElementById('levelup-new-lvl').textContent = `Level ${gameState.player.level}`;
+            document.getElementById('levelup-new-lvl').textContent = `Level ${newLevel}`;
+            const recoveryLine = document.getElementById('levelup-hp-recovery');
+            if (recoveryLine) recoveryLine.textContent = progressionHealText(hpRecovered, rankBonus, eligibleHeal);
             document.getElementById('levelup-new-rank').textContent = promoted
                 ? `${rank.title} (🎉 RANK UP!)`
                 : rank.title;
@@ -2035,6 +2134,9 @@ function addRewards(baseXp, baseGold, statType = null, statXpGain = 15, silentFl
         try { growthEvent = window.V7Growth.capture(growthBefore, window.V7Growth.snapshot(gameState.player)); }
         catch (growthError) { console.warn('Growth capture skipped:', growthError); }
     }
+    const result = { finalXp, finalGold, statType, statXpGain: creditedStatXp, statCurveVersion: version };
+    // Keep quest reward metadata in the same save as XP/Gold and the heal milestone.
+    if (typeof recordReward === 'function') recordReward(result);
     const rewardsSaved = saveState();
     renderAll();
     if (rewardsSaved && growthEvent && window.V7Growth) {
@@ -2042,15 +2144,15 @@ function addRewards(baseXp, baseGold, statType = null, statXpGain = 15, silentFl
         catch (growthError) { console.warn('Optional growth presentation failed:', growthError); }
     }
 
-    return { finalXp, finalGold, statType, statXpGain: finalStatXpGain };
+    return result;
 }
 
-function revokeRewards(xpAmount, goldAmount, statType = null, statXpGain = 15) {
+function revokeRewards(xpAmount, goldAmount, statType = null, statXpGain = 15, earnedVersion = 1) {
     gameState.player.gold = Math.max(0, gameState.player.gold - goldAmount);
 
     if (statType && gameState.player.stats[statType] !== undefined) {
         if (!gameState.player.statXp) gameState.player.statXp = { STR: 0, INT: 0, WIS: 0, CHR: 0 };
-        let remStatXp = statXpGain;
+        let remStatXp = statXpForUndo(statType, statXpGain, earnedVersion);
         while (remStatXp > 0) {
             if ((gameState.player.statXp[statType] || 0) >= remStatXp) {
                 gameState.player.statXp[statType] -= remStatXp;
@@ -3725,17 +3827,12 @@ function toggleQuest(id, preserveCount = false) {
         }
 
         const statXpEarned = getQuestStatXpGain(q);
-        const rewardResult = addRewards(effectiveBaseXp, effectiveBaseGold, q.stat, statXpEarned, isCrit);
+        const rewardResult = addRewards(effectiveBaseXp, effectiveBaseGold, q.stat, statXpEarned, isCrit, result => {
+            q.lastReward = { xp: result.finalXp, gold: result.finalGold, stat: q.stat, statXpGain: result.statXpGain, statCurveVersion: result.statCurveVersion };
+        });
         if (isCrit) {
             spawnFloatingReward(`⚡ CRITICAL CLEAR! +${rewardResult.finalXp} XP | +${rewardResult.finalGold} Gold (1.5x)`);
         }
-
-        q.lastReward = {
-            xp: rewardResult.finalXp,
-            gold: rewardResult.finalGold,
-            stat: q.stat,
-            statXpGain: statXpEarned
-        };
 
         if (q.category === 'Recovery Quest') {
             syncPlayerMaxHp();
@@ -3773,12 +3870,11 @@ function toggleQuest(id, preserveCount = false) {
                 const comboKey = `${todayKey}_${slot}`;
                 const slotQuests = gameState.quests.filter(item => item.category === 'Daily Quest' && inferQuestTimeSlot(item) === slot);
                 if (slotQuests.length > 0 && slotQuests.every(item => item.completed) && !gameState.history.slotCombosClaimed[comboKey]) {
-                    const comboReward = addRewards(15, 25, 'WIS', 15, true);
-                    gameState.history.slotCombosClaimed[comboKey] = {
-                        xp: comboReward.finalXp,
-                        gold: comboReward.finalGold,
-                        statXpGain: 15
-                    };
+                    const comboReward = addRewards(15, 25, 'WIS', 15, true, result => {
+                        gameState.history.slotCombosClaimed[comboKey] = {
+                            xp: result.finalXp, gold: result.finalGold, statXpGain: result.statXpGain, statCurveVersion: result.statCurveVersion
+                        };
+                    });
                     setTimeout(() => {
                         spawnFloatingReward(`🔥 ${slot.toUpperCase()} SWEEP COMBO! +${comboReward.finalGold} Gold & +15 WIS XP`);
                     }, 350);
@@ -3812,7 +3908,7 @@ function toggleQuest(id, preserveCount = false) {
         if (q.category === 'Recovery Quest' && rev.hpHealed) {
             gameState.player.hp = Math.max(1, gameState.player.hp - rev.hpHealed);
         }
-        revokeRewards(rev.xp, rev.gold, rev.stat, rev.statXpGain ?? rev.statGain ?? getQuestStatXpGain(q));
+        revokeRewards(rev.xp, rev.gold, rev.stat, rev.statXpGain ?? rev.statGain ?? getQuestStatXpGain(q), rev.statCurveVersion ?? 1);
         delete q.lastReward;
 
         if (gameState.history && Array.isArray(gameState.history.logs)) {
@@ -3830,7 +3926,7 @@ function toggleQuest(id, preserveCount = false) {
             const comboKey = `${todayKey}_${slot}`;
             if (gameState.history.slotCombosClaimed && gameState.history.slotCombosClaimed[comboKey]) {
                 const cRev = gameState.history.slotCombosClaimed[comboKey];
-                revokeRewards(cRev.xp, cRev.gold, 'WIS', cRev.statXpGain || 15);
+                revokeRewards(cRev.xp, cRev.gold, 'WIS', cRev.statXpGain ?? 15, cRev.statCurveVersion ?? 1);
                 delete gameState.history.slotCombosClaimed[comboKey];
             }
 
@@ -5216,7 +5312,8 @@ const HUNTER_HEALTH_GUIDE = {
             ]],
             ['🛡️ Shield & Pemulihan', [
                 'Streak Shield/Freeze otomatis digunakan hanya saat target harian gagal dan streak masih aktif. Stok maksimal 2. Shield tidak meniadakan penalti HP.',
-                'Potion/Elixir di Shop dan penyelesaian Penalty Quest bisa memulihkan HP; pemulihan tidak melebihi Max HP.'
+                'Potion/Elixir di Shop dan penyelesaian Penalty Quest bisa memulihkan HP; pemulihan tidak melebihi Max HP.',
+                'Level Hunter baru memulihkan hingga 30% Max HP; kenaikan Rank baru memulihkan HP penuh. Bonus tiap level/rank hanya sekali, tidak berulang setelah pembatalan quest.'
             ]],
             ['☠️ Jika HP Mencapai Nol', [
                 'HP 0 menyebabkan YOU DIED. Dalam 7 hari: kematian pertama mengurangi 10% Gold dan 0% XP; kedua 20% Gold dan 5% XP; ketiga dan seterusnya 30% Gold dan 10% XP.',
@@ -5243,7 +5340,8 @@ const HUNTER_HEALTH_GUIDE = {
             ]],
             ['🛡️ Shields & Healing', [
                 'Streak Shield/Freeze is used automatically when the daily target is missed and you still have a streak. Maximum stock: 2. It does not prevent HP damage.',
-                'Shop potions/elixirs and Penalty Quest completion heal HP, without exceeding Max HP.'
+                'Shop potions/elixirs and Penalty Quest completion heal HP, without exceeding Max HP.',
+                'A new Hunter level restores up to 30% Max HP; a new Rank restores full HP. Each milestone grants recovery only once, even after undoing quests.'
             ]],
             ['☠️ When HP Reaches Zero', [
                 'At 0 HP, YOU DIED triggers. Deaths within 7 days: first loses 10% Gold and 0% XP; second 20% Gold and 5% XP; third+ 30% Gold and 10% XP.',
@@ -5270,7 +5368,8 @@ const HUNTER_HEALTH_GUIDE = {
             ]],
             ['🛡️ シールドと回復', [
                 'デイリー目標未達でストリークがある場合、シールドが自動使用されます（最大2個）。HPダメージは無効化しません。',
-                'ショップのポーション／エリクサーやペナルティクエストでHPを回復できます。最大HPは超えません。'
+                'ショップのポーション／エリクサーやペナルティクエストでHPを回復できます。最大HPは超えません。',
+                '新しいハンターレベルに到達すると最大HPの30%まで回復し、新ランクに到達するとHPが全回復します。クエストを取り消しても各到達ボーナスは一度限りです。'
             ]],
             ['☠️ HPが0になると', [
                 'HPが0になるとYOU DIEDが発生します。7日間の死亡回数：1回目はゴールド10%、XP0%；2回目はゴールド20%、XP5%；3回目以降はゴールド30%、XP10%を失います。',
@@ -5634,6 +5733,16 @@ function syncHomeScreenWidget() {
     } catch (e) {}
 }
 
+function reminderSlotPrompt(slot) {
+    const prompts = {
+        Pagi: v6Text('Mulai hari dengan satu quest ringan.','Start your day with one easy quest.','まずは簡単なクエストから始めよう。'),
+        Siang: v6Text('Cek progres, istirahat sejenak, lalu lanjutkan prioritas.','Check progress, take a break, then resume priorities.','進捗を確認し、休憩してから優先課題を続けよう。'),
+        Sore: v6Text('Waktunya menuntaskan quest yang masih tertunda.','Time to tackle the remaining quests.','残りのクエストに取り組もう。'),
+        Petang: v6Text('Review harimu dan siapkan langkah terakhir.','Review your day and plan the final steps.','今日を振り返り、最後の行動を決めよう。'),
+        Malam: v6Text('Cek quest sebelum tengah malam; 100% mencegah penalti HP.','Check quests before midnight; 100% prevents the HP penalty.','深夜までに確認。100%達成でHPペナルティを防げます。')
+    };
+    return prompts[slot]||'';
+}
 function checkScheduledReminderTick() {
     const rem = ensureReminderState();
     if (!rem.enabled) return;
@@ -5659,7 +5768,7 @@ function checkScheduledReminderTick() {
                 saveState();
                 const slotLbl = d.slots[slot] || slot;
                 const slotPending = gameState.quests.filter(
-                    q => q.category === 'Daily Quest' && !q.completed && inferQuestTimeSlot(q) === slot
+                    q => q.category === 'Daily Quest' && !q.completed && isQuestActiveOnDate(q,getCurrentGameDateKey()) && inferQuestTimeSlot(q) === slot
                 );
                 const focusText = slotPending.length > 0
                     ? d.slotFocus(slotPending.length, slotLbl, slotPending.slice(0, 2).map(q => q.title).join(', '))
@@ -5667,7 +5776,7 @@ function checkScheduledReminderTick() {
 
                 fireOsNotification(
                     d.schedTitle(slotLbl),
-                    summary.pendingCount ? d.schedBody(gameState.player.name, focusText, gameState.player.streak) : d.testDone(gameState.player.name),
+                    summary.total===0 ? v6Text('Tidak ada Daily Quest terjadwal hari ini.','No daily quests scheduled today.','本日はデイリークエストの予定がありません。') : summary.pendingCount ? `${reminderSlotPrompt(slot)} ${d.schedBody(gameState.player.name, focusText, gameState.player.streak)}` : d.testDone(gameState.player.name),
                     `system-rpg-${slot.toLowerCase()}`
                 );
             }
@@ -6714,7 +6823,7 @@ function updateLofiVolume(val) {
 
     const vol = num / 100;
     if (lofiMasterGain && lofiCtx) {
-        lofiMasterGain.gain.setTargetAtTime(vol * 0.76, lofiCtx.currentTime, 0.05);
+        lofiMasterGain.gain.setTargetAtTime(vol * 1.25, lofiCtx.currentTime, 0.05);
     }
     const localAudio = document.getElementById('lofi-local-audio-player');
     if (localAudio) {
@@ -6991,7 +7100,13 @@ function toggleAnimeLofi1Hour() {
     if (lofiUseLocalFile) {
         const localAudio = document.getElementById('lofi-local-audio-player');
         if (localAudio) {
-            localAudio.play();
+            const slider = document.getElementById('lofi-volume-slider');
+            if(slider) localAudio.volume = Math.max(0,Math.min(1,Number(slider.value)/100));
+            localAudio.play().catch(() => {
+                if(!lofiIsPlaying || !localAudio.paused) return;
+                stopAnimeLofi1Hour();
+                if(status) status.textContent = v6Text('Audio gagal diputar. Coba pilih lagu lain.','Audio could not play. Try another track.','音声を再生できません。別の曲を選んでください。');
+            });
             if (status) {
                 const label = document.getElementById('rpg-lofi-track')?.selectedOptions?.[0]?.textContent || rpgLofiTrack;
                 status.textContent = rpgLofiTrack==='custom' ? `Memutar Lagu dari HP • Timer 1 Jam Aktif` : `♪ ${label} • Offline Lofi`;
@@ -7004,8 +7119,15 @@ function toggleAnimeLofi1Hour() {
             lofiMasterGain = lofiCtx.createGain();
             const slider = document.getElementById('lofi-volume-slider');
             const vol = slider ? Number(slider.value) / 100 : 0.55;
-            lofiMasterGain.gain.setValueAtTime(vol * 0.76, lofiCtx.currentTime);
-            lofiMasterGain.connect(lofiCtx.destination);
+            lofiMasterGain.gain.setValueAtTime(vol * 1.25, lofiCtx.currentTime);
+            const compressor = lofiCtx.createDynamicsCompressor();
+            compressor.threshold.value = -12;
+            compressor.knee.value = 6;
+            compressor.ratio.value = 6;
+            compressor.attack.value = 0.003;
+            compressor.release.value = 0.15;
+            lofiMasterGain.connect(compressor);
+            compressor.connect(lofiCtx.destination);
         }
         if (lofiCtx.state === 'suspended') lofiCtx.resume();
 
@@ -7167,10 +7289,10 @@ let rpgSplashAudio = null;
 function startAutoSplashFantasyBGM() {
     if (isSplashUnlocking || isSplashBgmPlaying) return;
     if (!rpgSplashAudio) {
-        rpgSplashAudio = new Audio('awakening-cinematic-loud.ogg');
+        rpgSplashAudio = new Audio('awakening-dark-remaster.mp3');
         rpgSplashAudio.loop = true;
         rpgSplashAudio.preload = 'auto';
-        rpgSplashAudio.volume = 0.9;
+        rpgSplashAudio.volume = 1.0;
     }
     isSplashBgmPlaying = true;
     rpgSplashAudio.play().catch(() => { isSplashBgmPlaying = false; });
@@ -7355,7 +7477,7 @@ function startFingerprintHold(event) {
 
     fpHoldTimer = setTimeout(() => {
         unlockSystemSplashScreen();
-    }, 1100);
+    }, 850);
 }
 
 function cancelFingerprintHold() {

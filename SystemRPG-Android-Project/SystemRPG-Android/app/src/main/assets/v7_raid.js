@@ -180,11 +180,18 @@
         v.active=w;v.lastBossId=b.id;
         return w;
     }
+    // Actual ledger determines eligibility, independently of optional animation.
+    function modeCleared(w, damage=w.damage) {
+        return w.maxDamage>0 && damage+1e-6 >= (w.mode==='challenge'?w.challengeTarget:w.normalTarget);
+    }
+    function activeClaimable(v,w) {
+        return !!(w && !w.closed && !v.archive[w.week] && !w.rewardClaimed && modeCleared(w));
+    }
     function finalizeWeek(v) {
         const w=v.active;
         if(!w||w.closed||v.archive[w.week]) return false;
-        const won=w.maxDamage>0&&w.damage>=w.normalTarget;
-        const challenge=won&&w.mode==='challenge'&&w.damage>=w.challengeTarget;
+        const won=w.maxDamage>0&&w.damage+1e-6>=w.normalTarget;
+        const challenge=won&&w.mode==='challenge'&&w.damage+1e-6>=w.challengeTarget;
         // Reward stays pending until user claims it. No changes to Hunter HP/streak.
         const dayDamage={};
         for(const [hitKey,raw] of Object.entries(w.hits||{})) {
@@ -193,7 +200,7 @@
             dayDamage[day]=Math.round(((dayDamage[day]||0)+Math.max(0,Number(raw)||0))*100)/100;
         }
         v.archive[w.week]={week:w.week,bossId:w.bossId,mode:w.mode,damage:w.damage,
-            maxDamage:w.maxDamage,normalTarget:w.normalTarget,won,challenge,claimed:!won,
+            maxDamage:w.maxDamage,normalTarget:w.normalTarget,won,challenge,claimed:!won||w.rewardClaimed===true,
             gold:won?120:0,crystals:won?(challenge?10:6):0,
             hits:Object.keys(w.hits||{}).length,
             // Snapshot purely for historical statistics; never used in rewards.
@@ -223,13 +230,14 @@
         if (Object.prototype.hasOwnProperty.call(w.hits,hitKey) ||
             Object.prototype.hasOwnProperty.call(v.questHitLedger,hitKey)) return false;
         // If the weekly maximum was reached, don't create zero-damage queued attacks.
-        if(w.damage>=w.maxDamage)return false;
+        if(modeCleared(w))return false;
         const hit=w.balanceVersion===2?adaptiveHit(w,dateKey,q.id):LEGACY_HIT;
         if(hit<=0)return false;
         battleView(w); // Capture old hits as displayed BEFORE adding a new pending hit.
-        const awarded=Math.max(0,Math.min(hit,w.maxDamage-w.damage));
+        const limit=w.mode==='challenge'?w.maxDamage:w.normalTarget;
+        const awarded=Math.max(0,Math.min(hit,limit-w.damage));
         w.hits[hitKey]=Math.round(awarded*DAMAGE_SCALE)/DAMAGE_SCALE;
-        w.damage=Math.round(Math.min(w.maxDamage,w.damage+awarded)*DAMAGE_SCALE)/DAMAGE_SCALE;
+        w.damage=Math.round(Math.min(limit,w.damage+awarded)*DAMAGE_SCALE)/DAMAGE_SCALE;
         v.questHitLedger[hitKey]=w.week;
         return true;
     }
@@ -279,7 +287,7 @@
         if(battleTimer!==null){clearTimeout(battleTimer);battleTimer=null;}
         activeBattle=null;
         const arena=document.querySelector('.v7-replay-stage');
-        if(arena)arena.classList.remove('v7-replay-active','v7-move-shadow','v7-move-phantom','v7-move-abyss');
+        if(arena)arena.classList.remove('v7-replay-active','v7-move-shadow','v7-move-phantom','v7-move-abyss','v7-visual-only-active');
         const action=document.getElementById('v7-watch-battle');if(action)action.disabled=false;
         const again=document.getElementById('v7-visual-replay');if(again)again.disabled=false;
     }
@@ -290,14 +298,14 @@ function renderVictory(w,p) {
     const challenge=w.mode==='challenge'&&p.displayedDamage+1e-6>=w.challengeTarget;
     const b=ROSTER.find(x=>x.id===w.bossId);
     const label=challenge?t('✦ CHALLENGE CLEAR · BOSS DEFEATED!','✦ CHALLENGE CLEAR · BOSS DEFEATED!','✦ チャレンジ達成 · ボス撃破！'):
-        t('⚔ NORMAL CLEAR · ENRAGED PHASE','⚔ NORMAL CLEAR · ENRAGED PHASE','⚔ 通常クリア · 激怒フェーズ');
+        w.mode==='challenge'?t('⚔ NORMAL TARGET · CHALLENGE CONTINUES','⚔ NORMAL TARGET · CHALLENGE CONTINUES','⚔ 通常目標達成・チャレンジ継続'):t('⚔ NORMAL CLEAR · BOSS DEFEATED!','⚔ NORMAL CLEAR · BOSS DEFEATED!','⚔ 通常クリア・ボス撃破！');
     const desc=challenge?
         t('Boss berhasil dikalahkan sepenuhnya! Bonus Challenge terbuka.','The Boss is fully defeated! Challenge bonus unlocked.','チャレンジ達成！'):
         w.mode==='challenge'?
         t('Target Normal tercapai. Lanjutkan Habits untuk menuntaskan Challenge.','Normal target reached. Keep going for Challenge clear.','通常クリア。チャレンジを続けよう。'):
         t('Target Normal tercapai! Kemenangan minggu ini sudah aman.','Normal target reached! Your weekly clear is secured.','通常クリア達成！');
     const gold=120,crystals=challenge?10:6;
-    const bonus=challenge?`<div class="v7-victory-bonus">✨ ${esc(t('Eclipse Aura permanen saat Challenge Clear pertama (diklaim Senin).','Permanent Eclipse Aura on your first Challenge Clear (claim Monday).','初回達成でエクリプスオーラ。'))}</div>`:'';
+    const bonus=challenge?`<div class="v7-victory-bonus">✨ ${esc(t('Eclipse Aura permanen saat Challenge Clear pertama.','Permanent Eclipse Aura on your first Challenge Clear.','初回達成でエクリプスオーラ。'))}</div>`:'';
     const provisional=p.pending.length>0?`<small class="v7-victory-pending">${esc(t('Masih ada serangan menunggu ditampilkan.','More queued attacks remain.','未再生の攻撃あり。'))}</small>`:'';
     return `<div class="v7-victory-card ${challenge?'v7-victory-challenge':''}" role="status" aria-live="polite">
       <div class="v7-victory-kicker">🏆 ${esc(t('HASIL RAID MINGGUAN','WEEKLY RAID RESULT','週間レイド結果'))}</div>
@@ -307,7 +315,7 @@ function renderVictory(w,p) {
         <div><strong>🪙 +${gold}</strong><small>Gold</small></div>
         <div><strong>💠 +${crystals}</strong><small>${esc(t('Kristal Raid','Raid Crystals','レイドクリスタル'))}</small></div>
       </div>${bonus}${provisional}
-      <p class="v7-victory-info">${esc(t('Preview hadiah. Tidak masuk saldo sekarang; klaim satu kali setelah minggu Raid berakhir (Senin).','Reward preview. Claim once after the raid week ends (Monday).','報酬は月曜日以降に一度だけ受け取れます。'))}</p>
+      <p class="v7-victory-info">${esc(w.mode==='challenge'&&!challenge?t('Selesaikan Challenge untuk klaim sekarang; jika hanya target Normal tercapai, hadiah Normal tersedia Senin.','Finish Challenge to claim now; if only the Normal target is reached, the Normal reward is available Monday.','今すぐ受け取るにはチャレンジを達成してください。通常目標のみ達成した場合は月曜日に通常報酬を受け取れます。'):t('Hadiah dapat diklaim sekali. Boss berikutnya muncul Senin.','Claim once. The next Boss arrives Monday.','報酬は一度だけ受取可能。次のボスは月曜日に登場。'))}</p>
     </div>`;
 }
 function paintVictory(w,p) {
@@ -329,7 +337,10 @@ function paintVictory(w,p) {
         if(bar)bar.style.width=(p.max?100*remaining/p.max:0)+'%';
         if(pending)pending.textContent=p.pending.length+' '+t('serangan menunggu','attacks queued','未再生の攻撃');
         const arena=document.querySelector('.v7-boss-card');
-        if(arena)arena.classList.toggle('v7-enraged',p.max>0&&p.displayedDamage>=w.normalTarget);
+        if(arena) {
+            arena.classList.toggle('v7-enraged',w.mode==='challenge'&&p.displayedDamage>=w.normalTarget&&!modeCleared(w,p.displayedDamage));
+            arena.classList.toggle('v7-defeated',modeCleared(w,p.displayedDamage));
+        }
         paintVictory(w,p); // visual-only: never finalizes rewards or changes actual raid HP.
         return p;
     }
@@ -364,6 +375,7 @@ function paintVictory(w,p) {
         if(name)name.textContent=move.name()+(frame.length>1?'  ×'+frame.length:'');
         if(impact)impact.textContent='';
         stage.classList.add('v7-replay-active',move.style);
+        stage.classList.toggle('v7-visual-only-active',session.visualOnly);
         // Only decorative audio. The damage ledger is never touched by SoundFX.
         try { if(typeof SoundFX!=='undefined' && SoundFX.playBattleAttack) SoundFX.playBattleAttack(session.step%ATTACKS.length,'windup'); } catch (_) {}
         // The HP bar changes at impact, not on Quest completion or on button press.
@@ -432,18 +444,21 @@ function paintVictory(w,p) {
     }
     function pendingRewards() {return Object.values(state().archive).filter(r=>r&&r.won&&!r.claimed).sort((a,b)=>a.week.localeCompare(b.week));}
     function claim(week) {
-        const v=state(),r=v.archive[week];
+        const v=state(), archived=v.archive[week], w=v.active;
+        const live=!archived && w && w.week===week && activeClaimable(v,w);
+        const r=live?{won:true,claimed:false,gold:120,crystals:w.mode==='challenge'?10:6,challenge:w.mode==='challenge'}:archived;
         if(!r||!r.won||r.claimed) return false;
         // No XP, streak, rank or battle buffs; gold and crystals only.
         if(!gameState.player||!Number.isFinite(Number(gameState.player.gold))) return false;
         const oldGold=gameState.player.gold,oldCrystals=v.raidCrystals;
         const hadAura=v.cosmetics.owned.auras.includes('aura_eclipse');
         r.claimed=true;
+        if(live)w.rewardClaimed=true;
         gameState.player.gold=Number(gameState.player.gold)+r.gold;
         v.raidCrystals+=r.crystals;
         if(r.challenge && !hadAura) v.cosmetics.owned.auras.push('aura_eclipse');
-        if(saveState() === false) {
-            r.claimed=false;gameState.player.gold=oldGold;v.raidCrystals=oldCrystals;
+        if(saveState() !== true) {
+            r.claimed=false;if(live)delete w.rewardClaimed;gameState.player.gold=oldGold;v.raidCrystals=oldCrystals;
             if(!hadAura)v.cosmetics.owned.auras=v.cosmetics.owned.auras.filter(id=>id!=='aura_eclipse');
             return false;
         }
@@ -646,7 +661,7 @@ function renderAppearance() {
              <h3>⚔️ ${esc(b.name)}</h3><p>${esc(t('Sebuah kisah baru terbuka di Abyss Codex. Baca sekarang atau lanjutkan pertarungan; ceritanya tidak akan hilang.','A new story has unlocked in the Abyss Codex. Read it now or continue; it will remain available.','深淵の図鑑に新しい物語が解放されました。今読んでも、後で読んでも消えません。'))}</p>
              <div class="v7-button-row">${button(t('📖 Baca Kisah','📖 Read Story','📖 物語を読む'), `V7Raid.openBossStory('${b.id}')`)}
              ${button(t('Lewati Intro','Skip Intro','登場演出をスキップ'), 'V7Raid.dismissEncounter()')}</div></div>` : '';
-        return introduction + `<div class="v7-boss-card ${normal?'v7-enraged':''}">
+        return introduction + `<div class="v7-boss-card ${modeCleared(w,p.displayedDamage)?'v7-defeated':normal&&w.mode==='challenge'?'v7-enraged':''}">
             <div class="v7-muted">${esc(w.week)} · ${esc(w.mode==='challenge'?t('CHALLENGE','CHALLENGE','チャレンジ'):t('NORMAL','NORMAL','通常'))} · ${esc(t('Boss dikunci saat minggu dimulai','Boss locked at week start','週の開始時に固定'))}</div>
             <div class="v7-battle-arena">
               <div class="v7-arena-title"><strong>🐉 ${esc(b.name)}</strong><small>${esc(b.epithet)}</small><button type="button" class="v7-boss-story-link" onclick="V7Raid.openBossStory('${b.id}')">📖 ${esc(t('Baca Lore','Read Lore','物語を読む'))}</button></div>
@@ -670,13 +685,14 @@ function renderAppearance() {
               </div>
             </div>
             <div id="v7-victory-slot">${renderVictory(w,p)}</div>
+            ${activeClaimable(v,w)?`<div class="v7-live-claim">${button(t('🎁 Klaim hadiah sekarang','🎁 Claim reward now','🎁 今すぐ報酬を受け取る'),`V7Raid.claim('${esc(w.week)}')`,'v7-claim-btn')}</div>`:w.rewardClaimed?`<p class="v7-live-claim">${esc(t('✓ Hadiah sudah diklaim · Boss baru Senin','✓ Reward claimed · New Boss Monday','✓ 受取済み・次のボスは月曜日'))}</p>`:''}
             <p class="v7-muted" id="v7-pending-hits">${p.pending.length} ${esc(t('serangan menunggu','attacks queued','未再生の攻撃'))}</p>
-            <p class="v7-muted">${esc(t('Normal clear','Normal clear','通常クリア'))}${w.balanceVersion===2?' (40%)':''}: ${damageLabel(w.normalTarget)} ${esc(t('damage','damage','ダメージ'))} · ${esc(t('Challenge','Challenge','チャレンジ'))}${w.balanceVersion===2?' (60%)':''}: ${damageLabel(w.challengeTarget)} ${esc(t('damage','damage','ダメージ'))}</p>
+            <p class="v7-muted">${esc(t('Normal clear','Normal clear','通常クリア'))}${w.balanceVersion===2?' (40%)':''}: ${damageLabel(w.normalTarget)} ${esc(t('damage','damage','ダメージ'))} · ${esc(t('Challenge','Challenge','チャレンジ'))}${w.balanceVersion===2?' (100% HP)':''}: ${damageLabel(w.challengeTarget)} ${esc(t('damage','damage','ダメージ'))}</p>
             ${w.balanceVersion===2?`<p class="v7-muted">${esc(t('Setiap hari aktif: maksimal 100 damage, dibagi ke Habits yang dijadwalkan. Tambah/kurangi Quest berlaku mulai besok; target Boss tetap terkunci sampai Raid berikutnya.','Each active day: up to 100 damage, divided among scheduled habits. Quest edits apply from tomorrow; Boss targets stay locked for this week.','活動日ごとに最大100ダメージを習慣に分配します。クエスト編集は翌日から反映され、今週のボス目標は固定です。'))}</p>`:''}
             <p class="v7-result">${p.max===0?esc(t('Tidak ada Habits terjadwal saat minggu dimulai.','No habits scheduled at week start.','週の開始時点で予定された習慣はありません。')):
               p.pending.length?esc(t('⚔️ Serangan tersimpan. Tekan tombol untuk menyaksikan!','⚔️ Attacks saved. Tap to watch!','⚔️ 攻撃を保存しました。ボタンを押して戦闘を再生！')):
-              challenge&&w.mode==='challenge'?esc(t('✨ CHALLENGE CLEAR! Reward tersedia Senin depan.','✨ CHALLENGE CLEAR! Claim next Monday.','✨ チャレンジ達成！報酬は来週月曜日から受け取れます。')):
-              normal?esc(t('🔥 NORMAL CLEAR — ENRAGED PHASE!','🔥 NORMAL CLEAR — ENRAGED PHASE!','🔥 通常クリア — 激怒フェーズ！')):
+              challenge&&w.mode==='challenge'?esc(t('✨ CHALLENGE CLEAR!','✨ CHALLENGE CLEAR!','✨ チャレンジ達成！')):
+              normal?esc(w.mode==='challenge'?t('🔥 Target Normal tercapai · lanjutkan Challenge','🔥 Normal target reached · continue Challenge','🔥 通常目標達成・チャレンジ継続'):t('🏆 NORMAL CLEAR!','🏆 NORMAL CLEAR!','🏆 通常クリア！')):
               esc(t('Selesaikan Habits untuk menyiapkan serangan.','Complete habits to queue attacks.','習慣達成で攻撃が貯まります。'))}</p>
             <div class="v7-button-row v7-battle-actions">
               ${p.pending.length?
@@ -722,7 +738,7 @@ function renderArchive() {
              `<span class="v7-archive-status">${r.claimed&&r.won?esc(t('✓ Diklaim','✓ Claimed','受取済み')):'—'}</span>`}
         </div>`;
     }).join('');
-    return `<div class="v7-raid-panel"><h3>🏆 ${esc(t('ARSIP RAID','RAID ARCHIVE','レイド履歴'))}</h3><p class="v7-muted">${esc(t('Hadiah dibayarkan sekali saat diklaim setelah minggu berakhir.','Rewards are paid once when claimed after the week ends.','報酬は週の終了後に一度だけ受取可能。'))}</p>${summary||`<p class="v7-muted">${esc(t('Belum ada minggu yang berakhir.','No completed weeks yet.','記録はありません。'))}</p>`}</div>`;
+    return `<div class="v7-raid-panel"><h3>🏆 ${esc(t('ARSIP RAID','RAID ARCHIVE','レイド履歴'))}</h3><p class="v7-muted">${esc(t('Hadiah setiap Raid dibayarkan sekali; klaim yang sudah dilakukan tetap tercatat.','Each raid reward is paid once; previous claims stay recorded.','各レイドの報酬は一度だけ受け取れます。受取済みの記録は保持されます。'))}</p>${summary||`<p class="v7-muted">${esc(t('Belum ada minggu yang berakhir.','No completed weeks yet.','記録はありません。'))}</p>`}</div>`;
 }
     // Preview is read-only: does not equip, spend Raid Crystals or modify save data.
     function closeCosmeticPreview() {
@@ -769,7 +785,7 @@ function renderExchange() {
               💠 ${item.cost}</button>`;
         return `<div class="system-card v7-exchange-row v7-shop-item">
             <div class="v7-shop-icon" aria-hidden="true">${item.kind==='frames'?'🖼️':'✨'}</div>
-            <div class="v7-shop-copy"><b>${esc(item.name)}</b><small>${item.challengeOnly?esc(t('Challenge Clear pertama → klaim hadiah setelah minggu berakhir','First Challenge Clear → claim reward after week ends','初回チャレンジ達成→週終了後に報酬を受け取る')):item.kind==='frames'?esc(t('Bingkai avatar & Awakening','Avatar & Awakening frame','フレーム')):esc(t('Efek Hunter & Shadow Sword','Hunter & Shadow Sword aura','オーラ'))}</small><button type="button" class="v7-shop-preview-btn" onclick="V7Raid.previewCosmetic('${item.id}')">👁 ${esc(t('Lihat Preview','Preview item','プレビュー'))}</button></div>
+            <div class="v7-shop-copy"><b>${esc(item.name)}</b><small>${item.challengeOnly?esc(t('Challenge Clear pertama → klaim hadiah','First Challenge Clear → claim reward','初回チャレンジ達成→報酬を受け取る')):item.kind==='frames'?esc(t('Bingkai avatar & Awakening','Avatar & Awakening frame','フレーム')):esc(t('Efek Hunter & Shadow Sword','Hunter & Shadow Sword aura','オーラ'))}</small><button type="button" class="v7-shop-preview-btn" onclick="V7Raid.previewCosmetic('${item.id}')">👁 ${esc(t('Lihat Preview','Preview item','プレビュー'))}</button></div>
             <div class="v7-shop-action">${action}</div>
         </div>`;
     }).join('');

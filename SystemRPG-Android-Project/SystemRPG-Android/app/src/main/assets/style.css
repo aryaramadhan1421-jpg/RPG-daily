@@ -1389,3 +1389,12 @@ body.sysrpg-tutorial-active main::after {
 .v7-growth-rank-sword{text-align:center;color:#fbbf24;font-size:1.8rem;animation:v7-sword-swipe .7s ease-out 1}
 @keyframes v7-sword-swipe{from{opacity:0;transform:translateX(-28px) rotate(-20deg)}to{opacity:1;transform:translateX(0) rotate(0)}}
 @media(prefers-reduced-motion:reduce){.v7-growth-rank-sword{animation:none}}
+
+/* Weekly Boss defeat: presentation only; retain a dim silhouette for the completed week. */
+.v7-defeated .v7-replay-boss img{animation:none!important;opacity:.27;filter:grayscale(.85) brightness(.65);transform:translateY(7px) scale(.96)}
+.v7-defeated .v7-replay-boss:after,.v7-defeated .v7-boss-energy-field{opacity:0;animation:none!important}
+.v7-defeated .v7-replay-active:not(.v7-visual-only-active) .v7-replay-boss{animation:v7BossFall .65s ease-out both!important}
+.v7-defeated .v7-visual-only-active .v7-replay-boss img{opacity:1;filter:none;transform:none}
+.v7-live-claim{margin:10px 0;text-align:center;color:#86efac;font-weight:700}
+@keyframes v7BossFall{0%{opacity:1;transform:translateY(0) scale(1)}35%{opacity:.8;transform:translateY(-7px) scale(1.04)}100%{opacity:.3;transform:translateY(12px) scale(.96)}}
+@media(prefers-reduced-motion:reduce){.v7-defeated .v7-replay-active .v7-replay-boss{animation:none!important}}
