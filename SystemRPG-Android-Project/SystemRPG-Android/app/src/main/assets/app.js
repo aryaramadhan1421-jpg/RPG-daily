@@ -2044,7 +2044,7 @@ function getDiscountedShopCost(baseCost) {
     return Math.max(5, Math.round(baseCost * (1 - chrShopDiscount)));
 }
 
-function addRewards(baseXp, baseGold, statType = null, statXpGain = 15, silentFloat = false, recordReward = null) {
+function addRewards(baseXp, baseGold, statType = null, statXpGain = 15, silentFloat = false, recordReward = null, onCommit = null) {
     ensureProgressionBalance(gameState.lastRealDate || formatDateKey(new Date()));
     const balance = gameState.progressionBalance;
     const player = gameState.player;
@@ -2131,12 +2131,13 @@ function addRewards(baseXp, baseGold, statType = null, statXpGain = 15, silentFl
         hpRecovered += player.maxHp - player.hp;
         player.hp = player.maxHp;
     }
-    if (rankBonus && !leveledUp) spawnFloatingReward(progressionHealText(hpRecovered, true, true));
+    if (rankBonus && !leveledUp && !onCommit) spawnFloatingReward(progressionHealText(hpRecovered, true, true));
     if (leveledUp) {
         const newLevel = player.level;
         const rank = getPlayerRank(newLevel);
         const promoted = rank.title !== prevRankTitle;
         setTimeout(() => {
+            if (onCommit && rewardsSaved !== true) return;
             SoundFX.playLevelUp();
             document.getElementById('levelup-new-lvl').textContent = `Level ${newLevel}`;
             const recoveryLine = document.getElementById('levelup-hp-recovery');
@@ -2158,6 +2159,7 @@ function addRewards(baseXp, baseGold, statType = null, statXpGain = 15, silentFl
     // Keep quest reward metadata in the same save as XP/Gold and the heal milestone.
     if (typeof recordReward === 'function') recordReward(result);
     const rewardsSaved = saveState();
+    if (onCommit) { onCommit(rewardsSaved === true); if (rewardsSaved !== true) return result; if(rankBonus && !leveledUp) spawnFloatingReward(progressionHealText(hpRecovered,true,true)); }
     renderAll();
     if (rewardsSaved && !V8Core.batch && growthEvent && window.V7Growth) {
         try { window.V7Growth.onReward(growthEvent, {silent: silentFloat}); }
@@ -2774,7 +2776,8 @@ function renderHistory() {
     const activeDateStr = gameState.selectedHistoryDate || getCurrentGameDateKey();
     const todayStr = formatDateKey(new Date());
     const dailyCounts = gameState.history?.dailyCounts || {};
-    const logs = showAllHistoryLogs ? V84History.records(gameState,'logs',v84HistoryMonth||undefined) : V84History.onDate(gameState,'logs',activeDateStr);
+    const rawLogs = showAllHistoryLogs ? V84History.records(gameState,'logs',v84HistoryMonth||undefined) : V84History.onDate(gameState,'logs',activeDateStr);
+    const logs = window.V86Treasury ? V86Treasury.filterHistory(rawLogs) : rawLogs;
 
     if (datePickerEl) datePickerEl.value = activeDateStr;
     if (dateLabelEl) {
@@ -2841,6 +2844,7 @@ function renderHistory() {
         const label=document.createElement('span');label.textContent=`${v84HistoryPage+1}/${pages}`;archiveControls.append(label);
     }
 
+    if(window.V86Treasury) V86Treasury.historyControls(logListEl);
     if (logTitleEl) {
         logTitleEl.textContent = showAllHistoryLogs 
             ? statusText('allHistory', {count:logs.length}) 
@@ -2851,8 +2855,8 @@ function renderHistory() {
     }
 
     logListEl.innerHTML = '';
-    const journals = (gameState.history?.journals || []).filter(j => showAllHistoryLogs ? (!v84HistoryMonth || String(j.dateStr).startsWith(v84HistoryMonth)) : j.dateStr === activeDateStr);
-    if (displayedLogs.length === 0 && journals.length === 0 && !Object.keys((()=>{try{return JSON.parse(localStorage.getItem("system_rpg_v6_journal")||"{}")}catch(_){return {}}})()).some(day => showAllHistoryLogs ? (!v84HistoryMonth || day.startsWith(v84HistoryMonth)) : day === activeDateStr)) {
+    const journals = (gameState.history?.journals || []).filter(j => (!window.V86Treasury || V86Treasury.showJournal(j)) && (showAllHistoryLogs ? (!v84HistoryMonth || String(j.dateStr).startsWith(v84HistoryMonth)) : j.dateStr === activeDateStr));
+    if (!window.V86Treasury && displayedLogs.length === 0 && journals.length === 0 && !Object.keys((()=>{try{return JSON.parse(localStorage.getItem("system_rpg_v6_journal")||"{}")}catch(_){return {}}})()).some(day => showAllHistoryLogs ? (!v84HistoryMonth || day.startsWith(v84HistoryMonth)) : day === activeDateStr)) {
         logListEl.innerHTML = `<p style="font-size: 0.75rem; color: #64748b; text-align: center; padding: 0.75rem 0;">${statusText('noQuests', {date:activeDateStr})}</p>`;
         return;
     }
@@ -2876,7 +2880,7 @@ function renderHistory() {
     try {
         const hunterEntries = JSON.parse(localStorage.getItem('system_rpg_v6_journal') || '{}');
         const selectedEntries = Object.entries(hunterEntries)
-            .filter(([day]) => showAllHistoryLogs ? (!v84HistoryMonth || day.startsWith(v84HistoryMonth)) : day === activeDateStr)
+            .filter(([day,j]) => (!window.V86Treasury || V86Treasury.showJournal(j)) && (showAllHistoryLogs ? (!v84HistoryMonth || day.startsWith(v84HistoryMonth)) : day === activeDateStr))
             .sort(([a],[b]) => b.localeCompare(a));
         const lang = typeof v6UiLang === 'function' ? v6UiLang() : 'id';
         const translations = {
@@ -2925,35 +2929,17 @@ function renderHistory() {
                     <span style="color: var(--cyan-400); display: block;">+${item.xp} XP</span>
                     <span style="color: var(--purple-400); font-size: 10px;">+${item.stat}</span>
                 </div>
-                <button onclick="deleteHistoryLog('${item.id}')" style="color: #64748b; padding: 4px;" title="Hapus Log Ini">
-                    <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                </button>
+
             </div>
         `;
         logListEl.appendChild(row);
     });
+    if(window.V86Treasury) V86Treasury.appendHistory(logListEl,activeDateStr,showAllHistoryLogs,v84HistoryMonth);
     // History analytics is display-only; no Quest or reward settlement here.
     if (window.V7Chronicle) window.V7Chronicle.render();
 }
 
-function deleteHistoryLog(logId) {
-    const found = V84History.findLog(gameState,l=>l.id===logId);
-    if (!found) return;
-    const {array,index:idx,entry:target} = found;
-    SoundFX.playClick();
-
-    const beforeCount=gameState.history.dailyCounts[target.dateStr];
-    if (beforeCount) gameState.history.dailyCounts[target.dateStr] = Math.max(0, beforeCount - 1);
-    array.splice(idx, 1);
-    if(saveState()!==true){
-        // Save may have rebuilt active arrays; restore into the current appropriate bucket.
-        const h=gameState.history,m=String(target.dateStr||'').slice(0,7),bucket=h.permanentArchive?.months?.[m];
-        const dest=m<formatDateKey(new Date()).slice(0,7)&&bucket?bucket.logs:h.logs;
-        dest.splice(Math.min(idx,dest.length),0,target);if(beforeCount!==undefined)h.dailyCounts[target.dateStr]=beforeCount;return;
-    }
-    renderAll();
-    spawnFloatingReward('Riwayat aktivitas dihapus');
-}
+function deleteHistoryLog(logId) { /* Activity records are read-only in V8.6. */ }
 
 function handleDateChange(newDateStr) {
     if (!newDateStr) return;
@@ -5955,6 +5941,7 @@ function ensureTreasuryState() {
     }
     if (!Array.isArray(gameState.treasury.transactions)) gameState.treasury.transactions = [];
     if (!gameState.treasury.dailyBonusCounts) gameState.treasury.dailyBonusCounts = {};
+    if (!Array.isArray(gameState.treasury.deletedTransactions)) gameState.treasury.deletedTransactions = [];
     return gameState.treasury;
 }
 
@@ -6140,74 +6127,23 @@ function applyCalcToNominal() {
 
 function handleAddTreasuryTx(e) {
     e.preventDefault();
-    const tr = ensureTreasuryState();
     const type = document.getElementById('tx-type').value;
     const dateStr = document.getElementById('tx-date').value || getCurrentGameDateKey();
     const currency = getTreasuryCurrency();
     const amount = parseTreasuryAmountInput(document.getElementById('tx-amount').value, currency);
     const category = document.getElementById('tx-category').value;
     const note = document.getElementById('tx-note').value.trim();
-    if (!Number.isFinite(amount)) {
-        if (typeof spawnFloatingReward === 'function') spawnFloatingReward(treasuryUi('invalid'));
-        return;
-    }
-    if (!note) return;
-
-   tr.transactions.unshift({
-        id: 'tx_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
-        type,
-        dateStr,
-        amount,
-        currency,
-        category,
-        note
-    });
-
-    // Urutkan transaksi dari tanggal terbaru ke terlama agar input tanggal mundur/maju tetap rapi
-    tr.transactions.sort((a, b) => (b.dateStr || '').localeCompare(a.dateStr || ''));
-
-    // Sesuaikan filter periode agar transaksi yang baru diinput langsung terlihat
-    const fDateEl = document.getElementById('tr-filter-date');
-    const fMonthEl = document.getElementById('tr-filter-month');
-    const fYearEl = document.getElementById('tr-filter-year');
-    if (fDateEl) fDateEl.value = dateStr;
-    if (fMonthEl) fMonthEl.value = dateStr.slice(0, 7);
-    if (fYearEl) fYearEl.value = dateStr.slice(0, 4);
-
-    const todayKey = getCurrentGameDateKey();
-    const usedToday = tr.dailyBonusCounts[todayKey] || 0;
-    if (usedToday < 3) {
-        tr.dailyBonusCounts[todayKey] = usedToday + 1;
-        SoundFX.playQuestComplete();
-        addRewards(10, 0, 'WIS', 10, true);
-        const count = tr.dailyBonusCounts[todayKey];
-        const curLang = (typeof gameState !== 'undefined' && gameState.language) || localStorage.getItem('system_rpg_lang') || 'id';
-        if (curLang === 'en') {
-            spawnFloatingReward(`💰 Recorded! +10 XP & +10 WIS XP (${count}/3 today)`);
-        } else if (curLang === 'ja') {
-            spawnFloatingReward(`💰 記録完了！ +10 XP & +10 WIS XP (本日 ${count}/3)`);
-        } else {
-            spawnFloatingReward(`💰 Tercatat! +10 XP & +10 WIS XP (${count}/3 hari ini)`);
-        }
-    } else {
-        SoundFX.playCoin();
-        spawnFloatingReward(tTreasury('💰 Transaksi keuangan berhasil dicatat!'));
-    }
-
-    document.getElementById('tx-amount').value = '';
-    document.getElementById('tx-note').value = '';
-    saveState();
+    if (!Number.isFinite(amount)) {spawnFloatingReward(treasuryUi('invalid'));return;}
+    if (!note || !V86Treasury.validDate(dateStr) || !TREASURY_CATEGORIES[type]?.includes(category)) return;
+    if(!V86Treasury.add({id:'tx_'+Date.now()+'_'+Math.random().toString(36).slice(2,10),type,dateStr,amount,currency,category,note}))return;
+    V86Treasury.resetSearch();
+    V86Treasury.years();
+    for(const [id,value] of [['tr-filter-date',dateStr],['tr-filter-month',dateStr.slice(0,7)],['tr-filter-year',dateStr.slice(0,4)]]){const el=document.getElementById(id);if(el)el.value=value;}
+    selectedTreasuryCategoryFilter=null;
+    document.getElementById('tx-amount').value='';document.getElementById('tx-note').value='';
     renderTreasury();
 }
-
-function deleteTreasuryTx(id) {
-    const tr = ensureTreasuryState();
-    SoundFX.playClick();
-    tr.transactions = tr.transactions.filter(t => t.id !== id);
-    saveState();
-    renderTreasury();
-    spawnFloatingReward(tTreasury('🗑️ Transaksi dihapus'));
-}
+function deleteTreasuryTx(id) { V86Treasury.openDetail(id); }
 
 function setTreasuryPeriodMode(mode) {
     SoundFX.playClick();
@@ -6310,16 +6246,7 @@ function initTreasuryDefaults() {
 
     if (fDate && !fDate.value) fDate.value = todayKey;
     if (fMonth && !fMonth.value) fMonth.value = todayKey.slice(0, 7);
-    if (fYear && fYear.options.length === 0) {
-        const curY = new Date().getFullYear();
-        for (let y = curY + 1; y >= curY - 4; y--) {
-            const opt = document.createElement('option');
-            opt.value = String(y);
-            opt.textContent = String(y);
-            if (y === curY) opt.selected = true;
-            fYear.appendChild(opt);
-        }
-    }
+    if (fYear && window.V86Treasury) V86Treasury.years();
     updateTreasuryCategoryOptions();
     const cEl = document.getElementById('tx-currency');
     if (cEl) cEl.value = getTreasuryCurrency();
@@ -6327,6 +6254,7 @@ function initTreasuryDefaults() {
 
 function renderTreasury() {
     const tr = ensureTreasuryState();
+    if(window.V86Treasury) V86Treasury.years();
     const currency = getTreasuryCurrency();
     const currencyEl = document.getElementById('tx-currency');
     if (currencyEl && currencyEl.value !== currency) currencyEl.value = currency;
@@ -6463,27 +6391,8 @@ function renderTreasury() {
             </div>
         ` : '';
 
-        if (displayedTx.length === 0) {
-            txListEl.innerHTML = filterBannerHtml + `<p style="font-size: 11px; color: #64748b; text-align: center; padding: 0.65rem 0;">${escapeHtml(tTreasury('Tidak ada transaksi pada periode ini.'))}</p>`;
-        } else {
-            txListEl.innerHTML = filterBannerHtml + displayedTx.map(tx => {
-                const isInc = tx.type === 'income';
-                return `
-                    <div style="background: rgba(15,23,42,0.75); border: 1px solid rgba(30,41,59,0.9); border-radius: 0.65rem; padding: 0.5rem 0.65rem;" class="flex items-center justify-between gap-2">
-                        <div class="min-w-0 flex-1">
-                            <p class="truncate" style="font-size: 0.75rem; font-weight: 600; color: #f1f5f9;">${escapeHtml(tx.note)}</p>
-                            <p style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">${escapeHtml(tTreasury(tx.category))} • ${tx.dateStr}</p>
-                        </div>
-                        <div class="flex items-center gap-2 shrink-0">
-                            <span class="font-display" style="font-size: 0.75rem; font-weight: 700; color: ${isInc ? '#34d399' : '#fb7185'};">
-                                ${isInc ? '+' : '-'}${formatRupiah(tx.amount)}
-                            </span>
-                            <button type="button" onclick="deleteTreasuryTx('${tx.id}')" style="color: #64748b; padding: 3px;" title="${escapeHtml(tTreasury('Hapus'))}">✕</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
+        if(window.V86Treasury) V86Treasury.renderList(txListEl, displayedTx, filterBannerHtml);
+
     }
     renderTreasuryAutoInsights(tr.transactions, currency);
 }
@@ -10056,7 +9965,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click',e=>{
         const el=e.target.closest?.('button,summary');
         if(!el||el.disabled||el.getAttribute('aria-disabled')==='true')return;
-        if(!el.closest('#tab-status,#tab-dungeon,#tab-shop,.v8-overlay,#v7-cosmetic-preview-overlay,#v7-story-overlay,#v7-claim-overlay'))return;
+        if(!el.closest('#tab-status,#tab-dungeon,#tab-shop,.v8-overlay,#v7-cosmetic-preview-overlay,#v7-story-overlay,#v7-claim-overlay,.v86-btn,.v86-tx'))return;
         const before=clicks;
         setTimeout(()=>{if(clicks===before)SoundFX.playClick();},0);
     },true);
