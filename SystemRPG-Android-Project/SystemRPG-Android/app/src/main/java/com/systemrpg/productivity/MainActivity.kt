@@ -125,7 +125,49 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private var pendingV84Backup: java.io.File? = null
+    private var pendingV84Lang: String = "id"
+    private fun backupToast(lang: String, success: Boolean) {
+        val message = when (lang) {
+            "ja" -> if (success) "バックアップを保存しました" else "バックアップの保存に失敗しました"
+            "en" -> if (success) "Backup saved" else "Backup save failed"
+            else -> if (success) "Backup berhasil disimpan" else "Backup gagal disimpan"
+        }
+        android.widget.Toast.makeText(this, message, if (success) android.widget.Toast.LENGTH_SHORT else android.widget.Toast.LENGTH_LONG).show()
+    }
+    private val backupLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        val data = pendingV84Backup
+        pendingV84Backup = null
+        if (uri != null && data != null) {
+            try {
+                val out = contentResolver.openOutputStream(uri, "w") ?: throw java.io.IOException("No output stream")
+                out.use { dest -> data.inputStream().use { source -> source.copyTo(dest) } }
+                backupToast(pendingV84Lang, true)
+            } catch (_: Exception) { backupToast(pendingV84Lang, false) }
+        }
+        data?.delete()
+    }
+
     inner class AndroidBridge {
+        @JavascriptInterface
+        fun exportV84Backup(json: String, filename: String, lang: String): Boolean {
+            if (json.isBlank()) return false
+            var temp: java.io.File? = null
+            return try {
+                val file = java.io.File.createTempFile("system-rpg-export-", ".json", cacheDir)
+                temp = file
+                file.writeText(json, Charsets.UTF_8)
+                runOnUiThread {
+                    if (pendingV84Backup != null) { file.delete(); backupToast(lang, false); return@runOnUiThread }
+                    pendingV84Backup = file
+                    pendingV84Lang = lang
+                    try { backupLauncher.launch(filename.replace(Regex("[^a-zA-Z0-9_.-]"), "_").take(100)) }
+                    catch (_: Exception) { pendingV84Backup = null; file.delete(); backupToast(lang, false) }
+                }
+                true
+            } catch (_: Exception) { temp?.delete(); false }
+        }
+
         @JavascriptInterface
         fun saveV8Report(base64: String, filename: String) {
             if (base64.length > 12_000_000) return
@@ -292,31 +334,59 @@ class MainActivity : ComponentActivity() {
             refreshAllAppWidgets(this@MainActivity)
         }
 
+        // Full state remains a single durable transaction even after WebView's quota is reached.
+        private fun stateBackupFile() = android.util.AtomicFile(java.io.File(filesDir, "system_rpg_autobackup.json"))
+
+        private fun writeStateFile(file: android.util.AtomicFile, jsonStr: String): Boolean {
+            if (jsonStr.isBlank()) return false
+            var stream: java.io.FileOutputStream? = null
+            return try {
+                val out = file.startWrite()
+                stream = out
+                out.write(jsonStr.toByteArray(Charsets.UTF_8))
+                file.finishWrite(out)
+                true
+            } catch (_: Exception) {
+                stream?.let { try { file.failWrite(it) } catch (_: Exception) {} }
+                false
+            }
+        }
+
+        @JavascriptInterface
+        fun saveLargeState(jsonStr: String): Boolean = writeStateFile(stateBackupFile(), jsonStr)
+
+        private fun slotFile(index: Int) = android.util.AtomicFile(java.io.File(filesDir, "system_rpg_manual_slot_${index}.json"))
+        @JavascriptInterface
+        fun saveV84Slot(index: Int, jsonStr: String): Boolean = index in 1..3 && writeStateFile(slotFile(index), jsonStr)
+        @JavascriptInterface
+        fun loadV84Slot(index: Int): String {
+            if (index !in 1..3) return ""
+            return try { String(slotFile(index).readFully(), Charsets.UTF_8) } catch (_: Exception) { "" }
+        }
+
+        @JavascriptInterface
+        fun loadLargeState(): String = try {
+            String(stateBackupFile().readFully(), Charsets.UTF_8)
+        } catch (_: Exception) { "" }
+
         @JavascriptInterface
         fun saveAutoBackup(jsonStr: String) {
-            if (jsonStr.isBlank()) return
+            if (!saveLargeState(jsonStr)) return
             try {
                 getSharedPreferences("SystemRpgAutoBackupPrefs", Context.MODE_PRIVATE).edit()
                     .putString("backupJson", jsonStr)
-                    .putLong("updatedAt", System.currentTimeMillis())
-                    .apply()
-                java.io.File(filesDir, "system_rpg_autobackup.json").writeText(jsonStr)
+                    .putLong("updatedAt", System.currentTimeMillis()).apply()
             } catch (_: Exception) {}
         }
 
         @JavascriptInterface
         fun loadAutoBackup(): String {
+            val full = loadLargeState()
+            if (full.isNotBlank()) return full
             return try {
-                val file = java.io.File(filesDir, "system_rpg_autobackup.json")
-                if (file.exists()) {
-                    val content = file.readText()
-                    if (content.isNotBlank()) return content
-                }
                 getSharedPreferences("SystemRpgAutoBackupPrefs", Context.MODE_PRIVATE)
                     .getString("backupJson", "") ?: ""
-            } catch (_: Exception) {
-                ""
-            }
+            } catch (_: Exception) { "" }
         }
 
         @JavascriptInterface

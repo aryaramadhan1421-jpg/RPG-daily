@@ -181,7 +181,15 @@ class ReminderReceiver : BroadcastReceiver() {
         val noQuests = fresh && prefs.getInt("totalCount", -1) == 0
         val rest = listOf("Tidak ada quest terjadwal. Nikmati waktu istirahat.", "No quests scheduled. Enjoy your rest.", "本日のクエスト予定はありません。ゆっくり休もう。")[langIndex]
         val unknown = listOf("Buka SYSTEM RPG untuk melihat progres hari ini.", "Open SYSTEM RPG to check today's progress.", "SYSTEM RPGを開いて今日の進捗を確認しよう。")[langIndex]
-        val completed = listOf("Semua misi selesai. Nikmati waktu istirahat.", "All missions complete. Enjoy your rest.", "全任務達成。ゆっくり休もう。")[langIndex]
+        val completedBank = listOf(
+            listOf("Semua misi selesai. Nikmati waktu istirahat.", "All missions complete. Enjoy your rest.", "全任務達成。ゆっくり休もう。"),
+            listOf("Hargai usaha hari ini.", "Celebrate your effort today.", "今日の努力を認めよう。"),
+            listOf("Hari ini berhasil dituntaskan.", "Today’s missions are complete.", "今日の任務は完了した。"),
+            listOf("Isi kembali energimu.", "Recharge your energy.", "エネルギーを回復しよう。"),
+            listOf("Perjalanan berlanjut esok hari.", "The journey continues tomorrow.", "旅は明日も続く。")
+        )
+        val clearOffset = listOf("Pagi", "Siang", "Sore", "Petang", "Malam").indexOf(slot).coerceAtLeast(0)
+        val completed = completedBank[(((dayNumber + clearOffset) % completedBank.size + completedBank.size) % completedBank.size).toInt()][langIndex]
         val body = when {
             !fresh -> "$prompt $unknown"
             noQuests -> rest
